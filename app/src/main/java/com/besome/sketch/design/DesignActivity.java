@@ -1507,12 +1507,13 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             labels = new String[]{
                     Helper.getResString(R.string.design_tab_title_view),
                     Helper.getResString(R.string.design_tab_title_event),
-                    Helper.getResString(R.string.design_tab_title_component)};
+                    Helper.getResString(R.string.design_tab_title_component),
+                    "AI"};
         }
 
         @Override
         public int getCount() {
-            return 3;
+            return 4;
         }
 
         @Override
@@ -1528,9 +1529,10 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                 viewTabAdapter = (ViewEditorFragment) fragment;
             } else if (position == 1) {
                 eventTabAdapter = (rs) fragment;
-            } else {
+            } else if (position == 2) {
                 componentTabAdapter = (br) fragment;
             }
+            // position 3 = AI tab (ChatFragment) - no special adapter reference needed.
 
             return fragment;
         }
@@ -1540,8 +1542,12 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         public Fragment getItem(int position) {
             if (position == 0) {
                 return new ViewEditorFragment();
+            } else if (position == 1) {
+                return new rs();
+            } else if (position == 2) {
+                return new br();
             } else {
-                return position == 1 ? new rs() : new br();
+                return new com.sketchware.ai.ui.chat.ChatFragment();
             }
         }
     }
