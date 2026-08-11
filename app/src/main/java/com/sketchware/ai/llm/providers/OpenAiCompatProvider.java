@@ -27,6 +27,39 @@ public class OpenAiCompatProvider extends OpenAiProvider {
 
     @Override public String getProviderId() { return providerId; }
 
+    /**
+     * Z.AI's GLM API (open.bigmodel.cn) and a few other OpenAI-compatible
+     * servers use a Pydantic union schema for the {@code tools} field that
+     * requires the <b>flat</b> tool format ({@code {type, name, description,
+     * parameters}}) and rejects the Chat Completions {@code function} wrapper
+     * as an extra field (HTTP 422 extra_forbidden).
+     *
+     * <p>Detection rules (any match triggers flat format):
+     * <ul>
+     *   <li>{@code providerId} is {@code "zai"} or {@code "z-ai"}</li>
+     *   <li>{@code baseUrl} host contains {@code z.ai}, {@code bigmodel.cn},
+     *       or {@code glm}</li>
+     *   <li>{@code model.id} contains {@code glm} (case-insensitive)</li>
+     * </ul>
+     */
+    @Override protected boolean useFlatToolFormat(LlmRequest request) {
+        if ("zai".equals(providerId) || "z-ai".equals(providerId)) return true;
+        if (request != null) {
+            String url = request.baseUrl;
+            if (url != null) {
+                String lower = url.toLowerCase();
+                if (lower.contains("z.ai") || lower.contains("bigmodel.cn") || lower.contains("glm")) {
+                    return true;
+                }
+            }
+            if (request.model != null && request.model.id != null
+                    && request.model.id.toLowerCase().contains("glm")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override public ModelInfo getModel(String modelId) {
         if ("openrouter".equals(providerId)) {
             // OpenRouter models are passed through; we use defaults.

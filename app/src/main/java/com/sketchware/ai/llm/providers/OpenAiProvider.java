@@ -98,6 +98,35 @@ public class OpenAiProvider implements LlmProvider {
 
     @Override public void abort() {}
 
+    /**
+     * Whether to serialize tools in the OpenAI Responses API <b>flat</b> format
+     * ({@code {"type":"function","name":"...","description":"...","parameters":{...}}})
+     * instead of the Chat Completions <b>wrapped</b> format
+     * ({@code {"type":"function","function":{...},"strict":false}}).
+     *
+     * <p>Some OpenAI-compatible servers (notably Z.AI's GLM API at
+     * {@code open.bigmodel.cn}) use a Pydantic union schema for the {@code tools}
+     * field that includes built-in tool types (WebSearchTool,
+     * CodeInterpreterTool, etc.) AND a generic Tool type. Their generic Tool
+     * type requires the <b>flat</b> format and rejects the {@code function}
+     * wrapper as an extra field, returning HTTP 422 with errors like:
+     * <pre>
+     * {"detail":[{"type":"literal_error","loc":[...,"WebSearchTool","type"],
+     * "msg":"Input should be 'web_search'","input":"function"},
+     * {"type":"extra_forbidden","loc":[...,"WebSearchTool","function"],
+     * "msg":"Extra inputs are not permitted","input":{"name":"view_add_widget",...}}]}
+     * </pre>
+     *
+     * <p>Subclasses (e.g. {@link OpenAiCompatProvider}) override this to return
+     * {@code true} for providers whose API requires the flat format.
+     *
+     * @param request the active request (used to inspect baseUrl/host)
+     * @return {@code false} by default (Chat Completions wrapped format)
+     */
+    protected boolean useFlatToolFormat(LlmRequest request) {
+        return false;
+    }
+
     protected JsonObject buildRequestBody(LlmRequest request) {
         JsonObject root = new JsonObject();
         root.addProperty("model", request.model.id);
@@ -121,7 +150,7 @@ public class OpenAiProvider implements LlmProvider {
         }
         for (AgentMessage m : request.messages) {
             if (AgentMessage.ROLE_SYSTEM.equals(m.role)) continue;
-            messages.add(toOpenAiMessage(m));
+            messages.add(toOpenAiMessage(m, useFlatToolFormat(request)));
         }
         root.add("messages", messages);
 
@@ -129,20 +158,31 @@ public class OpenAiProvider implements LlmProvider {
         if (request.toolsJson != null && !request.toolsJson.isEmpty() && !"[]".equals(request.toolsJson)) {
             JsonArray tools = JsonParser.parseString(request.toolsJson).getAsJsonArray();
             JsonArray mapped = new JsonArray();
+            boolean flat = useFlatToolFormat(request);
             for (JsonElement t : tools) {
                 JsonObject tool = t.getAsJsonObject();
-                JsonObject fn = new JsonObject();
-                fn.addProperty("name", tool.get("name").getAsString());
-                fn.addProperty("description", tool.get("description").getAsString());
+                String name = tool.get("name").getAsString();
+                String desc = tool.get("description").getAsString();
                 JsonObject schema = tool.has("inputSchema")
                         ? tool.getAsJsonObject("inputSchema")
                         : new JsonObject();
-                fn.add("parameters", schema);
-                JsonObject wrapped = new JsonObject();
-                wrapped.add("function", fn);
-                wrapped.addProperty("type", "function");
-                wrapped.addProperty("strict", false);
-                mapped.add(wrapped);
+                JsonObject out = new JsonObject();
+                out.addProperty("type", "function");
+                if (flat) {
+                    // Responses API flat format — name/description/parameters at top level.
+                    out.addProperty("name", name);
+                    out.addProperty("description", desc);
+                    out.add("parameters", schema);
+                } else {
+                    // Chat Completions wrapped format — name/description/parameters nested under function.
+                    JsonObject fn = new JsonObject();
+                    fn.addProperty("name", name);
+                    fn.addProperty("description", desc);
+                    fn.add("parameters", schema);
+                    out.add("function", fn);
+                    out.addProperty("strict", false);
+                }
+                mapped.add(out);
             }
             root.add("tools", mapped);
             root.addProperty("parallel_tool_calls", false);
@@ -157,7 +197,7 @@ public class OpenAiProvider implements LlmProvider {
         return root;
     }
 
-    protected JsonObject toOpenAiMessage(AgentMessage m) {
+    protected JsonObject toOpenAiMessage(AgentMessage m, boolean flatToolFormat) {
         JsonObject obj = new JsonObject();
 
         if (m.hasToolResults()) {
@@ -182,10 +222,17 @@ public class OpenAiProvider implements LlmProvider {
                     JsonObject call = new JsonObject();
                     call.addProperty("id", tc.id);
                     call.addProperty("type", "function");
-                    JsonObject fn = new JsonObject();
-                    fn.addProperty("name", tc.name);
-                    fn.addProperty("arguments", tc.argumentsJson == null ? "{}" : tc.argumentsJson);
-                    call.add("function", fn);
+                    if (flatToolFormat) {
+                        // Flat: name + arguments at top level (no function wrapper).
+                        call.addProperty("name", tc.name);
+                        call.addProperty("arguments", tc.argumentsJson == null ? "{}" : tc.argumentsJson);
+                    } else {
+                        // Wrapped: name + arguments nested under function.
+                        JsonObject fn = new JsonObject();
+                        fn.addProperty("name", tc.name);
+                        fn.addProperty("arguments", tc.argumentsJson == null ? "{}" : tc.argumentsJson);
+                        call.add("function", fn);
+                    }
                     arr.add(call);
                 }
                 obj.add("tool_calls", arr);
@@ -311,9 +358,10 @@ public class OpenAiProvider implements LlmProvider {
                                 if (tc.has("id")) {
                                     toolIds.put(idx, tc.get("id").getAsString());
                                 }
-                                if (tc.has("type") && "function".equals(tc.get("type").getAsString())
-                                        && tc.has("function")) {
-                                    JsonObject fn = tc.getAsJsonObject("function");
+                                // Accept BOTH wrapped ({function:{name,arguments}}) and
+                                // flat ({name,arguments}) tool_call shapes — servers differ.
+                                if (tc.has("type") && "function".equals(tc.get("type").getAsString())) {
+                                    JsonObject fn = tc.has("function") ? tc.getAsJsonObject("function") : tc;
                                     if (fn.has("name")) {
                                         toolNames.put(idx, fn.get("name").getAsString());
                                     }
