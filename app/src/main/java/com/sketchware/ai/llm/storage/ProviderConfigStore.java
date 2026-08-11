@@ -64,6 +64,26 @@ public final class ProviderConfigStore {
         public boolean useAzure;
         public String azureApiVersion;
         public List<ExtraHeader> customHeaders;
+        /**
+         * Force the OpenAI Responses API <b>flat</b> tool format
+         * ({@code {type, name, description, parameters}}) instead of the
+         * Chat Completions <b>wrapped</b> format
+         * ({@code {type, function:{...}, strict:false}}).
+         *
+         * <p>Auto-detection in {@code OpenAiProvider.useFlatToolFormat()}
+         * already enables flat format for Z.AI/GLM endpoints. This toggle
+         * lets the user force-enable it for any other endpoint that rejects
+         * the wrapped format with HTTP 422 {@code extra_forbidden} — for
+         * example, custom OpenAI-compatible servers using Pydantic union
+         * schemas similar to Z.AI's.
+         *
+         * <p>Values:
+         * <ul>
+         *   <li>{@code false} (default) — auto-detect via URL/model heuristics</li>
+         *   <li>{@code true} — always use flat format (skip auto-detection)</li>
+         * </ul>
+         */
+        public boolean forceFlatToolFormat;
         // Image generation (separate provider)
         public String imageProviderId;
         public String imageApiKey;
@@ -94,6 +114,7 @@ public final class ProviderConfigStore {
             useAzure = false;
             azureApiVersion = "";
             customHeaders = new ArrayList<>();
+            forceFlatToolFormat = false;
             imageProviderId = "";
             imageApiKey = "";
             imageModel = "";

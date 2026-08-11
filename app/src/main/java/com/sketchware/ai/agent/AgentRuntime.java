@@ -146,7 +146,8 @@ public final class AgentRuntime {
                         reasoning,
                         profile.maxOutputTokens > 0 ? profile.maxOutputTokens : model.maxOutputTokens,
                         profile.enableStreaming,
-                        toExtraHeaders(profile.customHeaders));
+                        toExtraHeaders(profile.customHeaders),
+                        profile.forceFlatToolFormat);
 
                 // Stream.
                 StringBuilder textBuf = new StringBuilder();
@@ -316,7 +317,8 @@ public final class AgentRuntime {
                 provider.getProviderId(), profile.baseUrl, profile.apiKey, model,
                 systemPrompt, conversationHistory, toolRegistry.toJsonSchemas(),
                 reasoning, profile.maxOutputTokens > 0 ? profile.maxOutputTokens : model.maxOutputTokens,
-                profile.enableStreaming, toExtraHeaders(profile.customHeaders));
+                profile.enableStreaming, toExtraHeaders(profile.customHeaders),
+                profile.forceFlatToolFormat);
     }
 
     private ToolResult executeTool(AgentMessage.ToolCall call, AgentListener listener) {

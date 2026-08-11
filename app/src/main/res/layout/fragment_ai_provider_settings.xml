@@ -136,6 +136,22 @@
             android:layout_marginTop="8dp"
             android:text="Prompt Caching" />
 
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_force_flat_tool_format"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Force flat tool format (for Z.AI / GLM)" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:text="Enable if your provider rejects tool calls with HTTP 422 extra_forbidden (e.g. Z.AI GLM, bigmodel.cn). Auto-detection already handles common Z.AI/GLM URLs — use this only when auto-detect fails."
+            android:textSize="11sp"
+            android:textColor="?android:attr/textColorSecondary" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_save"
             android:layout_width="match_parent"

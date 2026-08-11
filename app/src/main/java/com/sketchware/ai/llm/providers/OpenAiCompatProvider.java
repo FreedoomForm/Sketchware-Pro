@@ -43,12 +43,19 @@ public class OpenAiCompatProvider extends OpenAiProvider {
      * </ul>
      */
     @Override protected boolean useFlatToolFormat(LlmRequest request) {
+        // User-controlled override (highest priority) — see OpenAiProvider.
+        if (request != null && request.forceFlatToolFormat) {
+            return true;
+        }
         if ("zai".equals(providerId) || "z-ai".equals(providerId)) return true;
         if (request != null) {
             String url = request.baseUrl;
             if (url != null) {
                 String lower = url.toLowerCase();
-                if (lower.contains("z.ai") || lower.contains("bigmodel.cn") || lower.contains("glm")) {
+                if (lower.contains("z.ai")
+                        || lower.contains("bigmodel.cn")
+                        || lower.contains("glm")
+                        || lower.contains("paas/v4")) {
                     return true;
                 }
             }
@@ -152,7 +159,7 @@ public class OpenAiCompatProvider extends OpenAiProvider {
                     request.providerId, defaultBaseUrl, request.apiKey, request.model,
                     request.systemPrompt, request.messages, request.toolsJson,
                     request.reasoning, request.maxTokens, request.enableStreaming,
-                    request.extraHeaders);
+                    request.extraHeaders, request.forceFlatToolFormat);
         }
         return super.stream(request);
     }

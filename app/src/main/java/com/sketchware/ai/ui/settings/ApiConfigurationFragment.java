@@ -49,6 +49,7 @@ public final class ApiConfigurationFragment extends Fragment {
         com.google.android.material.materialswitch.MaterialSwitch enableStreaming = root.findViewById(R.id.sw_streaming);
         com.google.android.material.materialswitch.MaterialSwitch imageSupport = root.findViewById(R.id.sw_image_support);
         com.google.android.material.materialswitch.MaterialSwitch promptCaching = root.findViewById(R.id.sw_prompt_caching);
+        com.google.android.material.materialswitch.MaterialSwitch forceFlatToolFormat = root.findViewById(R.id.sw_force_flat_tool_format);
 
         // Defensive defaults — older stored profiles may have null/empty
         // values for fields added after the profile was first created.
@@ -66,6 +67,7 @@ public final class ApiConfigurationFragment extends Fragment {
         enableStreaming.setChecked(profile.enableStreaming);
         imageSupport.setChecked(profile.imageSupport);
         promptCaching.setChecked(profile.promptCaching);
+        forceFlatToolFormat.setChecked(profile.forceFlatToolFormat);
 
         // Provider spinner
         com.google.android.material.textfield.MaterialAutoCompleteTextView providerSpinner =
@@ -195,6 +197,7 @@ public final class ApiConfigurationFragment extends Fragment {
             profile.enableStreaming = enableStreaming.isChecked();
             profile.imageSupport = imageSupport.isChecked();
             profile.promptCaching = promptCaching.isChecked();
+            profile.forceFlatToolFormat = forceFlatToolFormat.isChecked();
             store.upsertProfile(profile);
             store.setActiveProfile(profile.id);
             View sbHost = getView();

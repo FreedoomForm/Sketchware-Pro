@@ -129,6 +129,14 @@ public class OpenAiProvider implements LlmProvider {
      * @return {@code true} if the request targets a Z.AI/GLM endpoint
      */
     protected boolean useFlatToolFormat(LlmRequest request) {
+        // User-controlled override (highest priority). When the user toggles
+        // "Force flat tool format" in API settings, we skip auto-detection
+        // entirely. This is the escape hatch for endpoints that the
+        // heuristics below fail to identify (e.g. a self-hosted GLM proxy
+        // whose URL does not contain z.ai/bigmodel.cn).
+        if (request != null && request.forceFlatToolFormat) {
+            return true;
+        }
         // Auto-detect Z.AI / GLM endpoints even when the user selected the
         // generic "openai" or "openai-compat" provider but pointed baseUrl
         // at a Z.AI/GLM-compatible server. This catches the common misconfig
@@ -138,7 +146,10 @@ public class OpenAiProvider implements LlmProvider {
             String url = request.baseUrl;
             if (url != null) {
                 String lower = url.toLowerCase();
-                if (lower.contains("z.ai") || lower.contains("bigmodel.cn") || lower.contains("/glm")) {
+                if (lower.contains("z.ai")
+                        || lower.contains("bigmodel.cn")
+                        || lower.contains("/glm")
+                        || lower.contains("paas/v4")) {
                     return true;
                 }
             }
@@ -154,7 +165,13 @@ public class OpenAiProvider implements LlmProvider {
         JsonObject root = new JsonObject();
         root.addProperty("model", request.model.id);
         root.addProperty("stream", request.enableStreaming);
-        if (request.enableStreaming) {
+        // stream_options.include_usage is OpenAI-specific. Z.AI's Pydantic
+        // schema rejects unknown fields as extra_forbidden, so we suppress
+        // it whenever the request targets a flat-format endpoint. The usage
+        // data will simply be absent from the SSE stream — acceptable
+        // trade-off for not getting HTTP 422.
+        boolean flat = useFlatToolFormat(request);
+        if (request.enableStreaming && !flat) {
             JsonObject streamOptions = new JsonObject();
             streamOptions.addProperty("include_usage", true);
             root.add("stream_options", streamOptions);
@@ -196,7 +213,7 @@ public class OpenAiProvider implements LlmProvider {
         if (request.toolsJson != null && !request.toolsJson.isEmpty() && !"[]".equals(request.toolsJson)) {
             JsonArray tools = JsonParser.parseString(request.toolsJson).getAsJsonArray();
             JsonArray mapped = new JsonArray();
-            boolean flat = useFlatToolFormat(request);
+            // `flat` was computed once at the top of buildRequestBody(); reuse it here.
             for (JsonElement t : tools) {
                 JsonObject tool = t.getAsJsonObject();
                 String name = tool.get("name").getAsString();
@@ -234,8 +251,11 @@ public class OpenAiProvider implements LlmProvider {
             }
         }
 
-        // Reasoning effort (OpenAI Responses / o1 / o3)
-        if (request.reasoning != null && request.reasoning.effort != null
+        // Reasoning effort (OpenAI Responses / o1 / o3).
+        // Suppress for flat-format endpoints: Z.AI's GLM uses `thinking.type`
+        // (added by OpenAiCompatProvider.buildRequestBody) and rejects
+        // `reasoning_effort` as extra_forbidden.
+        if (!flat && request.reasoning != null && request.reasoning.effort != null
                 && request.reasoning.effort != com.sketchware.ai.llm.reasoning.ReasoningEffort.NONE) {
             root.addProperty("reasoning_effort", request.reasoning.effort.name().toLowerCase());
         }
