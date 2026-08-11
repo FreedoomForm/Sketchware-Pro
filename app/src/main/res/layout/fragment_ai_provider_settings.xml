@@ -141,14 +141,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Force flat tool format (for Z.AI / GLM)" />
+            android:text="Force flat tool format (experimental)" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
-            android:text="Enable if your provider rejects tool calls with HTTP 422 extra_forbidden (e.g. Z.AI GLM, bigmodel.cn). Auto-detection already handles common Z.AI/GLM URLs — use this only when auto-detect fails."
+            android:text="Advanced: uses Responses API flat format {type,name,description,parameters} instead of Chat Completions wrapped format {type,function:{...}}. Leave OFF for all known providers (OpenAI, Z.AI, Mistral, DeepSeek, etc.). Enable only for custom servers that explicitly require flat format."
             android:textSize="11sp"
             android:textColor="?android:attr/textColorSecondary" />
 

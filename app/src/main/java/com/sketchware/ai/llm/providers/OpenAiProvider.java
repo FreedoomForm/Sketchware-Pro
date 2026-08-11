@@ -120,61 +120,44 @@ public class OpenAiProvider implements LlmProvider {
      * Whether to serialize tools in the OpenAI Responses API <b>flat</b> format
      * ({@code {"type":"function","name":"...","description":"...","parameters":{...}}})
      * instead of the Chat Completions <b>wrapped</b> format
-     * ({@code {"type":"function","function":{...},"strict":false}}).
+     * ({@code {"type":"function","function":{...}}}).
      *
-     * <p>Some OpenAI-compatible servers (notably Z.AI's GLM API at
-     * {@code open.bigmodel.cn}) use a Pydantic union schema for the {@code tools}
-     * field that includes built-in tool types (WebSearchTool,
-     * CodeInterpreterTool, etc.) AND a generic Tool type. Their generic Tool
-     * type requires the <b>flat</b> format and rejects the {@code function}
-     * wrapper as an extra field, returning HTTP 422 with errors like:
-     * <pre>
-     * {"detail":[{"type":"literal_error","loc":[...,"WebSearchTool","type"],
-     * "msg":"Input should be 'web_search'","input":"function"},
-     * {"type":"extra_forbidden","loc":[...,"WebSearchTool","function"],
-     * "msg":"Extra inputs are not permitted","input":{"name":"view_add_widget",...}}]}
-     * </pre>
+     * <p><b>IMPORTANT:</b> Z.AI's GLM API (despite using a Pydantic union schema
+     * for tools that includes built-in types like WebSearchTool) accepts the
+     * standard <b>wrapped</b> format for its generic {@code Tool} type. The
+     * only fields it rejects are {@code strict}, {@code parallel_tool_calls},
+     * and {@code stream_options} — those are already suppressed for non-native
+     * OpenAI providers in {@link #buildRequestBody(LlmRequest)}.
      *
-     * <p>The base implementation auto-detects Z.AI/GLM endpoints by inspecting
-     * {@code request.baseUrl} and {@code request.model.id}, so the flat format
-     * is applied even when the user configured the provider as "openai" or
-     * "openai-compat" but pointed the baseUrl at a Z.AI/GLM server. Subclasses
-     * can override to force-enable or force-disable the flat format.
+     * <p>The previous implementation auto-detected Z.AI/GLM endpoints by URL
+     * and forced the flat format. That was <b>wrong</b> — it caused HTTP 422
+     * {@code extra_forbidden} on every tool call because Z.AI's generic
+     * {@code Tool} type does NOT accept top-level {@code name}/
+     * {@code description}/{@code parameters} fields.
      *
-     * @param request the active request (used to inspect baseUrl/host)
-     * @return {@code true} if the request targets a Z.AI/GLM endpoint
+     * <p>Flat format is now opt-in ONLY via {@link LlmRequest#forceFlatToolFormat}
+     * (user toggle in API settings). It should not be needed for any known
+     * provider, but is kept as an escape hatch.
+     *
+     * @param request the active request
+     * @return {@code true} only if the user explicitly enabled flat format
      */
     protected boolean useFlatToolFormat(LlmRequest request) {
-        // User-controlled override (highest priority). When the user toggles
-        // "Force flat tool format" in API settings, we skip auto-detection
-        // entirely. This is the escape hatch for endpoints that the
-        // heuristics below fail to identify (e.g. a self-hosted GLM proxy
-        // whose URL does not contain z.ai/bigmodel.cn).
-        if (request != null && request.forceFlatToolFormat) {
-            return true;
-        }
-        // Auto-detect Z.AI / GLM endpoints even when the user selected the
-        // generic "openai" or "openai-compat" provider but pointed baseUrl
-        // at a Z.AI/GLM-compatible server. This catches the common misconfig
-        // where the user enters https://api.z.ai/... or
-        // https://open.bigmodel.cn/... in the OpenAI provider settings.
-        if (request != null) {
-            String url = request.baseUrl;
-            if (url != null) {
-                String lower = url.toLowerCase();
-                if (lower.contains("z.ai")
-                        || lower.contains("bigmodel.cn")
-                        || lower.contains("/glm")
-                        || lower.contains("paas/v4")) {
-                    return true;
-                }
-            }
-            if (request.model != null && request.model.id != null
-                    && request.model.id.toLowerCase().contains("glm")) {
-                return true;
-            }
-        }
-        return false;
+        // IMPORTANT: Z.AI's GLM API uses the STANDARD OpenAI wrapped format
+        // {type:"function", function:{name, description, parameters}} — NOT
+        // the flat Responses API format. The previous auto-detection that
+        // forced flat format for z.ai/bigmodel.cn URLs was WRONG and caused
+        // HTTP 422 extra_forbidden errors on every tool call.
+        //
+        // The only OpenAI-specific field that Z.AI rejects is `strict` (and
+        // `parallel_tool_calls`, `stream_options`) — those are already
+        // suppressed for non-native-OpenAI providers in buildRequestBody().
+        //
+        // The flat format is now opt-in ONLY via the user toggle
+        // (Profile.forceFlatToolFormat). It should not be needed for any
+        // known provider, but is kept as an escape hatch for hypothetical
+        // servers that genuinely require it.
+        return request != null && request.forceFlatToolFormat;
     }
 
     protected JsonObject buildRequestBody(LlmRequest request) {

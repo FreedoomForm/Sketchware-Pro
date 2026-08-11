@@ -43,28 +43,14 @@ public class OpenAiCompatProvider extends OpenAiProvider {
      * </ul>
      */
     @Override protected boolean useFlatToolFormat(LlmRequest request) {
-        // User-controlled override (highest priority) — see OpenAiProvider.
-        if (request != null && request.forceFlatToolFormat) {
-            return true;
-        }
-        if ("zai".equals(providerId) || "z-ai".equals(providerId)) return true;
-        if (request != null) {
-            String url = request.baseUrl;
-            if (url != null) {
-                String lower = url.toLowerCase();
-                if (lower.contains("z.ai")
-                        || lower.contains("bigmodel.cn")
-                        || lower.contains("glm")
-                        || lower.contains("paas/v4")) {
-                    return true;
-                }
-            }
-            if (request.model != null && request.model.id != null
-                    && request.model.id.toLowerCase().contains("glm")) {
-                return true;
-            }
-        }
-        return false;
+        // IMPORTANT: See OpenAiProvider.useFlatToolFormat() for full context.
+        // Z.AI's GLM API uses the standard OpenAI wrapped format, NOT flat.
+        // The previous auto-detection (z.ai / bigmodel.cn / glm / paas/v4 URL
+        // matches, providerId == "zai", model.id contains "glm") was WRONG
+        // and caused HTTP 422 extra_forbidden on every tool call.
+        //
+        // Flat format is now opt-in ONLY via the user toggle.
+        return request != null && request.forceFlatToolFormat;
     }
 
     @Override public ModelInfo getModel(String modelId) {
