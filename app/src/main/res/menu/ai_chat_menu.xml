@@ -14,4 +14,12 @@
         android:id="@+id/menu_ai_export"
         android:title="Export conversation"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_ai_history"
+        android:title="Task history"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_ai_cost"
+        android:title="Token usage / cost"
+        app:showAsAction="never" />
 </menu>

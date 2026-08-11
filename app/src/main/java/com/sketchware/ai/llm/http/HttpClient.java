@@ -38,7 +38,11 @@ public final class HttpClient {
     /**
      * Execute a streaming POST and return the raw Response.
      * Caller is responsible for closing the response body.
+     *
+     * @deprecated prefer {@link #postStreamWithRetry} which handles HTTP 429
+     *     and 5xx responses with exponential backoff.
      */
+    @Deprecated
     public static Response postStream(String url,
                                       String jsonBody,
                                       String apiKey,
@@ -81,6 +85,87 @@ public final class HttpClient {
     }
 
     /**
+     * Execute a POST with automatic retry on HTTP 429 (rate limited) and 5xx
+     * (server error) responses. Honors the {@code Retry-After} header when
+     * present, otherwise uses exponential backoff with jitter.
+     *
+     * <p>Mirrors Cline's retry logic in {@code core/api/index.ts}: up to
+     * {@link RateLimitHandler#MAX_RETRIES} retries, capped backoff of
+     * {@link RateLimitHandler#MAX_BACKOFF_MS}, random jitter to avoid
+     * thundering-herd. The retry loop is interruptible — calling
+     * {@code Thread.interrupt()} (which OkHttp does on {@code Call.cancel()})
+     * aborts the sleep immediately.
+     *
+     * @param url          endpoint URL
+     * @param jsonBody     request body JSON
+     * @param apiKey       Bearer token (or null for none)
+     * @param extraHeaders extra headers to add
+     * @param sse          true for SSE streaming, false for plain JSON
+     * @return the successful response (caller must close)
+     * @throws RateLimitExceededException if all retries are exhausted on 429
+     * @throws ServerErrorException       if all retries are exhausted on 5xx
+     * @throws RuntimeException           for non-retryable HTTP errors (4xx other than 429)
+     */
+    public static Response postStreamWithRetry(String url,
+                                               String jsonBody,
+                                               String apiKey,
+                                               java.util.List<com.sketchware.ai.llm.LlmRequest.ExtraHeader> extraHeaders,
+                                               boolean sse)
+            throws Exception {
+        Response lastResponse = null;
+        int lastCode = 0;
+        String lastErrBody = "";
+
+        for (int attempt = 0; attempt <= RateLimitHandler.MAX_RETRIES; attempt++) {
+            // Close any previous response before retrying.
+            if (lastResponse != null) {
+                try { lastResponse.close(); } catch (Throwable ignored) {}
+            }
+
+            lastResponse = postStream(url, jsonBody, apiKey, extraHeaders, sse);
+            lastCode = lastResponse.code();
+
+            if (lastResponse.isSuccessful()) {
+                return lastResponse;
+            }
+
+            // Non-retryable: 4xx other than 429 — close and throw immediately.
+            if (!RateLimitHandler.isRetryable(lastCode)) {
+                lastErrBody = lastResponse.body() != null ? lastResponse.body().string() : "";
+                lastResponse.close();
+                throw new RuntimeException("HTTP " + lastCode + ": " + lastErrBody);
+            }
+
+            // Retryable (429 or 5xx). Decide whether to retry or give up.
+            if (attempt >= RateLimitHandler.MAX_RETRIES) {
+                lastErrBody = lastResponse.body() != null ? lastResponse.body().string() : "";
+                lastResponse.close();
+                String msg = "HTTP " + lastCode + " after " + (attempt + 1) + " attempts: " + lastErrBody;
+                if (lastCode == 429) throw new RateLimitExceededException(msg);
+                throw new ServerErrorException(msg);
+            }
+
+            // Compute backoff and sleep.
+            long delay = RateLimitHandler.computeBackoff(lastResponse, attempt);
+            // Close the response body before retrying — we don't need the body
+            // for the retry decision, only the status code (which we already
+            // captured). Reading the body here would consume the stream and
+            // prevent OkHttp from reusing the connection.
+            try { lastResponse.close(); } catch (Throwable ignored) {}
+            lastResponse = null;
+
+            // Sleep (interruptible). If interrupted (e.g. user aborted),
+            // surface as a RuntimeException so the provider's caller sees it.
+            if (!RateLimitHandler.sleepInterruptible(delay)) {
+                throw new RuntimeException("Request aborted during retry backoff");
+            }
+        }
+
+        // Should never reach here — the loop above returns or throws on every path.
+        throw new RuntimeException("HTTP " + lastCode + ": exhausted retries");
+    }
+
+    /**
      * Execute a streaming POST with a custom OkHttp Request.Builder (used by
      * providers that need fine-grained control over headers / body, e.g.
      * Ollama which omits the Accept: text/event-stream header).
@@ -104,18 +189,29 @@ public final class HttpClient {
 
     /**
      * Execute a non-streaming POST and return the response body as a string.
+     * Uses {@link #postStreamWithRetry} for automatic 429/5xx retry handling.
      */
     public static String postJson(String url,
                                   String jsonBody,
                                   String apiKey,
                                   java.util.List<com.sketchware.ai.llm.LlmRequest.ExtraHeader> extraHeaders)
             throws Exception {
-        try (Response resp = postStream(url, jsonBody, apiKey, extraHeaders)) {
+        try (Response resp = postStreamWithRetry(url, jsonBody, apiKey, extraHeaders, false)) {
             if (!resp.isSuccessful()) {
                 String errBody = resp.body() != null ? resp.body().string() : "";
                 throw new RuntimeException("HTTP " + resp.code() + ": " + errBody);
             }
             return resp.body() != null ? resp.body().string() : "";
         }
+    }
+
+    /** Thrown when HTTP 429 (Too Many Requests) persists across all retries. */
+    public static final class RateLimitExceededException extends RuntimeException {
+        public RateLimitExceededException(String message) { super(message); }
+    }
+
+    /** Thrown when HTTP 5xx (Server Error) persists across all retries. */
+    public static final class ServerErrorException extends RuntimeException {
+        public ServerErrorException(String message) { super(message); }
     }
 }

@@ -55,7 +55,16 @@ public final class AgentRuntime {
     private final LlmProvider provider;
     private final ToolRegistry toolRegistry;
     private final ToolExecutor toolExecutor;
-    private final ToolPermissionGate permissionGate;
+    /**
+     * Enhanced permission gate with per-tool/action/path rules. Replaces the
+     * older {@link ToolPermissionGate} which only supported per-tool overrides.
+     * Kept as a field alongside {@link #legacyGate} for backwards compatibility
+     * — the legacy gate is still queried when the constructor that takes a
+     * {@code ToolPermissionGate} is used, so existing callers (e.g.
+     * {@code ChatFragment}) don't need to be rewritten.
+     */
+    private final AutoApprover autoApprover;
+    private final ToolPermissionGate legacyGate;
     private final ProviderConfigStore.Profile profile;
     private final String systemPrompt;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -96,12 +105,41 @@ public final class AgentRuntime {
         this.provider = provider;
         this.toolRegistry = toolRegistry;
         this.toolExecutor = new ToolExecutor(toolRegistry);
-        this.permissionGate = permissionGate;
+        this.legacyGate = permissionGate;
+        // Wrap the legacy gate in an AutoApprover with default rules. The
+        // legacy gate is still consulted for per-tool overrides the user may
+        // have set via the older UI; the AutoApprover adds per-action/path
+        // rules on top.
+        this.autoApprover = AutoApprover.withDefaults();
         this.profile = profile;
         this.systemPrompt = systemPrompt;
     }
 
-    public void setMode(AgentMode mode) { this.mode = mode; permissionGate.setMode(mode); }
+    /**
+     * Construct with an explicit {@link AutoApprover} for full per-tool /
+     * per-action / per-path rule control. Caller is responsible for setting
+     * the mode on the AutoApprover; {@link #setMode(AgentMode)} propagates
+     * to both the AutoApprover and any legacy gate.
+     */
+    public AgentRuntime(LlmProvider provider,
+                        ToolRegistry toolRegistry,
+                        AutoApprover autoApprover,
+                        ProviderConfigStore.Profile profile,
+                        String systemPrompt) {
+        this.provider = provider;
+        this.toolRegistry = toolRegistry;
+        this.toolExecutor = new ToolExecutor(toolRegistry);
+        this.autoApprover = autoApprover != null ? autoApprover : AutoApprover.withDefaults();
+        this.legacyGate = null;
+        this.profile = profile;
+        this.systemPrompt = systemPrompt;
+    }
+
+    public void setMode(AgentMode mode) {
+        this.mode = mode;
+        autoApprover.setMode(mode);
+        if (legacyGate != null) legacyGate.setMode(mode);
+    }
     public AgentMode getMode() { return mode; }
 
     public void setMaxIterations(int max) { this.maxIterations = max; }
@@ -112,11 +150,40 @@ public final class AgentRuntime {
     /** Get the loop detector (for testing / debugging). */
     public LoopDetector getLoopDetector() { return loopDetector; }
 
+    /** Get the AutoApprover (for adding/removing rules at runtime). */
+    public AutoApprover getAutoApprover() { return autoApprover; }
+
+    /**
+     * Get a snapshot of the current conversation history (for task save).
+     * Returns a copy — mutations to the returned list do not affect the
+     * agent's internal state.
+     */
+    public LinkedList<AgentMessage> getConversationHistory() {
+        synchronized (conversationHistory) {
+            return new LinkedList<>(conversationHistory);
+        }
+    }
+
+    /**
+     * Replace the conversation history (e.g. when loading a saved task).
+     * The next {@link #execute(String, AgentListener)} call will append to
+     * this restored history. Caller is responsible for ensuring the agent
+     * is not currently running (call {@link #abort()} first if needed).
+     */
+    public void setConversationHistory(LinkedList<AgentMessage> history) {
+        synchronized (conversationHistory) {
+            conversationHistory.clear();
+            if (history != null) conversationHistory.addAll(history);
+        }
+    }
+
     /** Reset the loop detector and TODO list (call when starting a new task). */
     public void resetSession() {
         loopDetector.reset();
         usageTracker.reset();
-        conversationHistory.clear();
+        synchronized (conversationHistory) {
+            conversationHistory.clear();
+        }
         com.sketchware.ai.tools.meta.TodoListTool.resetSession();
     }
 
@@ -397,13 +464,33 @@ public final class AgentRuntime {
             return ToolResult.error("Unknown tool: '" + call.name
                     + "'. Available tools: " + toolRegistry.toolNamesSample());
         }
-        // Permission gate
-        ToolPermissionGate.Decision decision = permissionGate.decide(tool);
-        if (decision == ToolPermissionGate.Decision.DENY) {
-            return ToolResult.error("Tool '" + call.name + "' is not allowed in current mode ("
-                    + permissionGate.getMode() + ").");
+        // Parse and validate args first — AutoApprover uses the parsed args
+        // to evaluate per-action/path rules.
+        JsonObject args;
+        try {
+            args = call.argumentsJson == null || call.argumentsJson.isEmpty()
+                    ? new JsonObject()
+                    : JsonParser.parseString(call.argumentsJson).getAsJsonObject();
+        } catch (Exception e) {
+            return ToolResult.error("Invalid arguments JSON for '" + call.name + "': " + e.getMessage()
+                    + " (raw: " + truncateForError(call.argumentsJson) + ")");
         }
-        if (decision == ToolPermissionGate.Decision.REQUIRE_APPROVAL) {
+        // Permission gate: use AutoApprover for fine-grained per-tool/action/path
+        // rules. Falls back to legacy gate's per-tool overrides if set.
+        AutoApprover.Decision decision = autoApprover.decide(tool, args);
+        // Legacy gate override: if the user explicitly set a per-tool override
+        // in the old UI, honor it (only when AutoApprover didn't already DENY).
+        if (decision != AutoApprover.Decision.DENY && legacyGate != null) {
+            Boolean override = legacyGate.getToolAutoApprove(call.name);
+            if (override != null) {
+                decision = override ? AutoApprover.Decision.AUTO_APPROVE : AutoApprover.Decision.REQUIRE_APPROVAL;
+            }
+        }
+        if (decision == AutoApprover.Decision.DENY) {
+            return ToolResult.error("Tool '" + call.name + "' is not allowed in current mode ("
+                    + autoApprover.getMode() + ").");
+        }
+        if (decision == AutoApprover.Decision.REQUIRE_APPROVAL) {
             // Ask the listener whether to proceed. The default implementation
             // returns true (auto-approve) for backward compatibility with the
             // previous MVP behaviour. A real ChatFragment listener should
@@ -417,16 +504,6 @@ public final class AgentRuntime {
             if (!approved) {
                 return ToolResult.error("User denied permission to execute tool '" + call.name + "'.");
             }
-        }
-        // Parse and validate args.
-        JsonObject args;
-        try {
-            args = call.argumentsJson == null || call.argumentsJson.isEmpty()
-                    ? new JsonObject()
-                    : JsonParser.parseString(call.argumentsJson).getAsJsonObject();
-        } catch (Exception e) {
-            return ToolResult.error("Invalid arguments JSON for '" + call.name + "': " + e.getMessage()
-                    + " (raw: " + truncateForError(call.argumentsJson) + ")");
         }
         JsonSchemaValidator.ValidationResult v = JsonSchemaValidator.validate(args, tool.jsonSchema());
         if (!v.ok) {

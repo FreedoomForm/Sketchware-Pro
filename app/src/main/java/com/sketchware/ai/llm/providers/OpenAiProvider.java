@@ -86,8 +86,13 @@ public class OpenAiProvider implements LlmProvider {
         // application/json for non-streaming. Some servers (Mistral) return
         // a regular JSON body when stream=false regardless of Accept, but
         // sending the correct Accept avoids ambiguity.
+        //
+        // Use postStreamWithRetry to get automatic 429/5xx retry with
+        // exponential backoff + Retry-After header honoring. This prevents
+        // the "retry also gets 429" cascade that previously caused the agent
+        // to abort on the first rate-limit response.
         boolean sse = request.enableStreaming;
-        Response response = HttpClient.postStream(url, body.toString(), request.apiKey, request.extraHeaders, sse);
+        Response response = HttpClient.postStreamWithRetry(url, body.toString(), request.apiKey, request.extraHeaders, sse);
         if (!response.isSuccessful()) {
             String errBody = response.body() != null ? response.body().string() : "";
             int code = response.code();

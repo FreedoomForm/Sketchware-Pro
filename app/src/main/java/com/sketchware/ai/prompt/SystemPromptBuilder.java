@@ -61,7 +61,12 @@ public final class SystemPromptBuilder {
         sb.append("changed lines instead of the whole file, saving tokens and reducing errors. Use `apply_patch` ");
         sb.append("when editing multiple files in one call.\n");
         sb.append("14. Use `todo_list(action=\"add\", content=\"...\")` to track multi-step tasks. Check the list ");
-        sb.append("before deciding the next step. Mark items as `completed` or `in_progress` as you go.\n\n");
+        sb.append("before deciding the next step. Mark items as `completed` or `in_progress` as you go.\n");
+        sb.append("15. Use `list_files(path=\"...\")` to explore the project structure before editing files you ");
+        sb.append("haven't seen yet. Use `search_files(pattern=\"...\")` to find where a string/identifier appears.\n");
+        sb.append("16. Use `web_search(query=\"...\")` to look up current docs / error messages online, and ");
+        sb.append("`web_fetch(url=\"...\")` to read a specific webpage. These help when you need information ");
+        sb.append("that may be newer than your training cutoff.\n\n");
 
         // Diff editing instructions
         sb.append("# Diff Editing (SEARCH/REPLACE blocks)\n");

@@ -23,6 +23,8 @@ import com.sketchware.ai.tools.event.EventListTool;
 import com.sketchware.ai.tools.event.EventManageTool;
 import com.sketchware.ai.tools.diff.ApplyPatchTool;
 import com.sketchware.ai.tools.diff.DiffEditFileTool;
+import com.sketchware.ai.tools.filesystem.ListFilesTool;
+import com.sketchware.ai.tools.filesystem.SearchFilesTool;
 import com.sketchware.ai.tools.java.JavaEditFileTool;
 import com.sketchware.ai.tools.java.JavaModifyClassTool;
 import com.sketchware.ai.tools.java.JavaReadFileTool;
@@ -61,6 +63,8 @@ import com.sketchware.ai.tools.view.ViewPaletteCommitTool;
 import com.sketchware.ai.tools.view.ViewSetPropertyTool;
 import com.sketchware.ai.tools.view.ViewUndoRedoTool;
 import com.sketchware.ai.tools.view.ViewfuncInvokeTool;
+import com.sketchware.ai.tools.web.WebFetchTool;
+import com.sketchware.ai.tools.web.WebSearchTool;
 
 /**
  * Builds a {@link ToolRegistry} pre-populated with the full catalogue of
@@ -273,6 +277,14 @@ public final class ToolRegistryInitializer {
         r.register(new AskQuestionTool());
         r.register(new SubmitAndExitTool());
         r.register(new TodoListTool());            // AI-managed TODO list (port of Cline task_progress)
+
+        // ===== Filesystem tools (port of Cline list_files + search_files) =====
+        r.register(new ListFilesTool());           // list project files recursively (tree view)
+        r.register(new SearchFilesTool());         // regex search across project file contents
+
+        // ===== Web tools (port of Cline web_search + web_fetch) =====
+        r.register(new WebSearchTool());           // DuckDuckGo search, no API key needed
+        r.register(new WebFetchTool());            // fetch URL content, strip HTML to text
 
         return r;
     }

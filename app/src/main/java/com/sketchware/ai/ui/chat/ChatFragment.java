@@ -26,8 +26,11 @@ import com.sketchware.ai.agent.AgentListener;
 import com.sketchware.ai.agent.AgentMessage;
 import com.sketchware.ai.agent.AgentMode;
 import com.sketchware.ai.agent.AgentRuntime;
+import com.sketchware.ai.context.ContextMentionParser;
+import com.sketchware.ai.context.TaskHistoryStore;
 import com.sketchware.ai.llm.LlmProvider;
 import com.sketchware.ai.llm.ModelInfo;
+import com.sketchware.ai.llm.UsageTracker;
 import com.sketchware.ai.llm.providers.AnthropicProvider;
 import com.sketchware.ai.llm.providers.GeminiProvider;
 import com.sketchware.ai.llm.providers.OllamaProvider;
@@ -43,7 +46,11 @@ import com.sketchware.ai.ui.chat.adapter.ChatAdapter;
 import com.sketchware.ai.ui.settings.AISettingsActivity;
 import com.sketchware.ai.ui.settings.AutoApproveFragment;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 
 public final class ChatFragment extends Fragment {
@@ -62,6 +69,13 @@ public final class ChatFragment extends Fragment {
     private ToolRegistry toolRegistry;
     private ToolPermissionGate permissionGate;
     private ProviderConfigStore.Profile profile;
+
+    /**
+     * Lazily-initialized task history store. Persists completed conversations
+     * so the user can resume or branch them later. Mirrors Cline's
+     * {@code HistoryItem} + task-history controller.
+     */
+    private TaskHistoryStore taskHistoryStore;
 
     /**
      * Tracks whether the agent loop is currently running. Set to {@code true}
@@ -145,6 +159,12 @@ public final class ChatFragment extends Fragment {
                 return true;
             } else if (id == R.id.menu_ai_export) {
                 exportConversation();
+                return true;
+            } else if (id == R.id.menu_ai_history) {
+                showTaskHistory();
+                return true;
+            } else if (id == R.id.menu_ai_cost) {
+                showCostSummary();
                 return true;
             }
             return false;
@@ -279,6 +299,33 @@ public final class ChatFragment extends Fragment {
         if (e == null) return;
         String text = e.toString().trim();
         if (text.isEmpty()) return;
+
+        // Intercept slash commands BEFORE sending to the LLM. Commands like
+        // /clear, /help, /mode, /cost, /tools are handled locally; the LLM
+        // never sees them. If the command returns a "consumed" result, we
+        // clear the input and return without invoking the agent.
+        if (text.startsWith("/")) {
+            SlashCommandProcessor.ParsedWithRemaining parsed =
+                    SlashCommandProcessor.parseWithRemaining(text);
+            if (parsed != null) {
+                boolean consumed = handleSlashCommand(parsed.command, parsed.remaining);
+                if (consumed) {
+                    input.setText("");
+                    return;
+                }
+                // If not consumed (e.g. unknown command), fall through and
+                // send the raw text to the LLM — the LLM may know how to
+                // interpret it.
+            }
+        }
+
+        // Expand @-mentions in the user's text. Mentions like @file:path or
+        // @layout:name are replaced with their expanded content before the
+        // message reaches the LLM. If expansion fails (e.g. file not found),
+        // the original mention text is preserved so the LLM can ask for
+        // clarification.
+        String expandedText = expandMentions(text);
+
         input.setText("");
         // Hide keyboard
         Context ctx = getContext();
@@ -295,7 +342,9 @@ public final class ChatFragment extends Fragment {
         if (btnStop != null) btnStop.setVisibility(View.VISIBLE);
         if (btnSend != null) btnSend.setEnabled(false);
 
-        // Append user message
+        // Append user message. Show the ORIGINAL text (with @mentions intact)
+        // in the UI — the expanded version is sent to the LLM but the user
+        // should see what they typed, not the inlined file content.
         reducer.addUserMessage(text);
         if (adapter != null) adapter.submitList(reducer.getMessages());
         if (recycler != null) recycler.scrollToPosition(reducer.getMessages().size() - 1);
@@ -390,6 +439,9 @@ public final class ChatFragment extends Fragment {
                 // cleared even if the fragment view is gone (runOnUiIfAlive
                 // would otherwise skip the reset inside finishRun).
                 isRunning = false;
+                // Auto-save the completed conversation to task history.
+                // Best-effort: failures are silent.
+                autoSaveTask();
                 runOnUiIfAlive(() -> {
                     reducer.finishStreaming();
                     // Only add a separate completion row if the agent didn't
@@ -462,7 +514,12 @@ public final class ChatFragment extends Fragment {
         };
 
         try {
-            agent.execute(text, listener);
+            // Send the EXPANDED text (with @mentions inlined) to the LLM.
+            // The user sees the original text in the UI (added via
+            // reducer.addUserMessage(text) above), but the LLM needs the
+            // expanded version so it can see the file contents, layout trees,
+            // etc. that the user referenced.
+            agent.execute(expandedText, listener);
         } catch (Throwable t) {
             String msg = t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage();
             reducer.addError(msg);
@@ -605,6 +662,404 @@ public final class ChatFragment extends Fragment {
         } catch (Throwable t) {
             return false;
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Slash command handling
+    // ------------------------------------------------------------------
+
+    /**
+     * Handle a parsed slash command locally. Returns true if the command was
+     * consumed (the LLM never sees it); false to fall through and send the
+     * raw text to the LLM.
+     *
+     * <p>Commands handled here:
+     * <ul>
+     *   <li>{@code /new} {@code /clear} — discard the conversation.</li>
+     *   <li>{@code /help} — show command help as a system message.</li>
+     *   <li>{@code /mode <act|plan|yolo>} — switch agent mode.</li>
+     *   <li>{@code /cost} — show token usage / cost summary.</li>
+     *   <li>{@code /tools} — list registered tool names.</li>
+     *   <li>{@code /context} — show context window usage estimate.</li>
+     *   <li>{@code /maxiter <n>} — set max iterations.</li>
+     *   <li>{@code /export} — export conversation.</li>
+     *   <li>{@code /undo} — placeholder (not yet implemented).</li>
+     *   <li>{@code /compact} — placeholder (not yet implemented).</li>
+     * </ul>
+     */
+    private boolean handleSlashCommand(SlashCommandProcessor.ParsedCommand cmd, String remaining) {
+        if (cmd == null) return false;
+        View v = getView();
+        switch (cmd.name) {
+            case "new":
+            case "clear":
+                clearConversation();
+                if (v != null) Snackbar.make(v, "Conversation cleared", Snackbar.LENGTH_SHORT).show();
+                return true;
+            case "help":
+                reducer.addCompletion(SlashCommandProcessor.helpText());
+                if (adapter != null) adapter.submitList(reducer.getMessages());
+                return true;
+            case "mode": {
+                String modeArg = cmd.arg == null ? "" : cmd.arg.toLowerCase();
+                AgentMode newMode;
+                switch (modeArg) {
+                    case "act":  newMode = AgentMode.ACT; break;
+                    case "plan": newMode = AgentMode.PLAN; break;
+                    case "yolo": newMode = AgentMode.YOLO; break;
+                    default:
+                        reducer.addError("Unknown mode: " + cmd.arg + ". Use act, plan, or yolo.");
+                        if (adapter != null) adapter.submitList(reducer.getMessages());
+                        return true;
+                }
+                if (agent != null) agent.setMode(newMode);
+                // Sync the toggle (except for YOLO which is set via settings).
+                if (planActToggle != null && newMode != AgentMode.YOLO) {
+                    planActToggle.setChecked(newMode == AgentMode.PLAN);
+                }
+                reducer.addCompletion("Switched to " + newMode + " mode.");
+                if (adapter != null) adapter.submitList(reducer.getMessages());
+                return true;
+            }
+            case "cost": {
+                showCostSummary();
+                return true;
+            }
+            case "tools": {
+                if (toolRegistry == null) return true;
+                StringBuilder sb = new StringBuilder("Registered tools (" + toolRegistry.size() + "):\n");
+                for (SketchwareToolInterface t : listToolInterfaces()) {
+                    sb.append("  ").append(t.name).append(" — ").append(t.category).append("\n");
+                }
+                reducer.addCompletion(sb.toString());
+                if (adapter != null) adapter.submitList(reducer.getMessages());
+                return true;
+            }
+            case "context": {
+                if (agent == null) {
+                    reducer.addError("No active agent. Send a message first.");
+                } else {
+                    int tokens = estimateContextTokens();
+                    reducer.addCompletion("Context window usage:\n  Estimated tokens: " + tokens + "\n  (No model context size available)");
+                }
+                if (adapter != null) adapter.submitList(reducer.getMessages());
+                return true;
+            }
+            case "maxiter": {
+                try {
+                    int n = Integer.parseInt(cmd.arg);
+                    if (agent != null) agent.setMaxIterations(n);
+                    reducer.addCompletion("Max iterations set to " + n + ".");
+                } catch (NumberFormatException e) {
+                    reducer.addError("Invalid number: " + cmd.arg);
+                }
+                if (adapter != null) adapter.submitList(reducer.getMessages());
+                return true;
+            }
+            case "export":
+                exportConversation();
+                return true;
+            case "undo":
+                reducer.addError("/undo is not yet implemented.");
+                if (adapter != null) adapter.submitList(reducer.getMessages());
+                return true;
+            case "compact":
+                reducer.addError("/compact is triggered automatically when the context window overflows. Manual trigger not yet wired.");
+                if (adapter != null) adapter.submitList(reducer.getMessages());
+                return true;
+            case "exit":
+                Activity a = getActivity();
+                if (a != null) a.onBackPressed();
+                return true;
+            case "model":
+                reducer.addCompletion("Active model: " + (profile == null ? "?" : profile.modelId)
+                        + "\n(To change the model, open AI Settings.)");
+                if (adapter != null) adapter.submitList(reducer.getMessages());
+                return true;
+            case "approve":
+                reducer.addCompletion("Per-tool auto-approval can be configured in AI Settings → Auto-Approve.");
+                if (adapter != null) adapter.submitList(reducer.getMessages());
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /** Lightweight wrapper for displaying tool info in /tools. */
+    private static final class SketchwareToolInterface {
+        final String name;
+        final String category;
+        SketchwareToolInterface(String name, String category) {
+            this.name = name;
+            this.category = category;
+        }
+    }
+
+    private java.util.List<SketchwareToolInterface> listToolInterfaces() {
+        java.util.List<SketchwareToolInterface> out = new java.util.ArrayList<>();
+        if (toolRegistry == null) return out;
+        for (com.sketchware.ai.tools.SketchwareTool t : toolRegistry.all()) {
+            out.add(new SketchwareToolInterface(t.name(), t.category()));
+        }
+        return out;
+    }
+
+    private int estimateContextTokens() {
+        if (agent == null) return 0;
+        int tokens = 0;
+        for (AgentMessage m : agent.getConversationHistory()) {
+            tokens += m.estimateTokens();
+        }
+        return tokens;
+    }
+
+    // ------------------------------------------------------------------
+    // Context mention expansion
+    // ------------------------------------------------------------------
+
+    /**
+     * Expand {@code @}-mentions in the user's input text. Each mention is
+     * replaced with its expanded content (file contents, layout tree, etc.).
+     * If a mention cannot be resolved, the original text is preserved.
+     */
+    private String expandMentions(String input) {
+        if (input == null || input.isEmpty()) return input;
+        return ContextMentionParser.expand(input, this::expandMention);
+    }
+
+    /**
+     * Expand a single mention to its inline text.
+     */
+    private String expandMention(ContextMentionParser.Mention mention) {
+        if (mention == null) return null;
+        try {
+            switch (mention.type) {
+                case FILE:
+                    return expandFileMention(mention.value);
+                case URL:
+                    // Don't auto-fetch URLs — let the LLM decide whether to
+                    // use web_fetch. We just mark it as a URL reference.
+                    return "[URL: " + mention.value + " — use web_fetch to retrieve]";
+                case PROBLEMS:
+                    return "[Build problems: run a build to populate this]";
+                case GIT_CHANGES:
+                    return "[Git changes: not available on Sketchware-Pro]";
+                case PROJECT:
+                    return "[Project: " + readScIdFromActivity() + "]";
+                case LAYOUT:
+                    return "[Layout: " + (mention.value == null ? "?" : mention.value)
+                            + " — use view_list_widgets to inspect]";
+                case COMPONENT:
+                    return "[Component: " + (mention.value == null ? "?" : mention.value) + "]";
+                case IMAGE:
+                    return "[Image: " + (mention.value == null ? "?" : mention.value) + " — attach separately]";
+                default:
+                    return null;
+            }
+        } catch (Throwable t) {
+            // On any error, preserve the original mention.
+            return null;
+        }
+    }
+
+    /** Inline a file's content (truncated to 4000 chars). */
+    private String expandFileMention(String path) {
+        if (path == null || path.isEmpty()) return null;
+        String scId = readScIdFromActivity();
+        String[] candidates = {
+            "/sdcard/.sketchware/data/" + scId + "/" + path,
+            "/storage/emulated/0/.sketchware/data/" + scId + "/" + path,
+            path  // treat as absolute
+        };
+        for (String candidate : candidates) {
+            File f = new File(candidate);
+            if (f.exists() && f.isFile()) {
+                try {
+                    byte[] bytes = java.nio.file.Files.readAllBytes(f.toPath());
+                    String content = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+                    if (content.length() > 4000) {
+                        content = content.substring(0, 4000) + "\n... (truncated, " + content.length() + " chars total)";
+                    }
+                    return "--- File: " + path + " ---\n" + content + "\n--- End of " + path + " ---";
+                } catch (Throwable ignored) {
+                    // Fall through to next candidate.
+                }
+            }
+        }
+        return "[File not found: " + path + "]";
+    }
+
+    // ------------------------------------------------------------------
+    // Task history UI
+    // ------------------------------------------------------------------
+
+    /**
+     * Show a dialog listing past saved tasks. Tapping a task loads its
+     * conversation into the current agent; long-pressing deletes it.
+     */
+    private void showTaskHistory() {
+        Activity a = getActivity();
+        if (a == null) return;
+        TaskHistoryStore store = getTaskHistoryStore();
+        java.util.List<TaskHistoryStore.TaskMetadata> tasks = store.list();
+        if (tasks.isEmpty()) {
+            new AlertDialog.Builder(a)
+                    .setTitle("Task history")
+                    .setMessage("No saved tasks yet.\n\nTasks are saved automatically when a conversation completes successfully.")
+                    .setPositiveButton("OK", null)
+                    .show();
+            return;
+        }
+        String[] items = new String[tasks.size()];
+        for (int i = 0; i < tasks.size(); i++) {
+            TaskHistoryStore.TaskMetadata t = tasks.get(i);
+            String date = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(new Date(t.updatedAt));
+            String title = t.firstUserMessage == null ? "(no title)" : t.firstUserMessage;
+            if (title.length() > 60) title = title.substring(0, 60) + "...";
+            items[i] = date + "  " + title + "  (" + t.messageCount + " msgs)";
+        }
+        new AlertDialog.Builder(a)
+                .setTitle("Task history (" + tasks.size() + ")")
+                .setItems(items, (dlg, idx) -> {
+                    TaskHistoryStore.TaskMetadata t = tasks.get(idx);
+                    loadTask(t.id);
+                })
+                .setNeutralButton("Delete all", (dlg, w) -> {
+                    new AlertDialog.Builder(a)
+                            .setTitle("Delete all tasks?")
+                            .setMessage("This will permanently delete all " + tasks.size() + " saved tasks.")
+                            .setPositiveButton("Delete", (d2, w2) -> {
+                                for (TaskHistoryStore.TaskMetadata t : tasks) store.delete(t.id);
+                                Snackbar.make(getView(), "All tasks deleted", Snackbar.LENGTH_SHORT).show();
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
+                })
+                .setNegativeButton("Close", null)
+                .show();
+    }
+
+    /**
+     * Load a saved task's conversation into the current agent. Replaces the
+     * current conversation history (after confirming with the user).
+     */
+    private void loadTask(String taskId) {
+        Activity a = getActivity();
+        if (a == null) return;
+        TaskHistoryStore store = getTaskHistoryStore();
+        try {
+            java.util.LinkedList<AgentMessage> conv = store.load(taskId);
+            if (conv == null || conv.isEmpty()) {
+                Snackbar.make(getView(), "Task not found or empty", Snackbar.LENGTH_SHORT).show();
+                return;
+            }
+            // Confirm overwrite of current conversation.
+            if (!reducer.getMessages().isEmpty()) {
+                new AlertDialog.Builder(a)
+                        .setTitle("Load task?")
+                        .setMessage("This will replace the current conversation. Continue?")
+                        .setPositiveButton("Load", (d, w) -> doLoadTask(store, taskId, conv))
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            } else {
+                doLoadTask(store, taskId, conv);
+            }
+        } catch (Throwable t) {
+            Snackbar.make(getView(), "Load failed: " + t.getMessage(), Snackbar.LENGTH_LONG).show();
+        }
+    }
+
+    private void doLoadTask(TaskHistoryStore store, String taskId, java.util.LinkedList<AgentMessage> conv) {
+        // Rebuild the agent if needed, then restore the conversation history.
+        if (agent == null) {
+            // Force rebuild on next send() by clearing the agent.
+            agent = null;
+        } else {
+            agent.abort();
+            agent.setConversationHistory(conv);
+        }
+        // Rebuild the UI reducer from the loaded conversation.
+        reducer.reset();
+        for (AgentMessage m : conv) {
+            if (AgentMessage.ROLE_USER.equals(m.role)) {
+                if (m.hasToolResults()) {
+                    for (AgentMessage.ToolResultContent r : m.toolResults) {
+                        reducer.addToolResult(r.toolName, r.output, r.isError);
+                    }
+                } else {
+                    reducer.addUserMessage(m.text == null ? "" : m.text);
+                }
+            } else if (AgentMessage.ROLE_ASSISTANT.equals(m.role)) {
+                if (m.hasToolCalls()) {
+                    for (AgentMessage.ToolCall c : m.toolCalls) {
+                        reducer.addToolCall(c.name, c.argumentsJson);
+                    }
+                }
+                if (m.text != null && !m.text.isEmpty()) {
+                    reducer.addCompletion(m.text);
+                }
+            }
+        }
+        if (adapter != null) adapter.submitList(reducer.getMessages());
+        View v = getView();
+        if (v != null) Snackbar.make(v, "Loaded task (" + conv.size() + " messages)", Snackbar.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Auto-save the current conversation to task history. Called from the
+     * onComplete listener.
+     */
+    private void autoSaveTask() {
+        if (agent == null) return;
+        try {
+            java.util.LinkedList<AgentMessage> conv = agent.getConversationHistory();
+            if (conv.size() < 2) return;  // nothing to save
+            TaskHistoryStore store = getTaskHistoryStore();
+            String scId = readScIdFromActivity();
+            store.save(conv, scId, "Sketchware Project");
+        } catch (Throwable ignored) {
+            // Auto-save failures should be silent.
+        }
+    }
+
+    private TaskHistoryStore getTaskHistoryStore() {
+        if (taskHistoryStore == null) {
+            android.content.Context ctx = getContext();
+            if (ctx == null) {
+                // Fallback — should not happen since this is called from a live fragment.
+                taskHistoryStore = new TaskHistoryStore(new File("/tmp"));
+            } else {
+                taskHistoryStore = new TaskHistoryStore(ctx.getFilesDir());
+            }
+        }
+        return taskHistoryStore;
+    }
+
+    // ------------------------------------------------------------------
+    // Cost / usage display
+    // ------------------------------------------------------------------
+
+    /**
+     * Show a dialog with the current session's token usage and cost breakdown.
+     * Reads from {@link AgentRuntime#getUsageTracker()}.
+     */
+    private void showCostSummary() {
+        Activity a = getActivity();
+        if (a == null) return;
+        if (agent == null) {
+            new AlertDialog.Builder(a)
+                    .setTitle("Token usage")
+                    .setMessage("No active session. Send a message first to start tracking usage.")
+                    .setPositiveButton("OK", null)
+                    .show();
+            return;
+        }
+        UsageTracker.Snapshot snap = agent.getUsageTracker().snapshot();
+        new AlertDialog.Builder(a)
+                .setTitle("Token usage & cost")
+                .setMessage(snap.summary())
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     /**

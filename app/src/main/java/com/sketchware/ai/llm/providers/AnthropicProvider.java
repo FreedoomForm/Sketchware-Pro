@@ -90,11 +90,14 @@ public final class AnthropicProvider implements LlmProvider {
         // Note: HttpClient adds Bearer auth by default - we want x-api-key only.
         // We pass null apiKey so HttpClient doesn't add Authorization, then
         // x-api-key comes from extraHeaders.
-        Response response = HttpClient.postStream(url, body.toString(), null, headers);
+        //
+        // Use postStreamWithRetry for automatic 429/5xx retry with backoff.
+        Response response = HttpClient.postStreamWithRetry(url, body.toString(), null, headers, true);
         if (!response.isSuccessful()) {
             String errBody = response.body() != null ? response.body().string() : "";
+            int code = response.code();
             response.close();
-            throw new RuntimeException("Anthropic HTTP " + response.code() + ": " + errBody);
+            throw new RuntimeException("Anthropic HTTP " + code + ": " + errBody);
         }
 
         // Track the in-flight call so abort() can cancel it.

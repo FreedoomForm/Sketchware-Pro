@@ -81,7 +81,8 @@ public final class GeminiProvider implements LlmProvider {
                 + ":streamGenerateContent?alt=sse&key=" + (request.apiKey == null ? "" : request.apiKey);
 
         JsonObject body = buildRequestBody(request);
-        Response response = HttpClient.postStream(url, body.toString(), null, request.extraHeaders);
+        // Use postStreamWithRetry for automatic 429/5xx retry with backoff.
+        Response response = HttpClient.postStreamWithRetry(url, body.toString(), null, request.extraHeaders, true);
         if (!response.isSuccessful()) {
             String errBody = response.body() != null ? response.body().string() : "";
             int code = response.code();
