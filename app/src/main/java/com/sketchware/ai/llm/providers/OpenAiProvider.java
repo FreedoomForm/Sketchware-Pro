@@ -119,13 +119,34 @@ public class OpenAiProvider implements LlmProvider {
      * "msg":"Extra inputs are not permitted","input":{"name":"view_add_widget",...}}]}
      * </pre>
      *
-     * <p>Subclasses (e.g. {@link OpenAiCompatProvider}) override this to return
-     * {@code true} for providers whose API requires the flat format.
+     * <p>The base implementation auto-detects Z.AI/GLM endpoints by inspecting
+     * {@code request.baseUrl} and {@code request.model.id}, so the flat format
+     * is applied even when the user configured the provider as "openai" or
+     * "openai-compat" but pointed the baseUrl at a Z.AI/GLM server. Subclasses
+     * can override to force-enable or force-disable the flat format.
      *
      * @param request the active request (used to inspect baseUrl/host)
-     * @return {@code false} by default (Chat Completions wrapped format)
+     * @return {@code true} if the request targets a Z.AI/GLM endpoint
      */
     protected boolean useFlatToolFormat(LlmRequest request) {
+        // Auto-detect Z.AI / GLM endpoints even when the user selected the
+        // generic "openai" or "openai-compat" provider but pointed baseUrl
+        // at a Z.AI/GLM-compatible server. This catches the common misconfig
+        // where the user enters https://api.z.ai/... or
+        // https://open.bigmodel.cn/... in the OpenAI provider settings.
+        if (request != null) {
+            String url = request.baseUrl;
+            if (url != null) {
+                String lower = url.toLowerCase();
+                if (lower.contains("z.ai") || lower.contains("bigmodel.cn") || lower.contains("/glm")) {
+                    return true;
+                }
+            }
+            if (request.model != null && request.model.id != null
+                    && request.model.id.toLowerCase().contains("glm")) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -206,8 +227,9 @@ public class OpenAiProvider implements LlmProvider {
             root.add("tools", mapped);
             // parallel_tool_calls is OpenAI-specific; some strict OpenAI-compat
             // servers (e.g. Z.AI's Pydantic schema) reject unknown fields as
-            // extra_forbidden. Only emit it for the native OpenAI provider.
-            if ("openai".equals(getProviderId())) {
+            // extra_forbidden. Only emit it for the native OpenAI provider AND
+            // when the request isn't auto-detected as a Z.AI/GLM endpoint.
+            if ("openai".equals(getProviderId()) && !useFlatToolFormat(request)) {
                 root.addProperty("parallel_tool_calls", false);
             }
         }

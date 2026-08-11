@@ -2,6 +2,7 @@ package com.sketchware.ai.ui.chat;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.view.LayoutInflater;
@@ -143,9 +144,7 @@ public final class ChatFragment extends Fragment {
                 clearConversation();
                 return true;
             } else if (id == R.id.menu_ai_export) {
-                if (getView() != null) {
-                    Snackbar.make(getView(), "Export conversation: not yet implemented", Snackbar.LENGTH_SHORT).show();
-                }
+                exportConversation();
                 return true;
             }
             return false;
@@ -237,6 +236,33 @@ public final class ChatFragment extends Fragment {
         if (btnSend != null) btnSend.setEnabled(true);
         if (btnStop != null) btnStop.setVisibility(View.GONE);
         if (btnAttach != null) btnAttach.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Export the current conversation to a text file and share it via
+     * Android's share-sheet. The user can then send the transcript (e.g.
+     * via Telegram, email, or upload to GitHub issue) so a developer can
+     * see the full conversation history including errors, tool calls, and
+     * tool results.
+     *
+     * <p>If the conversation is empty, shows a Snackbar and aborts.
+     * If the file write fails (e.g. storage full), shows the error.
+     */
+    private void exportConversation() {
+        View v = getView();
+        if (v == null) return;
+        List<ChatMessage> messages = reducer.getMessages();
+        if (messages == null || messages.isEmpty()) {
+            Snackbar.make(v, "Nothing to export — conversation is empty", Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            java.io.File file = ChatExporter.writeToCacheFile(requireContext(), messages);
+            Intent share = ChatExporter.createShareIntent(requireContext(), file);
+            startActivity(share);
+        } catch (Exception e) {
+            Snackbar.make(v, "Export failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+        }
     }
 
     private void send() {
