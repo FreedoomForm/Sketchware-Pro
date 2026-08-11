@@ -17,6 +17,7 @@ import com.sketchware.ai.tools.component.ComponentAddTool;
 import com.sketchware.ai.tools.component.ComponentManageTool;
 import com.sketchware.ai.tools.component.ComponentSetPropertyTool;
 import com.sketchware.ai.tools.component.CustomComponentManageTool;
+import com.sketchware.ai.tools.event.CustomEventManageTool;
 import com.sketchware.ai.tools.event.EventAttachTool;
 import com.sketchware.ai.tools.event.EventListTool;
 import com.sketchware.ai.tools.event.EventManageTool;
@@ -36,12 +37,15 @@ import com.sketchware.ai.tools.project.ProjectManageTool;
 import com.sketchware.ai.tools.project.ProjectSetAppNameTool;
 import com.sketchware.ai.tools.project.ProjectSetPackageNameTool;
 import com.sketchware.ai.tools.project.ProjectSetPropertyTool;
+import com.sketchware.ai.tools.project.ThemeManageTool;
 import com.sketchware.ai.tools.resource.AssetsManageTool;
 import com.sketchware.ai.tools.resource.FontManageTool;
+import com.sketchware.ai.tools.resource.IconCreatorTool;
 import com.sketchware.ai.tools.resource.ImageManageTool;
 import com.sketchware.ai.tools.resource.ResourceFileManageTool;
 import com.sketchware.ai.tools.resource.SoundManageTool;
 import com.sketchware.ai.tools.resource.ValuesXmlManageTool;
+import com.sketchware.ai.tools.view.PaletteVisibilityManageTool;
 import com.sketchware.ai.tools.view.ViewAddWidgetTool;
 import com.sketchware.ai.tools.view.ViewDeleteWidgetTool;
 import com.sketchware.ai.tools.view.ViewListWidgetsTool;
@@ -74,22 +78,31 @@ import com.sketchware.ai.tools.view.ViewfuncInvokeTool;
  * ({@link com.sketchware.ai.util.SketchwareApi}), giving real
  * functional behaviour — not stubs.
  *
- * <h3>Final tool inventory (56 tools total)</h3>
+ * <h3>Final tool inventory (61 tools total)</h3>
  * <ul>
  *   <li><b>14 specialized tools</b> with bespoke logic that doesn't fit
  *       the action-enum pattern (e.g. ViewAddWidgetTool has 40-value
  *       type enum + library gating; BlockAddTool assembles block beans
  *       with complex param schemas).</li>
- *   <li><b>42 universal tools</b> replacing 223 stubs:
+ *   <li><b>47 universal tools</b> replacing 223 stubs + closing 4 coverage gaps:
  *     <ul>
  *       <li>View: ViewManageLayoutTool (4 actions), ViewManageWidgetTool (4),
- *           ViewManageCustomWidgetTool (5), ViewManageFavoritesTool (4),
+ *           ViewManageCustomWidgetTool (5 — registered as palette_widget_manage
+ *           since P2 #21; class name unchanged for source stability),
+ *           ViewManageFavoritesTool (4),
  *           ViewPaletteActionTool (3 — read-only + auto-approved),
  *           ViewPaletteCommitTool (1 — mutating, requires approval;
  *           FIX-A-VIEW: split out of ViewPaletteActionTool),
  *           ViewfuncInvokeTool (89 — FIX-A-VIEW: extended from 7 to 89
- *           actions covering all viewfunc opCodes in a.a.a.Fx).</li>
- *       <li>Event: EventManageTool (10).</li>
+ *           actions covering all viewfunc opCodes in a.a.a.Fx),
+ *           PaletteVisibilityManageTool (6 — FIX-E-EVENTS-PALETTE: NEW —
+ *           set_category_visible/get_category_visible/list_categories/
+ *           reorder_category/set_widget_visible/reset; persists to
+ *           SharedPreferences key 'sketchware_ai_palette_config').</li>
+ *       <li>Event: EventManageTool (10),
+ *           CustomEventManageTool (5 — FIX-E-EVENTS-PALETTE: NEW —
+ *           register/unregister/list/get/update for
+ *           mod.hilal.saif.events.EventsHandler).</li>
  *       <li>Component: ComponentManageTool (8), ComponentSetPropertyTool (21),
  *           CustomComponentManageTool (6 — FIX-C-RESOURCES: NEW — manages
  *           custom Java UI components via wq.getCustomComponent() JSON).</li>
@@ -98,7 +111,10 @@ import com.sketchware.ai.tools.view.ViewfuncInvokeTool;
  *           MathOperationTool (18), StringOperationTool (13),
  *           MoreblockManageTool (3), CustomBlockManageTool (10).</li>
  *       <li>Project: ProjectManageTool (7), ProjectSetPropertyTool (8),
- *           ProjectEnableFeatureTool (3).</li>
+ *           ProjectEnableFeatureTool (3),
+ *           ThemeManageTool (5 — FIX-E-THEME-ICON: NEW — apply_preset/
+ *           generate_random/reset/get_current/list_presets; writes to
+ *           BOTH project metadata via lC.b AND colors.xml).</li>
  *       <li>Build: BuildActionTool (9 — FIX-D-PROJECT: was 7, +2 actions:
  *           clean_temp_files, clean_build_cache; set_setting now accepts
  *           19 keys: was 11, +8 keys: android_jar_path, classpath, dexer,
@@ -141,7 +157,10 @@ import com.sketchware.ai.tools.view.ViewfuncInvokeTool;
  *           ResourceFileManageTool (7 — FIX-C-RESOURCES: NEW — create_folder/
  *           create_xml/import/edit/rename/delete/list in project resource/),
  *           AssetsManageTool (7 — FIX-C-RESOURCES: NEW — create_file/
- *           create_folder/import/edit/rename/delete/list in project assets/).</li>
+ *           create_folder/import/edit/rename/delete/list in project assets/),
+ *           IconCreatorTool (6 — FIX-E-THEME-ICON: NEW — create_adaptive/
+ *           create_legacy/set_foreground/set_background/delete/list; writes
+ *           adaptive-icon XML + scaled PNGs to mipmap-{density}/).</li>
  *       <li>Meta: AskQuestionTool, SubmitAndExitTool.</li>
  *     </ul>
  *   </li>
@@ -165,7 +184,7 @@ public final class ToolRegistryInitializer {
     public static ToolRegistry createDefault() {
         ToolRegistry r = new ToolRegistry();
 
-        // ===== View category (13 tools: 5 specialized + 7 universal + 1 undo/redo pair) =====
+        // ===== View category (14 tools: 5 specialized + 8 universal + 1 undo/redo pair) =====
         r.register(new ViewAddWidgetTool());           // specialized: 40 widget types
         r.register(new ViewSetPropertyTool());         // specialized: any property name
         r.register(new ViewDeleteWidgetTool());        // specialized
@@ -178,13 +197,15 @@ public final class ToolRegistryInitializer {
         r.register(new ViewManageFavoritesTool());    // universal: 4 actions (was 4 stubs)
         r.register(new ViewPaletteActionTool());      // universal: 3 read-only actions (FIX-A-VIEW: split commit out)
         r.register(new ViewPaletteCommitTool());      // universal: 1 mutating action (FIX-A-VIEW: split from ViewPaletteActionTool)
+        r.register(new PaletteVisibilityManageTool());  // universal: 6 actions (FIX-E-EVENTS-PALETTE: NEW — set_category_visible/get_category_visible/list_categories/reorder_category/set_widget_visible/reset)
         r.register(new ViewfuncInvokeTool());         // universal: 89 actions (FIX-A-VIEW: was 7)
         // (was 37 view_set_widget_* stubs — dropped; ViewSetPropertyTool covers all of them)
 
-        // ===== Event category (3 tools: 2 specialized + 1 universal) =====
+        // ===== Event category (4 tools: 2 specialized + 2 universal) =====
         r.register(new EventAttachTool());             // specialized
         r.register(new EventListTool());               // specialized
         r.register(new EventManageTool());             // universal: 10 actions (was 10 stubs)
+        r.register(new CustomEventManageTool());        // universal: 5 actions (FIX-E-EVENTS-PALETTE: NEW — register/unregister/list/get/update for mod.hilal.saif.events.EventsHandler)
 
         // ===== Component category (4 tools: 1 specialized + 3 universal) =====
         r.register(new ComponentAddTool());           // specialized
@@ -204,12 +225,13 @@ public final class ToolRegistryInitializer {
         r.register(new MoreblockManageTool());   // universal: 3 actions (was 3 stubs)
         r.register(new CustomBlockManageTool()); // universal: 10 actions (NEW — manages global custom block palettes)
 
-        // ===== Project category (5 tools: 2 specialized + 3 universal) =====
+        // ===== Project category (6 tools: 2 specialized + 4 universal) =====
         r.register(new ProjectSetAppNameTool());     // specialized (kept for backward compat)
         r.register(new ProjectSetPackageNameTool()); // specialized (kept for backward compat)
         r.register(new ProjectManageTool());        // universal: 7 actions (was 7 stubs)
         r.register(new ProjectSetPropertyTool());   // universal: 8 actions (was 8 stubs)
         r.register(new ProjectEnableFeatureTool()); // universal: 3 actions (was 3 stubs)
+        r.register(new ThemeManageTool());              // universal: 5 actions (FIX-E-THEME-ICON: NEW — apply_preset/generate_random/reset/get_current/list_presets)
 
         // ===== Build category (3 universal tools) =====
         r.register(new BuildActionTool());          // universal: 9 actions (FIX-D-PROJECT: was 7, +2 actions +8 setting keys)
@@ -233,13 +255,14 @@ public final class ToolRegistryInitializer {
         r.register(new AppcompatManageTool()); // universal: 3 actions (was 3 stubs)
         r.register(new XmlCommandManageTool()); // universal: 3 actions (was 3 stubs)
 
-        // ===== Resource category (6 universal tools; FIX-C-RESOURCES added 5) =====
+        // ===== Resource category (7 universal tools; FIX-C-RESOURCES added 5, FIX-E-THEME-ICON added 1) =====
         r.register(new ValuesXmlManageTool());      // universal: 12 actions (was 12 stubs)
         r.register(new ImageManageTool());          // universal: 9 actions (FIX-C-RESOURCES: NEW — add/edit/delete/list/rotate/flip/import_from_collection/add_to_collection)
         r.register(new FontManageTool());           // universal: 5 actions (FIX-C-RESOURCES: NEW — add/edit/delete/list/import_from_collection)
         r.register(new SoundManageTool());          // universal: 5 actions (FIX-C-RESOURCES: NEW — add/edit/delete/list/import_from_collection)
         r.register(new ResourceFileManageTool());   // universal: 7 actions (FIX-C-RESOURCES: NEW — create_folder/create_xml/import/edit/rename/delete/list in resource/)
         r.register(new AssetsManageTool());         // universal: 7 actions (FIX-C-RESOURCES: NEW — create_file/create_folder/import/edit/rename/delete/list in assets/)
+        r.register(new IconCreatorTool());              // universal: 6 actions (FIX-E-THEME-ICON: NEW — create_adaptive/create_legacy/set_foreground/set_background/delete/list)
 
         // ===== Meta tools =====
         r.register(new AskQuestionTool());

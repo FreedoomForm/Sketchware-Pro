@@ -13,12 +13,21 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * view_manage_custom_widget — universal tool for managing custom widget
+ * palette_widget_manage — universal tool for managing custom widget
  * definitions (saved widget trees that can be reused across layouts and
  * projects). Custom widgets compile to Java classes, so their names follow
  * the Java class convention.
  *
- * <p>Replaces 5 stubs: view_manage_custom_widget:{create, edit, delete,
+ * <p><b>Renamed (P2 #21)</b>: this tool was previously registered as
+ * {@code view_manage_custom_widget}. The new name {@code palette_widget_manage}
+ * is clearer — the tool manages palette widgets (custom widget definitions
+ * that appear in the editor palette), not "custom view components" which
+ * the old name implied. The Java class name {@code ViewManageCustomWidgetTool}
+ * is kept unchanged for source stability; only the wire/tool name string
+ * was renamed for backward-compat: existing references to the old name
+ * should be migrated to {@code palette_widget_manage}.
+ *
+ * <p>Replaces 5 stubs: palette_widget_manage:{create, edit, delete,
  * export, import}.
  *
  * <p>This implementation:
@@ -46,9 +55,10 @@ public final class ViewManageCustomWidgetTool extends UniversalTool {
     private static final String PREFIX = "_custom_widget:";
 
     public ViewManageCustomWidgetTool() {
-        super("view_manage_custom_widget",
-                "Manage custom widget definitions: create, edit, delete, export, or import. "
-                        + "Custom widget names must match ^[A-Z][A-Za-z0-9_]*$ (Java class convention).",
+        super("palette_widget_manage",
+                "Manage palette (custom) widget definitions: create, edit, delete, export, or import. "
+                        + "Custom widget names must match ^[A-Z][A-Za-z0-9_]*$ (Java class convention). "
+                        + "(Renamed from view_manage_custom_widget in P2 #21.)",
                 "view", false, false,
                 "create", "edit", "delete", "export", "import");
     }
@@ -108,7 +118,7 @@ public final class ViewManageCustomWidgetTool extends UniversalTool {
         }
         if (customWidgetExists(editor, name)) {
             return err("A custom widget named '" + name + "' already exists in project '" + scId
-                    + "'. Use view_manage_custom_widget:edit to modify it, "
+                    + "'. Use palette_widget_manage:edit to modify it, "
                     + "or delete it first.");
         }
         try {
@@ -143,7 +153,7 @@ public final class ViewManageCustomWidgetTool extends UniversalTool {
         }
         if (!customWidgetExists(editor, name)) {
             return err("Custom widget '" + name + "' not found in project '" + scId + "'. "
-                    + "Use view_manage_custom_widget:create to create a new one. "
+                    + "Use palette_widget_manage:create to create a new one. "
                     + "Existing custom widgets: " + listCustomWidgets(editor));
         }
         try {
