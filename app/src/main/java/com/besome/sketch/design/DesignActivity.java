@@ -279,6 +279,44 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         }
     }
 
+    /**
+     * Public AI-facing refresh hooks. Called by ChatFragment's
+     * SketchwareToolContext when an AI tool mutates project state, so the
+     * visible View/Event/Component editors re-read from disk and redraw.
+     *
+     * <p>Previously these callbacks were no-ops {@code () -> {}}, which meant
+     * every tool call reported success but the user saw no visible change
+     * in the editor until they manually navigated away and back. This caused
+     * repeated confusion ("Не видно по моему ты не добавил") and re-runs of
+     * the same tool, which piled duplicate widgets into the ViewBeans list.
+     *
+     * <p>{@code refreshViewForAi()} reloads widgets from the project's
+     * ViewBeans collection via {@code jC.a(sc_id).d(xmlName)} and re-inits
+     * the ViewEditor — the SAME call path the editor itself uses after an
+     * undo/redo.
+     */
+    public void refreshViewForAi() {
+        runOnUiThread(() -> {
+            if (viewTabAdapter != null && projectFile != null) {
+                viewTabAdapter.i();
+            }
+        });
+    }
+
+    public void refreshEventsForAi() {
+        runOnUiThread(this::refreshEventTabAdapter);
+    }
+
+    public void refreshComponentsForAi() {
+        runOnUiThread(this::refreshComponentTabAdapter);
+    }
+
+    public void refreshLogicForAi() {
+        // Logic editor reads from disk on each open — no in-place refresh API.
+        // Touching the project file list is enough to invalidate caches.
+        runOnUiThread(() -> { /* no-op: logic editor reloads on open */ });
+    }
+
     private void refreshEventTabAdapter() {
         if (eventTabAdapter != null && projectFile != null) {
             eventTabAdapter.setCurrentActivity(projectFile);

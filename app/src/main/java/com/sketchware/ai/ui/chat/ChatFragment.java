@@ -381,12 +381,35 @@ public final class ChatFragment extends Fragment {
         // on every send.
         String scId = readScIdFromActivity();
         String javaName = readJavaNameFromActivity();
+        // Wire the SketchwareToolContext refresh callbacks to DesignActivity's
+        // real editor refresh methods. Previously these were no-op lambdas,
+        // which meant every tool call reported success but the editor canvas
+        // never updated — the user saw no visible change and would say
+        // "кнопка не видна" even though the widget WAS added to disk.
+        android.app.Activity hostActivity = requireActivity();
+        Runnable viewRefresh = () -> {
+            if (hostActivity instanceof com.besome.sketch.design.DesignActivity) {
+                ((com.besome.sketch.design.DesignActivity) hostActivity).refreshViewForAi();
+            }
+        };
+        Runnable logicRefresh = () -> {
+            if (hostActivity instanceof com.besome.sketch.design.DesignActivity) {
+                ((com.besome.sketch.design.DesignActivity) hostActivity).refreshLogicForAi();
+            }
+        };
+        Runnable eventRefresh = () -> {
+            if (hostActivity instanceof com.besome.sketch.design.DesignActivity) {
+                ((com.besome.sketch.design.DesignActivity) hostActivity).refreshEventsForAi();
+            }
+        };
+        Runnable componentRefresh = () -> {
+            if (hostActivity instanceof com.besome.sketch.design.DesignActivity) {
+                ((com.besome.sketch.design.DesignActivity) hostActivity).refreshComponentsForAi();
+            }
+        };
         SketchwareToolContext toolCtx = new SketchwareToolContext(
                 requireActivity(), scId, javaName, permissionGate,
-                /* viewRefresh */ () -> {},
-                /* logicRefresh */ () -> {},
-                /* eventRefresh */ () -> {},
-                /* componentRefresh */ () -> {});
+                viewRefresh, logicRefresh, eventRefresh, componentRefresh);
         // Set the tool execution context. MUST be the instance method, NOT
         // the legacy static AgentRuntime.setContext() — that one was backed
         // by a ThreadLocal and silently returned null on the executor

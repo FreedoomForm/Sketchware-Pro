@@ -142,11 +142,29 @@ public final class ViewAddWidgetTool implements SketchwareTool {
                         + "'. Check the description for the list of supported types.");
             }
             ViewBean bean = new ViewBean(newId, typeCode);
-            // Apply parent / coordinates.
+            // Apply parent / coordinates. When no parent is specified,
+            // attach to the ROOT layout (parent="root", parentType matches
+            // the root layout's type — typically LinearLayout). This mirrors
+            // ViewPane.updateViewBeanProperties lines 706-717.
+            //
+            // CRITICAL: previously when parent_id was not provided,
+            // bean.parent stayed null (the constructor default). That caused
+            // two downstream failures:
+            //   (1) NullPointerException in eC.a() during UnsavedChangesSaver
+            //       (eC iterates widgets and calls something like
+            //       widget.parent.equals("root") → NPE).
+            //   (2) The widget was persisted to the ViewBeans list but never
+            //       rendered in the editor, because ViewPane uses
+            //       rootLayout.findViewWithTag(viewBean.parent) to locate the
+            //       parent — with parent=null the widget is orphaned.
             if (parentId != null && !parentId.isEmpty()) {
                 bean.parent = parentId;
                 bean.parentType = ViewBean.VIEW_TYPE_LAYOUT_LINEAR; // best-effort
+            } else {
+                bean.parent = "root";
+                bean.parentType = ViewBean.VIEW_TYPE_LAYOUT_LINEAR;
             }
+            bean.index = -1; // append to end of parent's children
             // Default layout: match_parent x wrap_content (sensible defaults for
             // a fresh widget inside a LinearLayout root). LayoutBean stores
             // width/height as int encoded values (LAYOUT_MATCH_PARENT = -1,
