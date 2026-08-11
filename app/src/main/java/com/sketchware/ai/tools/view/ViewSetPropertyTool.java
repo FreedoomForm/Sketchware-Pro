@@ -61,15 +61,18 @@ public final class ViewSetPropertyTool implements SketchwareTool {
     @Override public String description() {
         return "Set a property on an existing widget. "
                 + "REQUIRED: widget_id, property_key, value. "
+                + "widget_id can be a specific widget ID (e.g. 'button1') or 'root' to target "
+                + "the layout's root container. "
                 + "Property_key MUST be one of the enum values listed below. "
-                + "Common keys: id, layout_width, layout_height, padding_left, padding_top, "
-                + "padding_right, padding_bottom, margin_left, margin_top, margin_right, margin_bottom, "
+                + "Common keys: id, layout_width, layout_height, padding, padding_left, padding_top, "
+                + "padding_right, padding_bottom, margin, margin_left, margin_top, margin_right, margin_bottom, "
                 + "orientation, weight_sum, gravity, layout_gravity, weight, text, text_size, text_style, "
                 + "text_color, hint, hint_color, single_line, lines, input_type, ime_option, image, "
                 + "scale_type, background_resource, background_color, enabled, rotate, alpha, translation_x, "
                 + "translation_y, scale_x, scale_y, inject, convert, spinner_mode, divider_height, "
                 + "custom_view_listview, checked, max, progress, progressbar_style, indeterminate, "
                 + "first_day_of_week, ad_size. "
+                + "'padding' and 'margin' are shortcuts that set all 4 sides at once. "
                 + "Value semantics: layout_width/height accept 'match_parent'/'wrap_content'/number; "
                 + "colors accept '#RRGGBB' or '#AARRGGBB'; gravity accepts 'left|center_vertical' etc; "
                 + "orientation accepts 'vertical'/'horizontal'; booleans accept 'true'/'false'.";
@@ -89,8 +92,8 @@ public final class ViewSetPropertyTool implements SketchwareTool {
         JsonArray enumArr = new JsonArray();
         String[] keys = {
             "id", "layout_width", "layout_height",
-            "padding_left", "padding_top", "padding_right", "padding_bottom",
-            "margin_left", "margin_top", "margin_right", "margin_bottom",
+            "padding", "padding_left", "padding_top", "padding_right", "padding_bottom",
+            "margin", "margin_left", "margin_top", "margin_right", "margin_bottom",
             "orientation", "weight_sum", "gravity", "layout_gravity", "weight",
             "text", "text_size", "text_style", "text_color",
             "hint", "hint_color", "single_line", "lines", "input_type", "ime_option",
@@ -140,19 +143,43 @@ public final class ViewSetPropertyTool implements SketchwareTool {
         String scId = ctx.getScId();
         String javaName = ctx.getCurrentJavaName();
         if (scId == null || javaName == null) return ToolResult.error("No active project/layout.");
+        // Normalise to .xml-suffixed name — eC's HashMap is keyed by "main.xml".
+        String xmlName = javaName.endsWith(".xml") ? javaName : javaName + ".xml";
         try {
             Object eC = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
-            Object widgets = SketchwareApi.invoke(eC, "d", javaName);
             Object target = null;
-            if (widgets instanceof List) {
-                for (Object b : (List<?>) widgets) {
-                    Object id = getFieldValue(b, "id");
-                    if (id != null && widgetId.equals(id.toString())) { target = b; break; }
+            // Special case: widget_id="root" targets the layout's root
+            // ViewBean (the container itself). eC.h(xmlName) returns the
+            // root ViewBean. Without this, the AI couldn't set orientation
+            // or gravity on the root LinearLayout — it would always get
+            // "Widget 'root' not found" because the root isn't in the
+            // regular widget list (eC.d(xmlName)).
+            if ("root".equals(widgetId)) {
+                try {
+                    target = SketchwareApi.invoke(eC, "h", xmlName);
+                } catch (Throwable ignored) {}
+                if (target == null) {
+                    return ToolResult.error("Root container not found for layout '" + xmlName + "'. "
+                            + "The layout may not be initialised. Try view_manage_layout create first.");
+                }
+            } else {
+                Object widgets = SketchwareApi.invoke(eC, "d", xmlName);
+                if (widgets instanceof List) {
+                    for (Object b : (List<?>) widgets) {
+                        Object id = getFieldValue(b, "id");
+                        if (id != null && widgetId.equals(id.toString())) { target = b; break; }
+                    }
                 }
             }
-            if (target == null) return ToolResult.error("Widget '" + widgetId + "' not found.");
+            if (target == null) return ToolResult.error("Widget '" + widgetId + "' not found "
+                    + "in layout '" + xmlName + "'. Use view_list_widgets to see available IDs.");
             applyProperty(target, key, value);
-            SketchwareApi.invoke(eC, "a", javaName, target);
+            // For non-root widgets, persist the change via eC.a(xmlName, viewBean).
+            // For the root widget, eC.a(xmlName, viewBean) might duplicate it,
+            // so skip the persist call — the root is already in eC.c.
+            if (!"root".equals(widgetId)) {
+                SketchwareApi.invoke(eC, "a", xmlName, target);
+            }
             // Persist the property change to disk so the editor and tool stay in sync.
             ctx.persistViewToDisk();
             ctx.refreshViewEditor();
@@ -180,12 +207,34 @@ public final class ViewSetPropertyTool implements SketchwareTool {
                 break;
 
             // ---- padding (int px) — CORRECT field names are paddingLeft/Top/Right/Bottom ----
+            // 'padding' is a shortcut that sets all 4 sides at once.
+            case "padding": {
+                if (layout != null) {
+                    int px = Integer.parseInt(value);
+                    setIntField(layout, "paddingLeft", px);
+                    setIntField(layout, "paddingTop", px);
+                    setIntField(layout, "paddingRight", px);
+                    setIntField(layout, "paddingBottom", px);
+                }
+                break;
+            }
             case "padding_left":  if (layout != null) setIntField(layout, "paddingLeft",  Integer.parseInt(value)); break;
             case "padding_top":   if (layout != null) setIntField(layout, "paddingTop",   Integer.parseInt(value)); break;
             case "padding_right": if (layout != null) setIntField(layout, "paddingRight", Integer.parseInt(value)); break;
             case "padding_bottom":if (layout != null) setIntField(layout, "paddingBottom",Integer.parseInt(value)); break;
 
             // ---- margin (int px) ----
+            // 'margin' is a shortcut that sets all 4 sides at once.
+            case "margin": {
+                if (layout != null) {
+                    int px = Integer.parseInt(value);
+                    setIntField(layout, "marginLeft", px);
+                    setIntField(layout, "marginTop", px);
+                    setIntField(layout, "marginRight", px);
+                    setIntField(layout, "marginBottom", px);
+                }
+                break;
+            }
             case "margin_left":   if (layout != null) setIntField(layout, "marginLeft",  Integer.parseInt(value)); break;
             case "margin_top":    if (layout != null) setIntField(layout, "marginTop",   Integer.parseInt(value)); break;
             case "margin_right":  if (layout != null) setIntField(layout, "marginRight", Integer.parseInt(value)); break;

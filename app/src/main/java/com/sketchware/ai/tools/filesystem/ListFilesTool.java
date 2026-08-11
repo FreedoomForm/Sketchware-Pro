@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.SketchwareToolContext;
 import com.sketchware.ai.tools.ToolResult;
+import com.sketchware.ai.util.SketchwareApi;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,7 +43,12 @@ public final class ListFilesTool implements SketchwareTool {
 
     @Override public String description() {
         return "List files and directories under the project root (recursive, up to "
-                + MAX_DEPTH + " levels deep). Returns a tree view. Use to explore project structure.";
+                + MAX_DEPTH + " levels deep). Returns a tree view. Use to explore project structure. "
+                + "NOTE: Sketchware projects store data as FILES, not directories — "
+                + "'view' (all widget data), 'logic' (all blocks), 'file' (project file list), "
+                + "'library' (lib config), 'resource' (resource zip), 'project_config', "
+                + "'permission'. There is NO 'resource/layout' directory. To list layouts, "
+                + "use view_manage_layout with action='list' instead.";
     }
 
     @Override public JsonObject jsonSchema() {
@@ -71,11 +77,24 @@ public final class ListFilesTool implements SketchwareTool {
 
         File projectRoot = resolveProjectRoot(ctx);
         if (projectRoot == null || !projectRoot.exists()) {
-            return ToolResult.error("Project root not found: " + (projectRoot == null ? "null" : projectRoot.getAbsolutePath()));
+            return ToolResult.error("Project root not found for sc_id='" + ctx.getScId() + "'. "
+                    + "Tried wq.b(sc_id) and fallback paths. Make sure the project is open in the editor.");
         }
         File target = relPath.isEmpty() ? projectRoot : new File(projectRoot, relPath);
         if (!target.exists()) {
-            return ToolResult.error("Path does not exist: " + relPath);
+            // Helpful error: show what DOES exist at the root.
+            StringBuilder hint = new StringBuilder();
+            File[] children = projectRoot.listFiles();
+            if (children != null) {
+                hint.append(" Available entries at root: ");
+                for (int i = 0; i < children.length; i++) {
+                    if (i > 0) hint.append(", ");
+                    hint.append(children[i].getName());
+                }
+                hint.append(". NOTE: Sketchware stores data as FILES not directories. "
+                        + "Use view_manage_layout action='list' to see layouts.");
+            }
+            return ToolResult.error("Path does not exist: '" + relPath + "'." + hint);
         }
         if (!target.isDirectory()) {
             // It's a file — just return its name.
@@ -131,14 +150,28 @@ public final class ListFilesTool implements SketchwareTool {
     }
 
     /**
-     * Resolve the project root directory. Tries multiple known Sketchware
-     * project data paths in order.
+     * Resolve the project root directory using Sketchware's own path
+     * resolver {@code wq.b(sc_id)}, which returns
+     * {@code <external_storage>/.sketchware/data/<sc_id>}.
+     *
+     * <p>Previous implementation used hardcoded paths that didn't match
+     * modern Android scoped storage. Using {@code wq.b(sc_id)} ensures we
+     * get the exact same path Sketchware itself uses to read/write project
+     * data.
      */
     static File resolveProjectRoot(SketchwareToolContext ctx) {
         if (ctx == null) return null;
         String scId = ctx.getScId();
         if (scId == null || scId.isEmpty()) return null;
-        // Try the standard Sketchware data paths in order of preference.
+        // Primary: use Sketchware's own path resolver.
+        try {
+            String path = (String) SketchwareApi.invokeStatic("a.a.a.wq", "b", scId);
+            if (path != null) {
+                File f = new File(path);
+                if (f.exists() && f.isDirectory()) return f;
+            }
+        } catch (Throwable ignored) {}
+        // Fallback candidates for unusual installations.
         String[] candidates = {
             "/data/data/pro.sketchware/files/.sketchware/data/" + scId,
             "/sdcard/.sketchware/data/" + scId,
@@ -149,7 +182,7 @@ public final class ListFilesTool implements SketchwareTool {
             File f = new File(path);
             if (f.exists() && f.isDirectory()) return f;
         }
-        // Fallback: use the app's files directory.
+        // Last resort: use the app's files directory.
         android.content.Context c = ctx.getContext();
         if (c != null) {
             File f = new File(c.getFilesDir(), ".sketchware/data/" + scId);

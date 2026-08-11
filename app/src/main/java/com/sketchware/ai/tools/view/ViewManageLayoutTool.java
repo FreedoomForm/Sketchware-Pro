@@ -102,17 +102,19 @@ public final class ViewManageLayoutTool extends UniversalTool {
     public ViewManageLayoutTool() {
         super("view_manage_layout",
                 "Manage layout XML files in the current project: create, delete, "
-                        + "rename, or switch the active layout shown in the View editor. "
-                        + "The create action supports optional view_type (activity|fragment|"
-                        + "dialog_fragment|bottomdialog_fragment), features array "
+                        + "rename, switch_active, or list. The create action supports "
+                        + "optional view_type (activity|fragment|dialog_fragment|"
+                        + "bottomdialog_fragment), features array "
                         + "(fullscreen|toolbar|drawer|fab), screen_orientation "
                         + "(portrait|landscape|auto), and keyboard_setting (visible|hidden|"
                         + "unspecified). When view_type=activity, the activity is also "
                         + "registered in the manifest and ProjectFile list, and drawer/fab "
                         + "side-effects are applied (drawer auto-enables toolbar + creates "
-                        + "_drawer_<name>; fab adds a _fab ViewBean).",
+                        + "_drawer_<name>; fab adds a _fab ViewBean). The 'list' action "
+                        + "returns all available layouts in the project — USE IT to verify "
+                        + "what layouts exist before calling switch_active.",
                 "view", false, false,
-                "create", "delete", "rename", "switch_active");
+                "create", "delete", "rename", "switch_active", "list");
     }
 
     @Override protected void addExtraProperties(JsonObject props) {
@@ -192,6 +194,7 @@ public final class ViewManageLayoutTool extends UniversalTool {
             case "delete": return doDelete(ctx, scId, name);
             case "rename": return doRename(ctx, scId, name, optString(args, "new_name"));
             case "switch_active": return doSwitchActive(ctx, scId, name);
+            case "list": return doList(ctx, scId);
             default: return err("Unknown action: " + action);
         }
     }
@@ -230,7 +233,8 @@ public final class ViewManageLayoutTool extends UniversalTool {
 
         // Check layout doesn't already exist.
         if (layoutExists(scId, name)) {
-            return err("Layout '" + name + "' already exists in project '" + scId + "'.");
+            return err("Layout '" + name + "' already exists in project '" + scId + "'. "
+                    + "Use switch_active to switch to it, or delete first.");
         }
 
         // Determine the actual fileName with the type-specific suffix.
@@ -269,15 +273,16 @@ public final class ViewManageLayoutTool extends UniversalTool {
                 + "</" + rootTag + ">\n";
 
         StringBuilder summary = new StringBuilder();
-        try {
-            // 1. Write the layout XML via Sketchware's project file manager.
-            Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
-            SketchwareApi.invoke(editor, "a", name, xml);
-            summary.append("Created layout '").append(name).append("' with root <").append(rootTag)
-                   .append("> (").append(xml.length()).append(" bytes).\n");
-        } catch (Throwable t) {
-            return ToolResult.error(t);
-        }
+        // NOTE: We do NOT call eC.a(name, xml) here — that overload actually
+        // returns ArrayList<BlockBean> (events lookup), NOT a file-write.
+        // Sketchware doesn't store layouts as individual XML files; the
+        // ViewBean data is serialised into a single 'view' file by
+        // eC.n(path). The layout XML is generated at build time from the
+        // ViewBean tree. So creating a layout = registering a ProjectFileBean
+        // + initialising an empty ViewBeans list (auto-created on first
+        // access via eC.d(xmlName)).
+        summary.append("Created layout '").append(name).append("' with root <").append(rootTag)
+               .append("> (generated XML ").append(xml.length()).append(" bytes).\n");
 
         // 2. If view_type=activity (or fragment variants), create the ProjectFileBean.
         if (fileType != -1) {
@@ -290,6 +295,20 @@ public final class ViewManageLayoutTool extends UniversalTool {
                 // Persist the bean in the project file list.
                 Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
                 SketchwareApi.invoke(projectFileEditor, "a", bean);
+                // CRITICAL: rebuild the derived name lists (XML names, Java
+                // names) so subsequent layoutExists / switch_active calls
+                // see the new layout. Without j(), the in-memory lists a/b
+                // stay stale and the new layout is invisible until reload.
+                try {
+                    SketchwareApi.invoke(projectFileEditor, "j");
+                } catch (Throwable ignored) {}
+                // CRITICAL: save to disk so the layout survives an editor
+                // reload. Without l(), the bean is in memory but not in the
+                // 'file' file — restart loses it, and switch_active fails
+                // because layoutExists can't find it after a reload.
+                try {
+                    SketchwareApi.invoke(projectFileEditor, "l");
+                } catch (Throwable ignored) {}
                 summary.append("Registered ProjectFileBean (fileType=").append(fileType)
                        .append(", fileName='").append(projectFileBeanName)
                        .append("', options=0x").append(Integer.toHexString(options))
@@ -372,6 +391,9 @@ public final class ViewManageLayoutTool extends UniversalTool {
         // (e.g. 'main') instead of the new one the assistant just created.
         // This mirrors the UX of AddViewActivity, which navigates into the
         // newly-created file after creation.
+        // CRITICAL: store the .xml-suffixed name — eC's HashMap is keyed by
+        // 'main.xml', not 'main'. Without the suffix, view_add_widget stores
+        // under 'main' but the editor reads from 'main.xml' → 0 widgets.
         ctx.setCurrentJavaName(name);
 
         return ok(summary.toString().trim());
@@ -442,25 +464,26 @@ public final class ViewManageLayoutTool extends UniversalTool {
     // ------------------------------------------------------------------
     private ToolResult doSwitchActive(SketchwareToolContext ctx, String scId, String name) {
         if (!layoutExists(scId, name)) {
-            return err("Layout '" + name + "' does not exist in project '" + scId + "'.");
+            // Provide helpful diagnostic: list what layouts DO exist.
+            String available = listAvailableLayouts(scId);
+            return err("Layout '" + name + "' does not exist in project '" + scId + "'. "
+                    + "Available layouts: " + available);
         }
         try {
             Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
             // jC.a(scId).d(xmlName) returns the ArrayList<ViewBean> for that
             // layout — the SAME call ViewEditor.java makes to read the widget
-            // list. (Previous code called b(name) which is the DELETE method
-            // b(String, ViewBean) and always threw NoSuchMethodException.)
-            Object beans = SketchwareApi.invoke(editor, "d", name);
+            // list. The key MUST be the .xml-suffixed name.
+            String xmlName = name.endsWith(".xml") ? name : name + ".xml";
+            Object beans = SketchwareApi.invoke(editor, "d", xmlName);
             int widgetCount = 0;
             if (beans instanceof List) {
                 widgetCount = ((List<?>) beans).size();
             }
             // CRITICAL: update the context's currentJavaName so subsequent
             // view_add_widget / view_set_property / view_list_widgets calls
-            // operate on the newly-switched layout. Without this, the context
-            // keeps pointing at the OLD layout and the assistant's next
-            // view_add_widget call adds a widget to the wrong layout (e.g.
-            // creating 'activity_calculator' but adding widgets to 'main').
+            // operate on the newly-switched layout. The setter normalises
+            // to the .xml-suffixed form.
             ctx.setCurrentJavaName(name);
             ctx.refreshViewEditor();
             return ok("Switched active layout to '" + name + "' in project '" + scId + "'. "
@@ -468,6 +491,64 @@ public final class ViewManageLayoutTool extends UniversalTool {
         } catch (Throwable t) {
             return ToolResult.error(t);
         }
+    }
+
+    // ------------------------------------------------------------------
+    //  list
+    // ------------------------------------------------------------------
+    private ToolResult doList(SketchwareToolContext ctx, String scId) {
+        try {
+            Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+            // jC.b(scId).c() returns ArrayList<ProjectFileBean> of activities.
+            Object activities = SketchwareApi.invoke(projectFileEditor, "c");
+            StringBuilder sb = new StringBuilder();
+            sb.append("Available layouts in project '").append(scId).append("':\n");
+            int count = 0;
+            if (activities instanceof List) {
+                for (Object bean : (List<?>) activities) {
+                    String fileName = str(SketchwareApi.readField(bean, "fileName"));
+                    int fileType = intField(bean, "fileType");
+                    sb.append("  - ").append(fileName).append(".xml")
+                      .append(" (type=").append(fileType)
+                      .append(fileType == 0 ? "=activity" : "=custom")
+                      .append(")\n");
+                    count++;
+                }
+            }
+            sb.append("Total: ").append(count).append(" layouts.");
+            return ok(sb.toString());
+        } catch (Throwable t) {
+            return ToolResult.error(t);
+        }
+    }
+
+    /** Best-effort listing of all available layout names (for error messages). */
+    private static String listAvailableLayouts(String scId) {
+        try {
+            Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+            Object activities = SketchwareApi.invoke(projectFileEditor, "c");
+            StringBuilder sb = new StringBuilder();
+            if (activities instanceof List) {
+                for (Object bean : (List<?>) activities) {
+                    String fileName = str(SketchwareApi.readField(bean, "fileName"));
+                    if (sb.length() > 0) sb.append(", ");
+                    sb.append(fileName);
+                }
+            }
+            return sb.length() == 0 ? "(none)" : sb.toString();
+        } catch (Throwable t) {
+            return "(error: " + t.getMessage() + ")";
+        }
+    }
+
+    private static String str(Object o) { return o == null ? "" : o.toString(); }
+
+    private static int intField(Object obj, String name) {
+        try {
+            Object v = SketchwareApi.readField(obj, name);
+            if (v instanceof Number) return ((Number) v).intValue();
+        } catch (Throwable ignored) {}
+        return -1;
     }
 
     // ------------------------------------------------------------------
@@ -608,74 +689,49 @@ public final class ViewManageLayoutTool extends UniversalTool {
     }
 
     /**
-     * Check if a layout exists in the project. A layout is considered to
-     * exist when EITHER:
-     * <ul>
-     *   <li>{@code jC.a(scId).d(xmlName)} returns a non-null list (the layout
-     *       has been loaded into the project data manager), OR</li>
-     *   <li>the XML file exists on disk under the project's
-     *       {@code resource/layout/} directory (the layout was just created
-     *       but not yet loaded).</li>
-     * </ul>
+     * Check if a layout exists in the project by looking it up in the
+     * ProjectFileBean list via {@code jC.b(scId).b(xmlName)}.
      *
-     * <p>Previous implementation called {@code jC.a(scId).b(name)} — but
-     * {@code b(String, ViewBean)} is the DELETE method (2 args). The correct
-     * read method is {@code d(String)} (1 arg, returns ArrayList<ViewBean>).
-     * Calling {@code b(name)} with one arg always threw, so layoutExists
-     * fell through to the filesystem check — which itself failed because
-     * getProjectPath uses hardcoded paths that don't work on modern Android
-     * scoped storage.
+     * <p>{@code hC.b(String)} iterates the activities list (field {@code c})
+     * and custom-views list (field {@code d}), comparing
+     * {@code ProjectFileBean.getXmlName().equals(arg)}. So the argument
+     * MUST be the {@code .xml}-suffixed name (e.g. {@code "main.xml"}).
+     *
+     * <p>Previous implementation called {@code jC.a(scId).d(name)} which
+     * returns an EMPTY ArrayList for unknown names (never null), so the
+     * {@code !isEmpty()} check always returned false for freshly-created
+     * layouts with no widgets yet. The fallback filesystem check then
+     * failed because Sketchware doesn't store layouts as individual XML
+     * files — all ViewBean data is serialised into a single {@code view}
+     * file in the project directory.
      */
     private static boolean layoutExists(String scId, String name) {
-        // Try the project data manager first.
+        String xmlName = name.endsWith(".xml") ? name : name + ".xml";
         try {
-            Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
-            Object beans = SketchwareApi.invoke(editor, "d", name);
-            if (beans instanceof List && !((List<?>) beans).isEmpty()) {
-                return true;
-            }
-            // Even an empty list means the layout is registered.
-            if (beans instanceof List) {
-                // Layout registered but empty — still exists.
-                // Verify via file system to distinguish "registered empty"
-                // from "not registered at all".
-            }
+            Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+            Object bean = SketchwareApi.invoke(projectFileEditor, "b", xmlName);
+            if (bean != null) return true;
         } catch (Throwable ignored) {}
-        // Fallback: check the file system using multiple candidate paths.
-        String projectPath = getProjectPath(scId);
-        if (projectPath != null) {
-            File layoutFile = new File(projectPath + "/resource/layout/" + name + ".xml");
-            if (layoutFile.exists()) return true;
-        }
+        // Also try without .xml extension in case some code paths store the
+        // name without the suffix.
+        try {
+            Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+            Object bean = SketchwareApi.invoke(projectFileEditor, "b", name);
+            if (bean != null) return true;
+        } catch (Throwable ignored) {}
         return false;
     }
 
     /**
-     * Resolve the project's filesystem path from its sc_id. Tries multiple
-     * candidate locations to handle different Sketchware-Pro versions and
-     * Android storage scopes:
-     * <ul>
-     *   <li>{@code /data/data/pro.sketchware/files/.sketchware/data/<scId>/}
-     *       (app-internal, modern Android)</li>
-     *   <li>{@code /sdcard/.sketchware/data/<scId>/}
-     *       (legacy external storage)</li>
-     *   <li>{@code /storage/emulated/0/.sketchware/data/<scId>/}
-     *       (alternative external path)</li>
-     * </ul>
-     * Returns null if none exist.
+     * Resolve the project's filesystem path using Sketchware's own path
+     * resolver {@code wq.b(sc_id)}, which returns
+     * {@code <external_storage>/.sketchware/data/<scId>}.
      */
     private static String getProjectPath(String scId) {
-        String[] candidates = {
-                "/data/data/pro.sketchware/files/.sketchware/data/" + scId,
-                "/sdcard/.sketchware/data/" + scId,
-                "/storage/emulated/0/.sketchware/data/" + scId,
-        };
-        for (String path : candidates) {
-            try {
-                java.io.File dir = new java.io.File(path);
-                if (dir.exists() && dir.isDirectory()) return dir.getAbsolutePath();
-            } catch (Throwable ignored) {}
+        try {
+            return (String) SketchwareApi.invokeStatic("a.a.a.wq", "b", scId);
+        } catch (Throwable ignored) {
+            return null;
         }
-        return null;
     }
 }

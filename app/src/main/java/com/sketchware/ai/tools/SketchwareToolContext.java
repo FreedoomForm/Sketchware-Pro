@@ -65,9 +65,37 @@ public class SketchwareToolContext {
      * Update the active layout/file name. Called by view_manage_layout when
      * the user/assistant switches or creates a layout, so subsequent tool
      * calls operate on the new active layout.
+     *
+     * <p>CRITICAL: Sketchware's {@code eC} (project data manager) stores
+     * ViewBeans in a HashMap keyed by the <b>full XML name</b> (e.g.
+     * {@code "main.xml"}, NOT {@code "main"}). All calls to
+     * {@code jC.a(scId).d(name)}, {@code .a(name, viewBean)},
+     * {@code .h(name)} etc. MUST use the {@code .xml}-suffixed name.
+     *
+     * <p>Previously this method stored the name WITHOUT the {@code .xml}
+     * suffix, which caused:
+     * <ul>
+     *   <li>{@code view_list_widgets} to return 0 widgets even after
+     *       {@code view_add_widget} succeeded — the widget was stored
+     *       under key {@code "main"} while the editor looked it up
+     *       under {@code "main.xml"}.</li>
+     *   <li>{@code view_set_property} to fail with "Widget not found"
+     *       because the widget list lookup used the wrong key.</li>
+     *   <li>The View editor canvas never showed AI-added widgets
+     *       because {@code ViewEditorFragment.i()} calls
+     *       {@code jC.a(scId).d(projectFileBean.getXmlName())} with the
+     *       {@code .xml}-suffixed name.</li>
+     * </ul>
+     *
+     * <p>This method now normalises the name to always end with
+     * {@code ".xml"} so all downstream eC calls use the correct key.
      */
     public void setCurrentJavaName(String javaName) {
         if (javaName != null && !javaName.isEmpty()) {
+            // Normalise: eC expects the .xml-suffixed name.
+            if (!javaName.endsWith(".xml")) {
+                javaName = javaName + ".xml";
+            }
             this.currentJavaName = javaName;
         }
     }

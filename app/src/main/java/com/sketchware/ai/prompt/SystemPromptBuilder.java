@@ -66,7 +66,26 @@ public final class SystemPromptBuilder {
         sb.append("haven't seen yet. Use `search_files(pattern=\"...\")` to find where a string/identifier appears.\n");
         sb.append("16. Use `web_search(query=\"...\")` to look up current docs / error messages online, and ");
         sb.append("`web_fetch(url=\"...\")` to read a specific webpage. These help when you need information ");
-        sb.append("that may be newer than your training cutoff.\n\n");
+        sb.append("that may be newer than your training cutoff.\n");
+        sb.append("17. CRITICAL — Sketchware project structure: projects store data as FILES, not directories. ");
+        sb.append("The `view` file contains all widget data (serialised), `logic` contains blocks, `file` ");
+        sb.append("contains the project file list. There is NO `resource/layout/` directory. To enumerate ");
+        sb.append("layouts, call `view_manage_layout(action=\"list\")` — do NOT use `list_files` for this.\n");
+        sb.append("18. CRITICAL — Layout workflow: before adding widgets, ensure the target layout exists by ");
+        sb.append("calling `view_manage_layout(action=\"list\")`. If the layout you want doesn't exist, create it ");
+        sb.append("with `view_manage_layout(action=\"create\", name=\"...\")` — this auto-switches the active ");
+        sb.append("layout. If it already exists, switch with `view_manage_layout(action=\"switch_active\", ");
+        sb.append("name=\"...\")`. After create/switch, the active layout is set automatically — you do NOT ");
+        sb.append("need to call switch_active after create.\n");
+        sb.append("19. CRITICAL — Root container: to set properties on the layout's root container (e.g. ");
+        sb.append("`orientation`, `gravity`, `background_color` on the root LinearLayout), use ");
+        sb.append("`view_set_property(widget_id=\"root\", property_key=\"orientation\", value=\"vertical\")`. ");
+        sb.append("The `root` widget ID is a special target that maps to the layout's root ViewBean.\n");
+        sb.append("20. CRITICAL — Property shortcuts: `padding` and `margin` are shortcut keys that set all ");
+        sb.append("4 sides at once. Use `view_set_property(widget_id=\"button1\", property_key=\"padding\", ");
+        sb.append("value=\"16\")` instead of calling padding_left/top/right/bottom separately.\n");
+        sb.append("21. After creating a layout and adding widgets, call `view_list_widgets()` to verify the ");
+        sb.append("widgets are present before setting properties. This catches any state-desync issues early.\n\n");
 
         // Diff editing instructions
         sb.append("# Diff Editing (SEARCH/REPLACE blocks)\n");

@@ -81,6 +81,11 @@ public final class ViewAddWidgetTool implements SketchwareTool {
         if (scId == null || xmlName == null || xmlName.isEmpty()) {
             return ToolResult.error("No active project/layout (scId=" + scId + ", xmlName=" + xmlName + ").");
         }
+        // Normalise to .xml-suffixed name — eC's HashMap is keyed by the
+        // full XML name (e.g. "main.xml"). Without the suffix, the widget
+        // would be stored under "main" while ViewEditor reads from
+        // "main.xml", causing the widget to be invisible in the editor.
+        if (!xmlName.endsWith(".xml")) xmlName = xmlName + ".xml";
         String parentId = args.has("parent_id") && !args.get("parent_id").isJsonNull()
                 ? args.get("parent_id").getAsString() : null;
 
