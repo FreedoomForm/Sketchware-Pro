@@ -72,6 +72,29 @@ public class ToolRegistryTest {
         assertThat(result.getOutput()).isEqualTo("ok");
     }
 
+    @Test public void toolNamesSampleListsRegisteredTools() {
+        ToolRegistry r = new ToolRegistry();
+        r.register(new FakeTool("alpha", "test"));
+        r.register(new FakeTool("beta", "test"));
+        r.register(new FakeTool("gamma", "test"));
+        String sample = r.toolNamesSample();
+        assertThat(sample).contains("alpha");
+        assertThat(sample).contains("beta");
+        assertThat(sample).contains("gamma");
+    }
+
+    @Test public void toolNamesSampleTruncatesLongLists() {
+        ToolRegistry r = new ToolRegistry();
+        for (int i = 0; i < 30; i++) {
+            r.register(new FakeTool("tool_" + i, "test"));
+        }
+        String sample = r.toolNamesSample();
+        // Should mention the overflow count.
+        assertThat(sample).contains("more");
+        // Should NOT list all 30 tools.
+        assertThat(sample.contains("tool_29")).isFalse();
+    }
+
     static final class FakeTool implements SketchwareTool {
         private final String name;
         private final String category;

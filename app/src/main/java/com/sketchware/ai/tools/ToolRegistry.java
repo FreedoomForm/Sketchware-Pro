@@ -46,6 +46,27 @@ public final class ToolRegistry {
     }
 
     /**
+     * Comma-separated sample of registered tool names for inclusion in error
+     * messages (e.g. "Unknown tool: 'foo'. Available tools: view_add_widget,
+     * view_set_property, ..."). Truncated to the first 20 names to avoid
+     * overflowing the LLM context window.
+     */
+    public String toolNamesSample() {
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (SketchwareTool t : tools.values()) {
+            if (count > 0) sb.append(", ");
+            if (count >= 20) {
+                sb.append("... (").append(tools.size() - 20).append(" more)");
+                break;
+            }
+            sb.append(t.name());
+            count++;
+        }
+        return sb.toString();
+    }
+
+    /**
      * Build a JSON array of tool definitions in the AI-SDK canonical shape.
      * Each entry: {@code { name, description, inputSchema: <jsonSchema> }}.
      */

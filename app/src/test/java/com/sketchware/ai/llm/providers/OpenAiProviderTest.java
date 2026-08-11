@@ -145,8 +145,13 @@ public class OpenAiProviderTest {
     }
 
     private String openAiStreamWithToolCall() {
+        // The arguments field is split across 3 chunks. When concatenated the
+        // result must be valid JSON: {"widget_type":"Button"}
+        //   chunk 1: id + name + start of args  -> {"widget
+        //   chunk 2: continuation of args        -> _type":"Button"}
+        // (chunk 1 also has empty `arguments:""` to seed the accumulator.)
         return "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"view_add_widget\",\"arguments\":\"\"}}]}}]}\n\n" +
-                "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"widget\\\"\"}}]}}]}\n\n" +
+                "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"widget\"}}]}}]}\n\n" +
                 "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"_type\\\":\\\"Button\\\"}\"}}]}}]}\n\n" +
                 "data: {\"id\":\"chatcmpl-1\",\"choices\":[{\"finish_reason\":\"tool_calls\"}]}\n\n" +
                 "data: [DONE]\n\n";

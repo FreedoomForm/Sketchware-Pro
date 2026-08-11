@@ -1,7 +1,9 @@
 package com.sketchware.ai.prompt;
 
 import com.sketchware.ai.agent.AgentMode;
+import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.ToolRegistry;
+import com.sketchware.ai.tools.UniversalTool;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -48,11 +50,13 @@ public final class SystemPromptBuilder {
         sb.append("3. Explain in the user's language what you did and what you plan to do next.\n");
         sb.append("4. If a tool returns 'library_required', enable the library first via library_enable.\n");
         sb.append("5. If a tool requires a widget ID you don't know, call view_list_widgets() first.\n");
-        sb.append("6. Use ask_question(text) to clarify with the user when ambiguous.\n");
-        sb.append("7. Use submit_and_exit(summary) to finish the task.\n");
+        sb.append("6. Use ask_question(question=...) to clarify with the user when ambiguous.\n");
+        sb.append("7. Use submit_and_exit(summary=...) to finish the task.\n");
         sb.append("8. Prefer the simplest tool that achieves the goal. Avoid chained edits when one tool call suffices.\n");
         sb.append("9. When generating Java code via java_edit_file, use the project's package name as the package declaration.\n");
-        sb.append("10. Be conservative: ask before performing destructive operations (delete widget, delete file, reset blocks).\n\n");
+        sb.append("10. Be conservative: ask before performing destructive operations (delete widget, delete file, reset blocks).\n");
+        sb.append("11. Universal tools take an `action` enum parameter - always pass exactly one action value per call.\n");
+        sb.append("12. Tool argument names are snake_case (e.g. `widget_id`, not `widgetId`). Match the schema exactly.\n\n");
 
         // Mode tag instructions
         sb.append("# Mode\n");
@@ -72,19 +76,45 @@ public final class SystemPromptBuilder {
         if (tools != null && tools.size() > 0) {
             sb.append("# Tools\n\n");
             sb.append("You have access to the following tools. Each tool name is in `code`. ")
-              .append("Arguments are JSON objects with the listed properties.\n\n");
+              .append("The full JSON Schema for every tool's arguments is sent alongside this prompt ")
+              .append("in the API request (the `tools` parameter) - always consult the schema for ")
+              .append("the exact parameter names and types.\n\n");
+            sb.append("Tools marked **(universal)** accept an `action` enum parameter that selects ")
+              .append("the operation; the supported actions are listed in parentheses below.\n\n");
 
             String currentCategory = "";
-            for (com.sketchware.ai.tools.SketchwareTool t : tools.all()) {
+            for (SketchwareTool t : tools.all()) {
                 if (!t.category().equals(currentCategory)) {
                     currentCategory = t.category();
                     sb.append("\n## ").append(currentCategory).append("\n\n");
                 }
                 sb.append("- `").append(t.name()).append("`");
-                if (t.isReadOnly()) sb.append(" (read-only)");
+                if (t.isReadOnly()) sb.append(" (read-only");
+                else sb.append(" (mutating");
+                if (t instanceof UniversalTool) {
+                    UniversalTool ut = (UniversalTool) t;
+                    sb.append(", universal, actions: ");
+                    String[] actions = ut.getActions();
+                    for (int i = 0; i < actions.length; i++) {
+                        if (i > 0) sb.append("|");
+                        sb.append(actions[i]);
+                    }
+                }
+                sb.append(")");
                 sb.append(": ").append(t.description()).append("\n");
             }
             sb.append("\n");
+
+            // Briefly explain the universal tool pattern with a concrete example.
+            sb.append("## Universal tool call pattern\n\n");
+            sb.append("Universal tools all take an `action` enum plus action-specific parameters. ")
+              .append("Example:\n")
+              .append("```\n")
+              .append("view_manage_widget(action=\"delete\", widget_id=\"button1\")\n")
+              .append("```\n")
+              .append("Always pick the action from the listed enum; passing an unknown action ")
+              .append("returns an error. Pass arguments by their snake_case names exactly as ")
+              .append("declared in the schema.\n\n");
         }
 
         sb.append("# Communication\n");

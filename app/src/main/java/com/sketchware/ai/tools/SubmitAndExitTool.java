@@ -5,7 +5,14 @@ import com.google.gson.JsonObject;
 
 /**
  * submit_and_exit - signal that the task is complete.
- * The agent loop will stop after this tool is called.
+ *
+ * <p>When the LLM invokes this tool, the agent loop terminates after the
+ * tool_result is added to the conversation history. The summary text is
+ * emitted to the UI as the final assistant message via
+ * {@code AgentListener.onComplete(summary)}.
+ *
+ * <p>The LLM should call this tool ONCE at the end of a task, after all
+ * other tool calls have completed. Do not call this tool mid-task.
  */
 public final class SubmitAndExitTool implements SketchwareTool {
 
@@ -15,7 +22,8 @@ public final class SubmitAndExitTool implements SketchwareTool {
     @Override public boolean isAutoApprovedByDefault() { return true; }
 
     @Override public String description() {
-        return "Signal that the task is complete. Provide a brief summary of what was done.";
+        return "Signal that the task is complete. Provide a brief summary of what was done. "
+                + "The agent loop will stop after this tool is called.";
     }
 
     @Override public JsonObject jsonSchema() {

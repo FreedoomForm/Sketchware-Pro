@@ -10,10 +10,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import pro.sketchware.R;
 import com.sketchware.ai.llm.storage.ProviderConfigStore;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * API Configuration fragment - replicates the Kilo Code "Providers" page:
@@ -45,6 +49,12 @@ public final class ApiConfigurationFragment extends Fragment {
         com.google.android.material.materialswitch.MaterialSwitch enableStreaming = root.findViewById(R.id.sw_streaming);
         com.google.android.material.materialswitch.MaterialSwitch imageSupport = root.findViewById(R.id.sw_image_support);
         com.google.android.material.materialswitch.MaterialSwitch promptCaching = root.findViewById(R.id.sw_prompt_caching);
+
+        // Defensive defaults — older stored profiles may have null/empty
+        // values for fields added after the profile was first created.
+        if (profile.reasoningEffort == null || profile.reasoningEffort.isEmpty()) {
+            profile.reasoningEffort = "medium";
+        }
 
         baseUrl.setText(profile.baseUrl);
         apiKey.setText(profile.apiKey);
@@ -79,6 +89,8 @@ public final class ApiConfigurationFragment extends Fragment {
                 case "ollama":     profile.baseUrl = "http://localhost:11434"; break;
             }
             baseUrl.setText(profile.baseUrl);
+            // Clear any stale error when the provider changes.
+            findTextInputLayout(baseUrl).setError(null);
             // Pre-fill a default model id if empty.
             if (profile.modelId == null || profile.modelId.isEmpty()) {
                 switch (profile.providerId) {
@@ -107,19 +119,121 @@ public final class ApiConfigurationFragment extends Fragment {
 
         // Save button
         root.findViewById(R.id.btn_save).setOnClickListener(v -> {
-            profile.baseUrl = baseUrl.getText() == null ? "" : baseUrl.getText().toString().trim();
-            profile.apiKey = apiKey.getText() == null ? "" : apiKey.getText().toString().trim();
-            profile.modelId = modelId.getText() == null ? "" : modelId.getText().toString().trim();
-            try { profile.maxOutputTokens = Integer.parseInt(maxTokens.getText().toString().trim()); } catch (Exception e) {}
-            try { profile.contextWindowSize = Integer.parseInt(contextWindow.getText().toString().trim()); } catch (Exception e) {}
+            // Read raw field values.
+            String baseUrlRaw = baseUrl.getText() == null ? "" : baseUrl.getText().toString().trim();
+            String apiKeyRaw = apiKey.getText() == null ? "" : apiKey.getText().toString().trim();
+            String modelIdRaw = modelId.getText() == null ? "" : modelId.getText().toString().trim();
+            String maxTokensRaw = maxTokens.getText() == null ? "" : maxTokens.getText().toString().trim();
+            String contextWindowRaw = contextWindow.getText() == null ? "" : contextWindow.getText().toString().trim();
+
+            // --- Validation (previously: any garbage was silently saved
+            // and the agent would fail at runtime with a cryptic error) ---
+            // baseUrl: must be empty (some providers like Ollama can run
+            // with defaults) or a syntactically valid http(s) URL.
+            TextInputLayout baseUrlLayout = findTextInputLayout(baseUrl);
+            if (!baseUrlRaw.isEmpty() && !isValidHttpUrl(baseUrlRaw)) {
+                baseUrlLayout.setError("Enter a valid http:// or https:// URL");
+                return;
+            } else {
+                baseUrlLayout.setError(null);
+            }
+
+            // Ollama can run without an API key, but every other provider
+            // requires one.
+            TextInputLayout apiKeyLayout = findTextInputLayout(apiKey);
+            boolean needsKey = !"ollama".equals(profile.providerId);
+            if (needsKey && apiKeyRaw.isEmpty()) {
+                apiKeyLayout.setError("API key is required for " + profile.providerId);
+                return;
+            } else {
+                apiKeyLayout.setError(null);
+            }
+
+            TextInputLayout modelIdLayout = findTextInputLayout(modelId);
+            if (modelIdRaw.isEmpty()) {
+                modelIdLayout.setError("Model ID is required");
+                return;
+            } else {
+                modelIdLayout.setError(null);
+            }
+
+            TextInputLayout maxTokensLayout = findTextInputLayout(maxTokens);
+            int maxTokensVal;
+            try {
+                maxTokensVal = Integer.parseInt(maxTokensRaw);
+            } catch (NumberFormatException e) {
+                maxTokensLayout.setError("Must be a number");
+                return;
+            }
+            if (maxTokensVal <= 0) {
+                maxTokensLayout.setError("Must be greater than 0");
+                return;
+            }
+            maxTokensLayout.setError(null);
+
+            TextInputLayout contextWindowLayout = findTextInputLayout(contextWindow);
+            int contextWindowVal;
+            try {
+                contextWindowVal = Integer.parseInt(contextWindowRaw);
+            } catch (NumberFormatException e) {
+                contextWindowLayout.setError("Must be a number (0 = model default)");
+                return;
+            }
+            if (contextWindowVal < 0) {
+                contextWindowLayout.setError("Cannot be negative");
+                return;
+            }
+            contextWindowLayout.setError(null);
+
+            // --- Commit to profile ---
+            profile.baseUrl = baseUrlRaw;
+            profile.apiKey = apiKeyRaw;
+            profile.modelId = modelIdRaw;
+            profile.maxOutputTokens = maxTokensVal;
+            profile.contextWindowSize = contextWindowVal;
             profile.enableReasoning = enableReasoning.isChecked();
             profile.enableStreaming = enableStreaming.isChecked();
             profile.imageSupport = imageSupport.isChecked();
             profile.promptCaching = promptCaching.isChecked();
             store.upsertProfile(profile);
             store.setActiveProfile(profile.id);
+            View sbHost = getView();
+            if (sbHost != null) {
+                Snackbar.make(sbHost, "Saved", Snackbar.LENGTH_SHORT).show();
+            }
             requireActivity().finish();
         });
         return root;
+    }
+
+    /**
+     * Validate that {@code url} is a syntactically valid http(s) URL. Used to
+     * reject garbage like {@code htp://invalid} before saving the profile —
+     * the HTTP client would otherwise fail at runtime with a less helpful
+     * error.
+     */
+    private static boolean isValidHttpUrl(String url) {
+        try {
+            URL u = new URL(url);
+            String proto = u.getProtocol();
+            return "http".equalsIgnoreCase(proto) || "https".equalsIgnoreCase(proto);
+        } catch (MalformedURLException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Walk up the parent chain of {@code v} until a {@link TextInputLayout}
+     * is found. The direct parent of a {@link TextInputEditText} is normally
+     * the TextInputLayout itself, but Material Components may introduce
+     * intermediate helper views in some versions; walking the chain avoids a
+     * ClassCastException in those cases.
+     */
+    private static TextInputLayout findTextInputLayout(View v) {
+        android.view.ViewParent p = v.getParent();
+        while (p != null && !(p instanceof TextInputLayout)) {
+            p = p.getParent();
+        }
+        return (TextInputLayout) p;
     }
 }

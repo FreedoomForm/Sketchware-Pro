@@ -109,7 +109,9 @@ public class OpenAiCompatProvider extends OpenAiProvider {
         // Provider-specific tweaks
         switch (providerId) {
             case "openrouter": {
-                if (request.reasoning != null && request.reasoning.effort != null
+                boolean reasoningEnabled = request.reasoning != null
+                        && request.reasoning.isReasoningEnabled();
+                if (reasoningEnabled && request.reasoning.effort != null
                         && request.reasoning.effort != com.sketchware.ai.llm.reasoning.ReasoningEffort.NONE) {
                     JsonObject reasoning = new JsonObject();
                     reasoning.addProperty("effort", request.reasoning.effort.name().toLowerCase());
@@ -119,8 +121,10 @@ public class OpenAiCompatProvider extends OpenAiProvider {
                     }
                     body.add("reasoning", reasoning);
                 }
-                // OpenRouter prefers "include_reasoning" rather than reasoning_content field
-                if (request.model != null && request.model.supportsReasoning) {
+                // OpenRouter prefers "include_reasoning" rather than reasoning_content field.
+                // Only ask for reasoning output when the user actually wants reasoning
+                // AND the model supports it (otherwise the server may reject the field).
+                if (reasoningEnabled && request.model != null && request.model.supportsReasoning) {
                     body.addProperty("include_reasoning", true);
                 }
                 break;
@@ -128,6 +132,9 @@ public class OpenAiCompatProvider extends OpenAiProvider {
             case "deepseek":
             case "zai":
             case "z-ai": {
+                // DeepSeek / Z.AI thinking toggle. Send enabled/disabled only
+                // when the model supports reasoning — sending `thinking` to a
+                // non-reasoning model causes HTTP 400 on DeepSeek.
                 if (request.reasoning != null && request.model != null && request.model.supportsReasoning) {
                     JsonObject thinking = new JsonObject();
                     thinking.addProperty("type", Boolean.TRUE.equals(request.reasoning.enabled) ? "enabled" : "disabled");

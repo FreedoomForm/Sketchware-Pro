@@ -138,11 +138,22 @@ public abstract class UniversalTool implements SketchwareTool {
         return def;
     }
 
-    /** Require a string argument: return error result if missing. */
-    protected static ToolResult requireString(JsonObject args, String key) {
+    /**
+     * Require a string argument: returns the value if present and non-empty,
+     * otherwise throws an IllegalStateException with a useful message.
+     *
+     * <p>Previous version was a no-op stub that always returned null — the
+     * comment said "caller checks for null", but callers had no way to
+     * distinguish "missing" from "present". This is now a proper helper.
+     *
+     * <p>Usage: {@code String id = requireString(args, "widget_id");}
+     */
+    protected static String requireString(JsonObject args, String key) {
         String v = optString(args, key);
-        if (v == null || v.isEmpty()) return null; // caller checks for null
-        return null; // sentinel; the actual value is fetched via optString
+        if (v == null || v.isEmpty()) {
+            throw new IllegalStateException("Missing required argument: " + key);
+        }
+        return v;
     }
 
     /** Convenience: error result with the tool name prefix. */

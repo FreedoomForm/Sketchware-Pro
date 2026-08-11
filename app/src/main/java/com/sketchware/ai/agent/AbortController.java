@@ -26,6 +26,22 @@ public final class AbortController {
         }
     }
 
+    /**
+     * Reset the abort flag so a new run can proceed.
+     *
+     * <p>CRITICAL: without this, the {@code aborted} flag stays true forever
+     * after the first abort(), and every subsequent {@code AgentRuntime.execute()}
+     * call exits the loop on the first iteration check, producing a no-op run
+     * with no listener callback. The user clicks "Stop" once and the agent
+     * never works again until the activity is recreated.
+     *
+     * <p>Called by {@code AgentRuntime.execute()} at the start of every new run.
+     */
+    public void reset() {
+        aborted.set(false);
+        httpCancellation.set(null);
+    }
+
     /** Register a callback that cancels the in-flight HTTP call. */
     public void setHttpCancellation(Runnable r) {
         httpCancellation.set(r);

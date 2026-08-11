@@ -1,7 +1,9 @@
 package com.sketchware.ai.llm.http;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
+import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -15,6 +17,10 @@ import okhttp3.Response;
 public final class HttpClient {
 
     private static OkHttpClient sharedClient;
+    // Track the most recently started Call so providers can cancel it via
+    // abort(). This is sufficient for Sketchware-Pro's single-request-at-a-time
+    // usage model (the agent runtime issues one LLM stream at a time).
+    private static final AtomicReference<Call> lastCall = new AtomicReference<>();
 
     /** A client with long read timeouts (LLM streams can be slow). */
     public static synchronized OkHttpClient getClient() {
@@ -52,7 +58,33 @@ public final class HttpClient {
         }
         RequestBody body = RequestBody.create(jsonBody, MediaType.get("application/json; charset=utf-8"));
         rb.post(body);
-        return getClient().newCall(rb.build()).execute();
+        Call call = getClient().newCall(rb.build());
+        // Remember this call so abort() can cancel it. Replace any previous
+        // call (which by contract should already be done).
+        lastCall.set(call);
+        return call.execute();
+    }
+
+    /**
+     * Execute a streaming POST with a custom OkHttp Request.Builder (used by
+     * providers that need fine-grained control over headers / body, e.g.
+     * Ollama which omits the Accept: text/event-stream header).
+     */
+    public static Response postStream(Request.Builder rb) throws Exception {
+        Call call = getClient().newCall(rb.build());
+        lastCall.set(call);
+        return call.execute();
+    }
+
+    /**
+     * Cancel the most recently started in-flight call, if any. Safe to call
+     * repeatedly. Implemented by providers' {@code abort()} methods.
+     */
+    public static void abortCurrent() {
+        Call c = lastCall.getAndSet(null);
+        if (c != null && !c.isCanceled()) {
+            c.cancel();
+        }
     }
 
     /**

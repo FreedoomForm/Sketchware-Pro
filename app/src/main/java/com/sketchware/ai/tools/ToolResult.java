@@ -27,10 +27,44 @@ public final class ToolResult {
         return new ToolResult(false, null, message);
     }
 
+    /**
+     * Build an error result from a Throwable, preserving the exception class
+     * name, message, AND a trimmed stack trace so the LLM (and the developer
+     * reading the chat log) has enough context to recover. Previously this
+     * only kept {@code t.getMessage()}, which was often null for NullPointerException
+     * and other runtime failures, leaving the LLM with no actionable signal.
+     */
     public static ToolResult error(Throwable t) {
-        String msg = t.getMessage();
-        if (msg == null) msg = t.getClass().getSimpleName();
-        return new ToolResult(false, null, msg);
+        if (t == null) return new ToolResult(false, null, "unknown error (null throwable)");
+        StringBuilder sb = new StringBuilder();
+        sb.append(t.getClass().getName());
+        if (t.getMessage() != null && !t.getMessage().isEmpty()) {
+            sb.append(": ").append(t.getMessage());
+        }
+        // Append the top few stack frames so the LLM can see WHERE the
+        // failure happened. Cap at 8 frames to avoid bloating the context.
+        StackTraceElement[] trace = t.getStackTrace();
+        if (trace != null && trace.length > 0) {
+            sb.append("\n  at ");
+            int max = Math.min(trace.length, 8);
+            for (int i = 0; i < max; i++) {
+                if (i > 0) sb.append("\n  at ");
+                sb.append(trace[i]);
+            }
+            if (trace.length > max) {
+                sb.append("\n  ... ").append(trace.length - max).append(" more");
+            }
+        }
+        // If the throwable has a cause that's different from itself, include
+        // it too (one level deep).
+        Throwable cause = t.getCause();
+        if (cause != null && cause != t) {
+            sb.append("\nCaused by: ").append(cause.getClass().getName());
+            if (cause.getMessage() != null && !cause.getMessage().isEmpty()) {
+                sb.append(": ").append(cause.getMessage());
+            }
+        }
+        return new ToolResult(false, null, sb.toString());
     }
 
     public boolean isSuccess() { return success; }

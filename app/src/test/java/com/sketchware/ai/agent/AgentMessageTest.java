@@ -128,4 +128,30 @@ public class AgentMessageTest {
         c.abort();
         assertThat(cancelled[0]).isFalse(); // not invoked because cleared
     }
+
+    @Test public void abortControllerResetClearsAbortedFlag() {
+        // CRITICAL regression test: previously AbortController had no reset()
+        // method, so once abort() was called the runtime was permanently
+        // stuck aborted and every subsequent execute() silently exited.
+        AbortController c = new AbortController();
+        assertThat(c.isAborted()).isFalse();
+        c.abort();
+        assertThat(c.isAborted()).isTrue();
+        c.reset();
+        assertThat(c.isAborted()).isFalse();
+    }
+
+    @Test public void abortControllerResetClearsHttpCancellation() {
+        AbortController c = new AbortController();
+        boolean[] cancelled = {false};
+        c.setHttpCancellation(() -> cancelled[0] = true);
+        c.abort();
+        assertThat(cancelled[0]).isTrue();
+        // After reset, the httpCancellation callback should be cleared so a
+        // new run doesn't accidentally trigger the previous run's cancel.
+        cancelled[0] = false;
+        c.reset();
+        c.abort();
+        assertThat(cancelled[0]).isFalse();
+    }
 }

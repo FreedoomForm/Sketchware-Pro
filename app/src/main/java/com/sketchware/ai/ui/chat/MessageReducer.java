@@ -20,7 +20,22 @@ public final class MessageReducer {
 
     private final List<ChatMessage> messages = new ArrayList<>();
 
-    public List<ChatMessage> getMessages() { return messages; }
+    /**
+     * Return a <b>snapshot copy</b> of the current message list.
+     *
+     * <p>Callers (notably {@code ChatAdapter.submitList(...)}) must pass a
+     * different list reference each time, otherwise {@code ListAdapter}'s
+     * {@code submitList} short-circuits with {@code list == currentList} and
+     * skips the DiffUtil pass entirely — the UI never updates during
+     * streaming. Returning a shallow copy guarantees a fresh wrapper while
+     * keeping the {@link ChatMessage} instances themselves shared (so
+     * in-place mutations are visible once DiffUtil flags the row as changed).
+     */
+    public List<ChatMessage> getMessages() {
+        synchronized (this) {
+            return new ArrayList<>(messages);
+        }
+    }
 
     public synchronized void reset() {
         messages.clear();
@@ -97,5 +112,17 @@ public final class MessageReducer {
 
     public synchronized void addCompaction() {
         messages.add(ChatMessage.compaction());
+    }
+
+    /**
+     * Whether the last message in the list is an assistant streaming-text row
+     * ({@link ChatMessage#TYPE_TEXT}). Used by {@code ChatFragment} to decide
+     * whether {@code onComplete(finalText)} / {@code onAborted(partialText)}
+     * should append a separate completion row: if the streamed text is already
+     * on screen, appending the same text again would duplicate it.
+     */
+    public synchronized boolean lastMessageIsStreamingText() {
+        if (messages.isEmpty()) return false;
+        return ChatMessage.TYPE_TEXT.equals(messages.get(messages.size() - 1).type);
     }
 }

@@ -96,7 +96,9 @@ public class OpenAiProvider implements LlmProvider {
         return () -> new IteratorImpl(parser, response, in);
     }
 
-    @Override public void abort() {}
+    @Override public void abort() {
+        com.sketchware.ai.llm.http.HttpClient.abortCurrent();
+    }
 
     /**
      * Whether to serialize tools in the OpenAI Responses API <b>flat</b> format
@@ -137,7 +139,16 @@ public class OpenAiProvider implements LlmProvider {
             root.add("stream_options", streamOptions);
         }
         if (request.maxTokens > 0) {
-            root.addProperty("max_tokens", request.maxTokens);
+            // OpenAI's o1 / o3 family uses max_completion_tokens instead of max_tokens.
+            // Sending max_tokens to those models causes HTTP 400.
+            String modelId = request.model != null && request.model.id != null
+                    ? request.model.id.toLowerCase() : "";
+            if (modelId.startsWith("o1") || modelId.startsWith("o3")
+                    || modelId.startsWith("o4")) {
+                root.addProperty("max_completion_tokens", request.maxTokens);
+            } else {
+                root.addProperty("max_tokens", request.maxTokens);
+            }
         }
 
         // Messages
@@ -150,7 +161,13 @@ public class OpenAiProvider implements LlmProvider {
         }
         for (AgentMessage m : request.messages) {
             if (AgentMessage.ROLE_SYSTEM.equals(m.role)) continue;
-            messages.add(toOpenAiMessage(m, useFlatToolFormat(request)));
+            // NOTE: assistant tool_calls are ALWAYS serialized in the wrapped
+            // Chat Completions format ({id,type,function:{name,arguments}})
+            // regardless of useFlatToolFormat(). The flat format only applies
+            // to the top-level `tools` array definition — assistant message
+            // tool_calls follow the standard OpenAI shape on every
+            // /v1/chat/completions endpoint (including Z.AI's).
+            messages.add(toOpenAiMessage(m, false));
         }
         root.add("messages", messages);
 
@@ -170,6 +187,8 @@ public class OpenAiProvider implements LlmProvider {
                 out.addProperty("type", "function");
                 if (flat) {
                     // Responses API flat format — name/description/parameters at top level.
+                    // Required by Z.AI's GLM API (open.bigmodel.cn) which uses a Pydantic
+                    // union schema rejecting the `function` wrapper as extra_forbidden.
                     out.addProperty("name", name);
                     out.addProperty("description", desc);
                     out.add("parameters", schema);
@@ -185,7 +204,12 @@ public class OpenAiProvider implements LlmProvider {
                 mapped.add(out);
             }
             root.add("tools", mapped);
-            root.addProperty("parallel_tool_calls", false);
+            // parallel_tool_calls is OpenAI-specific; some strict OpenAI-compat
+            // servers (e.g. Z.AI's Pydantic schema) reject unknown fields as
+            // extra_forbidden. Only emit it for the native OpenAI provider.
+            if ("openai".equals(getProviderId())) {
+                root.addProperty("parallel_tool_calls", false);
+            }
         }
 
         // Reasoning effort (OpenAI Responses / o1 / o3)
@@ -222,17 +246,18 @@ public class OpenAiProvider implements LlmProvider {
                     JsonObject call = new JsonObject();
                     call.addProperty("id", tc.id);
                     call.addProperty("type", "function");
-                    if (flatToolFormat) {
-                        // Flat: name + arguments at top level (no function wrapper).
-                        call.addProperty("name", tc.name);
-                        call.addProperty("arguments", tc.argumentsJson == null ? "{}" : tc.argumentsJson);
-                    } else {
-                        // Wrapped: name + arguments nested under function.
-                        JsonObject fn = new JsonObject();
-                        fn.addProperty("name", tc.name);
-                        fn.addProperty("arguments", tc.argumentsJson == null ? "{}" : tc.argumentsJson);
-                        call.add("function", fn);
-                    }
+                    // ALWAYS use the wrapped format for assistant tool_calls.
+                    // The OpenAI Chat Completions spec requires
+                    // {id, type, function: {name, arguments}} regardless of how
+                    // the `tools` array is shaped. (The flatToolFormat flag
+                    // applies only to the `tools` array, NOT to assistant
+                    // message tool_calls.) Sending flat assistant tool_calls
+                    // to /v1/chat/completions causes HTTP 400/422 on every
+                    // OpenAI-compat server we tested.
+                    JsonObject fn = new JsonObject();
+                    fn.addProperty("name", tc.name);
+                    fn.addProperty("arguments", tc.argumentsJson == null ? "{}" : tc.argumentsJson);
+                    call.add("function", fn);
                     arr.add(call);
                 }
                 obj.add("tool_calls", arr);
@@ -274,6 +299,10 @@ public class OpenAiProvider implements LlmProvider {
         private final InputStream stream;
         private ApiStreamChunk next;
         private boolean done;
+        // Pending error to surface to the caller. When readNext() throws a
+        // non-IOException (e.g. server error mid-stream), we store it here so
+        // hasNext() can rethrow it instead of silently ending the stream.
+        private Throwable pendingError;
         // Pending tool calls indexed by OpenAI-assigned index.
         private final java.util.Map<Integer, String> toolIds = new java.util.HashMap<>();
         private final java.util.Map<Integer, String> toolNames = new java.util.HashMap<>();
@@ -284,6 +313,7 @@ public class OpenAiProvider implements LlmProvider {
         private int cacheReadTokens = 0;
         private int cacheWriteTokens = 0;
         private boolean usageEmitted = false;
+        private boolean doneEmitted = false;
 
         IteratorImpl(SseParser parser, Response response, InputStream stream) {
             this.parser = parser;
@@ -299,6 +329,9 @@ public class OpenAiProvider implements LlmProvider {
             } catch (Exception e) {
                 done = true;
                 closeQuietly();
+                if (!(e instanceof java.io.IOException)) {
+                    pendingError = e;
+                }
                 return false;
             }
             if (next == null) {
@@ -310,7 +343,15 @@ public class OpenAiProvider implements LlmProvider {
         }
 
         @Override public ApiStreamChunk next() {
-            if (!hasNext()) throw new java.util.NoSuchElementException();
+            if (!hasNext()) {
+                if (pendingError != null) {
+                    if (pendingError instanceof RuntimeException) {
+                        throw (RuntimeException) pendingError;
+                    }
+                    throw new RuntimeException(pendingError);
+                }
+                throw new java.util.NoSuchElementException();
+            }
             ApiStreamChunk result = next;
             next = null;
             return result;
@@ -324,18 +365,74 @@ public class OpenAiProvider implements LlmProvider {
                     if (r != null) return r;
                     if (!usageEmitted) {
                         usageEmitted = true;
+                        double cost = computeCost();
                         return new ApiStreamChunk.Usage(inputTokens, outputTokens, reasoningTokens,
-                                cacheReadTokens, cacheWriteTokens, 0.0);
+                                cacheReadTokens, cacheWriteTokens, cost);
                     }
-                    return new ApiStreamChunk.Done();
+                    if (!doneEmitted) {
+                        doneEmitted = true;
+                        return new ApiStreamChunk.Done();
+                    }
+                    return null;
                 }
                 JsonObject obj = JsonParser.parseString(ev.data).getAsJsonObject();
+                // Process usage FIRST so we don't lose it when the same chunk
+                // also carries text/tool_calls (some servers bundle them).
+                if (obj.has("usage")) {
+                    JsonObject u = obj.getAsJsonObject("usage");
+                    if (u.has("prompt_tokens")) inputTokens = u.get("prompt_tokens").getAsInt();
+                    if (u.has("completion_tokens")) outputTokens = u.get("completion_tokens").getAsInt();
+                    if (u.has("prompt_tokens_details") && u.getAsJsonObject("prompt_tokens_details").has("cached_tokens")) {
+                        cacheReadTokens = u.getAsJsonObject("prompt_tokens_details").get("cached_tokens").getAsInt();
+                    }
+                    if (u.has("completion_tokens_details") && u.getAsJsonObject("completion_tokens_details").has("reasoning_tokens")) {
+                        reasoningTokens = u.getAsJsonObject("completion_tokens_details").get("reasoning_tokens").getAsInt();
+                    }
+                }
                 if (obj.has("choices")) {
                     JsonArray choices = obj.getAsJsonArray("choices");
                     if (choices.size() == 0) continue;
                     JsonObject choice = choices.get(0).getAsJsonObject();
                     JsonObject delta = choice.has("delta") ? choice.getAsJsonObject("delta") : null;
                     if (delta != null) {
+                        // CRITICAL: buffer tool_calls FIRST, before the
+                        // content/reasoning return statements below. Some
+                        // servers (vLLM, Mistral, OpenRouter, Z.AI) emit a
+                        // single delta carrying BOTH `content` AND `tool_calls`.
+                        // If we `return Text` before buffering the tool_calls,
+                        // the tool_calls in that delta are silently lost —
+                        // the agent runtime never sees them, the LLM's
+                        // intended tool call is dropped, and the conversation
+                        // ends prematurely with no tool execution.
+                        if (delta.has("tool_calls")) {
+                            JsonArray arr = delta.getAsJsonArray("tool_calls");
+                            for (JsonElement e : arr) {
+                                JsonObject tc = e.getAsJsonObject();
+                                int idx = tc.has("index") ? tc.get("index").getAsInt() : 0;
+                                if (tc.has("id") && !tc.get("id").isJsonNull()) {
+                                    toolIds.put(idx, tc.get("id").getAsString());
+                                }
+                                // Accept BOTH wrapped ({function:{name,arguments}}) and
+                                // flat ({name,arguments}) tool_call shapes — servers differ.
+                                // Some servers (e.g. Mistral, older vLLM) omit the `type`
+                                // field entirely, so don't gate on type == "function".
+                                JsonObject fn = tc.has("function") ? tc.getAsJsonObject("function") : tc;
+                                if (fn.has("name") && !fn.get("name").isJsonNull()) {
+                                    toolNames.put(idx, fn.get("name").getAsString());
+                                }
+                                if (fn.has("arguments") && !fn.get("arguments").isJsonNull()) {
+                                    String partial = fn.get("arguments").getAsString();
+                                    toolArgs.computeIfAbsent(idx, k -> new StringBuilder()).append(partial);
+                                }
+                                // If the server sent name+arguments but no id, generate
+                                // a synthetic id so emitPendingToolCalls() actually fires.
+                                // Without this, toolIds stays empty and the accumulated
+                                // tool call is silently dropped.
+                                if (!toolIds.containsKey(idx)) {
+                                    toolIds.put(idx, "call_" + idx + "_" + System.currentTimeMillis());
+                                }
+                            }
+                        }
                         if (delta.has("content")) {
                             JsonElement c = delta.get("content");
                             if (c != null && !c.isJsonNull() && c.isJsonPrimitive()) {
@@ -350,26 +447,12 @@ public class OpenAiProvider implements LlmProvider {
                                 if (!text.isEmpty()) return new ApiStreamChunk.Reasoning(text);
                             }
                         }
-                        if (delta.has("tool_calls")) {
-                            JsonArray arr = delta.getAsJsonArray("tool_calls");
-                            for (JsonElement e : arr) {
-                                JsonObject tc = e.getAsJsonObject();
-                                int idx = tc.has("index") ? tc.get("index").getAsInt() : 0;
-                                if (tc.has("id")) {
-                                    toolIds.put(idx, tc.get("id").getAsString());
-                                }
-                                // Accept BOTH wrapped ({function:{name,arguments}}) and
-                                // flat ({name,arguments}) tool_call shapes — servers differ.
-                                if (tc.has("type") && "function".equals(tc.get("type").getAsString())) {
-                                    JsonObject fn = tc.has("function") ? tc.getAsJsonObject("function") : tc;
-                                    if (fn.has("name")) {
-                                        toolNames.put(idx, fn.get("name").getAsString());
-                                    }
-                                    if (fn.has("arguments")) {
-                                        String partial = fn.get("arguments").getAsString();
-                                        toolArgs.computeIfAbsent(idx, k -> new StringBuilder()).append(partial);
-                                    }
-                                }
+                        // DeepSeek reasoning field alternative
+                        if (delta.has("reasoning")) {
+                            JsonElement r = delta.get("reasoning");
+                            if (r != null && !r.isJsonNull() && r.isJsonPrimitive()) {
+                                String text = r.getAsString();
+                                if (!text.isEmpty()) return new ApiStreamChunk.Reasoning(text);
                             }
                         }
                     }
@@ -377,17 +460,7 @@ public class OpenAiProvider implements LlmProvider {
                         String reason = choice.get("finish_reason").getAsString();
                         ApiStreamChunk r = emitPendingToolCalls();
                         if (r != null) return r;
-                    }
-                }
-                if (obj.has("usage")) {
-                    JsonObject u = obj.getAsJsonObject("usage");
-                    if (u.has("prompt_tokens")) inputTokens = u.get("prompt_tokens").getAsInt();
-                    if (u.has("completion_tokens")) outputTokens = u.get("completion_tokens").getAsInt();
-                    if (u.has("prompt_tokens_details") && u.getAsJsonObject("prompt_tokens_details").has("cached_tokens")) {
-                        cacheReadTokens = u.getAsJsonObject("prompt_tokens_details").get("cached_tokens").getAsInt();
-                    }
-                    if (u.has("completion_tokens_details") && u.getAsJsonObject("completion_tokens_details").has("reasoning_tokens")) {
-                        reasoningTokens = u.getAsJsonObject("completion_tokens_details").get("reasoning_tokens").getAsInt();
+                        // Don't break — keep reading; usage chunk usually follows.
                     }
                 }
             }
@@ -400,17 +473,29 @@ public class OpenAiProvider implements LlmProvider {
                 return new ApiStreamChunk.Usage(inputTokens, outputTokens, reasoningTokens,
                         cacheReadTokens, cacheWriteTokens, cost);
             }
-            return new ApiStreamChunk.Done();
+            if (!doneEmitted) {
+                doneEmitted = true;
+                return new ApiStreamChunk.Done();
+            }
+            return null;
         }
 
         private ApiStreamChunk emitPendingToolCalls() {
-            if (toolIds.isEmpty()) return null;
+            // Check toolNames/toolArgs too — some servers send name+arguments
+            // without an id (we synthesize one in the accumulator, but be
+            // defensive here in case the id path was never hit).
+            if (toolIds.isEmpty() && toolNames.isEmpty() && toolArgs.isEmpty()) return null;
             List<AgentMessage.ToolCall> calls = new ArrayList<>();
-            // Sort by index for deterministic order.
-            List<Integer> idxs = new ArrayList<>(toolIds.keySet());
-            java.util.Collections.sort(idxs);
-            for (int idx : idxs) {
+            // Union of all indexes we've seen, sorted for deterministic order.
+            java.util.Set<Integer> idxSet = new java.util.TreeSet<>();
+            idxSet.addAll(toolIds.keySet());
+            idxSet.addAll(toolNames.keySet());
+            idxSet.addAll(toolArgs.keySet());
+            for (int idx : idxSet) {
                 String id = toolIds.get(idx);
+                if (id == null || id.isEmpty()) {
+                    id = "call_" + idx + "_" + System.currentTimeMillis();
+                }
                 String name = toolNames.getOrDefault(idx, "unknown");
                 StringBuilder args = toolArgs.get(idx);
                 String argsJson = args == null ? "{}" : args.toString();
@@ -424,7 +509,9 @@ public class OpenAiProvider implements LlmProvider {
         }
 
         private double computeCost() {
-            // OpenAI native pricing depends on the model; we use the ModelInfo if available.
+            // Walk back up to the provider to get the ModelInfo for pricing.
+            // OpenAiProvider.this.model is not stored; we accept 0 cost if unknown.
+            // (Subclasses with explicit model catalogs can override.)
             return 0;
         }
 

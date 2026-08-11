@@ -1,6 +1,5 @@
 package com.sketchware.ai.llm.providers;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -17,10 +16,8 @@ import com.sketchware.ai.llm.http.SseParser;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import okhttp3.Response;
-import okhttp3.Call;
 
 /**
  * Anthropic Messages API provider.
@@ -41,9 +38,6 @@ import okhttp3.Call;
  * </ul>
  */
 public final class AnthropicProvider implements LlmProvider {
-
-    private final Gson gson = new Gson();
-    private final AtomicReference<Call> inFlight = new AtomicReference<>();
 
     @Override public String getProviderId() { return "anthropic"; }
 
@@ -116,8 +110,7 @@ public final class AnthropicProvider implements LlmProvider {
     }
 
     @Override public void abort() {
-        Call c = inFlight.get();
-        if (c != null) c.cancel();
+        com.sketchware.ai.llm.http.HttpClient.abortCurrent();
     }
 
     private JsonObject buildRequestBody(LlmRequest request) {
@@ -262,6 +255,10 @@ public final class AnthropicProvider implements LlmProvider {
         private final InputStream stream;
         private ApiStreamChunk next;
         private boolean done;
+        // Pending error to surface to the caller. When readNext() throws a
+        // non-IOException (e.g. Anthropic error event), we store it here so
+        // hasNext() can rethrow it instead of silently ending the stream.
+        private Throwable pendingError;
 
         // State for assembling tool_use blocks.
         private String currentToolId;
@@ -272,6 +269,8 @@ public final class AnthropicProvider implements LlmProvider {
         private int reasoningTokens = 0;
         private int cacheReadTokens = 0;
         private int cacheWriteTokens = 0;
+        private boolean usageEmitted = false;
+        private boolean doneEmitted = false;
 
         IteratorImpl(SseParser parser, Response response, InputStream stream) {
             this.parser = parser;
@@ -287,8 +286,10 @@ public final class AnthropicProvider implements LlmProvider {
             } catch (Exception e) {
                 done = true;
                 closeQuietly();
+                // Surface non-IO exceptions to the caller as a RuntimeException.
+                // IOExceptions are expected on stream end / cancellation.
                 if (!(e instanceof java.io.IOException)) {
-                    next = null;
+                    pendingError = e;
                 }
                 return false;
             }
@@ -301,7 +302,17 @@ public final class AnthropicProvider implements LlmProvider {
         }
 
         @Override public ApiStreamChunk next() {
-            if (!hasNext()) throw new java.util.NoSuchElementException();
+            if (!hasNext()) {
+                // If we terminated due to an error, rethrow it here so the
+                // caller's for-loop sees the exception.
+                if (pendingError != null) {
+                    if (pendingError instanceof RuntimeException) {
+                        throw (RuntimeException) pendingError;
+                    }
+                    throw new RuntimeException(pendingError);
+                }
+                throw new java.util.NoSuchElementException();
+            }
             ApiStreamChunk result = next;
             next = null;
             return result;
@@ -380,9 +391,17 @@ public final class AnthropicProvider implements LlmProvider {
                         break;
                     }
                     case "message_stop": {
-                        double cost = computeCost();
-                        return new ApiStreamChunk.Usage(inputTokens, outputTokens, reasoningTokens,
-                                cacheReadTokens, cacheWriteTokens, cost);
+                        // Emit usage first (if not yet emitted), then Done on
+                        // the next call. This keeps the chunk sequence
+                        // consistent with the other providers (Usage → Done).
+                        if (!usageEmitted) {
+                            usageEmitted = true;
+                            double cost = computeCost();
+                            return new ApiStreamChunk.Usage(inputTokens, outputTokens, reasoningTokens,
+                                    cacheReadTokens, cacheWriteTokens, cost);
+                        }
+                        doneEmitted = true;
+                        return new ApiStreamChunk.Done();
                     }
                     case "error": {
                         JsonObject err = obj.has("error") ? obj.getAsJsonObject("error") : obj;
@@ -390,6 +409,17 @@ public final class AnthropicProvider implements LlmProvider {
                         throw new RuntimeException("Anthropic error: " + msg);
                     }
                 }
+            }
+            // End of stream: emit Usage then Done if not already emitted.
+            if (!usageEmitted) {
+                usageEmitted = true;
+                double cost = computeCost();
+                return new ApiStreamChunk.Usage(inputTokens, outputTokens, reasoningTokens,
+                        cacheReadTokens, cacheWriteTokens, cost);
+            }
+            if (!doneEmitted) {
+                doneEmitted = true;
+                return new ApiStreamChunk.Done();
             }
             return null;
         }

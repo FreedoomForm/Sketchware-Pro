@@ -57,7 +57,7 @@ public final class OllamaProvider implements LlmProvider {
             for (LlmRequest.ExtraHeader h : request.extraHeaders) rb.header(h.name, h.value);
         }
         rb.post(RequestBody.create(body.toString(), MediaType.get("application/json; charset=utf-8")));
-        Response response = com.sketchware.ai.llm.http.HttpClient.getClient().newCall(rb.build()).execute();
+        Response response = com.sketchware.ai.llm.http.HttpClient.postStream(rb);
         if (!response.isSuccessful()) {
             String errBody = response.body() != null ? response.body().string() : "";
             response.close();
@@ -69,7 +69,9 @@ public final class OllamaProvider implements LlmProvider {
         return () -> new IteratorImpl(reader, response, in);
     }
 
-    @Override public void abort() {}
+    @Override public void abort() {
+        com.sketchware.ai.llm.http.HttpClient.abortCurrent();
+    }
 
     private JsonObject buildRequestBody(LlmRequest request) {
         JsonObject root = new JsonObject();
@@ -85,10 +87,28 @@ public final class OllamaProvider implements LlmProvider {
         }
         for (AgentMessage m : request.messages) {
             if (AgentMessage.ROLE_SYSTEM.equals(m.role)) continue;
+            // Tool-result messages must use role="tool" so Ollama knows they
+            // are outputs of a previous tool invocation, not user text.
+            String role;
+            if (m.hasToolResults()) {
+                role = "tool";
+            } else if ("assistant".equals(m.role)) {
+                role = "assistant";
+            } else {
+                role = "user";
+            }
             JsonObject msg = new JsonObject();
-            msg.addProperty("role", "user".equals(m.role) ? "user" : "assistant");
+            msg.addProperty("role", role);
             StringBuilder content = new StringBuilder();
             if (m.text != null) content.append(m.text);
+            // For tool-result messages, put the result output into `content`
+            // (Ollama's /api/chat expects the tool result text there).
+            if (m.hasToolResults()) {
+                for (AgentMessage.ToolResultContent r : m.toolResults) {
+                    if (content.length() > 0) content.append("\n");
+                    content.append(r.isError ? ("ERROR: " + r.output) : r.output);
+                }
+            }
             msg.addProperty("content", content.toString());
             if (m.images != null && !m.images.isEmpty()) {
                 JsonArray imgs = new JsonArray();
@@ -98,6 +118,21 @@ public final class OllamaProvider implements LlmProvider {
                     imgs.add(data);
                 }
                 msg.add("images", imgs);
+            }
+            // Assistant messages with tool_calls must include the `tool_calls`
+            // field — otherwise Ollama has no way to know what tool was called
+            // in the previous turn, and the conversation history is broken.
+            if ("assistant".equals(role) && m.toolCalls != null && !m.toolCalls.isEmpty()) {
+                JsonArray tcs = new JsonArray();
+                for (AgentMessage.ToolCall tc : m.toolCalls) {
+                    JsonObject tcObj = new JsonObject();
+                    JsonObject fn = new JsonObject();
+                    fn.addProperty("name", tc.name);
+                    fn.addProperty("arguments", tc.argumentsJson == null ? "{}" : tc.argumentsJson);
+                    tcObj.add("function", fn);
+                    tcs.add(tcObj);
+                }
+                msg.add("tool_calls", tcs);
             }
             messages.add(msg);
         }
@@ -137,6 +172,14 @@ public final class OllamaProvider implements LlmProvider {
         private final InputStream stream;
         private ApiStreamChunk next;
         private boolean done;
+        private Throwable pendingError;
+        private boolean usageEmitted = false;
+        private boolean doneEmitted = false;
+        // Monotonic counter for synthesizing tool-call ids (Ollama doesn't
+        // always return one). Using a counter avoids collisions when multiple
+        // tool calls arrive in the same NDJSON line.
+        private int toolIdCounter = 0;
+        private int inputTokens = 0, outputTokens = 0;
 
         IteratorImpl(BufferedReader reader, Response response, InputStream stream) {
             this.reader = reader;
@@ -152,6 +195,9 @@ public final class OllamaProvider implements LlmProvider {
             } catch (Exception e) {
                 done = true;
                 closeQuietly();
+                if (!(e instanceof java.io.IOException)) {
+                    pendingError = e;
+                }
                 return false;
             }
             if (next == null) {
@@ -163,7 +209,15 @@ public final class OllamaProvider implements LlmProvider {
         }
 
         @Override public ApiStreamChunk next() {
-            if (!hasNext()) throw new java.util.NoSuchElementException();
+            if (!hasNext()) {
+                if (pendingError != null) {
+                    if (pendingError instanceof RuntimeException) {
+                        throw (RuntimeException) pendingError;
+                    }
+                    throw new RuntimeException(pendingError);
+                }
+                throw new java.util.NoSuchElementException();
+            }
             ApiStreamChunk result = next;
             next = null;
             return result;
@@ -174,11 +228,20 @@ public final class OllamaProvider implements LlmProvider {
             while ((line = reader.readLine()) != null) {
                 if (line.isEmpty()) continue;
                 JsonObject obj = JsonParser.parseString(line).getAsJsonObject();
+                if (obj.has("error")) {
+                    String msg = obj.get("error").isJsonPrimitive()
+                            ? obj.get("error").getAsString()
+                            : obj.toString();
+                    throw new RuntimeException("Ollama error: " + msg);
+                }
                 if (obj.has("message")) {
                     JsonObject msg = obj.getAsJsonObject("message");
                     if (msg.has("content")) {
-                        String text = msg.get("content").getAsString();
-                        if (!text.isEmpty()) return new ApiStreamChunk.Text(text);
+                        JsonElement c = msg.get("content");
+                        if (c != null && !c.isJsonNull() && c.isJsonPrimitive()) {
+                            String text = c.getAsString();
+                            if (!text.isEmpty()) return new ApiStreamChunk.Text(text);
+                        }
                     }
                 }
                 if (obj.has("tool_calls")) {
@@ -187,9 +250,11 @@ public final class OllamaProvider implements LlmProvider {
                     for (JsonElement e : arr) {
                         JsonObject tc = e.getAsJsonObject();
                         JsonObject function = tc.has("function") ? tc.getAsJsonObject("function") : tc;
-                        String id = tc.has("id") ? tc.get("id").getAsString() : "tool_" + System.currentTimeMillis();
+                        String id = tc.has("id") && !tc.get("id").isJsonNull()
+                                ? tc.get("id").getAsString()
+                                : "tool_" + (toolIdCounter++);
                         String name = function.has("name") ? function.get("name").getAsString() : "unknown";
-                        String args = function.has("arguments")
+                        String args = function.has("arguments") && !function.get("arguments").isJsonNull()
                                 ? function.get("arguments").getAsString()
                                 : "{}";
                         calls.add(new AgentMessage.ToolCall(id, name, args));
@@ -198,12 +263,29 @@ public final class OllamaProvider implements LlmProvider {
                 }
                 if (obj.has("done") && obj.get("done").getAsBoolean()) {
                     if (obj.has("prompt_eval_count")) {
-                        int in = obj.get("prompt_eval_count").getAsInt();
-                        int out = obj.has("eval_count") ? obj.get("eval_count").getAsInt() : 0;
-                        return new ApiStreamChunk.Usage(in, out, 0, 0, 0, 0.0);
+                        inputTokens = obj.get("prompt_eval_count").getAsInt();
+                        outputTokens = obj.has("eval_count") ? obj.get("eval_count").getAsInt() : 0;
                     }
-                    return new ApiStreamChunk.Done();
+                    if (!usageEmitted) {
+                        usageEmitted = true;
+                        return new ApiStreamChunk.Usage(inputTokens, outputTokens, 0, 0, 0, 0.0);
+                    }
+                    if (!doneEmitted) {
+                        doneEmitted = true;
+                        return new ApiStreamChunk.Done();
+                    }
+                    return null;
                 }
+            }
+            // Stream ended without an explicit done:true. Emit Usage (if we
+            // have stats) then Done so the consumer sees a clean end.
+            if (!usageEmitted && (inputTokens > 0 || outputTokens > 0)) {
+                usageEmitted = true;
+                return new ApiStreamChunk.Usage(inputTokens, outputTokens, 0, 0, 0, 0.0);
+            }
+            if (!doneEmitted) {
+                doneEmitted = true;
+                return new ApiStreamChunk.Done();
             }
             return null;
         }

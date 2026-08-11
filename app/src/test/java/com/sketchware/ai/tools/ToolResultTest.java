@@ -29,13 +29,20 @@ public class ToolResultTest {
     @Test public void errorFromThrowableExtractsMessage() {
         Throwable t = new RuntimeException("disk full");
         ToolResult r = ToolResult.error(t);
-        assertThat(r.getError()).isEqualTo("disk full");
+        // The richer error format now includes the exception class name plus
+        // a trimmed stack trace so the LLM (and the developer) has actionable
+        // context. The original message is preserved as a substring.
+        assertThat(r.getError()).contains("disk full");
+        assertThat(r.getError()).contains("RuntimeException");
     }
 
     @Test public void errorFromThrowableWithoutMessageUsesClassName() {
         Throwable t = new RuntimeException();
         ToolResult r = ToolResult.error(t);
-        assertThat(r.getError()).isEqualTo("RuntimeException");
+        // Without a message, the error string still contains the fully-qualified
+        // class name plus a stack trace, so the LLM gets enough context to
+        // recover.
+        assertThat(r.getError()).contains("RuntimeException");
     }
 
     @Test public void truncatesLargeOutputWithMiddleCut() {

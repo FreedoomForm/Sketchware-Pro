@@ -32,11 +32,35 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
 
     public ChatAdapter() {
         super(new DiffUtil.ItemCallback<ChatMessage>() {
+            /**
+             * Two messages represent the same logical row if they share the
+             * same {@code ts} (creation timestamp, which is unique per
+             * ChatMessage instance). This lets DiffUtil distinguish "row
+             * changed" from "row added/removed" even when the surrounding
+             * list is rebuilt.
+             *
+             * <p>Previously this used {@code o == n} (reference equality),
+             * which combined with {@code MessageReducer.getMessages()}
+             * returning the same live list reference caused ListAdapter's
+             * {@code submitList} to short-circuit and never dispatch any
+             * update — the chat UI never visually updated during streaming.
+             */
             @Override public boolean areItemsTheSame(@NonNull ChatMessage o, @NonNull ChatMessage n) {
-                return o == n;
+                return o.ts == n.ts;
             }
+            /**
+             * Always return {@code false} so that any in-place mutation of
+             * a {@link ChatMessage} (e.g. streaming text appended by
+             * {@code MessageReducer.appendText}) triggers a rebind of the
+             * corresponding row. Because the reducer mutates the same
+             * ChatMessage instance and then publishes a shallow copy of the
+             * list, the old and new list slots point at the SAME instance —
+             * value-equality comparison would therefore return {@code true}
+             * and suppress the update. Forcing {@code false} is correct and
+             * cheap: RecyclerView only rebinds visible holders (~5–10).
+             */
             @Override public boolean areContentsTheSame(@NonNull ChatMessage o, @NonNull ChatMessage n) {
-                return o == n;
+                return false;
             }
         });
     }
@@ -107,17 +131,20 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
         final TextView text;
         TextHolder(@NonNull View v) { super(v); text = v.findViewById(R.id.text); }
         void bind(ChatMessage m) {
+            // API req info row takes precedence over generic text rendering.
+            if (ChatMessage.TYPE_API_REQ_DONE.equals(m.type)) {
+                text.setText("API: in=" + m.inputTokens + " out=" + m.outputTokens + " cost=$" + String.format("%.4f", m.cost));
+                return;
+            } else if (ChatMessage.TYPE_API_REQ_START.equals(m.type)) {
+                text.setText("Calling API...");
+                return;
+            } else if (ChatMessage.TYPE_COMPACTION.equals(m.type)) {
+                text.setText("Conversation compacted to fit context window.");
+                return;
+            }
             String t = m.text == null ? "" : m.text;
             if (m.isStreaming) t = t + "▋"; // typewriter cursor
             text.setText(t);
-            // API req info row
-            if (ChatMessage.TYPE_API_REQ_DONE.equals(m.type)) {
-                text.setText("API: in=" + m.inputTokens + " out=" + m.outputTokens + " cost=$" + String.format("%.4f", m.cost));
-            } else if (ChatMessage.TYPE_API_REQ_START.equals(m.type)) {
-                text.setText("Calling API...");
-            } else if (ChatMessage.TYPE_COMPACTION.equals(m.type)) {
-                text.setText("Conversation compacted to fit context window.");
-            }
         }
     }
 
@@ -149,13 +176,18 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
         void bind(ChatMessage m) {
             toolName.setText(m.toolName == null ? "" : m.toolName);
             toolArgs.setText(m.toolArgsJson == null ? "" : m.toolArgsJson);
-            if (m.toolResult != null) {
+            // Treat an empty-string result the same as null: the tool is still
+            // in-flight (or returned nothing useful) and the progress spinner
+            // should keep spinning until a non-empty result arrives.
+            if (m.toolResult != null && !m.toolResult.isEmpty()) {
                 toolResult.setVisibility(View.VISIBLE);
                 toolResult.setText((m.isError ? "ERROR: " : "OK: ") + m.toolResult);
                 progress.setVisibility(View.GONE);
             } else {
                 toolResult.setVisibility(View.GONE);
-                progress.setVisibility(View.VISIBLE);
+                // Only show the spinner for tool_call rows (in-flight). Tool
+                // _result rows with empty output should not spin forever.
+                progress.setVisibility(ChatMessage.TYPE_TOOL_CALL.equals(m.type) ? View.VISIBLE : View.GONE);
             }
         }
     }

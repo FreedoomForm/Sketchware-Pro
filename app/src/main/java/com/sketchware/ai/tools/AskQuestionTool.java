@@ -6,8 +6,14 @@ import com.google.gson.JsonObject;
 /**
  * ask_question - ask the user a question and wait for an answer.
  *
- * <p>The agent loop will pause and emit an ASK message to the UI.
- * The user's response is then injected as a user message.
+ * <p>When the LLM invokes this tool, the question text is returned to the
+ * LLM as a tool_result (prefixed with "QUESTION: "). The LLM should then
+ * stop and wait for the user's next message, which will be added to the
+ * conversation as a regular user message.
+ *
+ * <p>The tool_result is also surfaced in the chat UI as a regular tool
+ * result card, so the user sees the question and can type a reply in the
+ * chat input.
  */
 public final class AskQuestionTool implements SketchwareTool {
 
@@ -17,7 +23,8 @@ public final class AskQuestionTool implements SketchwareTool {
     @Override public boolean isAutoApprovedByDefault() { return true; }
 
     @Override public String description() {
-        return "Ask the user a question and wait for an answer. Use when the request is ambiguous.";
+        return "Ask the user a question and wait for an answer. Use when the request is ambiguous. "
+                + "The question is returned as a tool_result; stop and wait for the user's next message.";
     }
 
     @Override public JsonObject jsonSchema() {

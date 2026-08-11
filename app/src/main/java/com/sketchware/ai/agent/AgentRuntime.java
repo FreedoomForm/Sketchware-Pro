@@ -59,6 +59,16 @@ public final class AgentRuntime {
     private final AtomicReference<Future<?>> currentRun = new AtomicReference<>();
     private final AbortController abortController = new AbortController();
 
+    /**
+     * Tool execution context. Stored as a plain instance field (NOT a
+     * ThreadLocal) because {@code setContext()} is called from the UI thread
+     * but {@code executeTool()} runs on the agent's background executor —
+     * a ThreadLocal set on the UI thread is invisible to the executor thread,
+     * which previously caused every tool call to fail with
+     * "No tool context available."
+     */
+    private volatile SketchwareToolContext toolContext;
+
     private final LinkedList<AgentMessage> conversationHistory = new LinkedList<>();
     private AgentMode mode = AgentMode.ACT;
     private int maxIterations = DEFAULT_MAX_ITERATIONS;
@@ -82,6 +92,16 @@ public final class AgentRuntime {
     public void setMaxIterations(int max) { this.maxIterations = max; }
 
     /**
+     * Set the tool execution context. Must be called before {@link #execute}
+     * (or before the first tool call is dispatched). The context is stored as
+     * a plain instance field so it is visible across threads (the agent loop
+     * runs on a background executor, not the UI thread that calls this).
+     */
+    public void setContext(SketchwareToolContext ctx) {
+        this.toolContext = ctx;
+    }
+
+    /**
      * Start the agent loop with a new user message.
      * Returns immediately; the loop runs on a background thread.
      */
@@ -90,6 +110,10 @@ public final class AgentRuntime {
             listener.onError(new IllegalStateException("A run is already in progress. Call abort() first."));
             return;
         }
+        // CRITICAL: reset the abort flag so a previously-aborted runtime can
+        // start a fresh run. Without this, the loop's first-iteration check
+        // exits immediately and the listener is left with no callback.
+        abortController.reset();
         Future<?> f = executor.submit(() -> run(userInput, listener));
         currentRun.set(f);
     }
@@ -157,6 +181,16 @@ public final class AgentRuntime {
                     // Try overflow recovery once.
                     listener.onWarning("Stream error: " + e.getMessage() + ". Trying compaction.");
                     compactConversation(model.maxInputTokens);
+                    // CRITICAL: clear all buffers before retrying. The first
+                    // attempt may have streamed partial text/reasoning/tool_calls
+                    // before failing; if we don't reset, the retry would APPEND
+                    // to the existing buffers, producing duplicated text and
+                    // phantom tool calls in both the conversation history and
+                    // the UI (which already received onTextDelta callbacks for
+                    // the partial text).
+                    textBuf.setLength(0);
+                    reasonBuf.setLength(0);
+                    pendingToolCalls.clear();
                     // Retry once.
                     try {
                         LlmRequest retry = rebuildRequest(model, reasoning);
@@ -181,6 +215,15 @@ public final class AgentRuntime {
                     }
                 }
 
+                // If the user aborted mid-stream, surface the partial text
+                // and exit the loop. Previously the loop just exited silently
+                // and the listener was left in a "streaming" UI state with no
+                // terminal callback.
+                if (abortController.isAborted()) {
+                    listener.onAborted(textBuf.toString());
+                    return;
+                }
+
                 // Add assistant message to history.
                 conversationHistory.add(AgentMessage.assistant(
                         textBuf.toString(),
@@ -197,6 +240,7 @@ public final class AgentRuntime {
 
                 // Execute tools sequentially.
                 List<AgentMessage.ToolResultContent> results = new ArrayList<>();
+                boolean submitAndExit = false;
                 for (AgentMessage.ToolCall call : pendingToolCalls) {
                     if (abortController.isAborted()) break;
                     listener.onToolStart(call.id, call.name, call.argumentsJson);
@@ -207,8 +251,38 @@ public final class AgentRuntime {
                             result != null && result.isError());
                     results.add(tr);
                     listener.onToolResult(call.id, tr);
+                    // submit_and_exit signals task completion; the loop must
+                    // exit after the LLM sees the tool_result, NOT continue
+                    // with another LLM round-trip. We still execute any
+                    // remaining tool calls in this batch first (the LLM
+                    // issued them together, so they're presumably part of
+                    // the same logical step).
+                    if ("submit_and_exit".equals(call.name)) {
+                        submitAndExit = true;
+                    }
                 }
-                conversationHistory.add(AgentMessage.toolResult(results));
+                // Only add a tool_result message if at least one tool produced
+                // a result. If every call was skipped due to abort, an empty
+                // toolResult message would confuse the LLM (most providers
+                // reject empty tool_result content).
+                if (!results.isEmpty()) {
+                    conversationHistory.add(AgentMessage.toolResult(results));
+                }
+
+                // submit_and_exit: emit the summary as the final assistant
+                // text and stop the loop. The tool_result was already added
+                // so the conversation history is consistent.
+                if (submitAndExit) {
+                    String summary = extractSummary(results);
+                    listener.onComplete(summary);
+                    return;
+                }
+
+                // If abort happened during tool execution, surface partial state.
+                if (abortController.isAborted()) {
+                    listener.onAborted(textBuf.toString());
+                    return;
+                }
 
                 // Check for context overflow.
                 if (estimateTokens() > COMPACTION_TRIGGER_RATIO * model.maxInputTokens) {
@@ -216,7 +290,10 @@ public final class AgentRuntime {
                 }
             }
 
-            if (iteration > maxIterations) {
+            if (abortController.isAborted()) {
+                // Loop exited due to abort at iteration boundary.
+                listener.onAborted("");
+            } else if (iteration > maxIterations) {
                 listener.onMaxIterationsReached(maxIterations);
             }
         } catch (Throwable t) {
@@ -245,20 +322,29 @@ public final class AgentRuntime {
     private ToolResult executeTool(AgentMessage.ToolCall call, AgentListener listener) {
         SketchwareTool tool = toolRegistry.get(call.name);
         if (tool == null) {
-            return ToolResult.error("Unknown tool: " + call.name);
+            return ToolResult.error("Unknown tool: '" + call.name
+                    + "'. Available tools: " + toolRegistry.toolNamesSample());
         }
         // Permission gate
         ToolPermissionGate.Decision decision = permissionGate.decide(tool);
         if (decision == ToolPermissionGate.Decision.DENY) {
-            return ToolResult.error("Tool '" + call.name + "' is not allowed in current mode.");
+            return ToolResult.error("Tool '" + call.name + "' is not allowed in current mode ("
+                    + permissionGate.getMode() + ").");
         }
         if (decision == ToolPermissionGate.Decision.REQUIRE_APPROVAL) {
-            // For MVP: auto-approve if user is in YOLO. In ACT mode, we'd need a UI prompt.
-            // Since this runs on a background thread and the UI prompt is async,
-            // we currently treat it as auto-approve (the user can undo via Sketchware's
-            // own undo/redo buttons). A proper approve dialog will be wired up in
-            // the ChatFragment.
-            // TODO: implement async approval flow via listener.onApprovalRequired(call)
+            // Ask the listener whether to proceed. The default implementation
+            // returns true (auto-approve) for backward compatibility with the
+            // previous MVP behaviour. A real ChatFragment listener should
+            // override requestApproval() to show a confirmation dialog.
+            boolean approved = false;
+            try {
+                approved = listener.requestApproval(call);
+            } catch (Throwable t) {
+                return ToolResult.error("Approval request threw: " + t.getMessage());
+            }
+            if (!approved) {
+                return ToolResult.error("User denied permission to execute tool '" + call.name + "'.");
+            }
         }
         // Parse and validate args.
         JsonObject args;
@@ -267,28 +353,49 @@ public final class AgentRuntime {
                     ? new JsonObject()
                     : JsonParser.parseString(call.argumentsJson).getAsJsonObject();
         } catch (Exception e) {
-            return ToolResult.error("Invalid arguments JSON: " + e.getMessage());
+            return ToolResult.error("Invalid arguments JSON for '" + call.name + "': " + e.getMessage()
+                    + " (raw: " + truncateForError(call.argumentsJson) + ")");
         }
         JsonSchemaValidator.ValidationResult v = JsonSchemaValidator.validate(args, tool.jsonSchema());
         if (!v.ok) {
-            return ToolResult.error("Validation failed: " + v.error);
+            return ToolResult.error("Validation failed for '" + call.name + "': " + v.error);
         }
-        // Execute - the context is provided by the caller via ThreadLocal or
-        // constructor. For MVP we use a thread-local context set by ChatFragment.
-        SketchwareToolContext ctx = currentContext.get();
+        // Execute - the context is set by the caller via setContext().
+        // Previously this used a ThreadLocal which silently returned null on
+        // the background executor thread, causing every tool call to fail
+        // with "No tool context available."
+        SketchwareToolContext ctx = this.toolContext;
         if (ctx == null) {
-            return ToolResult.error("No tool context available.");
+            return ToolResult.error("No tool context available. Call AgentRuntime.setContext() before execute().");
         }
         ToolResult result = toolExecutor.execute(call.name, args, ctx);
         // Refresh UI
-        ctx.refreshAllEditors();
+        try {
+            ctx.refreshAllEditors();
+        } catch (Throwable ignored) {
+            // UI refresh failures should not affect the tool result.
+        }
         return result;
     }
 
-    // Thread-local tool context (set by ChatFragment before calling execute).
-    private static final ThreadLocal<SketchwareToolContext> currentContext = new ThreadLocal<>();
-    public static void setContext(SketchwareToolContext ctx) { currentContext.set(ctx); }
-    public static void clearContext() { currentContext.remove(); }
+    /**
+     * Extract the summary text from a submit_and_exit tool result. Falls back
+     * to concatenating the first non-error result's output if the structure
+     * is unexpected.
+     */
+    private static String extractSummary(List<AgentMessage.ToolResultContent> results) {
+        for (AgentMessage.ToolResultContent r : results) {
+            if (r.output != null && !r.output.isEmpty() && !r.isError) {
+                return r.output;
+            }
+        }
+        return "Task complete.";
+    }
+
+    private static String truncateForError(String s) {
+        if (s == null) return "null";
+        return s.length() <= 200 ? s : s.substring(0, 200) + "...(" + s.length() + " chars)";
+    }
 
     private int estimateTokens() {
         int sum = 0;

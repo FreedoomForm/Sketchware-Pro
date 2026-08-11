@@ -76,7 +76,7 @@ public final class JsonSchemaValidator {
             }
         }
 
-        if (value.isJsonPrimitive() && value.isJsonPrimitive()) {
+        if (value.isJsonPrimitive()) {
             JsonPrimitive p = value.getAsJsonPrimitive();
             if (schema.has("minimum") && p.isNumber()) {
                 if (p.getAsDouble() < schema.get("minimum").getAsDouble()) {

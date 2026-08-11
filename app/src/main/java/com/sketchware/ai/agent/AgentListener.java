@@ -27,6 +27,40 @@ public interface AgentListener {
     /** The run completed normally (assistant produced a final text with no tool calls). */
     void onComplete(String finalText);
 
+    /**
+     * The run was aborted by the user (or by an external {@code abort()} call).
+     * No further callbacks will be issued for this run. The listener should
+     * finalise any in-flight UI state (e.g. hide the stop button, mark the
+     * streaming message as finished).
+     *
+     * <p>Default implementation delegates to {@link #onComplete(String)} with
+     * whatever partial text was accumulated, so simple listeners that only
+     * override {@code onComplete} still get a clean shutdown signal.
+     */
+    default void onAborted(String partialText) {
+        onComplete(partialText == null ? "" : partialText);
+    }
+
+    /**
+     * Request user approval for a tool call that the permission gate has
+     * marked as {@link com.sketchware.ai.tools.ToolPermissionGate.Decision#REQUIRE_APPROVAL}.
+     *
+     * <p>This is invoked synchronously on the agent's background thread. The
+     * listener MUST NOT block the UI thread from inside this callback (post
+     * a dialog and block on a CountDownLatch, or just return a cached
+     * decision).
+     *
+     * <p>Default implementation returns {@code true} (auto-approve) to preserve
+     * the previous MVP behaviour where mutating tools in ACT mode were
+     * silently auto-approved. Override this to show a real approval dialog.
+     *
+     * @return {@code true} to execute the tool, {@code false} to deny (the
+     *     LLM will receive a "permission denied" tool_result).
+     */
+    default boolean requestApproval(AgentMessage.ToolCall call) {
+        return true;
+    }
+
     /** A recoverable error - the run keeps going (e.g. one tool failed). */
     void onWarning(String message);
 

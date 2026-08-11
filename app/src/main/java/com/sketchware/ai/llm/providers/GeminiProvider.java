@@ -67,16 +67,26 @@ public final class GeminiProvider implements LlmProvider {
         String baseUrl = request.baseUrl == null || request.baseUrl.isEmpty()
                 ? "https://generativelanguage.googleapis.com"
                 : request.baseUrl;
-        String url = baseUrl.replaceAll("/+$", "")
-                + "/v1beta/models/" + request.model.id
+        // Strip trailing slashes and any already-included /v1beta prefix so
+        // we don't double-append it when the user configured the base URL with
+        // the version segment included.
+        String base = baseUrl.replaceAll("/+$", "");
+        if (base.endsWith("/v1beta")) {
+            base = base.substring(0, base.length() - "/v1beta".length());
+        } else if (base.endsWith("/v1")) {
+            // Tolerate /v1 (older endpoint alias) — strip and use /v1beta below.
+            base = base.substring(0, base.length() - "/v1".length());
+        }
+        String url = base + "/v1beta/models/" + request.model.id
                 + ":streamGenerateContent?alt=sse&key=" + (request.apiKey == null ? "" : request.apiKey);
 
         JsonObject body = buildRequestBody(request);
         Response response = HttpClient.postStream(url, body.toString(), null, request.extraHeaders);
         if (!response.isSuccessful()) {
             String errBody = response.body() != null ? response.body().string() : "";
+            int code = response.code();
             response.close();
-            throw new RuntimeException("Gemini HTTP " + response.code() + ": " + errBody);
+            throw new RuntimeException("Gemini HTTP " + code + ": " + errBody);
         }
 
         final InputStream in = response.body() != null ? response.body().byteStream() : new java.io.ByteArrayInputStream(new byte[0]);
@@ -84,7 +94,9 @@ public final class GeminiProvider implements LlmProvider {
         return () -> new IteratorImpl(parser, response, in);
     }
 
-    @Override public void abort() {}
+    @Override public void abort() {
+        com.sketchware.ai.llm.http.HttpClient.abortCurrent();
+    }
 
     private JsonObject buildRequestBody(LlmRequest request) {
         JsonObject root = new JsonObject();
@@ -213,9 +225,24 @@ public final class GeminiProvider implements LlmProvider {
         private final InputStream stream;
         private ApiStreamChunk next;
         private boolean done;
+        // Pending error to surface to the caller. When readNext() throws a
+        // non-IOException (e.g. Gemini error event), we store it here so
+        // hasNext() can rethrow it instead of silently ending the stream.
+        private Throwable pendingError;
+        // FIFO queue of chunks decoded from the current SSE event but not
+        // yet returned to the caller. A single Gemini SSE event can carry
+        // multiple parts (text + functionCall + thoughtText), so we buffer
+        // them and return one per readNext() call.
+        private final java.util.ArrayDeque<ApiStreamChunk> pending = new java.util.ArrayDeque<>();
         private int inputTokens = 0, outputTokens = 0, reasoningTokens = 0;
         private int cacheReadTokens = 0, cacheWriteTokens = 0;
         private boolean usageEmitted = false;
+        private boolean doneEmitted = false;
+        // Monotonic counter for synthesizing tool-call ids when Gemini's
+        // response doesn't include one (which is the common case). Using a
+        // counter instead of System.currentTimeMillis() guarantees
+        // uniqueness across multiple tool calls in the same chunk.
+        private int toolIdCounter = 0;
 
         IteratorImpl(SseParser parser, Response response, InputStream stream) {
             this.parser = parser;
@@ -231,6 +258,9 @@ public final class GeminiProvider implements LlmProvider {
             } catch (Exception e) {
                 done = true;
                 closeQuietly();
+                if (!(e instanceof java.io.IOException)) {
+                    pendingError = e;
+                }
                 return false;
             }
             if (next == null) {
@@ -242,13 +272,23 @@ public final class GeminiProvider implements LlmProvider {
         }
 
         @Override public ApiStreamChunk next() {
-            if (!hasNext()) throw new java.util.NoSuchElementException();
+            if (!hasNext()) {
+                if (pendingError != null) {
+                    if (pendingError instanceof RuntimeException) {
+                        throw (RuntimeException) pendingError;
+                    }
+                    throw new RuntimeException(pendingError);
+                }
+                throw new java.util.NoSuchElementException();
+            }
             ApiStreamChunk result = next;
             next = null;
             return result;
         }
 
         private ApiStreamChunk readNext() throws Exception {
+            // Drain any buffered chunks first.
+            if (!pending.isEmpty()) return pending.poll();
             for (SseEvent ev : parser) {
                 if (ev.data == null || ev.data.isEmpty() || "[DONE]".equals(ev.data)) {
                     if (!usageEmitted) {
@@ -256,44 +296,16 @@ public final class GeminiProvider implements LlmProvider {
                         return new ApiStreamChunk.Usage(inputTokens, outputTokens, reasoningTokens,
                                 cacheReadTokens, cacheWriteTokens, 0.0);
                     }
-                    return new ApiStreamChunk.Done();
+                    if (!doneEmitted) {
+                        doneEmitted = true;
+                        return new ApiStreamChunk.Done();
+                    }
+                    return null;
                 }
                 JsonObject obj = JsonParser.parseString(ev.data).getAsJsonObject();
 
-                if (obj.has("candidates")) {
-                    JsonArray cands = obj.getAsJsonArray("candidates");
-                    if (cands.size() == 0) continue;
-                    JsonObject cand = cands.get(0).getAsJsonObject();
-                    if (cand.has("content")) {
-                        JsonObject content = cand.getAsJsonObject("content");
-                        if (content.has("parts")) {
-                            JsonArray parts = content.getAsJsonArray("parts");
-                            List<AgentMessage.ToolCall> pending = new ArrayList<>();
-                            for (JsonElement p : parts) {
-                                JsonObject part = p.getAsJsonObject();
-                                if (part.has("text")) {
-                                    String text = part.get("text").getAsString();
-                                    if (!text.isEmpty()) {
-                                        // Return text immediately.
-                                        return new ApiStreamChunk.Text(text);
-                                    }
-                                } else if (part.has("thoughtText")) {
-                                    String text = part.get("thoughtText").getAsString();
-                                    return new ApiStreamChunk.Reasoning(text);
-                                } else if (part.has("functionCall")) {
-                                    JsonObject fc = part.getAsJsonObject("functionCall");
-                                    String id = "tool_" + System.currentTimeMillis();
-                                    String name = fc.has("name") ? fc.get("name").getAsString() : "unknown";
-                                    JsonObject args = fc.has("args") ? fc.getAsJsonObject("args") : new JsonObject();
-                                    pending.add(new AgentMessage.ToolCall(id, name, args.toString()));
-                                }
-                            }
-                            if (!pending.isEmpty()) {
-                                return new ApiStreamChunk.ToolCalls(pending);
-                            }
-                        }
-                    }
-                }
+                // Process usageMetadata FIRST so we don't lose it when the
+                // same chunk also carries content.
                 if (obj.has("usageMetadata")) {
                     JsonObject u = obj.getAsJsonObject("usageMetadata");
                     if (u.has("promptTokenCount")) inputTokens = u.get("promptTokenCount").getAsInt();
@@ -301,13 +313,82 @@ public final class GeminiProvider implements LlmProvider {
                     if (u.has("thoughtsTokenCount")) reasoningTokens = u.get("thoughtsTokenCount").getAsInt();
                     if (u.has("cachedContentTokenCount")) cacheReadTokens = u.get("cachedContentTokenCount").getAsInt();
                 }
+
+                // Gemini error responses are sometimes wrapped in `error`.
+                if (obj.has("error")) {
+                    JsonObject err = obj.getAsJsonObject("error");
+                    String msg = err.has("message") ? err.get("message").getAsString() : ev.data;
+                    throw new RuntimeException("Gemini error: " + msg);
+                }
+
+                if (obj.has("candidates")) {
+                    JsonArray cands = obj.getAsJsonArray("candidates");
+                    if (cands.size() == 0) continue;
+                    JsonObject cand = cands.get(0).getAsJsonObject();
+                    // Check finishReason for safety/error states.
+                    if (cand.has("finishReason")) {
+                        String fr = cand.get("finishReason").getAsString();
+                        if ("SAFETY".equals(fr) || "RECITATION".equals(fr)
+                                || "BLOCKLIST".equals(fr) || "PROHIBITED_CONTENT".equals(fr)) {
+                            // Buffer a warning text so the caller sees something.
+                            pending.add(new ApiStreamChunk.Text("[blocked: " + fr + "]"));
+                        }
+                    }
+                    if (cand.has("content")) {
+                        JsonObject content = cand.getAsJsonObject("content");
+                        if (content.has("parts")) {
+                            JsonArray parts = content.getAsJsonArray("parts");
+                            List<AgentMessage.ToolCall> calls = new ArrayList<>();
+                            for (JsonElement p : parts) {
+                                JsonObject part = p.getAsJsonObject();
+                                if (part.has("text")) {
+                                    String text = part.get("text").getAsString();
+                                    if (!text.isEmpty()) {
+                                        pending.add(new ApiStreamChunk.Text(text));
+                                    }
+                                } else if (part.has("thoughtText")) {
+                                    String text = part.get("thoughtText").getAsString();
+                                    if (!text.isEmpty()) {
+                                        pending.add(new ApiStreamChunk.Reasoning(text));
+                                    }
+                                } else if (part.has("thought")) {
+                                    // Variant: some SDKs use `thought` for the
+                                    // reasoning text instead of `thoughtText`.
+                                    String text = part.get("thought").getAsString();
+                                    if (!text.isEmpty()) {
+                                        pending.add(new ApiStreamChunk.Reasoning(text));
+                                    }
+                                } else if (part.has("functionCall")) {
+                                    JsonObject fc = part.getAsJsonObject("functionCall");
+                                    String id = fc.has("id") && !fc.get("id").isJsonNull()
+                                            ? fc.get("id").getAsString()
+                                            : "tool_" + (toolIdCounter++);
+                                    String name = fc.has("name") ? fc.get("name").getAsString() : "unknown";
+                                    JsonObject args = fc.has("args") && fc.get("args").isJsonObject()
+                                            ? fc.getAsJsonObject("args") : new JsonObject();
+                                    calls.add(new AgentMessage.ToolCall(id, name, args.toString()));
+                                }
+                            }
+                            if (!calls.isEmpty()) {
+                                pending.add(new ApiStreamChunk.ToolCalls(calls));
+                            }
+                        }
+                    }
+                }
+                // If we buffered any chunks this iteration, return the first.
+                if (!pending.isEmpty()) return pending.poll();
             }
+            // End of stream.
             if (!usageEmitted) {
                 usageEmitted = true;
                 return new ApiStreamChunk.Usage(inputTokens, outputTokens, reasoningTokens,
                         cacheReadTokens, cacheWriteTokens, 0.0);
             }
-            return new ApiStreamChunk.Done();
+            if (!doneEmitted) {
+                doneEmitted = true;
+                return new ApiStreamChunk.Done();
+            }
+            return null;
         }
 
         private void closeQuietly() {
