@@ -1,40 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Cline-style user message: right-aligned bubble, primary container background -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:paddingStart="48dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
 
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="end"
         app:cardBackgroundColor="?attr/colorPrimaryContainer"
-        app:cardCornerRadius="16dp"
+        app:cardCornerRadius="14dp"
         app:cardElevation="0dp"
-        app:strokeWidth="0dp"
-        xmlns:app="http://schemas.android.com/apk/res-auto">
+        app:strokeWidth="0dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/text"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="You"
-                android:textStyle="bold"
-                android:textColor="?attr/colorOnPrimaryContainer"
-                android:textSize="12sp"
-                android:layout_marginBottom="4dp" />
-
-            <TextView
-                android:id="@+id/text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnPrimaryContainer"
-                android:textSize="14sp" />
-        </LinearLayout>
+            android:padding="10dp"
+            android:textColor="?attr/colorOnPrimaryContainer"
+            android:textSize="14sp"
+            android:lineSpacingExtra="2dp" />
     </com.google.android.material.card.MaterialCardView>
-</LinearLayout>
+</FrameLayout>

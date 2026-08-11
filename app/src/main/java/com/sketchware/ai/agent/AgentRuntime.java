@@ -63,7 +63,7 @@ public final class AgentRuntime {
      * {@code ToolPermissionGate} is used, so existing callers (e.g.
      * {@code ChatFragment}) don't need to be rewritten.
      */
-    private final AutoApprover autoApprover;
+    private AutoApprover autoApprover;
     private final ToolPermissionGate legacyGate;
     private final ProviderConfigStore.Profile profile;
     private final String systemPrompt;
@@ -141,6 +141,18 @@ public final class AgentRuntime {
         if (legacyGate != null) legacyGate.setMode(mode);
     }
     public AgentMode getMode() { return mode; }
+
+    /**
+     * Replace the AutoApprover at runtime. Used by ChatFragment when the
+     * user toggles the YOLO / auto-approve switch — the new policy takes
+     * effect on the next tool call without needing to rebuild the agent.
+     */
+    public void setAutoApprover(com.sketchware.ai.tools.AutoApprover approver) {
+        if (approver != null) {
+            this.autoApprover = approver;
+            this.autoApprover.setMode(this.mode);
+        }
+    }
 
     public void setMaxIterations(int max) { this.maxIterations = max; }
 

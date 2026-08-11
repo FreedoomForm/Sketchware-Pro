@@ -60,8 +60,13 @@ public final class ChatFragment extends Fragment {
     private com.google.android.material.button.MaterialButton btnSend;
     private com.google.android.material.button.MaterialButton btnStop;
     private com.google.android.material.button.MaterialButton btnAttach;
-    private com.google.android.material.materialswitch.MaterialSwitch planActToggle;
+    private com.google.android.material.button.MaterialButton btnMode;
+    private com.google.android.material.materialswitch.MaterialSwitch autoApproveToggle;
     private com.google.android.material.progressindicator.LinearProgressIndicator contextProgress;
+    private View statusDot;
+    private android.widget.TextView statusText;
+    private android.widget.TextView tokensText;
+    private android.widget.TextView modeLabel;
 
     private ChatAdapter adapter;
     private final MessageReducer reducer = new MessageReducer();
@@ -120,8 +125,13 @@ public final class ChatFragment extends Fragment {
         btnSend = root.findViewById(R.id.btn_send);
         btnStop = root.findViewById(R.id.btn_stop);
         btnAttach = root.findViewById(R.id.btn_attach);
-        planActToggle = root.findViewById(R.id.plan_act_toggle);
+        btnMode = root.findViewById(R.id.btn_mode);
+        autoApproveToggle = root.findViewById(R.id.auto_approve_toggle);
         contextProgress = root.findViewById(R.id.context_progress);
+        statusDot = root.findViewById(R.id.status_dot);
+        statusText = root.findViewById(R.id.status_text);
+        tokensText = root.findViewById(R.id.tokens_text);
+        modeLabel = root.findViewById(R.id.mode_label);
 
         adapter = new ChatAdapter();
         recycler.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -166,6 +176,9 @@ public final class ChatFragment extends Fragment {
             } else if (id == R.id.menu_ai_cost) {
                 showCostSummary();
                 return true;
+            } else if (id == R.id.menu_ai_auto_approve) {
+                startActivity(AISettingsActivity.newIntent(requireContext(), AISettingsActivity.FRAGMENT_AUTO_APPROVE));
+                return true;
             }
             return false;
         });
@@ -189,15 +202,70 @@ public final class ChatFragment extends Fragment {
             btnStop.setVisibility(View.GONE);
             btnAttach.setVisibility(View.VISIBLE);
         });
-        planActToggle.setOnCheckedChangeListener((b, checked) -> {
-            AgentMode mode = checked ? AgentMode.PLAN : AgentMode.ACT;
-            if (agent != null) agent.setMode(mode);
-            // If agent is null, the mode will be read from the toggle when
-            // the agent is first built in send().
+
+        // Mode toggle (Act/Plan) — cycles between ACT and PLAN. Updates the
+        // button label + mode chip, and notifies the agent if running.
+        java.util.concurrent.atomic.AtomicReference<AgentMode> currentMode =
+                new java.util.concurrent.atomic.AtomicReference<>(AgentMode.ACT);
+        updateModeUi(currentMode.get());
+        btnMode.setOnClickListener(v -> {
+            AgentMode next = currentMode.get() == AgentMode.ACT
+                    ? AgentMode.PLAN : AgentMode.ACT;
+            currentMode.set(next);
+            updateModeUi(next);
+            if (agent != null) agent.setMode(next);
+        });
+
+        // Auto-approve (YOLO) toggle — reads/writes the AutoApproveFragment
+        // shared preference so it stays in sync with the settings page.
+        android.content.SharedPreferences aaPrefs = requireContext()
+                .getSharedPreferences(AutoApproveFragment.PREFS_NAME, Context.MODE_PRIVATE);
+        autoApproveToggle.setChecked(aaPrefs.getBoolean(AutoApproveFragment.KEY_YOLO, false));
+        autoApproveToggle.setOnCheckedChangeListener((b, checked) -> {
+            aaPrefs.edit().putBoolean(AutoApproveFragment.KEY_YOLO, checked).apply();
+            // Update the AutoApprover used by the agent immediately so the
+            // change takes effect on the next tool call without a restart.
+            if (agent != null) {
+                agent.setAutoApprover(buildAutoApprover(checked));
+            }
+            if (statusText != null) {
+                statusText.setText(checked ? "Auto-approve ON" : "Idle");
+            }
         });
 
         adapter.submitList(reducer.getMessages());
         return root;
+    }
+
+    /** Update the mode button label + chip text based on AgentMode. */
+    private void updateModeUi(AgentMode mode) {
+        if (btnMode == null || modeLabel == null) return;
+        String label = mode == AgentMode.PLAN ? "Plan" : "Act";
+        btnMode.setText(label);
+        modeLabel.setText(mode.name());
+    }
+
+    /**
+     * Build an AutoApprover matching the YOLO toggle state. When yolo=true,
+     * returns an AutoApprover in YOLO mode; otherwise returns one in ACT mode
+     * with the default rule set.
+     */
+    private com.sketchware.ai.tools.AutoApprover buildAutoApprover(boolean yolo) {
+        com.sketchware.ai.tools.AutoApprover aa = com.sketchware.ai.tools.AutoApprover.withDefaults();
+        aa.setMode(yolo ? AgentMode.YOLO : AgentMode.ACT);
+        return aa;
+    }
+
+    /** Update the status dot + text. Called from agent listener callbacks. */
+    private void setStatus(String text, boolean active) {
+        if (statusText != null) statusText.setText(text);
+        if (statusDot != null) {
+            statusDot.setBackgroundColor(active
+                    ? androidx.core.content.ContextCompat.getColor(
+                        requireContext(), com.google.android.material.R.color.design_default_color_primary)
+                    : androidx.core.content.ContextCompat.getColor(
+                        requireContext(), com.google.android.material.R.color.design_default_color_secondary));
+        }
     }
 
     @Override public void onResume() {
@@ -368,10 +436,11 @@ public final class ChatFragment extends Fragment {
             AgentMode initialMode = AgentMode.ACT;
             if (isYoloEnabled()) {
                 initialMode = AgentMode.YOLO;
-            } else if (planActToggle != null && planActToggle.isChecked()) {
+            } else if (btnMode != null && "Plan".equals(btnMode.getText().toString())) {
                 initialMode = AgentMode.PLAN;
             }
             agent.setMode(initialMode);
+            updateModeUi(initialMode);
         }
 
         // Always refresh the tool context: the user may have navigated to a
@@ -443,7 +512,9 @@ public final class ChatFragment extends Fragment {
                     recycler.scrollToPosition(reducer.getMessages().size() - 1);
                 });
             }
-            @Override public void onToolStart(String toolCallId, String toolName, String argsJson) {}
+            @Override public void onToolStart(String toolCallId, String toolName, String argsJson) {
+                runOnUiIfAlive(() -> setStatus("Running " + toolName, true));
+            }
             @Override public void onToolResult(String toolCallId, AgentMessage.ToolResultContent result) {
                 runOnUiIfAlive(() -> {
                     reducer.addToolResult(result.toolName, result.output, result.isError);
@@ -455,6 +526,9 @@ public final class ChatFragment extends Fragment {
                 runOnUiIfAlive(() -> {
                     reducer.addUsage(inT, outT, cost);
                     adapter.submitList(reducer.getMessages());
+                    if (tokensText != null) {
+                        tokensText.setText(inT + " in · " + outT + " out");
+                    }
                 });
             }
             @Override public void onComplete(String finalText) {
@@ -481,6 +555,7 @@ public final class ChatFragment extends Fragment {
                         recycler.scrollToPosition(reducer.getMessages().size() - 1);
                     }
                     finishRun("Task complete");
+                    setStatus("Complete", false);
                 });
             }
             @Override public void onAborted(String partialText) {
@@ -498,6 +573,7 @@ public final class ChatFragment extends Fragment {
                     }
                     adapter.submitList(reducer.getMessages());
                     finishRun("Stopped");
+                    setStatus("Stopped", false);
                 });
             }
             @Override public void onWarning(String message) {
@@ -514,6 +590,7 @@ public final class ChatFragment extends Fragment {
                     reducer.addError(msg);
                     adapter.submitList(reducer.getMessages());
                     finishRun("Error: " + msg);
+                    setStatus("Error", false);
                 });
             }
             @Override public void onMaxIterationsReached(int max) {
@@ -736,9 +813,10 @@ public final class ChatFragment extends Fragment {
                         return true;
                 }
                 if (agent != null) agent.setMode(newMode);
-                // Sync the toggle (except for YOLO which is set via settings).
-                if (planActToggle != null && newMode != AgentMode.YOLO) {
-                    planActToggle.setChecked(newMode == AgentMode.PLAN);
+                // Sync the mode button (except for YOLO which is set via the
+                // auto-approve toggle).
+                if (btnMode != null && newMode != AgentMode.YOLO) {
+                    updateModeUi(newMode);
                 }
                 reducer.addCompletion("Switched to " + newMode + " mode.");
                 if (adapter != null) adapter.submitList(reducer.getMessages());
