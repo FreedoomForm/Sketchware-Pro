@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Cline-style AI chat layout.
+     Top bar: compact, icon + title + menu.
+     Status row: thin, shows running state + tokens.
+     Messages: RecyclerView with Cline-style rows.
+     Input: card at bottom with auto-approve toggle + mode + send. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -6,69 +11,71 @@
     android:orientation="vertical"
     android:background="?attr/colorSurface">
 
-    <!-- ============= Cline-style Top Bar ============= -->
-    <!-- Compact: icon + title on left, [auto-approve chip] + [history] + [more] on right -->
-    <com.google.android.material.appbar.AppBarLayout
+    <!-- ============= Top Bar (Cline-style compact) ============= -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:minHeight="44dp"
+        android:background="?attr/colorSurface"
+        app:title="AI Assistant"
+        app:titleTextAppearance="@style/TextAppearance.Material3.TitleSmall"
+        app:titleTextColor="?attr/colorOnSurface"
+        app:navigationIcon="@drawable/ic_terminal"
+        app:menu="@menu/ai_chat_menu"
+        app:elevation="0dp" />
+
+    <!-- Thin divider line under toolbar -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/colorOutlineVariant" />
+
+    <!-- ============= Status Row ============= -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/colorSurface"
-        app:elevation="0dp">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:background="?attr/colorSurface">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:minHeight="48dp"
-            app:title="Cline"
-            app:titleTextAppearance="@style/TextAppearance.Material3.TitleSmall"
-            app:titleTextColor="?attr/colorOnSurface"
-            app:navigationIcon="@drawable/ic_terminal"
-            app:menu="@menu/ai_chat_menu" />
+        <View
+            android:id="@+id/status_dot"
+            android:layout_width="7dp"
+            android:layout_height="7dp"
+            android:background="@drawable/circle_status_dot" />
 
-        <!-- Thin status row: shows running state + context usage -->
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/status_text"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="6dp">
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:text="Idle"
+            android:textSize="11sp"
+            android:textColor="?attr/colorOnSurfaceVariant" />
 
-            <View
-                android:id="@+id/status_dot"
-                android:layout_width="8dp"
-                android:layout_height="8dp"
-                android:background="@drawable/circle_status_dot" />
+        <TextView
+            android:id="@+id/tokens_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 in · 0 out"
+            android:textSize="10sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:fontFamily="monospace" />
+    </LinearLayout>
 
-            <TextView
-                android:id="@+id/status_text"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="6dp"
-                android:text="Idle"
-                android:textSize="11sp"
-                android:textColor="?attr/colorOnSurfaceVariant" />
-
-            <TextView
-                android:id="@+id/tokens_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0 in · 0 out"
-                android:textSize="11sp"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:fontFamily="monospace" />
-        </LinearLayout>
-
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-            android:id="@+id/context_progress"
-            android:layout_width="match_parent"
-            android:layout_height="2dp"
-            android:visibility="gone"
-            app:indicatorColor="?attr/colorPrimary"
-            app:trackColor="?attr/colorSurfaceVariant" />
-    </com.google.android.material.appbar.AppBarLayout>
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/context_progress"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:visibility="gone"
+        app:indicatorColor="?attr/colorPrimary"
+        app:trackColor="?attr/colorSurfaceVariant" />
 
     <!-- ============= Messages List ============= -->
     <androidx.recyclerview.widget.RecyclerView
@@ -77,7 +84,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingTop="4dp"
+        android:paddingTop="2dp"
         android:paddingBottom="8dp"
         android:scrollbars="vertical"
         android:overScrollMode="ifContentScrolls" />
@@ -100,7 +107,7 @@
             android:paddingBottom="6dp" />
     </HorizontalScrollView>
 
-    <!-- ============= Bottom Input Bar (Cline-style) ============= -->
+    <!-- ============= Bottom Input Area (Cline-style) ============= -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -111,7 +118,7 @@
         android:paddingTop="4dp"
         android:paddingBottom="6dp">
 
-        <!-- Auto-approve / YOLO toggle row — Cline shows this prominently above the input -->
+        <!-- Auto-approve + mode row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -129,8 +136,8 @@
                 app:trackTint="?attr/colorSurfaceVariant" />
 
             <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
                 android:layout_marginStart="6dp"
                 android:src="@drawable/ic_shield"
                 app:tint="?attr/colorOnSurfaceVariant" />
@@ -140,7 +147,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:text="Auto-approve"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
             <View
@@ -153,18 +160,23 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="ACT"
-                android:textSize="11sp"
+                android:textSize="10sp"
                 android:textStyle="bold"
                 android:textColor="?attr/colorPrimary"
-                android:fontFamily="monospace" />
+                android:fontFamily="monospace"
+                android:background="@drawable/mode_chip_bg"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp" />
         </LinearLayout>
 
-        <!-- Input box — single Material card, no nested boxes -->
+        <!-- Input card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:cardBackgroundColor="?attr/colorSurfaceVariant"
-            app:cardCornerRadius="12dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
             app:strokeWidth="0dp">
 
@@ -172,7 +184,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="6dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/input"
@@ -185,7 +200,9 @@
                     android:minLines="1"
                     android:padding="4dp"
                     android:imeOptions="actionSend"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textColorHint="?attr/colorOnSurfaceVariant" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -197,8 +214,8 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_attach"
                         style="@style/Widget.Material3.Button.IconButton"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
                         app:icon="@drawable/ic_attach"
                         app:iconSize="18dp"
                         app:iconTint="?attr/colorOnSurfaceVariant" />
@@ -207,7 +224,7 @@
                         android:id="@+id/btn_mode"
                         style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="wrap_content"
-                        android:layout_height="36dp"
+                        android:layout_height="32dp"
                         android:minWidth="0dp"
                         android:paddingStart="8dp"
                         android:paddingEnd="8dp"
@@ -225,8 +242,8 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_stop"
                         style="@style/Widget.Material3.Button.IconButton.Filled"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
                         android:visibility="gone"
                         app:icon="@drawable/ic_stop"
                         app:iconSize="16dp"
@@ -235,8 +252,8 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_send"
                         style="@style/Widget.Material3.Button.IconButton.Filled"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
                         app:icon="@drawable/ic_send"
                         app:iconSize="18dp" />
                 </LinearLayout>

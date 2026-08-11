@@ -54,6 +54,9 @@ public final class ViewDeleteWidgetTool implements SketchwareTool {
             }
             if (target == null) return ToolResult.error("Widget '" + widgetId + "' not found.");
             SketchwareApi.invoke(eC, "b", javaName, target);
+            // Persist the deletion to disk so the editor and tool stay in sync.
+            ctx.persistViewToDisk();
+            ctx.refreshViewEditor();
             return ToolResult.success("Deleted widget '" + widgetId + "'.");
         } catch (Throwable t) {
             return ToolResult.error(t);

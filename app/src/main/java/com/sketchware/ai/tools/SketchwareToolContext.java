@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 
 import com.besome.sketch.design.DesignActivity;
+import com.sketchware.ai.util.SketchwareApi;
 
 import java.util.function.Consumer;
 
@@ -120,5 +121,33 @@ public class SketchwareToolContext {
         refreshLogicEditor();
         refreshEventList();
         refreshComponentList();
+    }
+
+    /**
+     * Persist the in-memory view data (ViewBeans, events, components) to disk
+     * WITHOUT clearing the in-memory cache. This is the fix for the desync
+     * where {@code view_list_widgets} reported N widgets but the editor showed
+     * 0 — the widgets were in the in-memory {@code eC.c} HashMap but were
+     * never written to disk, so when the editor reloaded from disk (e.g. on
+     * layout switch) it got 0.
+     *
+     * <p>Implementation: calls {@code jC.a(scId).n(path)} reflectively, which
+     * serializes the view HashMap to a StringBuffer and writes it to the
+     * {@code <project>/view} file. Unlike {@code jC.a(scId).j()} (which saves
+     * AND clears), this preserves the in-memory cache so subsequent tool calls
+     * still see the data.
+     */
+    public void persistViewToDisk() {
+        try {
+            Object eC = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
+            // Build the path: wq.b(sc_id) + File.separator + "view"
+            String projectPath = (String) SketchwareApi.invokeStatic("a.a.a.wq", "b", scId);
+            String viewPath = projectPath + java.io.File.separator + "view";
+            // Call n(String path) — saves view data to disk without clearing memory.
+            SketchwareApi.invoke(eC, "n", viewPath);
+        } catch (Throwable t) {
+            // Best-effort persistence; don't fail the tool call if saving fails.
+            android.util.Log.w("SketchwareToolContext", "persistViewToDisk failed", t);
+        }
     }
 }

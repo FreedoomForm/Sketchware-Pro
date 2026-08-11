@@ -359,10 +359,15 @@ public final class ViewManageLayoutTool extends UniversalTool {
             }
         }
 
-        // 7. Refresh the View editor so the new layout appears in the palette list.
+        // 7. Persist the new layout's project file entry to disk so it
+        // survives an editor reload. Without this, the layout was registered
+        // in the in-memory hC.c list but lost on restart.
+        ctx.persistViewToDisk();
+
+        // 8. Refresh the View editor so the new layout appears in the palette list.
         ctx.refreshViewEditor();
 
-        // 8. Auto-switch the active layout to the newly-created one. Without
+        // 9. Auto-switch the active layout to the newly-created one. Without
         // this, the next view_add_widget call would target the OLD layout
         // (e.g. 'main') instead of the new one the assistant just created.
         // This mirrors the UX of AddViewActivity, which navigates into the

@@ -178,6 +178,14 @@ public final class ViewAddWidgetTool implements SketchwareTool {
             // when the user drags a widget onto the canvas.
             SketchwareApi.invoke(eC, "a", xmlName, bean);
 
+            // CRITICAL: save the in-memory ViewBeans to disk immediately.
+            // Without this, the widget exists in eC.c (HashMap) but is lost
+            // when the editor reloads from disk (e.g. on layout switch or
+            // app restart). This was the root cause of "tools return 20
+            // widgets but 0 visible" — the tool read from the in-memory
+            // cache (20 widgets) while the editor reloaded from disk (0).
+            ctx.persistViewToDisk();
+
             // Refresh the editor so the new widget is visible.
             ctx.refreshViewEditor();
 

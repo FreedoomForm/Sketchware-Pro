@@ -153,6 +153,9 @@ public final class ViewSetPropertyTool implements SketchwareTool {
             if (target == null) return ToolResult.error("Widget '" + widgetId + "' not found.");
             applyProperty(target, key, value);
             SketchwareApi.invoke(eC, "a", javaName, target);
+            // Persist the property change to disk so the editor and tool stay in sync.
+            ctx.persistViewToDisk();
+            ctx.refreshViewEditor();
             return ToolResult.success("Set " + key + " = " + value + " on " + widgetId + ".");
         } catch (Throwable t) {
             return ToolResult.error(t);

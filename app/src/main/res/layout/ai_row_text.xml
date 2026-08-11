@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Cline-style assistant text: full-width, left-aligned, with avatar dot -->
+<!-- Cline-style assistant text: full-width with left accent bar.
+     The accent bar gives assistant messages a visual anchor on the left,
+     matching Cline's sidebar layout where assistant responses have a
+     subtle left-border accent. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:paddingStart="8dp"
+    android:paddingStart="10dp"
     android:paddingEnd="48dp"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp">
+    android:paddingTop="5dp"
+    android:paddingBottom="5dp">
 
+    <!-- Left accent bar (Cline-style) -->
     <View
-        android:layout_width="6dp"
-        android:layout_height="6dp"
-        android:layout_marginTop="6dp"
-        android:layout_marginEnd="8dp"
-        android:background="@drawable/circle_status_dot" />
+        android:layout_width="3dp"
+        android:layout_height="match_parent"
+        android:layout_marginEnd="10dp"
+        android:background="?attr/colorPrimary" />
 
     <TextView
         android:id="@+id/text"
@@ -24,5 +26,5 @@
         android:layout_weight="1"
         android:textColor="?attr/colorOnSurface"
         android:textSize="14sp"
-        android:lineSpacingExtra="2dp" />
+        android:lineSpacingExtra="3dp" />
 </LinearLayout>

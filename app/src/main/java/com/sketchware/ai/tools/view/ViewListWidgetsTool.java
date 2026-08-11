@@ -42,13 +42,31 @@ public final class ViewListWidgetsTool implements SketchwareTool {
             if (widgets instanceof List) {
                 List<?> list = (List<?>) widgets;
                 sb.append("Widgets (").append(list.size()).append("):\n");
+                int rootCount = 0;
                 for (Object b : list) {
-                    sb.append("- id=").append(getField(b, "id"));
-                    sb.append(" type=").append(getField(b, "type"));
+                    String id = str(getField(b, "id"));
+                    Object type = getField(b, "type");
                     Object parent = getField(b, "parent");
-                    if (parent != null && !parent.toString().isEmpty()) sb.append(" parent=").append(parent);
+                    Object layout = getField(b, "layout");
+                    String parentStr = parent == null ? "(null)" : parent.toString();
+                    boolean isRoot = "root".equals(parentStr);
+                    if (isRoot) rootCount++;
+                    sb.append("- id=").append(id);
+                    sb.append(" type=").append(type);
+                    sb.append(" parent=").append(parentStr);
+                    sb.append(isRoot ? " [root-level]" : " [nested]");
+                    // Show layout dimensions if available (helps diagnose
+                    // invisible widgets — e.g. width=0 height=0).
+                    if (layout != null) {
+                        Object w = getField(layout, "width");
+                        Object h = getField(layout, "height");
+                        sb.append(" size=").append(w).append("x").append(h);
+                    }
                     sb.append("\n");
                 }
+                sb.append("Summary: ").append(list.size()).append(" total, ")
+                  .append(rootCount).append(" root-level (visible on canvas), ")
+                  .append(list.size() - rootCount).append(" nested.\n");
             } else {
                 sb.append("Widgets: (unable to enumerate)\n");
             }
@@ -57,6 +75,8 @@ public final class ViewListWidgetsTool implements SketchwareTool {
             return ToolResult.error(t);
         }
     }
+
+    private String str(Object o) { return o == null ? "" : o.toString(); }
 
     private Object getField(Object obj, String name) {
         try {

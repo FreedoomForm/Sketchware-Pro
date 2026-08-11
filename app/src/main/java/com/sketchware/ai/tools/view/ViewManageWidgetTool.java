@@ -113,6 +113,7 @@ public final class ViewManageWidgetTool extends UniversalTool {
             setIntField(target, "x", x);
             setIntField(target, "y", y);
             SketchwareApi.invoke(editor, "b", javaName, widgets);
+            ctx.persistViewToDisk();
             ctx.refreshViewEditor();
             return ok("Moved widget '" + widgetId + "' to parent='" + parentId
                     + "' at (" + x + "," + y + ") in layout '" + javaName + "'.");
@@ -154,6 +155,7 @@ public final class ViewManageWidgetTool extends UniversalTool {
             }
             setField(beanClone, "id", newId);
             SketchwareApi.invoke(editor, "a", javaName, beanClone);
+            ctx.persistViewToDisk();
             ctx.refreshViewEditor();
             return ok("Cloned widget '" + widgetId + "' → '" + newId
                     + "' in layout '" + javaName + "'.");
@@ -182,6 +184,7 @@ public final class ViewManageWidgetTool extends UniversalTool {
         }
         try {
             SketchwareApi.invoke(editor, "b", javaName, widgets);
+            ctx.persistViewToDisk();
             ctx.refreshViewEditor();
             return ok("Selected widget '" + widgetId + "' in layout '" + javaName
                     + "'. The View editor canvas has been refreshed.");
