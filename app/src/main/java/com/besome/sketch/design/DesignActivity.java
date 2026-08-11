@@ -280,6 +280,16 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     }
 
     /**
+     * Returns the currently active ProjectFileBean in the editor, or null
+     * if no project is loaded. Used by the AI ChatFragment to know which
+     * layout the user is currently viewing, so the AI can target it and
+     * so refresh callbacks know which layout to refresh.
+     */
+    public ProjectFileBean getCurrentProjectFile() {
+        return projectFile;
+    }
+
+    /**
      * Public AI-facing refresh hooks. Called by ChatFragment's
      * SketchwareToolContext when an AI tool mutates project state, so the
      * visible View/Event/Component editors re-read from disk and redraw.
@@ -290,17 +300,51 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
      * repeated confusion ("Не видно по моему ты не добавил") and re-runs of
      * the same tool, which piled duplicate widgets into the ViewBeans list.
      *
-     * <p>{@code refreshViewForAi()} reloads widgets from the project's
+     * <p>{@code refreshViewForAi(String)} reloads widgets from the project's
      * ViewBeans collection via {@code jC.a(sc_id).d(xmlName)} and re-inits
      * the ViewEditor — the SAME call path the editor itself uses after an
-     * undo/redo.
+     * undo/redo. If the AI is working on a DIFFERENT layout than the one
+     * currently displayed in the editor, this method first SWITCHES the
+     * editor to that layout (exactly as if the user had picked it from the
+     * file selector), so the user sees the AI's changes appear live.
+     *
+     * @param xmlName the layout the AI just modified (e.g. "calculator"),
+     *                or null to just refresh whatever is currently shown
      */
-    public void refreshViewForAi() {
+    public void refreshViewForAi(String xmlName) {
         runOnUiThread(() -> {
-            if (viewTabAdapter != null && projectFile != null) {
+            if (viewTabAdapter == null) return;
+            // If the AI names a layout that differs from the one the user is
+            // currently viewing, switch the editor to that layout first.
+            // This is the key fix for "в окне view не видно то что он сделал":
+            // the AI was creating/editing 'calculator' but the editor was
+            // still showing 'main', so refreshViewForAi() reloaded 'main'
+            // (which had no changes) and the user saw nothing.
+            if (xmlName != null && !xmlName.isEmpty()
+                    && projectFile != null
+                    && !xmlName.equals(projectFile.getXmlName())) {
+                try {
+                    ProjectFileBean bean = jC.b(sc_id).b(xmlName);
+                    if (bean != null) {
+                        projectFile = bean;
+                        refreshFileSelector();
+                        refreshViewTabAdapter(); // calls viewTabAdapter.initialize() -> i()
+                        return;
+                    }
+                } catch (Throwable ignored) {
+                    // fall through to plain refresh
+                }
+            }
+            // Otherwise (same layout, or lookup failed) just reload widgets.
+            if (projectFile != null) {
                 viewTabAdapter.i();
             }
         });
+    }
+
+    /** No-arg overload: refresh the currently displayed layout only. */
+    public void refreshViewForAi() {
+        refreshViewForAi(null);
     }
 
     public void refreshEventsForAi() {

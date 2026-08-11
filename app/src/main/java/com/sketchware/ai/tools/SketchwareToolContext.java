@@ -5,6 +5,8 @@ import android.content.Context;
 
 import com.besome.sketch.design.DesignActivity;
 
+import java.util.function.Consumer;
+
 /**
  * Context object passed to every tool execution. Encapsulates everything a
  * tool needs to act on the current project.
@@ -24,7 +26,13 @@ public class SketchwareToolContext {
     // even after the assistant had explicitly switched to a new one.
     private String currentJavaName;
     private final ToolPermissionGate permissionGate;
-    private final Runnable viewRefreshCallback;
+    /**
+     * Accepts the xml layout name the AI just modified. If it differs from
+     * what the editor is currently showing, the editor will switch to it.
+     * This is the fix for "в окне view не видно то что он сделал": the AI
+     * was creating 'calculator' but the editor was still showing 'main'.
+     */
+    private final Consumer<String> viewRefreshCallback;
     private final Runnable logicRefreshCallback;
     private final Runnable eventRefreshCallback;
     private final Runnable componentRefreshCallback;
@@ -33,7 +41,7 @@ public class SketchwareToolContext {
                                  String scId,
                                  String currentJavaName,
                                  ToolPermissionGate permissionGate,
-                                 Runnable viewRefreshCallback,
+                                 Consumer<String> viewRefreshCallback,
                                  Runnable logicRefreshCallback,
                                  Runnable eventRefreshCallback,
                                  Runnable componentRefreshCallback) {
@@ -73,10 +81,15 @@ public class SketchwareToolContext {
         if (a != null) a.runOnUiThread(r);
     }
 
-    /** Refresh the View editor canvas so changes are visible in real time. */
+    /**
+     * Refresh the View editor canvas so changes are visible in real time.
+     * Passes the AI's current layout name so DesignActivity can switch the
+     * editor to it if the user is viewing a different layout.
+     */
     public void refreshViewEditor() {
         if (viewRefreshCallback != null) {
-            runOnUiThread(viewRefreshCallback);
+            final String layout = currentJavaName;
+            runOnUiThread(() -> viewRefreshCallback.accept(layout));
         }
     }
 

@@ -455,10 +455,17 @@ public final class ChatFragment extends Fragment {
         // which meant every tool call reported success but the editor canvas
         // never updated — the user saw no visible change and would say
         // "кнопка не видна" even though the widget WAS added to disk.
+        //
+        // The view refresh callback now receives the layout name the AI just
+        // modified, so DesignActivity can SWITCH the editor to that layout if
+        // the user is viewing a different one. This is the fix for
+        // "в окне view не видно то что он сделал": the AI created 'calculator'
+        // and added widgets to it, but the editor was still showing 'main',
+        // so the user saw nothing change.
         android.app.Activity hostActivity = requireActivity();
-        Runnable viewRefresh = () -> {
+        java.util.function.Consumer<String> viewRefresh = (xmlName) -> {
             if (hostActivity instanceof com.besome.sketch.design.DesignActivity) {
-                ((com.besome.sketch.design.DesignActivity) hostActivity).refreshViewForAi();
+                ((com.besome.sketch.design.DesignActivity) hostActivity).refreshViewForAi(xmlName);
             }
         };
         Runnable logicRefresh = () -> {
@@ -725,8 +732,25 @@ public final class ChatFragment extends Fragment {
     }
 
     private String readJavaNameFromActivity() {
-        // For MVP, return "main" - the actual current layout file.
-        // The real implementation would query DesignActivity for the active ProjectFileBean.
+        // Query DesignActivity for the actually-displayed layout, so the AI
+        // targets the layout the user is looking at, not a hardcoded "main".
+        // Previously this always returned "main", which meant if the user
+        // had 'calculator' open and asked the AI to "add a button", the AI
+        // would add the button to 'main' instead — and then the user would
+        // see nothing change in their 'calculator' view.
+        try {
+            android.app.Activity host = getActivity();
+            if (host instanceof com.besome.sketch.design.DesignActivity) {
+                com.besome.sketch.beans.ProjectFileBean bean =
+                        ((com.besome.sketch.design.DesignActivity) host).getCurrentProjectFile();
+                if (bean != null) {
+                    String xml = bean.getXmlName();
+                    if (xml != null && !xml.isEmpty()) return xml;
+                }
+            }
+        } catch (Throwable t) {
+            // fall through
+        }
         return "main";
     }
 
