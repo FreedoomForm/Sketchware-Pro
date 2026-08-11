@@ -212,7 +212,20 @@ public class OpenAiProvider implements LlmProvider {
             // to the top-level `tools` array definition — assistant message
             // tool_calls follow the standard OpenAI shape on every
             // /v1/chat/completions endpoint (including Z.AI's).
-            messages.add(toOpenAiMessage(m, false));
+            //
+            // CRITICAL: when an assistant message issued N tool_calls, the
+            // OpenAI Chat Completions API requires N separate role=tool
+            // messages — one per tool_call_id. The previous implementation
+            // emitted only the first result and `break`ed out, dropping the
+            // rest, which caused HTTP 400 "Not the same number of function
+            // calls and responses" on every multi-tool turn.
+            if (m.hasToolResults() && m.toolResults.size() > 1) {
+                for (AgentMessage.ToolResultContent r : m.toolResults) {
+                    messages.add(toOpenAiToolResultMessage(r));
+                }
+            } else {
+                messages.add(toOpenAiMessage(m, false));
+            }
         }
         root.add("messages", messages);
 
@@ -275,21 +288,32 @@ public class OpenAiProvider implements LlmProvider {
         return root;
     }
 
+    /**
+     * Build a single {@code role=tool} message for one tool result. The OpenAI
+     * Chat Completions API requires ONE message per {@code tool_call_id} —
+     * when an assistant message issued N tool_calls, the next turn MUST
+     * contain N role=tool messages, each carrying its own
+     * {@code tool_call_id}. Bundling them into one message (or dropping all
+     * but the first) triggers HTTP 400
+     * "Not the same number of function calls and responses".
+     */
+    protected JsonObject toOpenAiToolResultMessage(AgentMessage.ToolResultContent r) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("role", "tool");
+        obj.addProperty("tool_call_id", r.toolCallId);
+        obj.addProperty("content", r.isError ? ("ERROR: " + r.output) : r.output);
+        return obj;
+    }
+
     protected JsonObject toOpenAiMessage(AgentMessage m, boolean flatToolFormat) {
         JsonObject obj = new JsonObject();
 
         if (m.hasToolResults()) {
-            // OpenAI tool result format: role=tool, content=text, tool_call_id=...
-            // If multiple results, emit multiple messages.
-            // We emit the first as the message; callers should treat multi-result
-            // messages appropriately.
-            for (AgentMessage.ToolResultContent r : m.toolResults) {
-                obj.addProperty("role", "tool");
-                obj.addProperty("tool_call_id", r.toolCallId);
-                obj.addProperty("content", r.isError ? ("ERROR: " + r.output) : r.output);
-                break; // one per message; multi-result not supported by OpenAI
-            }
-            return obj;
+            // Single-result tool_result message. Multi-result batches are
+            // unrolled by the caller (buildRequestBody) into N separate
+            // role=tool messages via toOpenAiToolResultMessage().
+            AgentMessage.ToolResultContent r = m.toolResults.get(0);
+            return toOpenAiToolResultMessage(r);
         }
 
         if ("assistant".equals(m.role)) {

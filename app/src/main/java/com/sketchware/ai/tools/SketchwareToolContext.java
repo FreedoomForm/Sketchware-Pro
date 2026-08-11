@@ -17,7 +17,12 @@ public class SketchwareToolContext {
 
     private final Context context;
     private final String scId;
-    private final String currentJavaName; // active layout/file, e.g. "main"
+    // Mutable: tools like view_manage_layout(switch_active) and view_manage_layout(create)
+    // update this so subsequent view_add_widget / view_set_property calls operate
+    // on the newly active layout. Previously this was final, which caused
+    // view_add_widget to keep adding widgets to the OLD layout (e.g. 'main')
+    // even after the assistant had explicitly switched to a new one.
+    private String currentJavaName;
     private final ToolPermissionGate permissionGate;
     private final Runnable viewRefreshCallback;
     private final Runnable logicRefreshCallback;
@@ -46,6 +51,17 @@ public class SketchwareToolContext {
     public String getScId() { return scId; }
     public String getCurrentJavaName() { return currentJavaName; }
     public ToolPermissionGate getPermissionGate() { return permissionGate; }
+
+    /**
+     * Update the active layout/file name. Called by view_manage_layout when
+     * the user/assistant switches or creates a layout, so subsequent tool
+     * calls operate on the new active layout.
+     */
+    public void setCurrentJavaName(String javaName) {
+        if (javaName != null && !javaName.isEmpty()) {
+            this.currentJavaName = javaName;
+        }
+    }
 
     public Activity getActivity() {
         if (context instanceof Activity) return (Activity) context;

@@ -362,6 +362,13 @@ public final class ViewManageLayoutTool extends UniversalTool {
         // 7. Refresh the View editor so the new layout appears in the palette list.
         ctx.refreshViewEditor();
 
+        // 8. Auto-switch the active layout to the newly-created one. Without
+        // this, the next view_add_widget call would target the OLD layout
+        // (e.g. 'main') instead of the new one the assistant just created.
+        // This mirrors the UX of AddViewActivity, which navigates into the
+        // newly-created file after creation.
+        ctx.setCurrentJavaName(name);
+
         return ok(summary.toString().trim());
     }
 
@@ -413,6 +420,11 @@ public final class ViewManageLayoutTool extends UniversalTool {
             ctx.refreshViewEditor();
             ctx.refreshEventList();
             ctx.refreshLogicEditor();
+            // If the active layout was the one renamed, follow it so subsequent
+            // tool calls operate on the renamed layout.
+            if (oldName.equals(ctx.getCurrentJavaName())) {
+                ctx.setCurrentJavaName(newName);
+            }
             return ok("Renamed layout '" + oldName + "' → '" + newName + "' in project '" + scId + "'. "
                     + "Updated layout index, event handlers, and Java references.");
         } catch (Throwable t) {
@@ -438,6 +450,13 @@ public final class ViewManageLayoutTool extends UniversalTool {
             if (beans instanceof List) {
                 widgetCount = ((List<?>) beans).size();
             }
+            // CRITICAL: update the context's currentJavaName so subsequent
+            // view_add_widget / view_set_property / view_list_widgets calls
+            // operate on the newly-switched layout. Without this, the context
+            // keeps pointing at the OLD layout and the assistant's next
+            // view_add_widget call adds a widget to the wrong layout (e.g.
+            // creating 'activity_calculator' but adding widgets to 'main').
+            ctx.setCurrentJavaName(name);
             ctx.refreshViewEditor();
             return ok("Switched active layout to '" + name + "' in project '" + scId + "'. "
                     + "Layout contains " + widgetCount + " widgets.");
