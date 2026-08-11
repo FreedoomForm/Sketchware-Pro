@@ -168,10 +168,11 @@ tasks.register('createMockGoogleServices') {
             new File("$projectDir/google-services.json").text = secrets
             return
         }
-        def mockFile = file("src/debug/google-services.json")
-        if (!mockFile.exists()) {
-            mockFile.parentFile.mkdirs()
-            def mockContent = """{
+        // Generate mock google-services.json for BOTH debug and release flavors.
+        // The Google Services plugin searches src/<flavor>/google-services.json
+        // (e.g. src/release/google-services.json) per variant, so a single
+        // src/debug/ file is insufficient when assembleRelease is invoked.
+        def mockContent = """{
   "project_info": {
     "project_number": "123456789000",
     "firebase_url": "https://mock-project-default-rtdb.firebaseio.com",
@@ -201,7 +202,12 @@ tasks.register('createMockGoogleServices') {
   ],
   "configuration_version": "1"
 }"""
-            mockFile.text = mockContent
+        ['debug', 'release'].each { flavor ->
+            def mockFile = file("src/${flavor}/google-services.json")
+            if (!mockFile.exists()) {
+                mockFile.parentFile.mkdirs()
+                mockFile.text = mockContent
+            }
         }
     }
 }
