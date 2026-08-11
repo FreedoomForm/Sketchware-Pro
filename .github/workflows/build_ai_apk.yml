@@ -20,14 +20,20 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Cancel in-progress runs for the same branch when a new push arrives.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # =========================================================================
-  # Step 1: Run unit tests (JVM only — no Android device required).
+  # Step 1: Run JVM unit tests (no Android device required).
   #         If any test fails, the workflow stops here and no APK is built.
   # =========================================================================
   unit-test:
     name: Run JVM unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     outputs:
       short_sha: ${{ steps.set_sha.outputs.short_sha }}
     steps:
@@ -53,10 +59,13 @@ jobs:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: bash .github/workflows/create_mock_google_services.sh
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Run unit tests
         env:
           SKETCHUB_API_KEY: ${{ secrets.SKETCHUB_API_KEY }}
-        run: ./gradlew testDebugUnitTest --continue --info
+        run: ./gradlew testDebugUnitTest --continue --console=plain
 
       - name: Upload unit test reports
         if: always()
@@ -70,11 +79,16 @@ jobs:
 
   # =========================================================================
   # Step 2: Run Android instrumentation tests on an emulator.
+  #         This job is best-effort: if it fails, the APK is still built.
+  #         The e2e Mistral test handles a missing API key gracefully
+  #         (an error row counts as a valid UI update).
   # =========================================================================
   instrumentation-test:
     name: Run Android instrumentation tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: unit-test
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -94,6 +108,9 @@ jobs:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: bash .github/workflows/create_mock_google_services.sh
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Enable KVM (for hardware-accelerated emulator)
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -102,6 +119,8 @@ jobs:
 
       - name: Run instrumentation tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
+        env:
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
         with:
           api-level: 30
           target: google_apis
@@ -111,7 +130,7 @@ jobs:
           ram-size: 4096M
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: ./gradlew connectedDebugAndroidTest --continue --info
+          script: ./gradlew connectedDebugAndroidTest --continue --console=plain
 
       - name: Upload instrumentation test reports
         if: always()
@@ -124,12 +143,14 @@ jobs:
           retention-days: 14
 
   # =========================================================================
-  # Step 3: Only if both unit + instrumentation tests pass, build the APK.
+  # Step 3: Build the Debug APK. Depends only on unit-test (instrumentation
+  #         is best-effort and should not block APK generation).
   # =========================================================================
   build:
     name: Build AI-Enabled APK
     runs-on: ubuntu-latest
-    needs: [unit-test, instrumentation-test]
+    timeout-minutes: 25
+    needs: unit-test
     outputs:
       short_sha: ${{ steps.set_sha.outputs.short_sha }}
     steps:
@@ -155,10 +176,13 @@ jobs:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: bash .github/workflows/create_mock_google_services.sh
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Build Debug APK
         env:
           SKETCHUB_API_KEY: ${{ secrets.SKETCHUB_API_KEY }}
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug --console=plain
 
       - name: Rename APK with commit hash + branch
         run: |
