@@ -7,27 +7,57 @@ import com.sketchware.ai.tools.UniversalTool;
 import com.sketchware.ai.util.SketchwareApi;
 
 /**
- * string_operation — universal tool for block operations.
+ * string_operation — universal tool for adding string operation blocks to event handlers.
  *
- * <p>Replaces 8 stubs: string_operation:concat, string_operation:contains, string_operation:length, string_operation:replace, string_operation:split, string_operation:substring, string_operation:to_lower, string_operation:to_upper
+ * <p>Actions (13):
+ * <ul>
+ *   <li><b>concat</b>, <b>contains</b>, <b>length</b>, <b>replace</b>, <b>split</b>,
+ *       <b>substring</b>, <b>to_lower</b>, <b>to_upper</b> — original 8</li>
+ *   <li><b>equals</b> — exact string equality (returns boolean)</li>
+ *   <li><b>starts_with</b> — prefix check (returns boolean)</li>
+ *   <li><b>ends_with</b> — suffix check (returns boolean)</li>
+ *   <li><b>trim</b> — remove leading/trailing whitespace</li>
+ *   <li><b>index_of</b> — find substring position (returns int)</li>
+ * </ul>
  *
- * <p><b>AUTO-GENERATED</b> by /home/z/my-project/scripts/gen_universal_tools_pt2.py.
- * Hand-edit is allowed; re-running the generator will overwrite this file.
+ * <p>All actions add a {@code string:opName} block to the event handler by invoking
+ * the obfuscated project-file editor returned by {@code jC.b(sc_id)} via reflection
+ * (method {@code z}=addStringBlock). The op name is passed as the block spec prefix
+ * (e.g. {@code "string:equals"}). The Sketchware code generator (a.a.a.Fx) maps
+ * these to the corresponding Java expressions:
+ * <ul>
+ *   <li>{@code string:equals} → {@code a.equals(b)}</li>
+ *   <li>{@code string:startsWith} → {@code a.startsWith(b)}</li>
+ *   <li>{@code string:endsWith} → {@code a.endsWith(b)}</li>
+ *   <li>{@code string:trim} → {@code a.trim()}</li>
+ *   <li>{@code string:index} → {@code a.indexOf(b)}</li>
+ * </ul>
+ *
+ * <p>For unary operations (trim), the second operand is ignored. For binary
+ * operations (equals/starts_with/ends_with/index_of), operand_a is the string to
+ * search within, and operand_b is the substring to find/check.
  */
 public final class StringOperationTool extends UniversalTool {
 
     public StringOperationTool() {
         super("string_operation",
-                "Add a string operation block to an event handler: concat, contains, length, replace, split, substring, to_lower, to_upper.",
+                "Add a string operation block to an event handler: concat, contains, "
+                        + "length, replace, split, substring, to_lower, to_upper, "
+                        + "equals, starts_with, ends_with, trim, index_of.",
                 "block", false, false,
-"concat",
+                "concat",
                 "contains",
                 "length",
                 "replace",
                 "split",
                 "substring",
                 "to_lower",
-                "to_upper");
+                "to_upper",
+                "equals",
+                "starts_with",
+                "ends_with",
+                "trim",
+                "index_of");
     }
 
     @Override protected void addExtraProperties(JsonObject props) {
@@ -37,11 +67,11 @@ public final class StringOperationTool extends UniversalTool {
         props.add("event_id", p_event_id);
         JsonObject p_operand_a = new JsonObject();
         p_operand_a.addProperty("type", "string");
-        p_operand_a.addProperty("description", "First string operand.");
+        p_operand_a.addProperty("description", "First string operand (the string to operate on).");
         props.add("operand_a", p_operand_a);
         JsonObject p_operand_b = new JsonObject();
         p_operand_b.addProperty("type", "string");
-        p_operand_b.addProperty("description", "Second string operand (for concat/contains/replace/split).");
+        p_operand_b.addProperty("description", "Second string operand (for concat/contains/replace/split/equals/starts_with/ends_with/index_of).");
         props.add("operand_b", p_operand_b);
         JsonObject p_start = new JsonObject();
         p_start.addProperty("type", "integer");
@@ -60,30 +90,32 @@ public final class StringOperationTool extends UniversalTool {
     @Override
     protected ToolResult dispatch(String action, JsonObject args, SketchwareToolContext ctx) throws Exception {
         switch (action) {
-            case "concat": {
+            case "concat":
                 return addStringBlock(ctx, args, "concat");
-            }
-            case "contains": {
+            case "contains":
                 return addStringBlock(ctx, args, "contains");
-            }
-            case "length": {
+            case "length":
                 return addStringBlock(ctx, args, "length");
-            }
-            case "replace": {
+            case "replace":
                 return addStringBlock(ctx, args, "replace");
-            }
-            case "split": {
+            case "split":
                 return addStringBlock(ctx, args, "split");
-            }
-            case "substring": {
+            case "substring":
                 return addStringBlock(ctx, args, "substring");
-            }
-            case "to_lower": {
+            case "to_lower":
                 return addStringBlock(ctx, args, "toLower");
-            }
-            case "to_upper": {
+            case "to_upper":
                 return addStringBlock(ctx, args, "toUpper");
-            }
+            case "equals":
+                return addStringBlock(ctx, args, "equals");
+            case "starts_with":
+                return addStringBlock(ctx, args, "startsWith");
+            case "ends_with":
+                return addStringBlock(ctx, args, "endsWith");
+            case "trim":
+                return addStringBlock(ctx, args, "trim");
+            case "index_of":
+                return addStringBlock(ctx, args, "index");
             default:
                 return err("Unknown action: " + action);
         }

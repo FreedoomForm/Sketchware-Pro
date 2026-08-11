@@ -1,77 +1,202 @@
 package com.sketchware.ai.tools.library;
 
-import com.google.gson.JsonArray;
+import com.besome.sketch.beans.ProjectLibraryBean;
 import com.google.gson.JsonObject;
-import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.SketchwareToolContext;
 import com.sketchware.ai.tools.ToolResult;
+import com.sketchware.ai.tools.UniversalTool;
 import com.sketchware.ai.util.SketchwareApi;
 
 /**
- * library_enable - enable a built-in library via reflection.
+ * library_enable — universal tool for enabling / disabling Sketchware's
+ * built-in libraries (AppCompat, Material3, Firebase, AdMob, GoogleMap).
+ *
+ * <p><b>FIX-D-PROJECT (Task D1):</b> refactored from a single-action
+ * SketchwareTool that used a non-standard {@code library_type} enum
+ * parameter into a UniversalTool with 10 explicit {@code action}
+ * values. This matches the pattern used by every other tool in the
+ * catalogue and removes the only schema inconsistency flagged in the
+ * coverage report (§4.4).
+ *
+ * <p>Underlying API (per {@code ManageLibraryActivity.saveLibraryConfiguration}
+ * and {@code Material3LibraryManager}):
+ * <ul>
+ *   <li>{@code jC.c(scId).c()} — returns the compatLibraryBean
+ *       (ProjectLibraryBean.PROJECT_LIB_TYPE_COMPAT).</li>
+ *   <li>{@code jC.c(scId).c(bean)} — saves the compatLibraryBean back.</li>
+ *   <li>{@code jC.c(scId).d()} / {@code .d(bean)} — firebaseLibraryBean.</li>
+ *   <li>{@code jC.c(scId).b()} / {@code .b(bean)} — admobLibraryBean.</li>
+ *   <li>{@code jC.c(scId).e()} / {@code .e(bean)} — googleMapLibraryBean.</li>
+ *   <li>{@code jC.c(scId).k()} — commit/persist all changes.</li>
+ * </ul>
+ *
+ * <p>Material3 is stored inside {@code compatLibraryBean.configurations}
+ * under keys {@code "material3"}, {@code "theme"}, {@code "dynamic_colors"}
+ * — see {@code Material3LibraryActivity}. Material3 REQUIRES AppCompat to
+ * be enabled first; this is enforced here.
+ *
+ * <p>Disabling AppCompat while Firebase or Material3 is enabled is blocked
+ * (matches the UI's behaviour in {@code ManageCompatActivity.onClick}).
  */
-public final class LibraryEnableTool implements SketchwareTool {
+public final class LibraryEnableTool extends UniversalTool {
 
-    @Override public String name() { return "library_enable"; }
-    @Override public String category() { return "library"; }
-    @Override public boolean isReadOnly() { return false; }
-
-    @Override public String description() {
-        return "Enable a built-in library. library_type: compat, material3, firebase, admob, googlemap. "
-                + "Some widgets/components require libraries (AdView->admob, MapView->googlemap, "
-                + "RecyclerView->compat). Call this before adding such widgets.";
+    public LibraryEnableTool() {
+        super("library_enable",
+                "Enable or disable a built-in Sketchware library (AppCompat, "
+                        + "Material3, Firebase, AdMob, GoogleMap). Material3 requires "
+                        + "AppCompat to be enabled first. Disabling AppCompat while "
+                        + "Firebase or Material3 are enabled is blocked.",
+                "library", false, false,
+                "enable_compat", "disable_compat",
+                "enable_firebase", "disable_firebase",
+                "enable_admob", "disable_admob",
+                "enable_googlemap", "disable_googlemap",
+                "enable_material3", "disable_material3");
     }
 
-    @Override public JsonObject jsonSchema() {
-        JsonObject schema = new JsonObject();
-        schema.addProperty("type", "object");
-        JsonObject props = new JsonObject();
-        JsonObject libType = new JsonObject();
-        libType.addProperty("type", "string");
-        JsonArray typeEnum = new JsonArray();
-        typeEnum.add("compat"); typeEnum.add("material3"); typeEnum.add("firebase");
-        typeEnum.add("admob"); typeEnum.add("googlemap");
-        libType.add("enum", typeEnum);
-        props.add("library_type", libType);
-        schema.add("properties", props);
-        JsonArray required = new JsonArray();
-        required.add("library_type");
-        schema.add("required", required);
-        return schema;
+    @Override
+    protected void addExtraProperties(JsonObject props) {
+        // No extra parameters — every action is implicit.
     }
 
-    @Override public ToolResult execute(JsonObject args, SketchwareToolContext ctx) throws Exception {
-        String libType = args.has("library_type") ? args.get("library_type").getAsString() : null;
-        if (libType == null) return ToolResult.error("library_type is required");
+    @Override
+    protected ToolResult dispatch(String action, JsonObject args, SketchwareToolContext ctx) {
         String scId = ctx.getScId();
-        if (scId == null) return ToolResult.error("No active project.");
+        if (scId == null) return err("No active project (sc_id is null).");
+
         try {
             Object iC = SketchwareApi.invokeStatic("a.a.a.jC", "c", scId);
-            // Try common enable methods by reflection. If they don't exist, this is a no-op
-            // (the library is enabled via the UI's ManageLibraryActivity which writes to disk).
-            switch (libType) {
-                case "compat":
-                    try { SketchwareApi.invoke(iC, "c", true); } catch (Throwable ignored) {}
-                    break;
-                case "firebase":
-                    try { SketchwareApi.invoke(iC, "d", true); } catch (Throwable ignored) {}
-                    break;
-                case "admob":
-                    try { SketchwareApi.invoke(iC, "b", true); } catch (Throwable ignored) {}
-                    break;
-                case "googlemap":
-                    try { SketchwareApi.invoke(iC, "e", true); } catch (Throwable ignored) {}
-                    break;
-                case "material3":
-                    try { SketchwareApi.invoke(iC, "c", true); } catch (Throwable ignored) {}
-                    break;
-                default:
-                    return ToolResult.error("Unknown library_type: " + libType);
+            switch (action) {
+                case "enable_compat":   return enableSimple(iC, "c", "AppCompat");
+                case "disable_compat":  return disableCompat(iC);
+                case "enable_firebase": return enableSimple(iC, "d", "Firebase");
+                case "disable_firebase": return disableSimple(iC, "d", "Firebase");
+                case "enable_admob":    return enableSimple(iC, "b", "AdMob");
+                case "disable_admob":   return disableSimple(iC, "b", "AdMob");
+                case "enable_googlemap": return enableSimple(iC, "e", "GoogleMap");
+                case "disable_googlemap": return disableSimple(iC, "e", "GoogleMap");
+                case "enable_material3":  return enableMaterial3(iC);
+                case "disable_material3": return disableMaterial3(iC);
+                default: return err("Unknown action: " + action);
             }
-            try { SketchwareApi.invoke(iC, "k"); } catch (Throwable ignored) {}
-            return ToolResult.success("Enabled library '" + libType + "'.");
         } catch (Throwable t) {
             return ToolResult.error(t);
         }
+    }
+
+    // ------------------------------------------------------------------
+    //  Generic enable/disable for libraries whose state lives in
+    //  ProjectLibraryBean.useYn ("Y"/"N").
+    // ------------------------------------------------------------------
+    private ToolResult enableSimple(Object iC, String getter, String displayName) {
+        try {
+            ProjectLibraryBean bean = (ProjectLibraryBean) SketchwareApi.invoke(iC, getter);
+            if (bean == null) {
+                return err("Could not load " + displayName + " library bean "
+                        + "(jC.c(scId)." + getter + "() returned null).");
+            }
+            bean.useYn = ProjectLibraryBean.LIB_USE_Y;
+            SketchwareApi.invoke(iC, getter, bean);
+            SketchwareApi.invoke(iC, "k");
+            return ok("Enabled " + displayName + " library.");
+        } catch (Throwable t) {
+            return ToolResult.error(t);
+        }
+    }
+
+    private ToolResult disableSimple(Object iC, String getter, String displayName) {
+        try {
+            ProjectLibraryBean bean = (ProjectLibraryBean) SketchwareApi.invoke(iC, getter);
+            if (bean == null) {
+                return err("Could not load " + displayName + " library bean.");
+            }
+            bean.useYn = ProjectLibraryBean.LIB_USE_N;
+            SketchwareApi.invoke(iC, getter, bean);
+            SketchwareApi.invoke(iC, "k");
+            return ok("Disabled " + displayName + " library.");
+        } catch (Throwable t) {
+            return ToolResult.error(t);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    //  AppCompat — blocking disable if Firebase or Material3 is enabled.
+    // ------------------------------------------------------------------
+    private ToolResult disableCompat(Object iC) {
+        try {
+            ProjectLibraryBean compatBean = (ProjectLibraryBean) SketchwareApi.invoke(iC, "c");
+            if (compatBean == null) return err("Could not load AppCompat library bean.");
+
+            ProjectLibraryBean firebaseBean = (ProjectLibraryBean) SketchwareApi.invoke(iC, "d");
+            boolean firebaseOn = firebaseBean != null && firebaseBean.isEnabled();
+            boolean material3On = isMaterial3Enabled(compatBean);
+
+            if (firebaseOn || material3On) {
+                StringBuilder why = new StringBuilder();
+                if (firebaseOn) why.append("Firebase is enabled. ");
+                if (material3On) why.append("Material3 is enabled. ");
+                return err("Cannot disable AppCompat because: " + why.toString()
+                        + "Disable those libraries first (library_enable:disable_firebase, "
+                        + "library_enable:disable_material3).");
+            }
+
+            compatBean.useYn = ProjectLibraryBean.LIB_USE_N;
+            SketchwareApi.invoke(iC, "c", compatBean);
+            SketchwareApi.invoke(iC, "k");
+            return ok("Disabled AppCompat library.");
+        } catch (Throwable t) {
+            return ToolResult.error(t);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    //  Material3 — settings live inside compatLibraryBean.configurations.
+    // ------------------------------------------------------------------
+    private ToolResult enableMaterial3(Object iC) {
+        try {
+            ProjectLibraryBean compatBean = (ProjectLibraryBean) SketchwareApi.invoke(iC, "c");
+            if (compatBean == null) return err("Could not load AppCompat library bean.");
+            if (!compatBean.isEnabled()) {
+                return err("Material3 requires AppCompat to be enabled first. "
+                        + "Call library_enable:enable_compat before this action.");
+            }
+            if (compatBean.configurations == null) compatBean.configurations = new java.util.HashMap<>();
+            compatBean.configurations.put("material3", Boolean.TRUE);
+            // Default theme to DayNight if not previously set (matches UI default).
+            if (!(compatBean.configurations.get("theme") instanceof String)) {
+                compatBean.configurations.put("theme", "DayNight");
+            }
+            SketchwareApi.invoke(iC, "c", compatBean);
+            SketchwareApi.invoke(iC, "k");
+            return ok("Enabled Material3 library (theme=DayNight by default; "
+                    + "use library_configure:material3_set_theme to change).");
+        } catch (Throwable t) {
+            return ToolResult.error(t);
+        }
+    }
+
+    private ToolResult disableMaterial3(Object iC) {
+        try {
+            ProjectLibraryBean compatBean = (ProjectLibraryBean) SketchwareApi.invoke(iC, "c");
+            if (compatBean == null) return err("Could not load AppCompat library bean.");
+            if (compatBean.configurations != null) {
+                compatBean.configurations.put("material3", Boolean.FALSE);
+                compatBean.configurations.put("dynamic_colors", Boolean.FALSE);
+            }
+            SketchwareApi.invoke(iC, "c", compatBean);
+            SketchwareApi.invoke(iC, "k");
+            return ok("Disabled Material3 library (also turned off dynamic_colors).");
+        } catch (Throwable t) {
+            return ToolResult.error(t);
+        }
+    }
+
+    /** Mirrors {@code Material3LibraryManager.isMaterial3Enabled()}. */
+    private static boolean isMaterial3Enabled(ProjectLibraryBean compatBean) {
+        if (compatBean == null || !compatBean.isEnabled() || compatBean.configurations == null) {
+            return false;
+        }
+        Object v = compatBean.configurations.get("material3");
+        return v instanceof Boolean && (Boolean) v;
     }
 }

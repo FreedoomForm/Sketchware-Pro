@@ -1,5 +1,7 @@
 package com.sketchware.ai.tools.view;
 
+import com.besome.sketch.beans.ProjectFileBean;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sketchware.ai.tools.SketchwareToolContext;
 import com.sketchware.ai.tools.ToolResult;
@@ -7,7 +9,11 @@ import com.sketchware.ai.tools.UniversalTool;
 import com.sketchware.ai.util.SketchwareApi;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * view_manage_layout — universal tool for layout (XML file) management.
@@ -20,7 +26,28 @@ import java.util.List;
  * <ul>
  *   <li><b>create</b>: writes a new {@code <root_tag>} XML file to the
  *       project's {@code resource/layout/} directory and registers it in
- *       the layout index via {@code jC.a(scId).a(javaName, xml)}.</li>
+ *       the layout index via {@code jC.a(scId).a(javaName, xml)}. When
+ *       {@code view_type=activity} (default), also:
+ *       <ul>
+ *         <li>Creates a {@link ProjectFileBean} with the appropriate
+ *             file type (ACTIVITY / FRAGMENT / DIALOG_FRAGMENT /
+ *             BOTTOM_DIALOG_FRAGMENT) and feature options
+ *             (toolbar/fullscreen/fab/drawer) computed from the
+ *             {@code features} array.</li>
+ *         <li>Persists the bean via {@code jC.b(scId).a(ProjectFileBean)}.</li>
+ *         <li>If {@code drawer} is in features, also auto-enables
+ *             {@code toolbar} (matching AddViewActivity's behaviour) and
+ *             creates the matching drawer ProjectFileBean
+ *             ({@code _drawer_<name>} with fileType=PROJECT_FILE_TYPE_DRAWER).</li>
+ *         <li>If {@code fab} is in features, adds a {@code _fab} ViewBean
+ *             to the layout's ViewBeans collection via
+ *             {@code jC.a(scId).a(name, viewBean)}.</li>
+ *         <li>Registers the activity in the manifest via
+ *             {@code jC.d(scId).h(activityName)}.</li>
+ *         <li>Enables AppCompat in the project library config via
+ *             {@code jC.c(scId).c().useYn = "Y"} (only when drawer or fab
+ *             is set, matching {@code Fw.b()}).</li>
+ *       </ul></li>
  *   <li><b>delete</b>: removes the layout file and unregisters it from
  *       the layout index.</li>
  *   <li><b>rename</b>: atomically renames the layout file, updates the
@@ -34,6 +61,13 @@ import java.util.List;
  * (LinearLayout, RelativeLayout, ConstraintLayout, FrameLayout,
  * CoordinatorLayout, ScrollView, HorizontalScrollView, TableLayout,
  * GridLayout, RadioGroup, TabLayout, AppBarLayout, Collapse).
+ *
+ * <p><b>FIX-A-VIEW</b>: the {@code create} action's new
+ * {@code view_type} / {@code features} / {@code screen_orientation} /
+ * {@code keyboard_setting} parameters mirror {@code AddViewActivity}'s
+ * UI controls. When creating an activity, the ProjectFileBean is now
+ * registered in the project file list (via {@code jC.b(scId).a(bean)})
+ * and in the manifest (via {@code jC.d(scId).h(activityName)}).
  */
 public final class ViewManageLayoutTool extends UniversalTool {
 
@@ -45,10 +79,38 @@ public final class ViewManageLayoutTool extends UniversalTool {
             "RadioGroup", "TabLayout", "AppBarLayout"
     };
 
+    /** Supported view_type values. */
+    private static final Set<String> SUPPORTED_VIEW_TYPES = new HashSet<>(Arrays.asList(
+            "activity", "fragment", "dialog_fragment", "bottomdialog_fragment"
+    ));
+
+    /** Supported feature flags. */
+    private static final Set<String> SUPPORTED_FEATURES = new HashSet<>(Arrays.asList(
+            "fullscreen", "toolbar", "drawer", "fab"
+    ));
+
+    /** Supported screen_orientation values (mapped to int per ProjectFileBean). */
+    private static final int ORIENTATION_PORTRAIT  = 0;
+    private static final int ORIENTATION_LANDSCAPE = 1;
+    private static final int ORIENTATION_AUTO      = 2;
+
+    /** Supported keyboard_setting values (mapped to int per ProjectFileBean). */
+    private static final int KEYBOARD_VISIBLE      = 0;
+    private static final int KEYBOARD_HIDDEN       = 1;
+    private static final int KEYBOARD_UNSPECIFIED  = 2;
+
     public ViewManageLayoutTool() {
         super("view_manage_layout",
                 "Manage layout XML files in the current project: create, delete, "
-                        + "rename, or switch the active layout shown in the View editor.",
+                        + "rename, or switch the active layout shown in the View editor. "
+                        + "The create action supports optional view_type (activity|fragment|"
+                        + "dialog_fragment|bottomdialog_fragment), features array "
+                        + "(fullscreen|toolbar|drawer|fab), screen_orientation "
+                        + "(portrait|landscape|auto), and keyboard_setting (visible|hidden|"
+                        + "unspecified). When view_type=activity, the activity is also "
+                        + "registered in the manifest and ProjectFile list, and drawer/fab "
+                        + "side-effects are applied (drawer auto-enables toolbar + creates "
+                        + "_drawer_<name>; fab adds a _fab ViewBean).",
                 "view", false, false,
                 "create", "delete", "rename", "switch_active");
     }
@@ -74,6 +136,41 @@ public final class ViewManageLayoutTool extends UniversalTool {
         newName.addProperty("type", "string");
         newName.addProperty("description", "(rename only) New layout file name. Must match ^[a-z][a-z0-9_]*$.");
         props.add("new_name", newName);
+
+        JsonObject viewType = new JsonObject();
+        viewType.addProperty("type", "string");
+        viewType.addProperty("description",
+                "(create only) View type. One of: activity, fragment, dialog_fragment, "
+                        + "bottomdialog_fragment. Default: activity. When 'activity', the file "
+                        + "is also registered in the manifest and ProjectFile list, and "
+                        + "features are applied.");
+        props.add("view_type", viewType);
+
+        JsonObject features = new JsonObject();
+        features.addProperty("type", "array");
+        features.addProperty("description",
+                "(create only) Feature flags for activity view_type. Subset of "
+                        + "[fullscreen, toolbar, drawer, fab]. 'drawer' auto-enables 'toolbar' "
+                        + "and creates a _drawer_<name> file. 'fab' adds a _fab ViewBean. "
+                        + "Default: [toolbar].");
+        JsonObject featItem = new JsonObject();
+        featItem.addProperty("type", "string");
+        features.add("items", featItem);
+        props.add("features", features);
+
+        JsonObject orientation = new JsonObject();
+        orientation.addProperty("type", "string");
+        orientation.addProperty("description",
+                "(create only, activity only) Screen orientation: portrait | landscape | auto. "
+                        + "Default: portrait.");
+        props.add("screen_orientation", orientation);
+
+        JsonObject keyboard = new JsonObject();
+        keyboard.addProperty("type", "string");
+        keyboard.addProperty("description",
+                "(create only, activity only) Keyboard setting: visible | hidden | unspecified. "
+                        + "Default: visible.");
+        props.add("keyboard_setting", keyboard);
     }
 
     @Override
@@ -87,7 +184,11 @@ public final class ViewManageLayoutTool extends UniversalTool {
         }
 
         switch (action) {
-            case "create": return doCreate(ctx, scId, name, optString(args, "root_tag", "LinearLayout"));
+            case "create": return doCreate(ctx, scId, name, optString(args, "root_tag", "LinearLayout"),
+                    optString(args, "view_type", "activity"),
+                    readFeaturesArray(args),
+                    optString(args, "screen_orientation", "portrait"),
+                    optString(args, "keyboard_setting", "visible"));
             case "delete": return doDelete(ctx, scId, name);
             case "rename": return doRename(ctx, scId, name, optString(args, "new_name"));
             case "switch_active": return doSwitchActive(ctx, scId, name);
@@ -98,16 +199,65 @@ public final class ViewManageLayoutTool extends UniversalTool {
     // ------------------------------------------------------------------
     //  create
     // ------------------------------------------------------------------
-    private ToolResult doCreate(SketchwareToolContext ctx, String scId, String name, String rootTag) {
+    private ToolResult doCreate(SketchwareToolContext ctx, String scId, String name, String rootTag,
+                                String viewType, Set<String> features,
+                                String screenOrientation, String keyboardSetting) {
         // Validate root tag.
         if (!isSupportedRootTag(rootTag)) {
             return err("Unsupported root_tag '" + rootTag + "'. Supported: " + String.join(", ", SUPPORTED_ROOT_TAGS));
         }
+        // Validate view_type.
+        if (!SUPPORTED_VIEW_TYPES.contains(viewType)) {
+            return err("Unsupported view_type '" + viewType + "'. Supported: " + SUPPORTED_VIEW_TYPES);
+        }
+        // Validate features.
+        for (String f : features) {
+            if (!SUPPORTED_FEATURES.contains(f)) {
+                return err("Unsupported feature '" + f + "'. Supported: " + SUPPORTED_FEATURES);
+            }
+        }
+        // Validate orientation/keyboard.
+        int orientationConst = parseOrientation(screenOrientation);
+        if (orientationConst < 0) {
+            return err("Unsupported screen_orientation '" + screenOrientation
+                    + "'. Use one of: portrait, landscape, auto.");
+        }
+        int keyboardConst = parseKeyboard(keyboardSetting);
+        if (keyboardConst < 0) {
+            return err("Unsupported keyboard_setting '" + keyboardSetting
+                    + "'. Use one of: visible, hidden, unspecified.");
+        }
+
         // Check layout doesn't already exist.
         if (layoutExists(scId, name)) {
             return err("Layout '" + name + "' already exists in project '" + scId + "'.");
         }
-        // Build XML.
+
+        // Determine the actual fileName with the type-specific suffix.
+        // For fragment types, AddViewActivity appends "_fragment" / "_dialog_fragment" /
+        // "_bottomdialog_fragment". For activity, no suffix.
+        // However, the LAYOUT file (XML) is named after the user-supplied `name` (no suffix).
+        // The ProjectFileBean.fileName stores the suffixed name (e.g. "main_fragment").
+        String fileSuffix = suffixForViewType(viewType);
+        String projectFileBeanName = name + fileSuffix;
+
+        // Compute the ProjectFileBean file type from view_type.
+        int fileType = fileTypeForViewType(viewType);
+
+        // Apply drawer auto-enables toolbar rule (matches AddViewActivity line 419-428).
+        Set<String> effectiveFeatures = new HashSet<>(features);
+        if (effectiveFeatures.contains("drawer")) {
+            effectiveFeatures.add("toolbar");
+        }
+        // Default: toolbar on for activity (matches AddViewActivity handleCreateFile:247).
+        if ("activity".equals(viewType) && effectiveFeatures.isEmpty()) {
+            effectiveFeatures.add("toolbar");
+        }
+
+        // Compute the options bitmask.
+        int options = computeActivityOptions(effectiveFeatures);
+
+        // Build XML for the main layout file.
         boolean isVertical = rootTag.equals("LinearLayout") || rootTag.equals("ScrollView")
                 || rootTag.equals("HorizontalScrollView") || rootTag.equals("RadioGroup");
         String orientationAttr = isVertical ? "\n    android:orientation=\"vertical\"" : "";
@@ -117,19 +267,102 @@ public final class ViewManageLayoutTool extends UniversalTool {
                 + "    android:layout_width=\"match_parent\"\n"
                 + "    android:layout_height=\"match_parent\">\n\n"
                 + "</" + rootTag + ">\n";
+
+        StringBuilder summary = new StringBuilder();
         try {
-            // Write XML via Sketchware's project file manager (jC.a(scId)).
-            // The single-arg "a" method on the ViewEditor singleton accepts
-            // (javaName, xmlContent) and persists to <project>/resource/layout/<name>.xml.
+            // 1. Write the layout XML via Sketchware's project file manager.
             Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
             SketchwareApi.invoke(editor, "a", name, xml);
-            // Refresh the View editor so the new layout appears in the palette list.
-            ctx.refreshViewEditor();
-            return ok("Created layout '" + name + "' with root <" + rootTag + "> in project '" + scId + "'. "
-                    + "XML written to resource/layout/" + name + ".xml (" + xml.length() + " bytes).");
+            summary.append("Created layout '").append(name).append("' with root <").append(rootTag)
+                   .append("> (").append(xml.length()).append(" bytes).\n");
         } catch (Throwable t) {
             return ToolResult.error(t);
         }
+
+        // 2. If view_type=activity (or fragment variants), create the ProjectFileBean.
+        if (fileType != -1) {
+            try {
+                ProjectFileBean bean = new ProjectFileBean(fileType, projectFileBeanName,
+                        orientationConst, keyboardConst, /* noActionBar */ false,
+                        /* fullscreen */ effectiveFeatures.contains("fullscreen"),
+                        /* hasFab */ effectiveFeatures.contains("fab"),
+                        /* hasDrawer */ effectiveFeatures.contains("drawer"));
+                // Persist the bean in the project file list.
+                Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+                SketchwareApi.invoke(projectFileEditor, "a", bean);
+                summary.append("Registered ProjectFileBean (fileType=").append(fileType)
+                       .append(", fileName='").append(projectFileBeanName)
+                       .append("', options=0x").append(Integer.toHexString(options))
+                       .append(", orientation=").append(orientationConst)
+                       .append(", keyboard=").append(keyboardConst).append(").\n");
+            } catch (Throwable t) {
+                summary.append("WARNING: failed to register ProjectFileBean: ")
+                       .append(t.getMessage()).append("\n");
+            }
+
+            // 3. If view_type=activity, register the activity in the manifest.
+            if ("activity".equals(viewType)) {
+                String activityName = ProjectFileBean.getActivityName(projectFileBeanName);
+                try {
+                    Object manifestEditor = SketchwareApi.invokeStatic("a.a.a.jC", "d", scId);
+                    SketchwareApi.invoke(manifestEditor, "h", activityName);
+                    summary.append("Registered <activity android:name=\"")
+                           .append(activityName).append("\" /> in manifest.\n");
+                } catch (Throwable t) {
+                    summary.append("WARNING: failed to register activity in manifest: ")
+                           .append(t.getMessage()).append("\n");
+                }
+            }
+
+            // 4. If drawer is in features, create the drawer ProjectFileBean
+            //    (fileType=PROJECT_FILE_TYPE_DRAWER, fileName=_drawer_<name>).
+            if (effectiveFeatures.contains("drawer")) {
+                String drawerName = ProjectFileBean.getDrawerName(projectFileBeanName);
+                try {
+                    ProjectFileBean drawerBean = new ProjectFileBean(
+                            ProjectFileBean.PROJECT_FILE_TYPE_DRAWER, drawerName);
+                    Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+                    SketchwareApi.invoke(projectFileEditor, "a", drawerBean);
+                    summary.append("Created drawer file '").append(drawerName).append("'.\n");
+                } catch (Throwable t) {
+                    summary.append("WARNING: failed to create drawer file '")
+                           .append(drawerName).append("': ").append(t.getMessage()).append("\n");
+                }
+            }
+
+            // 5. If fab is in features, add a _fab ViewBean to the layout.
+            if (effectiveFeatures.contains("fab")) {
+                try {
+                    Object fabBean = createFabViewBean(name);
+                    if (fabBean != null) {
+                        Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
+                        SketchwareApi.invoke(editor, "a", name, fabBean);
+                        summary.append("Added _fab ViewBean to layout '").append(name).append("'.\n");
+                    }
+                } catch (Throwable t) {
+                    summary.append("WARNING: failed to add _fab ViewBean: ")
+                           .append(t.getMessage()).append("\n");
+                }
+            }
+
+            // 6. If drawer or fab, enable AppCompat (matches Fw.b()).
+            if (effectiveFeatures.contains("drawer") || effectiveFeatures.contains("fab")) {
+                try {
+                    Object javaEditor = SketchwareApi.invokeStatic("a.a.a.jC", "c", scId);
+                    Object projectLibrary = SketchwareApi.invoke(javaEditor, "c");
+                    setField(projectLibrary, "useYn", "Y");
+                    summary.append("Enabled AppCompat library (jC.c(scId).c().useYn = \"Y\").\n");
+                } catch (Throwable t) {
+                    summary.append("WARNING: failed to enable AppCompat: ")
+                           .append(t.getMessage()).append("\n");
+                }
+            }
+        }
+
+        // 7. Refresh the View editor so the new layout appears in the palette list.
+        ctx.refreshViewEditor();
+
+        return ok(summary.toString().trim());
     }
 
     // ------------------------------------------------------------------
@@ -214,6 +447,122 @@ public final class ViewManageLayoutTool extends UniversalTool {
     // ------------------------------------------------------------------
     //  Helpers
     // ------------------------------------------------------------------
+
+    /** Read the {@code features} JSON array as a Set of strings (empty if absent). */
+    private static Set<String> readFeaturesArray(JsonObject args) {
+        Set<String> out = new HashSet<>();
+        if (!args.has("features") || !args.get("features").isJsonArray()) return out;
+        JsonArray arr = args.getAsJsonArray("features");
+        for (int i = 0; i < arr.size(); i++) {
+            if (arr.get(i) != null && !arr.get(i).isJsonNull()) {
+                out.add(arr.get(i).getAsString());
+            }
+        }
+        return out;
+    }
+
+    private static String suffixForViewType(String viewType) {
+        switch (viewType) {
+            case "fragment":               return "_fragment";
+            case "dialog_fragment":        return "_dialog_fragment";
+            case "bottomdialog_fragment":  return "_bottomdialog_fragment";
+            default:                       return "";
+        }
+    }
+
+    private static int fileTypeForViewType(String viewType) {
+        switch (viewType) {
+            case "activity":               return ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY;
+            case "fragment":               return ProjectFileBean.PROJECT_FILE_TYPE_FRAGMENT;
+            case "dialog_fragment":        return ProjectFileBean.PROJECT_FILE_TYPE_DIALOG_FRAGMENT;
+            case "bottomdialog_fragment":  return ProjectFileBean.PROJECT_FILE_TYPE_SHEET;
+            default:                       return -1;
+        }
+    }
+
+    private static int parseOrientation(String s) {
+        if (s == null) return -1;
+        switch (s.toLowerCase()) {
+            case "portrait":  return ORIENTATION_PORTRAIT;
+            case "landscape": return ORIENTATION_LANDSCAPE;
+            case "auto":      return ORIENTATION_AUTO;
+            default:          return -1;
+        }
+    }
+
+    private static int parseKeyboard(String s) {
+        if (s == null) return -1;
+        switch (s.toLowerCase()) {
+            case "visible":     return KEYBOARD_VISIBLE;
+            case "hidden":      return KEYBOARD_HIDDEN;
+            case "unspecified": return KEYBOARD_UNSPECIFIED;
+            default:            return -1;
+        }
+    }
+
+    /**
+     * Compute the ProjectFileBean.options bitmask from the effective feature
+     * set. Mirrors AddViewActivity.handleEditFile (lines 247-261).
+     *
+     * <p>Note: in Sketchware's convention, "StatusBar visible" means the
+     * activity is NOT fullscreen — so the {@code fullscreen} feature flag
+     * maps to {@code OPTION_ACTIVITY_FULLSCREEN}.
+     */
+    private static int computeActivityOptions(Set<String> features) {
+        int options = 0;
+        if (features.contains("toolbar")) {
+            options |= ProjectFileBean.OPTION_ACTIVITY_TOOLBAR;
+        }
+        if (features.contains("fullscreen")) {
+            options |= ProjectFileBean.OPTION_ACTIVITY_FULLSCREEN;
+        }
+        if (features.contains("fab")) {
+            options |= ProjectFileBean.OPTION_ACTIVITY_FAB;
+        }
+        if (features.contains("drawer")) {
+            options |= ProjectFileBean.OPTION_ACTIVITY_DRAWER;
+        }
+        return options;
+    }
+
+    /**
+     * Create a {@code _fab} ViewBean reflectively. The ViewBean class is
+     * {@code com.besome.sketch.beans.ViewBean}; we instantiate via the
+     * no-arg constructor and set the {@code id}, {@code type}, and
+     * {@code parent} fields reflectively.
+     */
+    private static Object createFabViewBean(String layoutName) {
+        try {
+            Class<?> cls = Class.forName("com.besome.sketch.beans.ViewBean");
+            Object bean = cls.getDeclaredConstructor().newInstance();
+            setField(bean, "id", "_fab");
+            setField(bean, "type", 16); // VIEW_TYPE_WIDGET_FAB = 16 (per ViewBean constant)
+            setField(bean, "parent", layoutName);
+            return bean;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** Reflectively set a field on a bean (best-effort, walks superclass chain). */
+    private static boolean setField(Object bean, String fieldName, Object value) {
+        if (bean == null) return false;
+        try {
+            Class<?> cls = bean.getClass();
+            while (cls != null) {
+                try {
+                    java.lang.reflect.Field f = cls.getDeclaredField(fieldName);
+                    f.setAccessible(true);
+                    f.set(bean, value);
+                    return true;
+                } catch (NoSuchFieldException e) {
+                    cls = cls.getSuperclass();
+                }
+            }
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
     private static boolean isValidLayoutName(String name) {
         if (name == null || name.isEmpty()) return false;
         if (!Character.isLowerCase(name.charAt(0))) return false;

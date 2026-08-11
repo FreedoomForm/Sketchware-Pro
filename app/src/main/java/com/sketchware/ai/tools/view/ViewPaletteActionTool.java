@@ -13,12 +13,21 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * view_palette_action — universal tool for operating on the View editor
- * palette/UI: switch the palette group, switch the property group, open
- * the property editor for a widget, or commit pending property changes.
+ * view_palette_action — universal tool for <b>read-only</b> operations on
+ * the View editor palette/UI: switch the palette group, switch the
+ * property group, or open the property editor for a widget.
  *
- * <p>Replaces 4 stubs: view_palette_action:{switch_palette_group,
- * switch_property_group, open_property_editor, commit_property_changes}.
+ * <p>Replaces 3 stubs: view_palette_action:{switch_palette_group,
+ * switch_property_group, open_property_editor}.
+ *
+ * <p><b>FIX-A-VIEW</b>: this tool was previously a 4-action tool that
+ * included {@code commit_property_changes} (a mutating action). Because
+ * the entire tool was marked {@code isReadOnly() = true} and
+ * {@code isAutoApprovedByDefault() = true}, the {@code commit_property_changes}
+ * action was being auto-approved without user confirmation — a safety bug
+ * flagged in {@code COVERAGE_REPORT.md} §4.3. The mutating action has been
+ * split out into a separate {@link ViewPaletteCommitTool} which is neither
+ * read-only nor auto-approved.
  *
  * <p>This implementation:
  * <ul>
@@ -28,9 +37,6 @@ import java.util.Set;
  *   <li>For {@code open_property_editor}: verifies the widget exists in
  *       the active layout before opening (returns the available widget
  *       IDs if not found).</li>
- *   <li>For {@code commit_property_changes}: returns the count of
- *       properties changed if available via reflection (best-effort),
- *       otherwise returns a plain confirmation.</li>
  * </ul>
  */
 public final class ViewPaletteActionTool extends UniversalTool {
@@ -42,13 +48,13 @@ public final class ViewPaletteActionTool extends UniversalTool {
 
     public ViewPaletteActionTool() {
         super("view_palette_action",
-                "Operate on the View editor palette/UI: switch palette group, "
-                        + "switch property group, open the property editor for a widget, "
-                        + "or commit pending property changes. "
-                        + "Group must be one of: basic, layout, media, advanced, widget, custom.",
-                "view", true, true,
-                "switch_palette_group", "switch_property_group",
-                "open_property_editor", "commit_property_changes");
+                "Read-only operations on the View editor palette/UI: switch palette group, "
+                        + "switch property group, or open the property editor for a widget. "
+                        + "Group must be one of: basic, layout, media, advanced, widget, custom. "
+                        + "For committing pending property changes, use the separate "
+                        + "view_palette_commit tool (which requires user approval).",
+                "view", /* readOnly */ true, /* autoApproved */ true,
+                "switch_palette_group", "switch_property_group", "open_property_editor");
     }
 
     @Override protected void addExtraProperties(JsonObject props) {
@@ -77,7 +83,6 @@ public final class ViewPaletteActionTool extends UniversalTool {
             case "switch_palette_group":    return doSwitchPaletteGroup(ctx, scId, args);
             case "switch_property_group":   return doSwitchPropertyGroup(ctx, scId, args);
             case "open_property_editor":    return doOpenPropertyEditor(ctx, scId, args);
-            case "commit_property_changes": return doCommitPropertyChanges(ctx, scId);
             default:                         return err("Unknown action: " + action);
         }
     }
@@ -153,30 +158,6 @@ public final class ViewPaletteActionTool extends UniversalTool {
     }
 
     // ------------------------------------------------------------------
-    //  commit_property_changes
-    // ------------------------------------------------------------------
-    private ToolResult doCommitPropertyChanges(SketchwareToolContext ctx, String scId) {
-        try {
-            Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
-            Object result = SketchwareApi.invoke(editor, "l");
-            ctx.refreshViewEditor();
-            // Best-effort: try to extract a count of changed properties from the return value.
-            int changedCount = -1;
-            if (result != null) {
-                changedCount = extractChangeCount(result);
-            }
-            if (changedCount >= 0) {
-                return ok("Committed " + changedCount + " property change(s) to project '"
-                        + scId + "'. The View editor has been refreshed.");
-            }
-            return ok("Committed pending property changes to project '" + scId + "'. "
-                    + "The View editor has been refreshed and changes are now persisted.");
-        } catch (Throwable t) {
-            return ToolResult.error(t);
-        }
-    }
-
-    // ------------------------------------------------------------------
     //  Helpers
     // ------------------------------------------------------------------
     private static List<String> listWidgetIds(Object editor, String javaName) {
@@ -192,26 +173,6 @@ public final class ViewPaletteActionTool extends UniversalTool {
             }
         } catch (Throwable ignored) {}
         return ids;
-    }
-
-    /**
-     * Best-effort: extract an integer "change count" from the return value of
-     * the {@code l} method. Sketchware's internals may return a Boolean,
-     * Integer, List, or void. Returns -1 if no count could be extracted.
-     */
-    private static int extractChangeCount(Object result) {
-        if (result == null) return -1;
-        if (result instanceof Integer) return (Integer) result;
-        if (result instanceof Number) return ((Number) result).intValue();
-        if (result instanceof Boolean) return ((Boolean) result) ? 1 : 0;
-        if (result instanceof List) return ((List<?>) result).size();
-        // Some beans expose a "count" or "size" field — try reflection.
-        String s = readField(result, "count");
-        if (s == null) s = readField(result, "size");
-        if (s != null) {
-            try { return Integer.parseInt(s); } catch (NumberFormatException ignored) {}
-        }
-        return -1;
     }
 
     private static String readField(Object bean, String fieldName) {

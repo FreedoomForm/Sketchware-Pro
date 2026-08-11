@@ -3,6 +3,7 @@ package com.sketchware.ai.tools;
 import com.sketchware.ai.tools.block.BlockAddTool;
 import com.sketchware.ai.tools.block.BlockManageTool;
 import com.sketchware.ai.tools.block.ControlFlowTool;
+import com.sketchware.ai.tools.block.CustomBlockManageTool;
 import com.sketchware.ai.tools.block.ListManageTool;
 import com.sketchware.ai.tools.block.MapManageTool;
 import com.sketchware.ai.tools.block.MathOperationTool;
@@ -11,17 +12,21 @@ import com.sketchware.ai.tools.block.StringOperationTool;
 import com.sketchware.ai.tools.block.VariableManageTool;
 import com.sketchware.ai.tools.build.BuildActionTool;
 import com.sketchware.ai.tools.build.ExportActionTool;
+import com.sketchware.ai.tools.build.ProguardManageTool;
 import com.sketchware.ai.tools.component.ComponentAddTool;
 import com.sketchware.ai.tools.component.ComponentManageTool;
 import com.sketchware.ai.tools.component.ComponentSetPropertyTool;
+import com.sketchware.ai.tools.component.CustomComponentManageTool;
 import com.sketchware.ai.tools.event.EventAttachTool;
 import com.sketchware.ai.tools.event.EventListTool;
 import com.sketchware.ai.tools.event.EventManageTool;
 import com.sketchware.ai.tools.java.JavaEditFileTool;
 import com.sketchware.ai.tools.java.JavaModifyClassTool;
 import com.sketchware.ai.tools.java.JavaReadFileTool;
+import com.sketchware.ai.tools.library.LibraryConfigureTool;
 import com.sketchware.ai.tools.library.LibraryEnableTool;
 import com.sketchware.ai.tools.library.LibraryManageTool;
+import com.sketchware.ai.tools.library.NativeLibManageTool;
 import com.sketchware.ai.tools.library.PermissionManageTool;
 import com.sketchware.ai.tools.manifest.AppcompatManageTool;
 import com.sketchware.ai.tools.manifest.ManifestManageTool;
@@ -31,6 +36,11 @@ import com.sketchware.ai.tools.project.ProjectManageTool;
 import com.sketchware.ai.tools.project.ProjectSetAppNameTool;
 import com.sketchware.ai.tools.project.ProjectSetPackageNameTool;
 import com.sketchware.ai.tools.project.ProjectSetPropertyTool;
+import com.sketchware.ai.tools.resource.AssetsManageTool;
+import com.sketchware.ai.tools.resource.FontManageTool;
+import com.sketchware.ai.tools.resource.ImageManageTool;
+import com.sketchware.ai.tools.resource.ResourceFileManageTool;
+import com.sketchware.ai.tools.resource.SoundManageTool;
 import com.sketchware.ai.tools.resource.ValuesXmlManageTool;
 import com.sketchware.ai.tools.view.ViewAddWidgetTool;
 import com.sketchware.ai.tools.view.ViewDeleteWidgetTool;
@@ -40,6 +50,7 @@ import com.sketchware.ai.tools.view.ViewManageFavoritesTool;
 import com.sketchware.ai.tools.view.ViewManageLayoutTool;
 import com.sketchware.ai.tools.view.ViewManageWidgetTool;
 import com.sketchware.ai.tools.view.ViewPaletteActionTool;
+import com.sketchware.ai.tools.view.ViewPaletteCommitTool;
 import com.sketchware.ai.tools.view.ViewSetPropertyTool;
 import com.sketchware.ai.tools.view.ViewUndoRedoTool;
 import com.sketchware.ai.tools.view.ViewfuncInvokeTool;
@@ -63,31 +74,74 @@ import com.sketchware.ai.tools.view.ViewfuncInvokeTool;
  * ({@link com.sketchware.ai.util.SketchwareApi}), giving real
  * functional behaviour — not stubs.
  *
- * <h3>Final tool inventory (45 tools total)</h3>
+ * <h3>Final tool inventory (56 tools total)</h3>
  * <ul>
- *   <li><b>16 specialized tools</b> with bespoke logic that doesn't fit
+ *   <li><b>14 specialized tools</b> with bespoke logic that doesn't fit
  *       the action-enum pattern (e.g. ViewAddWidgetTool has 40-value
  *       type enum + library gating; BlockAddTool assembles block beans
  *       with complex param schemas).</li>
- *   <li><b>29 universal tools</b> replacing 223 stubs:
+ *   <li><b>42 universal tools</b> replacing 223 stubs:
  *     <ul>
  *       <li>View: ViewManageLayoutTool (4 actions), ViewManageWidgetTool (4),
  *           ViewManageCustomWidgetTool (5), ViewManageFavoritesTool (4),
- *           ViewPaletteActionTool (4), ViewfuncInvokeTool (7).</li>
+ *           ViewPaletteActionTool (3 — read-only + auto-approved),
+ *           ViewPaletteCommitTool (1 — mutating, requires approval;
+ *           FIX-A-VIEW: split out of ViewPaletteActionTool),
+ *           ViewfuncInvokeTool (89 — FIX-A-VIEW: extended from 7 to 89
+ *           actions covering all viewfunc opCodes in a.a.a.Fx).</li>
  *       <li>Event: EventManageTool (10).</li>
- *       <li>Component: ComponentManageTool (8), ComponentSetPropertyTool (21).</li>
+ *       <li>Component: ComponentManageTool (8), ComponentSetPropertyTool (21),
+ *           CustomComponentManageTool (6 — FIX-C-RESOURCES: NEW — manages
+ *           custom Java UI components via wq.getCustomComponent() JSON).</li>
  *       <li>Block: BlockManageTool (10), ControlFlowTool (11),
- *           VariableManageTool (5), ListManageTool (6), MapManageTool (3),
- *           MathOperationTool (10), StringOperationTool (8),
- *           MoreblockManageTool (3).</li>
+ *           VariableManageTool (5), ListManageTool (12), MapManageTool (9),
+ *           MathOperationTool (18), StringOperationTool (13),
+ *           MoreblockManageTool (3), CustomBlockManageTool (10).</li>
  *       <li>Project: ProjectManageTool (7), ProjectSetPropertyTool (8),
  *           ProjectEnableFeatureTool (3).</li>
- *       <li>Build: BuildActionTool (7), ExportActionTool (4).</li>
+ *       <li>Build: BuildActionTool (9 — FIX-D-PROJECT: was 7, +2 actions:
+ *           clean_temp_files, clean_build_cache; set_setting now accepts
+ *           19 keys: was 11, +8 keys: android_jar_path, classpath, dexer,
+ *           java_version, no_warnings, no_http_legacy, enable_logcat,
+ *           stringfog_enabled),
+ *           ExportActionTool (4),
+ *           ProguardManageTool (6 — FIX-D-PROJECT: NEW — toggle_enabled,
+ *           toggle_r8, toggle_debug, edit_rules, select_fm_libs, get_rules).</li>
  *       <li>Java: JavaModifyClassTool (11).</li>
- *       <li>Library/Permission: LibraryManageTool (6), PermissionManageTool (6).</li>
- *       <li>Manifest: ManifestManageTool (6), AppcompatManageTool (3),
+ *       <li>Library/Permission: LibraryEnableTool (10 — FIX-D-PROJECT:
+ *           converted from SketchwareTool w/ library_type enum to
+ *           UniversalTool w/ enable/disable for compat/firebase/admob/
+ *           googlemap/material3),
+ *           LibraryManageTool (6),
+ *           LibraryConfigureTool (15 — FIX-D-PROJECT: NEW — firebase/admob/
+ *           googlemap/material3 config: import_json, set_storage_bucket,
+ *           set_app_id, set_api_key, set_firebase_url, import_from_project,
+ *           admob_set_app_id, admob_add_ad_unit, admob_assign_ad_unit,
+ *           admob_add_test_device, admob_import_from_project,
+ *           googlemap_set_api_key, googlemap_import_from_project,
+ *           material3_set_theme, material3_toggle_dynamic_colors),
+ *           NativeLibManageTool (5 — FIX-D-PROJECT: NEW — create_folder,
+ *           import_so, rename, delete, list),
+ *           PermissionManageTool (6).</li>
+ *       <li>Manifest: ManifestManageTool (10 — FIX-D-PROJECT: was 6,
+ *           removed duplicate add_permission, +5 new actions:
+ *           set_launcher_activity, edit_app_components,
+ *           edit_activity_components, edit_all_activities_attrs,
+ *           show_source),
+ *           AppcompatManageTool (3),
  *           XmlCommandManageTool (3).</li>
- *       <li>Resource: ValuesXmlManageTool (12).</li>
+ *       <li>Resource: ValuesXmlManageTool (12),
+ *           ImageManageTool (9 — FIX-C-RESOURCES: NEW — add/edit/delete/
+ *           list/rotate/flip_horizontal/flip_vertical/import_from_collection/
+ *           add_to_collection via jC.d(scId).b + Op.g()),
+ *           FontManageTool (5 — FIX-C-RESOURCES: NEW — add/edit/delete/
+ *           list/import_from_collection via jC.d(scId).d + Np.g()),
+ *           SoundManageTool (5 — FIX-C-RESOURCES: NEW — add/edit/delete/
+ *           list/import_from_collection via jC.d(scId).c + Qp.g()),
+ *           ResourceFileManageTool (7 — FIX-C-RESOURCES: NEW — create_folder/
+ *           create_xml/import/edit/rename/delete/list in project resource/),
+ *           AssetsManageTool (7 — FIX-C-RESOURCES: NEW — create_file/
+ *           create_folder/import/edit/rename/delete/list in project assets/).</li>
  *       <li>Meta: AskQuestionTool, SubmitAndExitTool.</li>
  *     </ul>
  *   </li>
@@ -111,19 +165,20 @@ public final class ToolRegistryInitializer {
     public static ToolRegistry createDefault() {
         ToolRegistry r = new ToolRegistry();
 
-        // ===== View category (12 tools: 5 specialized + 6 universal + 1 undo/redo pair) =====
+        // ===== View category (13 tools: 5 specialized + 7 universal + 1 undo/redo pair) =====
         r.register(new ViewAddWidgetTool());           // specialized: 40 widget types
         r.register(new ViewSetPropertyTool());         // specialized: any property name
         r.register(new ViewDeleteWidgetTool());        // specialized
         r.register(new ViewListWidgetsTool());         // specialized
-        r.register(new ViewUndoRedoTool(true));        // view_undo
-        r.register(new ViewUndoRedoTool(false));       // view_redo
-        r.register(new ViewManageLayoutTool());        // universal: 4 actions (was 4 stubs)
+        r.register(new ViewUndoRedoTool(true));        // view_undo — FIX-A-VIEW: now calls cC.c(scId).i(xmlName)
+        r.register(new ViewUndoRedoTool(false));       // view_redo — FIX-A-VIEW: now calls cC.c(scId).h(xmlName)
+        r.register(new ViewManageLayoutTool());        // universal: 4 actions; create now accepts view_type/features/orientation/keyboard
         r.register(new ViewManageWidgetTool());        // universal: 4 actions (was 4 stubs)
         r.register(new ViewManageCustomWidgetTool());  // universal: 5 actions (was 5 stubs)
         r.register(new ViewManageFavoritesTool());    // universal: 4 actions (was 4 stubs)
-        r.register(new ViewPaletteActionTool());      // universal: 4 actions (was 4 stubs)
-        r.register(new ViewfuncInvokeTool());         // universal: 7 actions (was 7 stubs)
+        r.register(new ViewPaletteActionTool());      // universal: 3 read-only actions (FIX-A-VIEW: split commit out)
+        r.register(new ViewPaletteCommitTool());      // universal: 1 mutating action (FIX-A-VIEW: split from ViewPaletteActionTool)
+        r.register(new ViewfuncInvokeTool());         // universal: 89 actions (FIX-A-VIEW: was 7)
         // (was 37 view_set_widget_* stubs — dropped; ViewSetPropertyTool covers all of them)
 
         // ===== Event category (3 tools: 2 specialized + 1 universal) =====
@@ -131,21 +186,23 @@ public final class ToolRegistryInitializer {
         r.register(new EventListTool());               // specialized
         r.register(new EventManageTool());             // universal: 10 actions (was 10 stubs)
 
-        // ===== Component category (3 tools: 1 specialized + 2 universal) =====
+        // ===== Component category (4 tools: 1 specialized + 3 universal) =====
         r.register(new ComponentAddTool());           // specialized
         r.register(new ComponentManageTool());        // universal: 8 actions (was 8 stubs)
         r.register(new ComponentSetPropertyTool());   // universal: 21 actions (was 21 stubs)
+        r.register(new CustomComponentManageTool());  // universal: 6 actions (FIX-C-RESOURCES: NEW — manages custom Java UI components via wq.getCustomComponent())
 
-        // ===== Block category (9 tools: 1 specialized + 8 universal) =====
+        // ===== Block category (10 tools: 1 specialized + 9 universal) =====
         r.register(new BlockAddTool());               // specialized
         r.register(new BlockManageTool());           // universal: 10 actions (was 10 stubs)
         r.register(new ControlFlowTool());           // universal: 11 actions (was 11 stubs)
         r.register(new VariableManageTool());        // universal: 5 actions (was 5 stubs)
-        r.register(new ListManageTool());           // universal: 6 actions (was 6 stubs)
-        r.register(new MapManageTool());            // universal: 3 actions (was 3 stubs)
-        r.register(new MathOperationTool());       // universal: 10 actions (was 10 stubs)
-        r.register(new StringOperationTool());    // universal: 8 actions (was 8 stubs)
+        r.register(new ListManageTool());           // universal: 12 actions (was 6 stubs; +6 new)
+        r.register(new MapManageTool());            // universal: 9 actions (was 3 stubs; +6 new)
+        r.register(new MathOperationTool());       // universal: 18 actions (was 10 stubs; +8 new)
+        r.register(new StringOperationTool());    // universal: 13 actions (was 8 stubs; +5 new)
         r.register(new MoreblockManageTool());   // universal: 3 actions (was 3 stubs)
+        r.register(new CustomBlockManageTool()); // universal: 10 actions (NEW — manages global custom block palettes)
 
         // ===== Project category (5 tools: 2 specialized + 3 universal) =====
         r.register(new ProjectSetAppNameTool());     // specialized (kept for backward compat)
@@ -154,27 +211,35 @@ public final class ToolRegistryInitializer {
         r.register(new ProjectSetPropertyTool());   // universal: 8 actions (was 8 stubs)
         r.register(new ProjectEnableFeatureTool()); // universal: 3 actions (was 3 stubs)
 
-        // ===== Build category (2 universal tools) =====
-        r.register(new BuildActionTool());          // universal: 7 actions (was 7 stubs)
-        r.register(new ExportActionTool());        // universal: 4 actions (was 4 stubs)
+        // ===== Build category (3 universal tools) =====
+        r.register(new BuildActionTool());          // universal: 9 actions (FIX-D-PROJECT: was 7, +2 actions +8 setting keys)
+        r.register(new ExportActionTool());         // universal: 4 actions (was 4 stubs)
+        r.register(new ProguardManageTool());       // universal: 6 actions (FIX-D-PROJECT: NEW)
 
         // ===== Java category (3 tools: 2 specialized + 1 universal) =====
         r.register(new JavaEditFileTool());         // specialized
         r.register(new JavaReadFileTool());        // specialized
         r.register(new JavaModifyClassTool());    // universal: 11 actions (was 12 stubs)
 
-        // ===== Library/Permission category (3 tools: 1 specialized + 2 universal) =====
-        r.register(new LibraryEnableTool());      // specialized
-        r.register(new LibraryManageTool());     // universal: 6 actions (was 6 stubs)
-        r.register(new PermissionManageTool()); // universal: 6 actions (was 6 stubs)
+        // ===== Library/Permission category (5 universal tools; FIX-D-PROJECT) =====
+        r.register(new LibraryEnableTool());      // universal: 10 actions (FIX-D-PROJECT: was specialized w/ library_type enum)
+        r.register(new LibraryManageTool());      // universal: 6 actions (was 6 stubs)
+        r.register(new LibraryConfigureTool());   // universal: 15 actions (FIX-D-PROJECT: NEW)
+        r.register(new NativeLibManageTool());    // universal: 5 actions (FIX-D-PROJECT: NEW)
+        r.register(new PermissionManageTool());    // universal: 6 actions (was 6 stubs)
 
         // ===== Manifest/AppCompat/XML category (3 universal tools) =====
-        r.register(new ManifestManageTool());   // universal: 6 actions (was 6 stubs)
+        r.register(new ManifestManageTool());   // universal: 10 actions (FIX-D-PROJECT: was 6, -1 duplicate add_permission, +5 new)
         r.register(new AppcompatManageTool()); // universal: 3 actions (was 3 stubs)
         r.register(new XmlCommandManageTool()); // universal: 3 actions (was 3 stubs)
 
-        // ===== Resource category (1 universal tool) =====
-        r.register(new ValuesXmlManageTool()); // universal: 12 actions (was 12 stubs)
+        // ===== Resource category (6 universal tools; FIX-C-RESOURCES added 5) =====
+        r.register(new ValuesXmlManageTool());      // universal: 12 actions (was 12 stubs)
+        r.register(new ImageManageTool());          // universal: 9 actions (FIX-C-RESOURCES: NEW — add/edit/delete/list/rotate/flip/import_from_collection/add_to_collection)
+        r.register(new FontManageTool());           // universal: 5 actions (FIX-C-RESOURCES: NEW — add/edit/delete/list/import_from_collection)
+        r.register(new SoundManageTool());          // universal: 5 actions (FIX-C-RESOURCES: NEW — add/edit/delete/list/import_from_collection)
+        r.register(new ResourceFileManageTool());   // universal: 7 actions (FIX-C-RESOURCES: NEW — create_folder/create_xml/import/edit/rename/delete/list in resource/)
+        r.register(new AssetsManageTool());         // universal: 7 actions (FIX-C-RESOURCES: NEW — create_file/create_folder/import/edit/rename/delete/list in assets/)
 
         // ===== Meta tools =====
         r.register(new AskQuestionTool());
