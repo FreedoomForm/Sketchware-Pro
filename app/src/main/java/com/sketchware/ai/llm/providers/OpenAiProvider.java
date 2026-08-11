@@ -82,7 +82,12 @@ public class OpenAiProvider implements LlmProvider {
         }
 
         JsonObject body = buildRequestBody(request);
-        Response response = HttpClient.postStream(url, body.toString(), request.apiKey, request.extraHeaders);
+        // Use the appropriate Accept header: text/event-stream for streaming,
+        // application/json for non-streaming. Some servers (Mistral) return
+        // a regular JSON body when stream=false regardless of Accept, but
+        // sending the correct Accept avoids ambiguity.
+        boolean sse = request.enableStreaming;
+        Response response = HttpClient.postStream(url, body.toString(), request.apiKey, request.extraHeaders, sse);
         if (!response.isSuccessful()) {
             String errBody = response.body() != null ? response.body().string() : "";
             int code = response.code();
@@ -91,8 +96,19 @@ public class OpenAiProvider implements LlmProvider {
         }
 
         final InputStream in = response.body() != null ? response.body().byteStream() : new java.io.ByteArrayInputStream(new byte[0]);
-        final SseParser parser = new SseParser(in);
 
+        if (!sse) {
+            // Non-streaming: parse a single JSON response object.
+            final String responseBody;
+            try (java.util.Scanner scanner = new java.util.Scanner(in, java.nio.charset.StandardCharsets.UTF_8.name())) {
+                scanner.useDelimiter("\\A");
+                responseBody = scanner.hasNext() ? scanner.next() : "";
+            }
+            response.close();
+            return () -> new SingleShotIterator(responseBody);
+        }
+
+        final SseParser parser = new SseParser(in);
         return () -> new IteratorImpl(parser, response, in);
     }
 
@@ -165,13 +181,16 @@ public class OpenAiProvider implements LlmProvider {
         JsonObject root = new JsonObject();
         root.addProperty("model", request.model.id);
         root.addProperty("stream", request.enableStreaming);
-        // stream_options.include_usage is OpenAI-specific. Z.AI's Pydantic
-        // schema rejects unknown fields as extra_forbidden, so we suppress
-        // it whenever the request targets a flat-format endpoint. The usage
-        // data will simply be absent from the SSE stream — acceptable
-        // trade-off for not getting HTTP 422.
         boolean flat = useFlatToolFormat(request);
-        if (request.enableStreaming && !flat) {
+        // stream_options.include_usage is OpenAI-specific. Most OpenAI-compat
+        // servers (Mistral, DeepSeek, Together, Fireworks, OpenRouter) either
+        // reject it as HTTP 400 or silently ignore it. Only send it for the
+        // native OpenAI provider AND when the request isn't targeting a
+        // flat-format (Z.AI/GLM) endpoint. The usage data will simply be
+        // absent from the SSE stream for other providers — acceptable
+        // trade-off for not getting HTTP 400/422.
+        boolean isOpenAiNative = "openai".equals(getProviderId()) && !flat;
+        if (request.enableStreaming && isOpenAiNative) {
             JsonObject streamOptions = new JsonObject();
             streamOptions.addProperty("include_usage", true);
             root.add("stream_options", streamOptions);
@@ -237,7 +256,12 @@ public class OpenAiProvider implements LlmProvider {
                     fn.addProperty("description", desc);
                     fn.add("parameters", schema);
                     out.add("function", fn);
-                    out.addProperty("strict", false);
+                    // `strict` is OpenAI's structured-outputs field. Sending it
+                    // to OpenAI-compat servers (Mistral, DeepSeek, etc.) can
+                    // cause HTTP 400 "unknown field". Only emit for native OpenAI.
+                    if (isOpenAiNative) {
+                        out.addProperty("strict", false);
+                    }
                 }
                 mapped.add(out);
             }
@@ -246,7 +270,7 @@ public class OpenAiProvider implements LlmProvider {
             // servers (e.g. Z.AI's Pydantic schema) reject unknown fields as
             // extra_forbidden. Only emit it for the native OpenAI provider AND
             // when the request isn't auto-detected as a Z.AI/GLM endpoint.
-            if ("openai".equals(getProviderId()) && !useFlatToolFormat(request)) {
+            if (isOpenAiNative) {
                 root.addProperty("parallel_tool_calls", false);
             }
         }
@@ -560,6 +584,128 @@ public class OpenAiProvider implements LlmProvider {
         private void closeQuietly() {
             try { if (stream != null) stream.close(); } catch (Exception ignored) {}
             try { if (response != null) response.close(); } catch (Exception ignored) {}
+        }
+    }
+
+    /**
+     * Iterator for non-streaming responses (when {@code stream:false} is sent).
+     * Parses a single JSON Chat Completions response object and emits the
+     * appropriate chunks: Text (or ToolCalls), Usage, Done.
+     *
+     * <p>This is used by the {@link com.sketchware.ai.context.AgenticCompactor}
+     * which sets {@code enableStreaming=false} for its summarization call.
+     * Previously, non-streaming responses were fed to {@link SseParser}, which
+     * expected SSE format and silently returned no events — resulting in an
+     * empty summary and a confusing "no text" result for the user.
+     */
+    protected final class SingleShotIterator implements java.util.Iterator<ApiStreamChunk> {
+        private final String json;
+        private ApiStreamChunk next;
+        private boolean done = false;
+        private boolean usageEmitted = false;
+        private boolean doneEmitted = false;
+        private boolean parsed = false;
+        // Extracted from JSON on first hasNext() call.
+        private String textContent = "";
+        private java.util.List<AgentMessage.ToolCall> toolCalls = null;
+        private int inputTokens = 0;
+        private int outputTokens = 0;
+        private int reasoningTokens = 0;
+        private int cacheReadTokens = 0;
+        private int cacheWriteTokens = 0;
+
+        SingleShotIterator(String responseBody) {
+            this.json = responseBody == null ? "" : responseBody;
+        }
+
+        private void parseOnce() {
+            if (parsed) return;
+            parsed = true;
+            if (json.isEmpty()) return;
+            try {
+                JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
+                if (obj.has("usage")) {
+                    JsonObject u = obj.getAsJsonObject("usage");
+                    if (u.has("prompt_tokens")) inputTokens = u.get("prompt_tokens").getAsInt();
+                    if (u.has("completion_tokens")) outputTokens = u.get("completion_tokens").getAsInt();
+                    if (u.has("prompt_tokens_details") && u.getAsJsonObject("prompt_tokens_details").has("cached_tokens")) {
+                        cacheReadTokens = u.getAsJsonObject("prompt_tokens_details").get("cached_tokens").getAsInt();
+                    }
+                    if (u.has("completion_tokens_details") && u.getAsJsonObject("completion_tokens_details").has("reasoning_tokens")) {
+                        reasoningTokens = u.getAsJsonObject("completion_tokens_details").get("reasoning_tokens").getAsInt();
+                    }
+                }
+                if (obj.has("choices")) {
+                    JsonArray choices = obj.getAsJsonArray("choices");
+                    if (choices.size() > 0) {
+                        JsonObject choice = choices.get(0).getAsJsonObject();
+                        JsonObject msg = choice.has("message") ? choice.getAsJsonObject("message") : null;
+                        if (msg != null) {
+                            if (msg.has("content") && !msg.get("content").isJsonNull()) {
+                                JsonElement c = msg.get("content");
+                                if (c.isJsonPrimitive()) {
+                                    textContent = c.getAsString();
+                                }
+                            }
+                            if (msg.has("tool_calls") && !msg.get("tool_calls").isJsonNull()) {
+                                JsonArray arr = msg.getAsJsonArray("tool_calls");
+                                toolCalls = new java.util.ArrayList<>();
+                                for (JsonElement e : arr) {
+                                    JsonObject tc = e.getAsJsonObject();
+                                    String id = tc.has("id") && !tc.get("id").isJsonNull()
+                                            ? tc.get("id").getAsString()
+                                            : "call_" + toolCalls.size() + "_" + System.currentTimeMillis();
+                                    JsonObject fn = tc.has("function") ? tc.getAsJsonObject("function") : tc;
+                                    String name = fn.has("name") && !fn.get("name").isJsonNull()
+                                            ? fn.get("name").getAsString() : "unknown";
+                                    String args = fn.has("arguments") && !fn.get("arguments").isJsonNull()
+                                            ? fn.get("arguments").getAsString() : "{}";
+                                    toolCalls.add(new AgentMessage.ToolCall(id, name, args));
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+                // Malformed JSON — leave fields at defaults.
+            }
+        }
+
+        @Override public boolean hasNext() {
+            if (next != null) return true;
+            if (done) return false;
+            parseOnce();
+            // Emit order: ToolCalls (if any) OR Text, then Usage, then Done.
+            if (toolCalls != null && !toolCalls.isEmpty()) {
+                next = new ApiStreamChunk.ToolCalls(toolCalls);
+                toolCalls = null;
+                return true;
+            }
+            if (!textContent.isEmpty()) {
+                next = new ApiStreamChunk.Text(textContent);
+                textContent = "";
+                return true;
+            }
+            if (!usageEmitted) {
+                usageEmitted = true;
+                next = new ApiStreamChunk.Usage(inputTokens, outputTokens, reasoningTokens,
+                        cacheReadTokens, cacheWriteTokens, 0.0);
+                return true;
+            }
+            if (!doneEmitted) {
+                doneEmitted = true;
+                next = new ApiStreamChunk.Done();
+                return true;
+            }
+            done = true;
+            return false;
+        }
+
+        @Override public ApiStreamChunk next() {
+            if (!hasNext()) throw new java.util.NoSuchElementException();
+            ApiStreamChunk result = next;
+            next = null;
+            return result;
         }
     }
 }

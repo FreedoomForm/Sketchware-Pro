@@ -44,10 +44,25 @@ public final class HttpClient {
                                       String apiKey,
                                       java.util.List<com.sketchware.ai.llm.LlmRequest.ExtraHeader> extraHeaders)
             throws Exception {
+        return postStream(url, jsonBody, apiKey, extraHeaders, true);
+    }
+
+    /**
+     * Execute a POST and return the raw Response. When {@code sse} is true,
+     * sends {@code Accept: text/event-stream} (for streaming requests). When
+     * false, sends {@code Accept: application/json} (for non-streaming
+     * requests — used by the compactor which sets {@code stream:false}).
+     */
+    public static Response postStream(String url,
+                                      String jsonBody,
+                                      String apiKey,
+                                      java.util.List<com.sketchware.ai.llm.LlmRequest.ExtraHeader> extraHeaders,
+                                      boolean sse)
+            throws Exception {
         Request.Builder rb = new Request.Builder()
                 .url(url)
                 .header("Content-Type", "application/json")
-                .header("Accept", "text/event-stream");
+                .header("Accept", sse ? "text/event-stream" : "application/json");
         if (apiKey != null && !apiKey.isEmpty()) {
             rb.header("Authorization", "Bearer " + apiKey);
         }
