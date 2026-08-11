@@ -429,9 +429,11 @@ public final class ViewManageLayoutTool extends UniversalTool {
         }
         try {
             Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
-            // jC.a(scId).b(javaName) returns the ViewBeans collection for that
-            // layout, which Sketchware uses as the active editing target.
-            Object beans = SketchwareApi.invoke(editor, "b", name);
+            // jC.a(scId).d(xmlName) returns the ArrayList<ViewBean> for that
+            // layout — the SAME call ViewEditor.java makes to read the widget
+            // list. (Previous code called b(name) which is the DELETE method
+            // b(String, ViewBean) and always threw NoSuchMethodException.)
+            Object beans = SketchwareApi.invoke(editor, "d", name);
             int widgetCount = 0;
             if (beans instanceof List) {
                 widgetCount = ((List<?>) beans).size();
@@ -582,39 +584,74 @@ public final class ViewManageLayoutTool extends UniversalTool {
     }
 
     /**
-     * Check if a layout exists in the project by attempting to read its
-     * ViewBeans collection. If the collection is null or empty AND no XML
-     * file exists on disk, the layout doesn't exist.
+     * Check if a layout exists in the project. A layout is considered to
+     * exist when EITHER:
+     * <ul>
+     *   <li>{@code jC.a(scId).d(xmlName)} returns a non-null list (the layout
+     *       has been loaded into the project data manager), OR</li>
+     *   <li>the XML file exists on disk under the project's
+     *       {@code resource/layout/} directory (the layout was just created
+     *       but not yet loaded).</li>
+     * </ul>
+     *
+     * <p>Previous implementation called {@code jC.a(scId).b(name)} — but
+     * {@code b(String, ViewBean)} is the DELETE method (2 args). The correct
+     * read method is {@code d(String)} (1 arg, returns ArrayList<ViewBean>).
+     * Calling {@code b(name)} with one arg always threw, so layoutExists
+     * fell through to the filesystem check — which itself failed because
+     * getProjectPath uses hardcoded paths that don't work on modern Android
+     * scoped storage.
      */
     private static boolean layoutExists(String scId, String name) {
+        // Try the project data manager first.
         try {
             Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
-            Object beans = SketchwareApi.invoke(editor, "b", name);
+            Object beans = SketchwareApi.invoke(editor, "d", name);
             if (beans instanceof List && !((List<?>) beans).isEmpty()) {
                 return true;
             }
-        } catch (Throwable ignored) {}
-        // Fallback: check the file system.
-        try {
-            String projectPath = getProjectPath(scId);
-            if (projectPath != null) {
-                File layoutFile = new File(projectPath + "/resource/layout/" + name + ".xml");
-                return layoutFile.exists();
+            // Even an empty list means the layout is registered.
+            if (beans instanceof List) {
+                // Layout registered but empty — still exists.
+                // Verify via file system to distinguish "registered empty"
+                // from "not registered at all".
             }
         } catch (Throwable ignored) {}
+        // Fallback: check the file system using multiple candidate paths.
+        String projectPath = getProjectPath(scId);
+        if (projectPath != null) {
+            File layoutFile = new File(projectPath + "/resource/layout/" + name + ".xml");
+            if (layoutFile.exists()) return true;
+        }
         return false;
     }
 
-    /** Resolve the project's filesystem path from its sc_id. */
+    /**
+     * Resolve the project's filesystem path from its sc_id. Tries multiple
+     * candidate locations to handle different Sketchware-Pro versions and
+     * Android storage scopes:
+     * <ul>
+     *   <li>{@code /data/data/pro.sketchware/files/.sketchware/data/<scId>/}
+     *       (app-internal, modern Android)</li>
+     *   <li>{@code /sdcard/.sketchware/data/<scId>/}
+     *       (legacy external storage)</li>
+     *   <li>{@code /storage/emulated/0/.sketchware/data/<scId>/}
+     *       (alternative external path)</li>
+     * </ul>
+     * Returns null if none exist.
+     */
     private static String getProjectPath(String scId) {
-        // Sketchware-Pro stores projects under <app_data>/files/.sketchware/data/<sc_id>/
-        try {
-            java.io.File dataDir = new java.io.File("/data/data/pro.sketchware/files/.sketchware/data/" + scId);
-            if (dataDir.exists()) return dataDir.getAbsolutePath();
-            // Try external storage.
-            java.io.File extDir = new java.io.File("/sdcard/.sketchware/data/" + scId);
-            if (extDir.exists()) return extDir.getAbsolutePath();
-        } catch (Throwable ignored) {}
+        String[] candidates = {
+                "/data/data/pro.sketchware/files/.sketchware/data/" + scId,
+                "/sdcard/.sketchware/data/" + scId,
+                "/storage/emulated/0/.sketchware/data/" + scId,
+        };
+        for (String path : candidates) {
+            try {
+                java.io.File dir = new java.io.File(path);
+                if (dir.exists() && dir.isDirectory()) return dir.getAbsolutePath();
+            } catch (Throwable ignored) {}
+        }
         return null;
     }
 }

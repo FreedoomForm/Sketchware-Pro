@@ -203,9 +203,9 @@ public final class SketchwareApi {
                 sb.append(m.getName()).append("(")
                   .append(Arrays.toString(m.getParameterTypes())).append(")");
                 count++;
-                if (count >= 5) break;
+                if (count >= 20) break;
             }
-            if (count >= 5) break;
+            if (count >= 20) break;
         }
         if (count == 0) sb.append("(none)");
         return sb.toString();
