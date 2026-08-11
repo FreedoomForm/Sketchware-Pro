@@ -56,7 +56,72 @@ public final class SystemPromptBuilder {
         sb.append("9. When generating Java code via java_edit_file, use the project's package name as the package declaration.\n");
         sb.append("10. Be conservative: ask before performing destructive operations (delete widget, delete file, reset blocks).\n");
         sb.append("11. Universal tools take an `action` enum parameter - always pass exactly one action value per call.\n");
-        sb.append("12. Tool argument names are snake_case (e.g. `widget_id`, not `widgetId`). Match the schema exactly.\n\n");
+        sb.append("12. Tool argument names are snake_case (e.g. `widget_id`, not `widgetId`). Match the schema exactly.\n");
+        sb.append("13. For editing existing files, PREFER `diff_edit_file` over `java_edit_file` - it sends only the ");
+        sb.append("changed lines instead of the whole file, saving tokens and reducing errors. Use `apply_patch` ");
+        sb.append("when editing multiple files in one call.\n");
+        sb.append("14. Use `todo_list(action=\"add\", content=\"...\")` to track multi-step tasks. Check the list ");
+        sb.append("before deciding the next step. Mark items as `completed` or `in_progress` as you go.\n\n");
+
+        // Diff editing instructions
+        sb.append("# Diff Editing (SEARCH/REPLACE blocks)\n");
+        sb.append("When using `diff_edit_file`, format your diff as one or more blocks:\n");
+        sb.append("```\n");
+        sb.append("<<<<<<< SEARCH\n");
+        sb.append(" original lines (must exist in the file)\n");
+        sb.append("=======\n");
+        sb.append(" replacement lines\n");
+        sb.append(">>>>>>> REPLACE\n");
+        sb.append("```\n");
+        sb.append("The matcher tries exact match first, then line-trimmed, then block-anchor. ");
+        sb.append("If a block fails to match, you'll get an error with the block index and search snippet - ");
+        sb.append("re-read the file with `java_read_file` and retry with corrected SEARCH content.\n\n");
+
+        // Multi-file patch instructions
+        sb.append("# Multi-file Patch (apply_patch)\n");
+        sb.append("When editing multiple files at once, use `apply_patch` with this format:\n");
+        sb.append("```\n");
+        sb.append("*** Begin Patch\n");
+        sb.append("*** Add File: path/to/new.txt\n");
+        sb.append("+line 1\n");
+        sb.append("+line 2\n");
+        sb.append("*** End File\n");
+        sb.append("*** Update File: path/to/existing.txt\n");
+        sb.append("@@context line\n");
+        sb.append("-old line\n");
+        sb.append("+new line\n");
+        sb.append(" unchanged context\n");
+        sb.append("*** End File\n");
+        sb.append("*** Delete File: path/to/old.txt\n");
+        sb.append("*** End Patch\n");
+        sb.append("```\n");
+        sb.append("Lines starting with `+` are added, `-` are removed, `@@` or ` ` (space) are context.\n\n");
+
+        // Slash commands
+        sb.append("# Slash Commands\n");
+        sb.append("The user may type slash commands in the chat. These are preprocessed before reaching you:\n");
+        sb.append("- `/new` or `/clear` - start a new conversation\n");
+        sb.append("- `/compact` - manually trigger context compaction\n");
+        sb.append("- `/help` - show available commands\n");
+        sb.append("- `/export` - export the conversation\n");
+        sb.append("- `/mode <act|plan|yolo>` - switch agent mode\n");
+        sb.append("- `/cost` - show token usage and cost summary\n");
+        sb.append("- `/undo` - undo the last exchange\n");
+        sb.append("- `/tools` - list all registered tools\n");
+        sb.append("- `/context` - show current context window usage\n\n");
+
+        // Context mentions
+        sb.append("# Context Mentions\n");
+        sb.append("The user may include `@`-mentions in their message to inline context:\n");
+        sb.append("- `@file:<path>` - inline a file's content\n");
+        sb.append("- `@project:<id>` - inline project metadata\n");
+        sb.append("- `@layout:<name>` - inline a layout's widget tree\n");
+        sb.append("- `@component:<id>` - inline a component's properties\n");
+        sb.append("- `@url:<URL>` - reference a URL (use a fetch tool to retrieve)\n");
+        sb.append("- `@image:<path>` - attach an image (for vision models)\n");
+        sb.append("- `@problems` - inline current build errors\n");
+        sb.append("- `@git-changes` - inline the current diff\n");
+        sb.append("Mentions are expanded to text before the message reaches you.\n\n");
 
         // Mode tag instructions
         sb.append("# Mode\n");

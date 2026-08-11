@@ -5,14 +5,17 @@ import com.google.gson.JsonParser;
 import com.sketchware.ai.context.AgenticCompactor;
 import com.sketchware.ai.context.BasicCompactor;
 import com.sketchware.ai.context.Compactor;
+import com.sketchware.ai.context.ContextTruncator;
 import com.sketchware.ai.llm.ApiStreamChunk;
 import com.sketchware.ai.llm.LlmProvider;
 import com.sketchware.ai.llm.LlmRequest;
 import com.sketchware.ai.llm.ModelInfo;
+import com.sketchware.ai.llm.UsageTracker;
 import com.sketchware.ai.llm.reasoning.ReasoningEffort;
 import com.sketchware.ai.llm.reasoning.ReasoningRequest;
 import com.sketchware.ai.llm.storage.ProviderConfigStore;
 import com.sketchware.ai.prompt.SystemPromptBuilder;
+import com.sketchware.ai.tools.AutoApprover;
 import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.SketchwareToolContext;
 import com.sketchware.ai.tools.ToolExecutor;
@@ -60,6 +63,18 @@ public final class AgentRuntime {
     private final AbortController abortController = new AbortController();
 
     /**
+     * Loop detector — tracks repeated identical tool calls and injects warnings.
+     * Mirrors Cline's {@code core/task/loop-detection.ts}.
+     */
+    private final LoopDetector loopDetector = new LoopDetector();
+
+    /**
+     * Usage tracker — accumulates token usage and cost across the session.
+     * Exposed for the /cost slash command and UI cost display.
+     */
+    private final UsageTracker usageTracker = new UsageTracker();
+
+    /**
      * Tool execution context. Stored as a plain instance field (NOT a
      * ThreadLocal) because {@code setContext()} is called from the UI thread
      * but {@code executeTool()} runs on the agent's background executor —
@@ -90,6 +105,20 @@ public final class AgentRuntime {
     public AgentMode getMode() { return mode; }
 
     public void setMaxIterations(int max) { this.maxIterations = max; }
+
+    /** Get the usage tracker (for /cost command and UI cost display). */
+    public UsageTracker getUsageTracker() { return usageTracker; }
+
+    /** Get the loop detector (for testing / debugging). */
+    public LoopDetector getLoopDetector() { return loopDetector; }
+
+    /** Reset the loop detector and TODO list (call when starting a new task). */
+    public void resetSession() {
+        loopDetector.reset();
+        usageTracker.reset();
+        conversationHistory.clear();
+        com.sketchware.ai.tools.meta.TodoListTool.resetSession();
+    }
 
     /**
      * Set the tool execution context. Must be called before {@link #execute}
@@ -173,6 +202,10 @@ public final class AgentRuntime {
                             usage[2] = u.reasoningTokens;
                             usage[3] = u.cacheReadTokens;
                             usage[4] = u.cacheWriteTokens;
+                            // Record in the usage tracker for /cost command and UI display.
+                            usageTracker.record(provider.getProviderId(), profile.modelId,
+                                    u.inputTokens, u.outputTokens, u.reasoningTokens,
+                                    u.cacheReadTokens, u.cacheWriteTokens, u.cost);
                             listener.onUsage(u.inputTokens, u.outputTokens, u.reasoningTokens, u.cost);
                         } else if (chunk.isDone()) {
                             break;
@@ -207,6 +240,9 @@ public final class AgentRuntime {
                                 pendingToolCalls.addAll(chunk.asToolCalls().calls);
                             } else if (chunk.isUsage()) {
                                 ApiStreamChunk.Usage u = chunk.asUsage();
+                                usageTracker.record(provider.getProviderId(), profile.modelId,
+                                        u.inputTokens, u.outputTokens, u.reasoningTokens,
+                                        u.cacheReadTokens, u.cacheWriteTokens, u.cost);
                                 listener.onUsage(u.inputTokens, u.outputTokens, u.reasoningTokens, u.cost);
                             } else if (chunk.isDone()) break;
                         }
@@ -245,11 +281,40 @@ public final class AgentRuntime {
                 for (AgentMessage.ToolCall call : pendingToolCalls) {
                     if (abortController.isAborted()) break;
                     listener.onToolStart(call.id, call.name, call.argumentsJson);
+                    // Loop detection: observe the call before executing.
+                    LoopDetector.LoopResult loop = loopDetector.observe(call.name, call.argumentsJson);
+                    if (loop.softWarning || loop.hardEscalation) {
+                        String warning = loop.warningText(call.name);
+                        if (warning != null) listener.onWarning(warning);
+                        // If hard escalation + shouldAbort, stop the run.
+                        if (loop.shouldAbort) {
+                            AgentMessage.ToolResultContent tr = new AgentMessage.ToolResultContent(
+                                    call.id, call.name, warning, true);
+                            results.add(tr);
+                            listener.onToolResult(call.id, tr);
+                            listener.onError(new IllegalStateException(
+                                    "Loop detected: tool '" + call.name + "' called " + loop.repeatCount
+                                            + " times with identical arguments. Aborting to prevent infinite loop."));
+                            return;
+                        }
+                    }
+                    // Record tool call for telemetry.
+                    usageTracker.recordToolCall(call.name);
                     ToolResult result = executeTool(call, listener);
                     AgentMessage.ToolResultContent tr = new AgentMessage.ToolResultContent(
                             call.id, call.name,
                             result == null ? "" : result.toLLMString(),
                             result != null && result.isError());
+                    // If a loop warning was issued, append it to the tool result so the LLM sees it.
+                    if (loop.softWarning || loop.hardEscalation) {
+                        String warning = loop.warningText(call.name);
+                        if (warning != null) {
+                            tr = new AgentMessage.ToolResultContent(
+                                    call.id, call.name,
+                                    tr.output + "\n\n" + warning,
+                                    tr.isError);
+                        }
+                    }
                     results.add(tr);
                     listener.onToolResult(call.id, tr);
                     // submit_and_exit signals task completion; the loop must
@@ -285,8 +350,13 @@ public final class AgentRuntime {
                     return;
                 }
 
-                // Check for context overflow.
-                if (estimateTokens() > COMPACTION_TRIGGER_RATIO * model.maxInputTokens) {
+                // Check for context overflow using smart truncation strategy.
+                int estimatedTokens = estimateTokens();
+                ContextTruncator.TruncationRange truncation = ContextTruncator.decide(
+                        conversationHistory.size(), estimatedTokens, model.maxInputTokens);
+                if (truncation.needsTruncation) {
+                    String notice = ContextTruncator.truncationNotice(truncation);
+                    if (notice != null) listener.onWarning(notice);
                     compactConversation(model.maxInputTokens);
                 }
             }

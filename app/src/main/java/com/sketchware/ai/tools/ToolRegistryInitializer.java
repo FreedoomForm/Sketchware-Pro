@@ -21,9 +21,12 @@ import com.sketchware.ai.tools.event.CustomEventManageTool;
 import com.sketchware.ai.tools.event.EventAttachTool;
 import com.sketchware.ai.tools.event.EventListTool;
 import com.sketchware.ai.tools.event.EventManageTool;
+import com.sketchware.ai.tools.diff.ApplyPatchTool;
+import com.sketchware.ai.tools.diff.DiffEditFileTool;
 import com.sketchware.ai.tools.java.JavaEditFileTool;
 import com.sketchware.ai.tools.java.JavaModifyClassTool;
 import com.sketchware.ai.tools.java.JavaReadFileTool;
+import com.sketchware.ai.tools.meta.TodoListTool;
 import com.sketchware.ai.tools.library.LibraryConfigureTool;
 import com.sketchware.ai.tools.library.LibraryEnableTool;
 import com.sketchware.ai.tools.library.LibraryManageTool;
@@ -238,10 +241,12 @@ public final class ToolRegistryInitializer {
         r.register(new ExportActionTool());         // universal: 4 actions (was 4 stubs)
         r.register(new ProguardManageTool());       // universal: 6 actions (FIX-D-PROJECT: NEW)
 
-        // ===== Java category (3 tools: 2 specialized + 1 universal) =====
+        // ===== Java category (6 tools: 2 specialized + 1 universal + 2 diff + 1 todo) =====
         r.register(new JavaEditFileTool());         // specialized
         r.register(new JavaReadFileTool());        // specialized
         r.register(new JavaModifyClassTool());    // universal: 11 actions (was 12 stubs)
+        r.register(new DiffEditFileTool());       // SEARCH/REPLACE diff editing (port of Cline replace_in_file)
+        r.register(new ApplyPatchTool());         // multi-file unified diff (port of Cline apply_patch)
 
         // ===== Library/Permission category (5 universal tools; FIX-D-PROJECT) =====
         r.register(new LibraryEnableTool());      // universal: 10 actions (FIX-D-PROJECT: was specialized w/ library_type enum)
@@ -267,6 +272,7 @@ public final class ToolRegistryInitializer {
         // ===== Meta tools =====
         r.register(new AskQuestionTool());
         r.register(new SubmitAndExitTool());
+        r.register(new TodoListTool());            // AI-managed TODO list (port of Cline task_progress)
 
         return r;
     }
