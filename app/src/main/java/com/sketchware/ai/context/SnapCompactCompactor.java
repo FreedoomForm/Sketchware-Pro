@@ -2,6 +2,7 @@ package com.sketchware.ai.context;
 
 import com.sketchware.ai.agent.AgentMessage;
 import com.sketchware.ai.context.snapcompact.BdfFontRegistry;
+import com.sketchware.ai.context.snapcompact.SilverFontRegistry;
 import com.sketchware.ai.context.snapcompact.SnapCompact;
 
 import java.util.ArrayList;
