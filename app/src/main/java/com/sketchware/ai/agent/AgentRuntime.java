@@ -7,6 +7,7 @@ import com.sketchware.ai.context.BasicCompactor;
 import com.sketchware.ai.context.Compactor;
 import com.sketchware.ai.context.ContextTruncator;
 import com.sketchware.ai.context.OhMyPiCompactor;
+import com.sketchware.ai.context.SnapCompactCompactor;
 import com.sketchware.ai.llm.ApiStreamChunk;
 import com.sketchware.ai.llm.LlmProvider;
 import com.sketchware.ai.llm.LlmRequest;
@@ -587,13 +588,35 @@ public final class AgentRuntime {
 
     private void compactConversation(int maxInputTokens) {
         // Strategy selection (mirrors oh-my-pi's compaction pipeline):
-        //  - Reasoning-enabled profile: try context-full (LLM summarizer) first.
-        //    On summarizer failure, OhMyPiCompactor falls back to shake internally.
-        //  - Reasoning-disabled profile: use shake (BasicCompactor) directly.
-        //    No LLM call is made — safe for overflow recovery where a second
-        //    failing LLM call would only compound the problem.
+        //  - Vision-capable model (supportsImages): use SnapCompactCompactor —
+        //    renders discarded history into PNG frames that the LLM reads
+        //    back directly. No LLM call during compaction; fully local.
+        //  - Reasoning-enabled profile (non-vision): try context-full
+        //    (LLM summarizer) first. On summarizer failure, OhMyPiCompactor
+        //    falls back to shake internally.
+        //  - Reasoning-disabled profile (non-vision): use shake
+        //    (BasicCompactor) directly. No LLM call is made — safe for
+        //    overflow recovery where a second failing LLM call would only
+        //    compound the problem.
+        ModelInfo model = null;
+        try {
+            model = provider.getModel(profile.modelId);
+        } catch (Throwable ignored) {
+            // getModel may throw on unknown ids; we fall through to the
+            // safe BasicCompactor path.
+        }
+        boolean modelSupportsImages = model != null && model.supportsImages;
+
         Compactor c;
-        if (profile.enableReasoning) {
+        if (modelSupportsImages && toolContext != null) {
+            SnapCompactCompactor.Listener listener = event ->
+                warnListener("Compaction (snapcompact): " + event);
+            c = new SnapCompactCompactor(
+                    profile.modelId,
+                    toolContext.getContext(),
+                    SnapCompactCompactor.DEFAULT_KEEP_RECENT_TOKENS,
+                    listener);
+        } else if (profile.enableReasoning) {
             OhMyPiCompactor.Listener listener = event ->
                 warnListener("Compaction (context-full): " + event);
             c = new OhMyPiCompactor(provider, profile.apiKey, profile.modelId,
