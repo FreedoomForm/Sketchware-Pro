@@ -178,10 +178,16 @@
     <string name="ai_thread_action_open">Open</string>
     <string name="ai_thread_action_rename">Rename</string>
     <string name="ai_thread_action_delete">Delete</string>
+    <string name="ai_thread_action_export">Export</string>
+    <string name="ai_thread_action_pin">Pin</string>
+    <string name="ai_thread_action_unpin">Unpin</string>
     <string name="ai_thread_delete_confirm">Delete this chat permanently?</string>
     <string name="ai_thread_rename_title">Rename chat</string>
     <string name="ai_thread_rename_hint">Chat title</string>
     <string name="ai_thread_empty_hint">Send a message to start a new chat</string>
+    <string name="ai_thread_export_empty">This chat has no messages to export</string>
+    <string name="ai_thread_export_done">Chat exported</string>
+    <string name="ai_thread_export_failed">Export failed: %1$s</string>
 
     <!-- ===== Provider display names ===== -->
     <string name="ai_provider_openai">OpenAI</string>

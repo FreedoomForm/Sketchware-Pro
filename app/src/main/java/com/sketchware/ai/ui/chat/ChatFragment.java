@@ -81,7 +81,8 @@ public final class ChatFragment extends Fragment {
     private View btnSend;
     private View btnStop;
     private View btnAttach;
-    private com.google.android.material.button.MaterialButton btnMode;
+    private com.google.android.material.materialswitch.MaterialSwitch btnMode;
+    private android.widget.TextView modeLabelInline;
     private com.google.android.material.materialswitch.MaterialSwitch autoApproveToggle;
     private com.google.android.material.progressindicator.LinearProgressIndicator contextProgress;
     private View statusDot;
@@ -189,6 +190,7 @@ public final class ChatFragment extends Fragment {
         btnStop = root.findViewById(R.id.btn_stop);
         btnAttach = root.findViewById(R.id.btn_attach);
         btnMode = root.findViewById(R.id.btn_mode);
+        modeLabelInline = root.findViewById(R.id.mode_label_inline);
         autoApproveToggle = root.findViewById(R.id.auto_approve_toggle);
         contextProgress = root.findViewById(R.id.context_progress);
         statusDot = root.findViewById(R.id.status_dot);
@@ -345,14 +347,16 @@ public final class ChatFragment extends Fragment {
             btnAttach.setVisibility(View.VISIBLE);
         });
 
-        // Mode toggle (Act/Plan) — cycles between ACT and PLAN. Updates the
-        // button label + mode chip, and notifies the agent if running.
+        // Mode toggle (Act/Plan) — now a MaterialSwitch, mirroring the YOLO
+        // toggle's look & feel. OFF = Act (execute), ON = Plan (think only).
+        // Updates the inline label + top status chip, and notifies the agent
+        // if running.
         java.util.concurrent.atomic.AtomicReference<AgentMode> currentMode =
                 new java.util.concurrent.atomic.AtomicReference<>(AgentMode.ACT);
         updateModeUi(currentMode.get());
-        btnMode.setOnClickListener(v -> {
-            AgentMode next = currentMode.get() == AgentMode.ACT
-                    ? AgentMode.PLAN : AgentMode.ACT;
+        btnMode.setOnCheckedChangeListener((b, checked) -> {
+            if (updatingModeUi) return;  // ignore programmatic setChecked
+            AgentMode next = checked ? AgentMode.PLAN : AgentMode.ACT;
             currentMode.set(next);
             updateModeUi(next);
             if (agent != null) agent.setMode(next);
@@ -379,19 +383,34 @@ public final class ChatFragment extends Fragment {
         return root;
     }
 
-    /** Update the mode button label + chip text based on AgentMode. */
+    /** Guard flag so updateModeUi's setChecked doesn't re-enter the listener. */
+    private boolean updatingModeUi = false;
+
+    /** Update the mode toggle label + chip text based on AgentMode. */
     private void updateModeUi(AgentMode mode) {
-        // Use a consistent capitalized label for both the bottom button
-        // and the top status-row chip. Previously the chip showed the raw
-        // enum name (e.g. "YOLO") while the button showed "Act" — that was
-        // inconsistent and confusing when YOLO mode was enabled.
+        // The inline label next to the toggle shows the current mode name;
+        // the top status-row chip mirrors it. Previously the chip showed the
+        // raw enum name (e.g. "YOLO") while the button showed "Act" — that
+        // was inconsistent and confusing when YOLO mode was enabled.
         String label;
+        boolean planChecked;
         switch (mode) {
-            case PLAN: label = "Plan";  break;
-            case YOLO: label = "Yolo";  break;
-            default:   label = "Act";   break;
+            case PLAN: label = "Plan";  planChecked = true;  break;
+            case YOLO: label = "Yolo";  planChecked = false; break;
+            default:   label = "Act";   planChecked = false; break;
         }
-        if (btnMode != null) btnMode.setText(label);
+        updatingModeUi = true;
+        try {
+            if (btnMode != null) {
+                btnMode.setChecked(planChecked);
+                // In YOLO mode the Act/Plan distinction is meaningless, so
+                // disable the toggle to signal that.
+                btnMode.setEnabled(mode != AgentMode.YOLO);
+            }
+        } finally {
+            updatingModeUi = false;
+        }
+        if (modeLabelInline != null) modeLabelInline.setText(label);
         if (modeLabel != null) modeLabel.setText(label);
     }
 
@@ -729,7 +748,7 @@ public final class ChatFragment extends Fragment {
             AgentMode initialMode = AgentMode.ACT;
             if (isYoloEnabled()) {
                 initialMode = AgentMode.YOLO;
-            } else if (btnMode != null && "Plan".equals(btnMode.getText().toString())) {
+            } else if (btnMode != null && btnMode.isChecked()) {
                 initialMode = AgentMode.PLAN;
             }
             agent.setMode(initialMode);
@@ -1486,7 +1505,11 @@ public final class ChatFragment extends Fragment {
             if (conv.size() < 2) return;  // nothing to save
             TaskHistoryStore store = getTaskHistoryStore();
             String scId = readScIdFromActivity();
-            store.save(conv, scId, "Sketchware Project");
+            // Record which provider/model this chat used so the chat list
+            // can show the provider's emblem instead of a generic bot icon.
+            String pid = profile != null ? profile.providerId : null;
+            String mid = profile != null ? profile.modelId : null;
+            store.save(conv, scId, "Sketchware Project", pid, mid);
         } catch (Throwable ignored) {
             // Auto-save failures should be silent.
         }
@@ -1563,6 +1586,12 @@ public final class ChatFragment extends Fragment {
                 runOnUiIfAlive(() -> {
                     if (threadsAdapter != null) {
                         threadsAdapter.submitAll(tasks);
+                        // Keep the star indicators in sync with the pinned set.
+                        android.content.SharedPreferences prefs = requireContext()
+                                .getSharedPreferences(PINNED_THREADS_PREFS, Context.MODE_PRIVATE);
+                        java.util.Set<String> pinned = prefs.getStringSet(
+                                PINNED_THREADS_KEY, java.util.Collections.emptySet());
+                        threadsAdapter.setPinnedIds(pinned);
                     }
                     if (drawerEmptyState != null) {
                         drawerEmptyState.setVisibility(tasks.isEmpty() ? View.VISIBLE : View.GONE);
@@ -1586,12 +1615,16 @@ public final class ChatFragment extends Fragment {
         if (a == null) return;
         String title = thread.firstUserMessage == null ? "(no title)" : thread.firstUserMessage;
         if (title.length() > 60) title = title.substring(0, 60) + "...";
+        boolean pinned = isThreadPinned(thread.id);
         new AlertDialog.Builder(a)
                 .setTitle(R.string.ai_thread_actions_title)
                 .setMessage(title)
                 .setItems(new CharSequence[]{
                         getString(R.string.ai_thread_action_open),
                         getString(R.string.ai_thread_action_rename),
+                        getString(R.string.ai_thread_action_export),
+                        pinned ? getString(R.string.ai_thread_action_unpin)
+                               : getString(R.string.ai_thread_action_pin),
                         getString(R.string.ai_thread_action_delete)
                 }, (dlg, which) -> {
                     if (which == 0) {
@@ -1602,11 +1635,107 @@ public final class ChatFragment extends Fragment {
                     } else if (which == 1) {
                         showRenameDialog(thread);
                     } else if (which == 2) {
+                        exportThread(thread);
+                    } else if (which == 3) {
+                        togglePinThread(thread);
+                    } else if (which == 4) {
                         confirmDeleteThread(thread);
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    // ------------------------------------------------------------------
+    // Thread export + pin (star)
+    // ------------------------------------------------------------------
+
+    /** SharedPreferences-backed set of pinned (starred) thread ids. */
+    private static final String PINNED_THREADS_PREFS = "ai_chat_prefs";
+    private static final String PINNED_THREADS_KEY = "pinned_thread_ids";
+
+    private boolean isThreadPinned(String threadId) {
+        if (threadId == null) return false;
+        android.content.SharedPreferences prefs = requireContext()
+                .getSharedPreferences(PINNED_THREADS_PREFS, Context.MODE_PRIVATE);
+        return prefs.getStringSet(PINNED_THREADS_KEY, java.util.Collections.emptySet())
+                .contains(threadId);
+    }
+
+    private void togglePinThread(TaskHistoryStore.TaskMetadata thread) {
+        android.content.SharedPreferences prefs = requireContext()
+                .getSharedPreferences(PINNED_THREADS_PREFS, Context.MODE_PRIVATE);
+        java.util.Set<String> current = new java.util.HashSet<>(
+                prefs.getStringSet(PINNED_THREADS_KEY, java.util.Collections.emptySet()));
+        boolean wasPinned = !current.add(thread.id);
+        if (wasPinned) current.remove(thread.id);
+        prefs.edit().putStringSet(PINNED_THREADS_KEY, current).apply();
+        View v = getView();
+        if (v != null) {
+            Snackbar.make(v, wasPinned ? "Unpinned" : "Pinned", Snackbar.LENGTH_SHORT).show();
+        }
+        refreshThreads();
+    }
+
+    /**
+     * Export a saved thread (by id) to a text file and share it via the
+     * system share-sheet. Loads the conversation from {@link TaskHistoryStore},
+     * replays it into a temporary {@link MessageReducer}, then renders the
+     * transcript with {@link ChatExporter}.
+     */
+    private void exportThread(TaskHistoryStore.TaskMetadata thread) {
+        Activity a = getActivity();
+        if (a == null) return;
+        View v = getView();
+        new Thread(() -> {
+            try {
+                TaskHistoryStore store = getTaskHistoryStore();
+                java.util.LinkedList<AgentMessage> conv = store.load(thread.id);
+                if (conv == null || conv.isEmpty()) {
+                    runOnUiIfAlive(() -> {
+                        if (v != null) Snackbar.make(v,
+                                R.string.ai_thread_export_empty, Snackbar.LENGTH_SHORT).show();
+                    });
+                    return;
+                }
+                // Rebuild a MessageReducer from the stored conversation so
+                // ChatExporter.renderTranscript() can format it.
+                MessageReducer tmp = new MessageReducer();
+                for (AgentMessage m : conv) {
+                    if (AgentMessage.ROLE_USER.equals(m.role)) {
+                        if (m.hasToolResults()) {
+                            for (AgentMessage.ToolResultContent r : m.toolResults) {
+                                tmp.addToolResult(r.toolName, r.output, r.isError);
+                            }
+                        } else {
+                            tmp.addUserMessage(m.text == null ? "" : m.text);
+                        }
+                    } else if (AgentMessage.ROLE_ASSISTANT.equals(m.role)) {
+                        if (m.hasToolCalls()) {
+                            for (AgentMessage.ToolCall c : m.toolCalls) {
+                                tmp.addToolCall(c.name, c.argumentsJson);
+                            }
+                        }
+                        if (m.text != null && !m.text.isEmpty()) {
+                            tmp.addCompletion(m.text);
+                        }
+                    }
+                }
+                java.io.File file = ChatExporter.writeToCacheFile(a, tmp.getMessages());
+                Intent share = ChatExporter.createShareIntent(a, file);
+                runOnUiIfAlive(() -> {
+                    if (v != null) Snackbar.make(v,
+                            R.string.ai_thread_export_done, Snackbar.LENGTH_SHORT).show();
+                    startActivity(share);
+                });
+            } catch (Exception e) {
+                runOnUiIfAlive(() -> {
+                    if (v != null) Snackbar.make(v,
+                            getString(R.string.ai_thread_export_failed, e.getMessage()),
+                            Snackbar.LENGTH_LONG).show();
+                });
+            }
+        }, "ai-thread-export").start();
     }
 
     private void showRenameDialog(TaskHistoryStore.TaskMetadata thread) {

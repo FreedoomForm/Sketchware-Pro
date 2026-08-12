@@ -32,9 +32,9 @@ import java.util.Map;
 public final class LoopDetector {
 
     /** Soft warning threshold: at this many identical calls, inject a hint. */
-    public static final int SOFT_THRESHOLD = 3;
+    public static final int SOFT_THRESHOLD = 2;
     /** Hard escalation threshold: at this many identical calls, count as a mistake. */
-    public static final int HARD_THRESHOLD = 5;
+    public static final int HARD_THRESHOLD = 3;
     /** Sliding window size. */
     private static final int WINDOW = 8;
 
@@ -44,7 +44,7 @@ public final class LoopDetector {
     private final int maxConsecutiveMistakes;
 
     public LoopDetector() {
-        this(3);
+        this(2);
     }
 
     public LoopDetector(int maxConsecutiveMistakes) {

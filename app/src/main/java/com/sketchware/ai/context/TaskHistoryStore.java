@@ -59,10 +59,21 @@ public final class TaskHistoryStore {
         public final String firstUserMessage;
         public final String lastUserMessage;
         public final int messageCount;
+        /** Provider id used in the last message of this chat (may be null for old chats). */
+        public final String lastProviderId;
+        /** Model id used in the last message of this chat (may be null for old chats). */
+        public final String lastModelId;
 
         public TaskMetadata(String id, long createdAt, long updatedAt, String projectScId,
                             String projectName, String firstUserMessage, String lastUserMessage,
                             int messageCount) {
+            this(id, createdAt, updatedAt, projectScId, projectName,
+                    firstUserMessage, lastUserMessage, messageCount, null, null);
+        }
+
+        public TaskMetadata(String id, long createdAt, long updatedAt, String projectScId,
+                            String projectName, String firstUserMessage, String lastUserMessage,
+                            int messageCount, String lastProviderId, String lastModelId) {
             this.id = id;
             this.createdAt = createdAt;
             this.updatedAt = updatedAt;
@@ -71,11 +82,22 @@ public final class TaskHistoryStore {
             this.firstUserMessage = firstUserMessage;
             this.lastUserMessage = lastUserMessage;
             this.messageCount = messageCount;
+            this.lastProviderId = lastProviderId;
+            this.lastModelId = lastModelId;
         }
     }
 
     /** Save the current conversation as a new task. Returns the task ID. */
     public String save(LinkedList<AgentMessage> conversation, String projectScId, String projectName) throws IOException {
+        return save(conversation, projectScId, projectName, null, null);
+    }
+
+    /**
+     * Save the current conversation as a new task, recording the provider/model
+     * used so the chat list can show the provider's emblem for this chat.
+     */
+    public String save(LinkedList<AgentMessage> conversation, String projectScId,
+                       String projectName, String providerId, String modelId) throws IOException {
         String id = generateId();
         long now = System.currentTimeMillis();
         String firstUser = null, lastUser = null;
@@ -97,6 +119,8 @@ public final class TaskHistoryStore {
         root.addProperty("firstUserMessage", truncate(firstUser, 200));
         root.addProperty("lastUserMessage", truncate(lastUser, 200));
         root.addProperty("messageCount", conversation.size());
+        if (providerId != null) root.addProperty("lastProviderId", providerId);
+        if (modelId != null) root.addProperty("lastModelId", modelId);
 
         JsonArray conv = new JsonArray();
         for (AgentMessage m : conversation) conv.add(serialize(m));
@@ -109,11 +133,23 @@ public final class TaskHistoryStore {
 
     /** Update an existing task with the latest conversation state. */
     public void update(String taskId, LinkedList<AgentMessage> conversation) throws IOException {
+        update(taskId, conversation, null, null);
+    }
+
+    /**
+     * Update an existing task, also refreshing the provider/model fields so
+     * the chat list emblem stays in sync with whatever model the user switched
+     * to during this chat.
+     */
+    public void update(String taskId, LinkedList<AgentMessage> conversation,
+                       String providerId, String modelId) throws IOException {
         File file = new File(historyDir, taskId + ".json");
         if (!file.exists()) throw new IOException("Task not found: " + taskId);
         JsonObject root = gson.fromJson(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8), JsonObject.class);
         root.addProperty("updatedAt", System.currentTimeMillis());
         root.addProperty("messageCount", conversation.size());
+        if (providerId != null) root.addProperty("lastProviderId", providerId);
+        if (modelId != null) root.addProperty("lastModelId", modelId);
 
         String lastUser = null;
         for (AgentMessage m : conversation) {
@@ -159,7 +195,11 @@ public final class TaskHistoryStore {
                         root.has("projectName") ? root.get("projectName").getAsString() : null,
                         root.has("firstUserMessage") ? root.get("firstUserMessage").getAsString() : "(no title)",
                         root.has("lastUserMessage") ? root.get("lastUserMessage").getAsString() : null,
-                        root.has("messageCount") ? root.get("messageCount").getAsInt() : 0));
+                        root.has("messageCount") ? root.get("messageCount").getAsInt() : 0,
+                        root.has("lastProviderId") && !root.get("lastProviderId").isJsonNull()
+                                ? root.get("lastProviderId").getAsString() : null,
+                        root.has("lastModelId") && !root.get("lastModelId").isJsonNull()
+                                ? root.get("lastModelId").getAsString() : null));
             } catch (Throwable ignored) {
                 // Skip malformed files.
             }

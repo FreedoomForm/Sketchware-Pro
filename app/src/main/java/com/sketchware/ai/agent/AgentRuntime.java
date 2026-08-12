@@ -27,8 +27,10 @@ import com.sketchware.ai.tools.ToolResult;
 import com.sketchware.ai.tools.JsonSchemaValidator;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -53,6 +55,8 @@ public final class AgentRuntime {
     private static final int DEFAULT_MAX_ITERATIONS = 50;
     private static final double COMPACTION_TRIGGER_RATIO = 0.9;
     private static final int COMPACTION_PRESERVE_RECENT = 20;
+    /** Max compaction-recovery cycles per run before giving up with onError. */
+    private static final int MAX_COMPACTION_RETRIES = 3;
 
     private final LlmProvider provider;
     private final ToolRegistry toolRegistry;
@@ -264,6 +268,12 @@ public final class AgentRuntime {
 
             ModelInfo model = provider.getModel(profile.modelId);
             int iteration = 0;
+            // Budget for compaction-recovery cycles. Each time the stream
+            // fails with an overflow error we compact and retry; if the retry
+            // ALSO fails we used to call onError + return (which stopped the
+            // agent dead). Now we let the outer while loop retry from the
+            // compacted history, up to this many times, before giving up.
+            int compactionRetries = 0;
             while (iteration++ < maxIterations && !abortController.isAborted()) {
                 // Build request.
                 ReasoningRequest reasoning = buildReasoningRequest();
@@ -315,9 +325,16 @@ public final class AgentRuntime {
                         }
                     }
                 } catch (Exception e) {
-                    // Try overflow recovery once.
+                    // Overflow recovery: compact and retry. Previously this
+                    // was a single-shot retry — if it failed, onError+return
+                    // stopped the agent for good, leaving the user with a dead
+                    // chat after every compaction. Now we compact, retry, and
+                    // if the retry ALSO fails we let the outer while loop take
+                    // another crack at the (now smaller) history instead of
+                    // terminating. A retry budget prevents infinite loops.
                     listener.onWarning("Stream error: " + e.getMessage() + ". Trying compaction.");
                     compactConversation(model.maxInputTokens);
+                    compactionRetries++;
                     // CRITICAL: clear all buffers before retrying. The first
                     // attempt may have streamed partial text/reasoning/tool_calls
                     // before failing; if we don't reset, the retry would APPEND
@@ -350,6 +367,22 @@ public final class AgentRuntime {
                             } else if (chunk.isDone()) break;
                         }
                     } catch (Exception e2) {
+                        // Retry also failed. Instead of killing the agent,
+                        // let the outer while loop rebuild the request from
+                        // the compacted history and try again — but only if we
+                        // still have compaction budget left. This is what
+                        // fixes "agent stops after compression": the system
+                        // now keeps retrying with the new (compacted) context
+                        // instead of giving up after one failed retry.
+                        if (compactionRetries < MAX_COMPACTION_RETRIES
+                                && !abortController.isAborted()
+                                && estimateTokens() > 0) {
+                            listener.onWarning("Retry failed after compaction ("
+                                    + e2.getMessage()
+                                    + "). Restarting agent loop with compacted context (attempt "
+                                    + (compactionRetries + 1) + "/" + MAX_COMPACTION_RETRIES + ").");
+                            continue;  // outer while — rebuilds request from compacted history
+                        }
                         listener.onError(e2);
                         return;
                     }
@@ -364,6 +397,11 @@ public final class AgentRuntime {
                     return;
                 }
 
+                // The stream succeeded (or was recovered via compaction).
+                // Reset the compaction-retry budget so a future overflow in a
+                // later iteration gets a fresh set of retries.
+                compactionRetries = 0;
+
                 // Add assistant message to history.
                 conversationHistory.add(AgentMessage.assistant(
                         textBuf.toString(),
@@ -375,6 +413,34 @@ public final class AgentRuntime {
                     listener.onComplete(textBuf.toString());
                     return;
                 }
+
+                // Deduplicate tool calls by signature BEFORE execution.
+                // Many providers/proxies (OpenRouter, vLLM, Z.AI, ...) emit
+                // the same tool_calls array in successive SSE deltas, or the
+                // LLM itself re-emits an identical call. Without dedup every
+                // duplicate executes — e.g. view_add_widget creates a second
+                // identical-looking Button. We collapse identical (name+args)
+                // calls into a single execution and feed a synthetic "skipped"
+                // result back to the LLM so it knows the duplicate was ignored.
+                List<AgentMessage.ToolCall> dedupedCalls = new ArrayList<>();
+                List<AgentMessage.ToolCall> skippedDupes = new ArrayList<>();
+                Set<String> seenSignatures = new LinkedHashSet<>();
+                for (AgentMessage.ToolCall call : pendingToolCalls) {
+                    String sig = LoopDetector.signature(call.name, call.argumentsJson);
+                    if (seenSignatures.add(sig)) {
+                        dedupedCalls.add(call);
+                    } else {
+                        skippedDupes.add(call);
+                    }
+                }
+                if (!skippedDupes.isEmpty()) {
+                    listener.onWarning("Skipped " + skippedDupes.size()
+                            + " duplicate tool call(s) in this batch to prevent repeated execution.");
+                }
+                // Replace the pending list with the deduped one so the
+                // assistant message recorded in history also reflects only
+                // the calls that actually ran.
+                pendingToolCalls = dedupedCalls;
 
                 listener.onToolCalls(pendingToolCalls);
 
@@ -429,6 +495,15 @@ public final class AgentRuntime {
                     if ("submit_and_exit".equals(call.name)) {
                         submitAndExit = true;
                     }
+                }
+                // Append synthetic "skipped" results for any duplicate tool
+                // calls we collapsed, so the LLM sees explicit feedback that
+                // its duplicate was ignored (instead of silently dropping it).
+                for (AgentMessage.ToolCall dup : skippedDupes) {
+                    results.add(new AgentMessage.ToolResultContent(
+                            dup.id, dup.name,
+                            "Skipped: this tool call is an exact duplicate of an earlier call in the same batch and was not executed again. Do not repeat identical tool calls.",
+                            false));
                 }
                 // Only add a tool_result message if at least one tool produced
                 // a result. If every call was skipped due to abort, an empty

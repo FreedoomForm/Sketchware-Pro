@@ -15,10 +15,14 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import pro.sketchware.R;
 import com.sketchware.ai.context.TaskHistoryStore;
+import com.sketchware.ai.ui.settings.ProviderIconResolver;
 
 /**
  * Adapter for the past-conversations list shown in the chat side drawer.
@@ -46,10 +50,21 @@ public final class ChatThreadsAdapter extends
     private final Callback callback;
     @Nullable
     private List<TaskHistoryStore.TaskMetadata> allItems = null;
+    @Nullable
+    private Set<String> pinnedIds = Collections.emptySet();
 
     public ChatThreadsAdapter(@NonNull Callback callback) {
         super(DIFF);
         this.callback = callback;
+    }
+
+    /**
+     * Update the set of pinned (starred) thread ids. The adapter will show a
+     * star icon on matching rows. Pass an empty set to clear all stars.
+     */
+    public void setPinnedIds(@Nullable Set<String> ids) {
+        this.pinnedIds = ids == null ? Collections.emptySet() : new HashSet<>(ids);
+        notifyItemRangeChanged(0, getItemCount());
     }
 
     @NonNull @Override
@@ -72,6 +87,40 @@ public final class ChatThreadsAdapter extends
             subtitle = item.projectName + " · " + subtitle;
         }
         h.subtitle.setText(subtitle);
+
+        // Show the provider/model emblem for this chat instead of a generic
+        // bot icon. Resolve by provider id first, then by model id keyword
+        // (e.g. "claude-3.5-sonnet" still maps to the Anthropic icon), and
+        // fall back to the default bot icon for old chats that have no
+        // provider/model recorded.
+        if (h.icon != null) {
+            int iconRes = 0;
+            if (item.lastProviderId != null && !item.lastProviderId.isEmpty()) {
+                iconRes = ProviderIconResolver.resolveProvider(item.lastProviderId, null);
+            }
+            if (iconRes == 0 || iconRes == R.drawable.ic_ai) {
+                // Try the model id as a fallback (substring match).
+                if (item.lastModelId != null && !item.lastModelId.isEmpty()) {
+                    iconRes = ProviderIconResolver.resolveModel(item.lastModelId);
+                }
+            }
+            if (iconRes != 0) {
+                h.icon.setImageResource(iconRes);
+                // Provider emblems are full-color PNGs; clear the tint so
+                // they render in their brand colors instead of monochrome.
+                h.icon.setImageTintList(null);
+            } else {
+                h.icon.setImageResource(R.drawable.kelivo_lucide_bot_message_square);
+                h.icon.setImageTintList(androidx.core.content.ContextCompat
+                        .getColorStateList(h.itemView.getContext(), R.color.ai_avatar_text));
+            }
+        }
+
+        // Star indicator for pinned threads.
+        if (h.pinnedStar != null) {
+            boolean pinned = pinnedIds != null && item.id != null && pinnedIds.contains(item.id);
+            h.pinnedStar.setVisibility(pinned ? View.VISIBLE : View.GONE);
+        }
 
         h.itemView.setOnClickListener(v -> callback.onOpen(item));
         h.itemView.setOnLongClickListener(v -> {
@@ -118,11 +167,15 @@ public final class ChatThreadsAdapter extends
         final TextView title;
         final TextView subtitle;
         final ImageView more;
+        final ImageView icon;
+        final ImageView pinnedStar;
         ThreadVH(@NonNull View v) {
             super(v);
             title = v.findViewById(R.id.thread_title);
             subtitle = v.findViewById(R.id.thread_subtitle);
             more = v.findViewById(R.id.btn_thread_more);
+            icon = v.findViewById(R.id.thread_icon);
+            pinnedStar = v.findViewById(R.id.thread_pinned_star);
         }
     }
 

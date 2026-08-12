@@ -23,8 +23,9 @@
         android:background="@drawable/ai_avatar_bg">
 
         <ImageView
-            android:layout_width="18dp"
-            android:layout_height="18dp"
+            android:id="@+id/thread_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:layout_gravity="center"
             android:contentDescription="@null"
             android:src="@drawable/kelivo_lucide_bot_message_square"
@@ -58,6 +59,16 @@
             android:textColor="@color/ai_chat_text_secondary"
             android:textSize="12sp" />
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/thread_pinned_star"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_marginEnd="2dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_star"
+        android:visibility="gone"
+        app:tint="@color/ai_chat_accent" />
 
     <ImageView
         android:id="@+id/btn_thread_more"
