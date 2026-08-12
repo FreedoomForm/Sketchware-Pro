@@ -1,4 +1,5 @@
 <resources>
+    <color name="white">#ffffffff</color>
     <color name="color_accent">#ff008dcd</color>
     <color name="color_btn_blue_highlight">#ff005e8a</color>
     <color name="color_btn_blue_normal">#ff008dce</color>

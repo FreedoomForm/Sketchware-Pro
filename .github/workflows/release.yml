@@ -1,0 +1,136 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/release.yml'
+      - '.github/workflows/bump_version.py'
+      - 'app/**'
+      - 'gradle/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'public-stable-ids.txt'
+      - 'settings.gradle'
+  workflow_dispatch:
+
+# Cancel in-progress release runs for the same branch when a new push arrives.
+# We keep Android CI + Build AI APK running (different workflows) so the
+# verification signal is preserved even when a release is superseded.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write   # required by softprops/action-gh-release to create releases
+
+jobs:
+  release:
+    name: Bump version, build APK, create GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      version_code: ${{ steps.bump.outputs.version_code }}
+      version_name: ${{ steps.bump.outputs.version_name }}
+      upload_url:  ${{ steps.create_release.outputs.upload_url }}
+      release_html_url: ${{ steps.create_release.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Configure Git for push-back
+        run: |
+          git config --global user.name  "Sketchware Pro Release Bot"
+          git config --global user.email "release-bot@users.noreply.github.com"
+
+      - name: Bump versionCode + versionName
+        id: bump
+        run: python .github/workflows/bump_version.py
+
+      - name: Commit version bump
+        run: |
+          git add app/build.gradle
+          git commit -m "chore(release): v${{ steps.bump.outputs.version_name }} (code ${{ steps.bump.outputs.version_code }})" \
+            || echo "Nothing to commit (no version change)"
+          git push origin HEAD:main
+
+      - name: Create mock google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: bash .github/workflows/create_mock_google_services.sh
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Release APK
+        env:
+          SKETCHUB_API_KEY: ${{ secrets.SKETCHUB_API_KEY }}
+        run: ./gradlew assembleRelease --no-daemon --console=plain
+
+      - name: Rename APK with version + commit
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk \
+             app/build/outputs/apk/release/sketchware-pro-${{ steps.bump.outputs.version_name }}.apk
+          ls -la app/build/outputs/apk/release/
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sketchware-pro-${{ steps.bump.outputs.version_name }}
+          path: app/build/outputs/apk/release/sketchware-pro-${{ steps.bump.outputs.version_name }}.apk
+          retention-days: 90
+          compression-level: 0
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            NOTES=$(git log --pretty=format:"- %s (%h)" "${PREV_TAG}..HEAD" | head -50)
+          else
+            NOTES=$(git log --pretty=format:"- %s (%h)" -n 50)
+          fi
+          {
+            echo "notes<<EOF"
+            echo "## Changes"
+            echo ""
+            echo "${NOTES}"
+            echo ""
+            echo ""
+            echo "**versionCode:** ${{ steps.bump.outputs.version_code }}"
+            echo "**versionName:** ${{ steps.bump.outputs.version_name }}"
+            echo "**commit:** $(git rev-parse HEAD)"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump.outputs.version_name }}
+          name: Sketchware Pro ${{ steps.bump.outputs.version_name }}
+          body: ${{ steps.notes.outputs.notes }}
+          prerelease: false
+          files: |
+            app/build/outputs/apk/release/sketchware-pro-${{ steps.bump.outputs.version_name }}.apk
+          fail_on_unmatched_files: true
+          generate_release_notes: false
