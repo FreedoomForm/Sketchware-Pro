@@ -232,6 +232,12 @@ public final class ChatFragment extends Fragment {
         // The old toolbar-based menu has been replaced by individual icon
         // buttons in the new chat header. Wire each one to its action.
         chatDrawerRoot = root.findViewById(R.id.chat_drawer_root);
+        // Use a slightly darker scrim (60% black) than the default (40%)
+        // so the chat content behind the open drawer is more dimmed and
+        // less visually distracting.
+        if (chatDrawerRoot != null) {
+            chatDrawerRoot.setScrimColor(0x99000000);
+        }
         View btnChatMenu = root.findViewById(R.id.btn_chat_menu);
         View btnChatSettings = root.findViewById(R.id.btn_chat_settings);
         View btnChatClear = root.findViewById(R.id.btn_chat_clear);
@@ -375,10 +381,18 @@ public final class ChatFragment extends Fragment {
 
     /** Update the mode button label + chip text based on AgentMode. */
     private void updateModeUi(AgentMode mode) {
-        if (btnMode == null || modeLabel == null) return;
-        String label = mode == AgentMode.PLAN ? "Plan" : "Act";
-        btnMode.setText(label);
-        modeLabel.setText(mode.name());
+        // Use a consistent capitalized label for both the bottom button
+        // and the top status-row chip. Previously the chip showed the raw
+        // enum name (e.g. "YOLO") while the button showed "Act" — that was
+        // inconsistent and confusing when YOLO mode was enabled.
+        String label;
+        switch (mode) {
+            case PLAN: label = "Plan";  break;
+            case YOLO: label = "Yolo";  break;
+            default:   label = "Act";   break;
+        }
+        if (btnMode != null) btnMode.setText(label);
+        if (modeLabel != null) modeLabel.setText(label);
     }
 
     /**
@@ -1164,10 +1178,14 @@ public final class ChatFragment extends Fragment {
                         return true;
                 }
                 if (agent != null) agent.setMode(newMode);
-                // Sync the mode button (except for YOLO which is set via the
-                // auto-approve toggle).
-                if (btnMode != null && newMode != AgentMode.YOLO) {
-                    updateModeUi(newMode);
+                // Always sync the mode button + chip so the UI stays
+                // consistent with the agent's actual mode (including YOLO).
+                updateModeUi(newMode);
+                // If the user explicitly switched to/from YOLO via slash
+                // command, also sync the auto-approve toggle so it stays
+                // in sync with the settings page.
+                if (autoApproveToggle != null) {
+                    autoApproveToggle.setChecked(newMode == AgentMode.YOLO);
                 }
                 reducer.addCompletion("Switched to " + newMode + " mode.");
                 if (adapter != null) adapter.submitList(reducer.getMessages());

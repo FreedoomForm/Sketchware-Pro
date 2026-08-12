@@ -226,7 +226,7 @@
                 android:paddingTop="3dp"
                 android:paddingEnd="8dp"
                 android:paddingBottom="3dp"
-                android:text="ACT"
+                android:text="Act"
                 android:textColor="@color/ai_chat_accent"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -494,10 +494,12 @@
     </RelativeLayout>
 
     <!-- ============= Side Drawer (chat threads) ============= -->
+    <!-- 340dp ≈ 89% of a 380dp screen, so the drawer covers most of the
+         chat content when open without completely hiding it. -->
     <include
         android:id="@+id/chat_drawer_content"
         layout="@layout/ai_chat_drawer"
-        android:layout_width="300dp"
+        android:layout_width="340dp"
         android:layout_height="match_parent"
         android:layout_gravity="start" />
 
