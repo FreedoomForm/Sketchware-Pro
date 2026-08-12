@@ -222,6 +222,17 @@ public final class AgentRuntime {
      * Returns immediately; the loop runs on a background thread.
      */
     public void execute(String userInput, AgentListener listener) {
+        execute(userInput, null, listener);
+    }
+
+    /**
+     * Overload that accepts an optional list of base64-encoded image
+     * attachments. When {@code images} is non-null and non-empty, the user
+     * message is created via {@link AgentMessage#userWithImages(String, List)}
+     * so the LLM can see the images. When {@code images} is null or empty,
+     * behaviour is identical to {@link #execute(String, AgentListener)}.
+     */
+    public void execute(String userInput, List<String> images, AgentListener listener) {
         if (currentRun.get() != null && !currentRun.get().isDone()) {
             listener.onError(new IllegalStateException("A run is already in progress. Call abort() first."));
             return;
@@ -230,7 +241,7 @@ public final class AgentRuntime {
         // start a fresh run. Without this, the loop's first-iteration check
         // exits immediately and the listener is left with no callback.
         abortController.reset();
-        Future<?> f = executor.submit(() -> run(userInput, listener));
+        Future<?> f = executor.submit(() -> run(userInput, images, listener));
         currentRun.set(f);
     }
 
@@ -242,10 +253,14 @@ public final class AgentRuntime {
         if (f != null) f.cancel(true);
     }
 
-    private void run(String userInput, AgentListener listener) {
+    private void run(String userInput, List<String> images, AgentListener listener) {
         this.currentListener = listener;
         try {
-            conversationHistory.add(AgentMessage.user(userInput));
+            if (images != null && !images.isEmpty()) {
+                conversationHistory.add(AgentMessage.userWithImages(userInput, images));
+            } else {
+                conversationHistory.add(AgentMessage.user(userInput));
+            }
 
             ModelInfo model = provider.getModel(profile.modelId);
             int iteration = 0;

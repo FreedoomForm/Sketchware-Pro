@@ -155,6 +155,31 @@
     <string name="ai_model_sheet_tag_image_in">Image in</string>
     <string name="ai_model_sheet_favorite">Favorite</string>
 
+    <!-- ===== Attach tools bottom sheet (ported from reference bottom_sheet_kelivo_tools) ===== -->
+    <string name="ai_attach_sheet_title">Attach</string>
+    <string name="ai_attach_tool_camera">Camera</string>
+    <string name="ai_attach_tool_photos">Photos</string>
+    <string name="ai_attach_tool_upload">Upload</string>
+    <string name="ai_attach_tool_instruction">Instruction</string>
+    <string name="ai_attach_tool_context">Context</string>
+    <string name="ai_attach_image_failed">Could not load image</string>
+    <string name="ai_attach_image_added">Image attached</string>
+    <string name="ai_attach_image_removed">Image removed</string>
+    <string name="ai_attach_no_camera">No camera app found</string>
+    <string name="ai_attach_no_gallery">No gallery app found</string>
+    <string name="ai_attach_no_file_picker">No file picker found</string>
+    <string name="ai_attach_max_reached">Maximum image attachments reached</string>
+
+    <!-- ===== Thread actions (drawer long-press) ===== -->
+    <string name="ai_thread_actions_title">Chat actions</string>
+    <string name="ai_thread_action_open">Open</string>
+    <string name="ai_thread_action_rename">Rename</string>
+    <string name="ai_thread_action_delete">Delete</string>
+    <string name="ai_thread_delete_confirm">Delete this chat permanently?</string>
+    <string name="ai_thread_rename_title">Rename chat</string>
+    <string name="ai_thread_rename_hint">Chat title</string>
+    <string name="ai_thread_empty_hint">Send a message to start a new chat</string>
+
     <!-- ===== Provider display names ===== -->
     <string name="ai_provider_openai">OpenAI</string>
     <string name="ai_provider_anthropic">Anthropic</string>

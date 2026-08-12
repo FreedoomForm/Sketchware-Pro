@@ -3,17 +3,31 @@ package com.sketchware.ai.ui.chat;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -42,11 +56,18 @@ import com.sketchware.ai.tools.ToolPermissionGate;
 import com.sketchware.ai.tools.ToolRegistry;
 import com.sketchware.ai.tools.ToolRegistryInitializer;
 import com.sketchware.ai.ui.chat.adapter.ChatAdapter;
+import com.sketchware.ai.ui.chat.adapter.ChatThreadsAdapter;
+import com.sketchware.ai.ui.chat.sheet.AiToolsBottomSheet;
 import com.sketchware.ai.ui.settings.AISettingsActivity;
 import com.sketchware.ai.ui.settings.AutoApproveFragment;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -77,6 +98,26 @@ public final class ChatFragment extends Fragment {
     private android.widget.TextView btnModelSelectorLabel;
     private android.widget.ProgressBar contextProgressBar;
     private androidx.drawerlayout.widget.DrawerLayout chatDrawerRoot;
+
+    // ---- Drawer / threads side panel ----
+    private RecyclerView drawerThreadsList;
+    private View drawerEmptyState;
+    private EditText drawerSearchInput;
+    private ChatThreadsAdapter threadsAdapter;
+
+    // ---- Image attachment thumbnails ----
+    private HorizontalScrollView thumbnailsScroll;
+    private LinearLayout thumbnailsContainer;
+    /** Base64-encoded JPEG thumbnails (max 8) attached to the next outgoing message. */
+    private final List<String> attachedImages = new ArrayList<>();
+    private static final int MAX_ATTACHED_IMAGES = 8;
+
+    // ---- Activity-result launchers for the attach popup ----
+    private ActivityResultLauncher<Uri> cameraLauncher;
+    private ActivityResultLauncher<String> photosLauncher;
+    private ActivityResultLauncher<String[]> uploadLauncher;
+    private ActivityResultLauncher<String> cameraPermissionLauncher;
+    private Uri pendingCameraUri;
 
     private ChatAdapter adapter;
     private final MessageReducer reducer = new MessageReducer();
@@ -133,6 +174,9 @@ public final class ChatFragment extends Fragment {
         ProviderConfigStore store = new ProviderConfigStore(requireContext());
         profile = store.getActiveProfile();
         lastProfileSignature = profileSignature(profile);
+        // Register activity-result launchers BEFORE onStart (lifecycle
+        // requirement for registerForActivityResult).
+        registerAttachmentLaunchers();
     }
 
     @Nullable @Override
@@ -195,6 +239,7 @@ public final class ChatFragment extends Fragment {
             btnChatMenu.setOnClickListener(v -> {
                 if (chatDrawerRoot != null) {
                     chatDrawerRoot.openDrawer(androidx.core.view.GravityCompat.START);
+                    refreshThreads();
                 }
             });
         }
@@ -204,6 +249,39 @@ public final class ChatFragment extends Fragment {
         }
         if (btnChatClear != null) {
             btnChatClear.setOnClickListener(v -> clearConversation());
+        }
+
+        // ---- Drawer: threads list + search + footer buttons ----
+        drawerThreadsList = root.findViewById(R.id.drawer_threads_list);
+        drawerEmptyState = root.findViewById(R.id.drawer_empty_state);
+        drawerSearchInput = root.findViewById(R.id.drawer_search);
+
+        if (drawerThreadsList != null) {
+            drawerThreadsList.setLayoutManager(new LinearLayoutManager(getContext()));
+            threadsAdapter = new ChatThreadsAdapter(new ChatThreadsAdapter.Callback() {
+                @Override
+                public void onOpen(TaskHistoryStore.TaskMetadata thread) {
+                    if (chatDrawerRoot != null) {
+                        chatDrawerRoot.closeDrawer(androidx.core.view.GravityCompat.START);
+                    }
+                    loadTask(thread.id);
+                }
+
+                @Override
+                public void onMore(TaskHistoryStore.TaskMetadata thread, View anchor) {
+                    showThreadActionsSheet(thread);
+                }
+            });
+            drawerThreadsList.setAdapter(threadsAdapter);
+        }
+        if (drawerSearchInput != null) {
+            drawerSearchInput.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    if (threadsAdapter != null) threadsAdapter.filter(s == null ? "" : s.toString());
+                }
+                @Override public void afterTextChanged(Editable s) { }
+            });
         }
 
         // Drawer footer buttons (settings shortcut on drawer)
@@ -217,10 +295,21 @@ public final class ChatFragment extends Fragment {
         View btnDrawerHistory = root.findViewById(R.id.btn_drawer_history);
         if (btnDrawerHistory != null) {
             btnDrawerHistory.setOnClickListener(v -> {
-                if (chatDrawerRoot != null) chatDrawerRoot.closeDrawer(androidx.core.view.GravityCompat.START);
-                // History button opens the same provider list as a shortcut.
-                startActivity(AISettingsActivity.newIntent(requireContext(), AISettingsActivity.FRAGMENT_PROVIDER));
+                // History button on the drawer just re-opens the thread list
+                // view (which is what the drawer already shows). Refresh it.
+                refreshThreads();
             });
+        }
+
+        // ---- Image thumbnails strip ----
+        thumbnailsScroll = root.findViewById(R.id.thumbnails_scroll);
+        thumbnailsContainer = root.findViewById(R.id.thumbnails_container);
+
+        // ---- Attach button popup (Camera / Photos / Upload) ----
+        // The launchers themselves were registered in onCreate so they're
+        // ready before onStart. Here we just wire the click listener.
+        if (btnAttach != null) {
+            btnAttach.setOnClickListener(v -> showAttachSheet());
         }
 
         // Model selector chip in the input bar — opens the model picker
@@ -480,6 +569,9 @@ public final class ChatFragment extends Fragment {
         if (adapter != null && profile != null) {
             adapter.setProviderId(profile.providerId == null ? "" : profile.providerId);
         }
+        // Refresh the past-conversations list in the side drawer so the user
+        // always sees the latest tasks after returning from a run.
+        refreshThreads();
         // One-shot in-app update check — fires on the first resume after
         // the fragment is created. If a newer GitHub Release exists, the
         // UpdateDialog is shown. We deliberately do NOT auto-download —
@@ -541,6 +633,12 @@ public final class ChatFragment extends Fragment {
         if (btnSend != null) btnSend.setEnabled(true);
         if (btnStop != null) btnStop.setVisibility(View.GONE);
         if (btnAttach != null) btnAttach.setVisibility(View.VISIBLE);
+        // Drop any pending image attachments — they belong to the cleared
+        // conversation, not the next one.
+        if (!attachedImages.isEmpty()) {
+            attachedImages.clear();
+            renderThumbnails();
+        }
     }
 
     /**
@@ -854,7 +952,18 @@ public final class ChatFragment extends Fragment {
             // reducer.addUserMessage(text) above), but the LLM needs the
             // expanded version so it can see the file contents, layout trees,
             // etc. that the user referenced.
-            agent.execute(expandedText, listener);
+            //
+            // If the user attached any images via the paperclip button, pass
+            // them along as base64-encoded JPEGs. The agent's userWithImages
+            // factory packages them into the next outgoing message.
+            List<String> imagesToSend = attachedImages.isEmpty() ? null : new ArrayList<>(attachedImages);
+            agent.execute(expandedText, imagesToSend, listener);
+            // Clear the thumbnails strip after the message is dispatched —
+            // the images are now part of the conversation.
+            if (!attachedImages.isEmpty()) {
+                attachedImages.clear();
+                renderThumbnails();
+            }
         } catch (Throwable t) {
             String msg = t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage();
             reducer.addError(msg);
@@ -1453,5 +1562,319 @@ public final class ChatFragment extends Fragment {
                 + "|" + p.maxOutputTokens + "|" + p.contextWindowSize
                 + "|" + p.enableStreaming + "|" + p.imageSupport
                 + "|" + p.promptCaching;
+    }
+
+    // ==================================================================
+    // Side drawer: past-conversations list
+    // ==================================================================
+
+    /**
+     * Refresh the threads list shown in the side drawer from
+     * {@link TaskHistoryStore}. Runs on a background thread (file IO),
+     * then posts the result back to the UI thread.
+     */
+    private void refreshThreads() {
+        final TaskHistoryStore store = getTaskHistoryStore();
+        new Thread(() -> {
+            try {
+                final List<TaskHistoryStore.TaskMetadata> tasks = store.list();
+                runOnUiIfAlive(() -> {
+                    if (threadsAdapter != null) {
+                        threadsAdapter.submitAll(tasks);
+                    }
+                    if (drawerEmptyState != null) {
+                        drawerEmptyState.setVisibility(tasks.isEmpty() ? View.VISIBLE : View.GONE);
+                    }
+                    if (drawerThreadsList != null) {
+                        drawerThreadsList.setVisibility(tasks.isEmpty() ? View.GONE : View.VISIBLE);
+                    }
+                });
+            } catch (Throwable ignored) {
+                // Best-effort — the drawer just shows empty.
+            }
+        }, "ai-threads-refresh").start();
+    }
+
+    /**
+     * Show the rename / delete action sheet for a thread in the drawer.
+     * Triggered by long-press or the overflow icon on a thread row.
+     */
+    private void showThreadActionsSheet(TaskHistoryStore.TaskMetadata thread) {
+        Activity a = getActivity();
+        if (a == null) return;
+        String title = thread.firstUserMessage == null ? "(no title)" : thread.firstUserMessage;
+        if (title.length() > 60) title = title.substring(0, 60) + "...";
+        new AlertDialog.Builder(a)
+                .setTitle(R.string.ai_thread_actions_title)
+                .setMessage(title)
+                .setItems(new CharSequence[]{
+                        getString(R.string.ai_thread_action_open),
+                        getString(R.string.ai_thread_action_rename),
+                        getString(R.string.ai_thread_action_delete)
+                }, (dlg, which) -> {
+                    if (which == 0) {
+                        if (chatDrawerRoot != null) {
+                            chatDrawerRoot.closeDrawer(androidx.core.view.GravityCompat.START);
+                        }
+                        loadTask(thread.id);
+                    } else if (which == 1) {
+                        showRenameDialog(thread);
+                    } else if (which == 2) {
+                        confirmDeleteThread(thread);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void showRenameDialog(TaskHistoryStore.TaskMetadata thread) {
+        Activity a = getActivity();
+        if (a == null) return;
+        final EditText et = new EditText(a);
+        et.setText(thread.firstUserMessage);
+        et.setHint(R.string.ai_thread_rename_hint);
+        et.setSingleLine(true);
+        new AlertDialog.Builder(a)
+                .setTitle(R.string.ai_thread_rename_title)
+                .setView(et)
+                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                    String name = et.getText().toString().trim();
+                    if (name.isEmpty()) return;
+                    renameThread(thread, name);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void renameThread(TaskHistoryStore.TaskMetadata thread, String newName) {
+        final TaskHistoryStore store = getTaskHistoryStore();
+        new Thread(() -> {
+            try {
+                File f = new File(store.getHistoryDir(), thread.id + ".json");
+                if (!f.exists()) return;
+                String raw = new String(java.nio.file.Files.readAllBytes(f.toPath()),
+                        java.nio.charset.StandardCharsets.UTF_8);
+                com.google.gson.JsonObject root = new com.google.gson.Gson().fromJson(raw, com.google.gson.JsonObject.class);
+                root.addProperty("firstUserMessage", newName);
+                java.nio.file.Files.write(f.toPath(),
+                        new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(root)
+                                .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                runOnUiIfAlive(this::refreshThreads);
+            } catch (Throwable ignored) { }
+        }, "ai-thread-rename").start();
+    }
+
+    private void confirmDeleteThread(TaskHistoryStore.TaskMetadata thread) {
+        Activity a = getActivity();
+        if (a == null) return;
+        new AlertDialog.Builder(a)
+                .setTitle(R.string.ai_thread_action_delete)
+                .setMessage(R.string.ai_thread_delete_confirm)
+                .setPositiveButton(R.string.ai_thread_action_delete, (d, w) -> {
+                    final TaskHistoryStore store = getTaskHistoryStore();
+                    new Thread(() -> {
+                        store.delete(thread.id);
+                        runOnUiIfAlive(this::refreshThreads);
+                    }, "ai-thread-delete").start();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    // ==================================================================
+    // Attach button: bottom-sheet popup + image handling
+    // ==================================================================
+
+    /**
+     * Register the activity-result launchers used by the attach popup. Must
+     * be called from {@link #onCreateView} (or earlier — fragment lifecycle
+     * requirement: {@code registerForActivityResult} can only be called
+     * before {@code STARTED}).
+     */
+    private void registerAttachmentLaunchers() {
+        cameraLauncher = registerForActivityResult(
+                new ActivityResultContracts.TakePicture(),
+                ok -> {
+                    if (ok != null && ok && pendingCameraUri != null) {
+                        addImageFromUri(pendingCameraUri);
+                    }
+                    pendingCameraUri = null;
+                });
+        photosLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) addImageFromUri(uri);
+                });
+        uploadLauncher = registerForActivityResult(
+                new ActivityResultContracts.OpenDocument(),
+                uri -> {
+                    if (uri != null) addImageFromUri(uri);
+                });
+        cameraPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                granted -> {
+                    if (granted != null && granted) {
+                        doLaunchCamera();
+                    } else {
+                        toast(R.string.ai_attach_no_camera);
+                    }
+                });
+    }
+
+    /** Show the attach-tools bottom sheet (Camera / Photos / Upload tiles). */
+    private void showAttachSheet() {
+        Activity a = getActivity();
+        if (a == null) return;
+        AiToolsBottomSheet.show(a, new AiToolsBottomSheet.Callback() {
+            @Override public void onCamera() { launchCamera(); }
+            @Override public void onPhotos() { launchPhotos(); }
+            @Override public void onUpload() { launchUpload(); }
+        });
+    }
+
+    /** Launch the camera app, writing the captured image to a FileProvider URI. */
+    private void launchCamera() {
+        // CAMERA is a runtime permission on Android 6+. Request it on demand
+        // when the user picks the Camera tile.
+        if (cameraPermissionLauncher == null) return;
+        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                requireContext(), android.Manifest.permission.CAMERA)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            doLaunchCamera();
+        } else {
+            cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA);
+        }
+    }
+
+    private void doLaunchCamera() {
+        if (cameraLauncher == null) return;
+        try {
+            File out = new File(requireContext().getCacheDir(), "ai_camera_"
+                    + System.currentTimeMillis() + ".jpg");
+            Uri uri = FileProvider.getUriForFile(requireContext(),
+                    requireContext().getPackageName() + ".provider", out);
+            pendingCameraUri = uri;
+            cameraLauncher.launch(uri);
+        } catch (Throwable t) {
+            View v = getView();
+            if (v != null) Snackbar.make(v, R.string.ai_attach_no_camera, Snackbar.LENGTH_SHORT).show();
+        }
+    }
+
+    /** Launch the system photo picker. */
+    private void launchPhotos() {
+        if (photosLauncher == null) return;
+        try {
+            photosLauncher.launch("image/*");
+        } catch (Throwable t) {
+            View v = getView();
+            if (v != null) Snackbar.make(v, R.string.ai_attach_no_gallery, Snackbar.LENGTH_SHORT).show();
+        }
+    }
+
+    /** Launch the system file picker (any MIME type). */
+    private void launchUpload() {
+        if (uploadLauncher == null) return;
+        try {
+            uploadLauncher.launch(new String[]{"*/*"});
+        } catch (Throwable t) {
+            View v = getView();
+            if (v != null) Snackbar.make(v, R.string.ai_attach_no_file_picker, Snackbar.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Read the image at the supplied URI, downscale to a reasonable size,
+     * base64-encode it as JPEG, and add it to {@link #attachedImages}.
+     * Refreshes the thumbnails strip afterwards.
+     */
+    private void addImageFromUri(Uri uri) {
+        new Thread(() -> {
+            try {
+                Bitmap bmp = loadDownscaledBitmap(uri, 1024);
+                if (bmp == null) {
+                    runOnUiIfAlive(() -> toast(R.string.ai_attach_image_failed));
+                    return;
+                }
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                bmp.compress(Bitmap.CompressFormat.JPEG, 85, baos);
+                byte[] bytes = baos.toByteArray();
+                String b64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
+                runOnUiIfAlive(() -> {
+                    if (attachedImages.size() >= MAX_ATTACHED_IMAGES) {
+                        toast(R.string.ai_attach_max_reached);
+                        return;
+                    }
+                    attachedImages.add(b64);
+                    renderThumbnails();
+                    toast(R.string.ai_attach_image_added);
+                });
+            } catch (Throwable t) {
+                runOnUiIfAlive(() -> toast(R.string.ai_attach_image_failed));
+            }
+        }, "ai-image-attach").start();
+    }
+
+    /** Decode + downscale a bitmap from a content URI. */
+    private Bitmap loadDownscaledBitmap(Uri uri, int maxDim) throws IOException {
+        Context ctx = getContext();
+        if (ctx == null) return null;
+        InputStream is = ctx.getContentResolver().openInputStream(uri);
+        if (is == null) return null;
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inJustDecodeBounds = true;
+        BitmapFactory.decodeStream(is, null, opts);
+        is.close();
+        int sample = 1;
+        while (opts.outWidth / sample > maxDim || opts.outHeight / sample > maxDim) sample *= 2;
+        opts.inJustDecodeBounds = false;
+        opts.inSampleSize = sample;
+        is = ctx.getContentResolver().openInputStream(uri);
+        Bitmap bmp = is == null ? null : BitmapFactory.decodeStream(is, null, opts);
+        if (is != null) is.close();
+        return bmp;
+    }
+
+    /** Rebuild the thumbnails strip from {@link #attachedImages}. */
+    private void renderThumbnails() {
+        if (thumbnailsContainer == null || thumbnailsScroll == null) return;
+        thumbnailsContainer.removeAllViews();
+        if (attachedImages.isEmpty()) {
+            thumbnailsScroll.setVisibility(View.GONE);
+            return;
+        }
+        thumbnailsScroll.setVisibility(View.VISIBLE);
+        LayoutInflater inf = LayoutInflater.from(requireContext());
+        for (int i = 0; i < attachedImages.size(); i++) {
+            final int idx = i;
+            View chip = inf.inflate(R.layout.ai_chat_thumbnail_item, thumbnailsContainer, false);
+            ImageView img = chip.findViewById(R.id.thumb_image);
+            View remove = chip.findViewById(R.id.thumb_remove);
+            // Decode just enough for the thumbnail preview.
+            new Thread(() -> {
+                try {
+                    byte[] bytes = Base64.decode(attachedImages.get(idx), Base64.NO_WRAP);
+                    final Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    runOnUiIfAlive(() -> {
+                        if (bmp != null && img != null) img.setImageBitmap(bmp);
+                    });
+                } catch (Throwable ignored) { }
+            }, "ai-thumb-" + idx).start();
+            if (remove != null) {
+                remove.setOnClickListener(v -> {
+                    if (idx < attachedImages.size()) {
+                        attachedImages.remove(idx);
+                        renderThumbnails();
+                        toast(R.string.ai_attach_image_removed);
+                    }
+                });
+            }
+            thumbnailsContainer.addView(chip);
+        }
+    }
+
+    private void toast(int resId) {
+        View v = getView();
+        if (v != null) Snackbar.make(v, resId, Snackbar.LENGTH_SHORT).show();
     }
 }

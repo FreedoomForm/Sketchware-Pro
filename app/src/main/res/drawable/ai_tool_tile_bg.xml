@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Soft rounded tile background for the attach-tools bottom sheet.
+     Ported from FabioSilva11/Sketchware-IA bg_kelivo_tool_tile.xml. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/ai_chat_surface_soft" />
+    <corners android:radius="14dp" />
+</shape>

@@ -14,6 +14,11 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- AI chat: camera attachment (paperclip button). Runtime permission
+         requested on demand when the user picks the Camera tile. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- AI chat: gallery attachment on Android 13+ (replaces READ_EXTERNAL_STORAGE). -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
         android:name=".SketchApplication"
