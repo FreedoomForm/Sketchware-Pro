@@ -69,7 +69,7 @@ public final class ChatFragment extends Fragment {
     private android.widget.TextView modeLabel;
     private android.widget.TextView chatSubtitle;
     private android.widget.ImageView chatModelIcon;
-    private android.widget.View runStatusRow;
+    private android.view.View runStatusRow;
     private android.widget.TextView runStatusText;
     private com.sketchware.ai.ui.chat.TypingDotsView runStatusDots;
     private android.view.View btnModelSelector;
