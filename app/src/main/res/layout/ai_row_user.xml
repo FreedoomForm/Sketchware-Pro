@@ -1,22 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- User message row: right-aligned bubble + user avatar on the right.
-     Inspired by FabioSilva11/Sketchware-IA's item_message_user.xml.
-     The bubble uses the AI accent color so it stands out from the bot
-     bubble (white surface with border). -->
+<!-- User message row — ported from FabioSilva11/Sketchware-IA item_message_user.xml.
+     Layout: sender name + time + avatar, bubble with optional image preview + text,
+     optional action row (copy/refresh/edit/more).
+     IDs preserved for ChatAdapter.UserHolder compatibility: text. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:gravity="end"
-    android:orientation="horizontal"
-    android:paddingStart="48dp"
-    android:paddingEnd="12dp"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp">
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="4dp">
 
+    <!-- Top row: sender name + time + avatar (right-aligned) -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end"
+        android:gravity="center_vertical|end"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/sender_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/ai_chat_text_secondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="@color/ai_chat_text_hint"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/avatar_text"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/ai_avatar_user_bg"
+            android:gravity="center"
+            android:text="U"
+            android:textColor="@color/ai_user_avatar_text"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Message bubble (right-aligned, max 280dp wide) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:background="@drawable/ai_bubble_user"
         android:maxWidth="280dp"
         android:orientation="vertical"
@@ -25,29 +62,83 @@
         android:paddingEnd="14dp"
         android:paddingBottom="10dp">
 
+        <HorizontalScrollView
+            android:id="@+id/message_image_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:overScrollMode="never"
+            android:scrollbars="none"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:id="@+id/message_images_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
         <TextView
             android:id="@+id/text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:lineSpacingExtra="3dp"
+            android:lineSpacingExtra="4dp"
             android:textColor="@android:color/white"
-            android:textSize="14sp" />
+            android:textSize="15sp" />
     </LinearLayout>
 
-    <FrameLayout
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:layout_marginStart="8dp"
-        android:layout_gravity="bottom|end"
-        android:background="@drawable/ai_avatar_user_bg">
+    <!-- Message action row (copy, refresh, edit, more) -->
+    <LinearLayout
+        android:id="@+id/message_actions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="end"
+        android:orientation="horizontal"
+        android:visibility="gone">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="U"
-            android:textColor="@color/ai_user_avatar_text"
-            android:textSize="11sp"
-            android:textStyle="bold" />
-    </FrameLayout>
+        <ImageView
+            android:id="@+id/action_copy"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/ai_chat_action_copy"
+            android:padding="5dp"
+            android:src="@drawable/kelivo_lucide_copy"
+            app:tint="@color/ai_chat_text_secondary" />
+
+        <ImageView
+            android:id="@+id/action_refresh"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/ai_chat_action_refresh"
+            android:padding="5dp"
+            android:src="@drawable/kelivo_lucide_refresh_cw"
+            app:tint="@color/ai_chat_text_secondary" />
+
+        <ImageView
+            android:id="@+id/action_edit"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/ai_chat_action_edit"
+            android:padding="5dp"
+            android:src="@drawable/kelivo_lucide_edit"
+            app:tint="@color/ai_chat_text_secondary" />
+
+        <ImageView
+            android:id="@+id/action_more"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/ai_chat_action_more"
+            android:padding="5dp"
+            android:src="@drawable/kelivo_lucide_more_horizontal"
+            app:tint="@color/ai_chat_text_secondary" />
+    </LinearLayout>
 </LinearLayout>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chat threads side drawer — ported from FabioSilva11/Sketchware-IA layout_kelivo_drawer.xml.
+     Layout: search bar + history button + threads RecyclerView + user profile footer. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ai_chat_surface"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="15dp"
+        android:orientation="vertical">
+
+        <!-- Search bar + history button -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1"
+                android:background="@drawable/ai_search_field_bg"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/kelivo_lucide_bot_message_square"
+                    app:tint="@color/ai_chat_text_hint" />
+
+                <EditText
+                    android:id="@+id/drawer_search"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:background="@android:color/transparent"
+                    android:fontFamily="sans-serif"
+                    android:hint="@string/ai_chat_drawer_search_hint"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="@color/ai_chat_text_primary"
+                    android:textColorHint="@color/ai_chat_text_hint"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/btn_drawer_history"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/ai_chat_drawer_history"
+                android:padding="8dp"
+                android:src="@drawable/kelivo_lucide_history"
+                app:tint="@color/ai_chat_text_primary" />
+        </LinearLayout>
+
+        <!-- Empty state (shown when there are no threads) -->
+        <LinearLayout
+            android:id="@+id/drawer_empty_state"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="@null"
+                android:src="@drawable/kelivo_lucide_bot_message_square"
+                app:tint="@color/ai_chat_text_hint" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/ai_chat_threads_empty"
+                android:textColor="@color/ai_chat_text_secondary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center"
+                android:text="@string/ai_chat_threads_empty_hint"
+                android:textColor="@color/ai_chat_text_hint"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Threads list -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/drawer_threads_list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:paddingTop="4dp"
+            android:paddingBottom="8dp" />
+
+        <!-- User profile footer -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="8dp">
+
+            <FrameLayout
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/ai_avatar_user_bg">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/ai_chat_profile_avatar"
+                    android:padding="8dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/kelivo_lucide_bot_message_square"
+                    app:tint="@color/ai_user_avatar_text" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="@string/ai_chat_drawer_default_user"
+                android:textColor="@color/ai_chat_text_primary"
+                android:textSize="14sp" />
+
+            <ImageView
+                android:id="@+id/btn_drawer_settings"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/ai_chat_drawer_settings"
+                android:padding="8dp"
+                android:src="@drawable/kelivo_lucide_settings"
+                app:tint="@color/ai_chat_text_primary" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

@@ -26,9 +26,19 @@ import pro.sketchware.R;
  * RecyclerView adapter for the chat. Renders different row types based on
  * {@link ChatMessage#type}. Mirrors Cline's {@code ChatRow.tsx} dispatch.
  *
- * <p>The TextHolder now binds a provider avatar (icon) and a "copy" action
- * button on each assistant message — inspired by
- * FabioSilva11/Sketchware-IA's item_message_bot.xml.
+ * <p>Layouts ported from FabioSilva11/Sketchware-IA:
+ * <ul>
+ *   <li>{@code ai_row_text.xml}   — assistant message (avatar, sender name, time,
+ *       status chip, reasoning block, streaming dots, message text, action row
+ *       with copy/refresh/edit/speak/more, token count).</li>
+ *   <li>{@code ai_row_user.xml}   — user message (sender name, time, avatar,
+ *       bubble with optional image preview, action row).</li>
+ *   <li>{@code ai_row_tool.xml}   — collapsible tool-call card (header, args,
+ *       result, optional approval buttons).</li>
+ * </ul>
+ *
+ * <p>All optional views are looked up lazily and bound defensively (null-safe)
+ * so that older layouts without the new fields keep working.
  */
 public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolder> {
 
@@ -56,33 +66,9 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
 
     public ChatAdapter() {
         super(new DiffUtil.ItemCallback<ChatMessage>() {
-            /**
-             * Two messages represent the same logical row if they share the
-             * same {@code ts} (creation timestamp, which is unique per
-             * ChatMessage instance). This lets DiffUtil distinguish "row
-             * changed" from "row added/removed" even when the surrounding
-             * list is rebuilt.
-             *
-             * <p>Previously this used {@code o == n} (reference equality),
-             * which combined with {@code MessageReducer.getMessages()}
-             * returning the same live list reference caused ListAdapter's
-             * {@code submitList} to short-circuit and never dispatch any
-             * update — the chat UI never visually updated during streaming.
-             */
             @Override public boolean areItemsTheSame(@NonNull ChatMessage o, @NonNull ChatMessage n) {
                 return o.ts == n.ts;
             }
-            /**
-             * Always return {@code false} so that any in-place mutation of
-             * a {@link ChatMessage} (e.g. streaming text appended by
-             * {@code MessageReducer.appendText}) triggers a rebind of the
-             * corresponding row. Because the reducer mutates the same
-             * ChatMessage instance and then publishes a shallow copy of the
-             * list, the old and new list slots point at the SAME instance —
-             * value-equality comparison would therefore return {@code true}
-             * and suppress the update. Forcing {@code false} is correct and
-             * cheap: RecyclerView only rebinds visible holders (~5–10).
-             */
             @Override public boolean areContentsTheSame(@NonNull ChatMessage o, @NonNull ChatMessage n) {
                 return false;
             }
@@ -145,9 +131,39 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
 
     static final class UserHolder extends RecyclerView.ViewHolder {
         final TextView text;
-        UserHolder(@NonNull View v) { super(v); text = v.findViewById(R.id.text); }
+        final TextView senderName;
+        final TextView time;
+        final LinearLayout messageActions;
+        final View actionCopy;
+        UserHolder(@NonNull View v) {
+            super(v);
+            text = v.findViewById(R.id.text);
+            senderName = v.findViewById(R.id.sender_name);
+            time = v.findViewById(R.id.time);
+            messageActions = v.findViewById(R.id.message_actions);
+            actionCopy = v.findViewById(R.id.action_copy);
+        }
         void bind(ChatMessage m) {
             text.setText(m.text == null ? "" : m.text);
+            // Optional fields — null-safe
+            if (senderName != null) senderName.setText("You");
+            if (time != null) time.setVisibility(View.GONE);
+            // Show copy action on user messages too (handy for re-running prompts)
+            if (messageActions != null) {
+                messageActions.setVisibility(View.GONE);
+            }
+            if (actionCopy != null) {
+                actionCopy.setOnClickListener(v -> {
+                    Context ctx = v.getContext();
+                    try {
+                        ClipboardManager cm = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
+                        if (cm != null) {
+                            cm.setPrimaryClip(ClipData.newPlainText("AI prompt", m.text));
+                            Toast.makeText(ctx, R.string.ai_chat_action_copy_done, Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Throwable ignored) { }
+                });
+            }
         }
     }
 
@@ -155,6 +171,10 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
         final TextView text;
         final ImageView avatarIcon;
         final View avatarContainer;
+        final TextView avatarText;
+        final TextView senderName;
+        final TextView time;
+        final TextView statusChip;
         final LinearLayout messageActions;
         final View actionCopy;
         final TextView tokenCount;
@@ -164,6 +184,10 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
             text = v.findViewById(R.id.text);
             avatarIcon = v.findViewById(R.id.avatar_icon);
             avatarContainer = v.findViewById(R.id.avatar_container);
+            avatarText = v.findViewById(R.id.avatar_text);
+            senderName = v.findViewById(R.id.sender_name);
+            time = v.findViewById(R.id.time);
+            statusChip = v.findViewById(R.id.status_chip);
             messageActions = v.findViewById(R.id.message_actions);
             actionCopy = v.findViewById(R.id.action_copy);
             tokenCount = v.findViewById(R.id.token_count);
@@ -176,26 +200,56 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
                 if (avatarContainer != null) avatarContainer.setVisibility(View.GONE);
                 if (messageActions != null) messageActions.setVisibility(View.GONE);
                 if (streamingDots != null) streamingDots.setVisibility(View.GONE);
+                if (senderName != null) senderName.setVisibility(View.GONE);
+                if (time != null) time.setVisibility(View.GONE);
+                if (statusChip != null) statusChip.setVisibility(View.GONE);
                 return;
             } else if (ChatMessage.TYPE_API_REQ_START.equals(m.type)) {
                 text.setText("Calling API...");
                 if (avatarContainer != null) avatarContainer.setVisibility(View.GONE);
                 if (messageActions != null) messageActions.setVisibility(View.GONE);
                 if (streamingDots != null) streamingDots.setVisibility(View.GONE);
+                if (senderName != null) senderName.setVisibility(View.GONE);
+                if (time != null) time.setVisibility(View.GONE);
+                if (statusChip != null) statusChip.setVisibility(View.GONE);
                 return;
             } else if (ChatMessage.TYPE_COMPACTION.equals(m.type)) {
                 text.setText("Conversation compacted to fit context window.");
                 if (avatarContainer != null) avatarContainer.setVisibility(View.GONE);
                 if (messageActions != null) messageActions.setVisibility(View.GONE);
                 if (streamingDots != null) streamingDots.setVisibility(View.GONE);
+                if (senderName != null) senderName.setVisibility(View.GONE);
+                if (time != null) time.setVisibility(View.GONE);
+                if (statusChip != null) statusChip.setVisibility(View.GONE);
                 return;
             }
             // Real assistant text row — show avatar + actions.
             if (avatarContainer != null) avatarContainer.setVisibility(View.VISIBLE);
+            // Resolve provider display name & icon
+            String displayName = ProviderCatalog.safeDisplayName(providerId);
+            if (senderName != null) {
+                senderName.setVisibility(View.VISIBLE);
+                senderName.setText(displayName);
+            }
+            if (time != null) {
+                time.setVisibility(View.VISIBLE);
+                time.setText(formatTime(m.ts));
+            }
             if (avatarIcon != null) {
-                int iconRes = ProviderIconResolver.resolveProvider(providerId,
-                        ProviderCatalog.safeDisplayName(providerId));
+                int iconRes = ProviderIconResolver.resolveProvider(providerId, displayName);
                 avatarIcon.setImageResource(iconRes);
+                avatarIcon.setVisibility(View.VISIBLE);
+                if (avatarText != null) avatarText.setVisibility(View.GONE);
+            }
+            // Status chip
+            if (statusChip != null) {
+                if (m.isStreaming) {
+                    statusChip.setVisibility(View.VISIBLE);
+                    statusChip.setText(R.string.ai_chat_status_chip_thinking);
+                    statusChip.setTextColor(itemView.getContext().getResources().getColor(R.color.ai_status_chip_thinking_text));
+                } else {
+                    statusChip.setVisibility(View.GONE);
+                }
             }
             String t = m.text == null ? "" : m.text;
             // Show typing dots while streaming AND no text yet; once text
@@ -235,6 +289,15 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
                 }
             }
         }
+
+        private static String formatTime(long ts) {
+            try {
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault());
+                return sdf.format(new java.util.Date(ts));
+            } catch (Throwable t) {
+                return "";
+            }
+        }
     }
 
     static final class ReasoningHolder extends RecyclerView.ViewHolder {
@@ -255,29 +318,86 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
         final TextView toolArgs;
         final TextView toolResult;
         final ProgressBar progress;
+        final View layoutToolDetails;
+        final ImageView imgExpand;
+        final TextView textToolStatus;
+        final ImageView imgToolStatus;
+        final View approvalRow;
+        final View btnApprove;
+        final View btnReject;
+        final ImageView toolStatusIcon;
+        private boolean expanded = false;
+
         ToolHolder(@NonNull View v) {
             super(v);
             toolName = v.findViewById(R.id.tool_name);
             toolArgs = v.findViewById(R.id.tool_args);
             toolResult = v.findViewById(R.id.tool_result);
             progress = v.findViewById(R.id.progress);
+            // New optional fields — null-safe
+            layoutToolDetails = v.findViewById(R.id.layout_tool_details);
+            imgExpand = v.findViewById(R.id.img_expand);
+            textToolStatus = v.findViewById(R.id.text_tool_status);
+            imgToolStatus = v.findViewById(R.id.img_tool_status);
+            approvalRow = v.findViewById(R.id.approval_row);
+            btnApprove = v.findViewById(R.id.btn_approve);
+            btnReject = v.findViewById(R.id.btn_reject);
+            toolStatusIcon = v.findViewById(R.id.tool_status_icon);
         }
         void bind(ChatMessage m) {
             toolName.setText(m.toolName == null ? "" : m.toolName);
             toolArgs.setText(m.toolArgsJson == null ? "" : m.toolArgsJson);
-            // Treat an empty-string result the same as null: the tool is still
-            // in-flight (or returned nothing useful) and the progress spinner
-            // should keep spinning until a non-empty result arrives.
-            if (m.toolResult != null && !m.toolResult.isEmpty()) {
+            boolean hasResult = m.toolResult != null && !m.toolResult.isEmpty();
+            if (hasResult) {
                 toolResult.setVisibility(View.VISIBLE);
                 toolResult.setText((m.isError ? "ERROR: " : "OK: ") + m.toolResult);
                 progress.setVisibility(View.GONE);
+                if (imgToolStatus != null) {
+                    imgToolStatus.setVisibility(View.VISIBLE);
+                    imgToolStatus.setImageResource(R.drawable.ic_mtrl_check);
+                }
+                if (textToolStatus != null) {
+                    textToolStatus.setVisibility(View.VISIBLE);
+                    textToolStatus.setText(m.isError ? "Failed" : "Done");
+                }
+                if (imgExpand != null) imgExpand.setVisibility(View.VISIBLE);
+                if (toolStatusIcon != null) toolStatusIcon.setVisibility(View.GONE);
             } else {
                 toolResult.setVisibility(View.GONE);
-                // Only show the spinner for tool_call rows (in-flight). Tool
-                // _result rows with empty output should not spin forever.
-                progress.setVisibility(ChatMessage.TYPE_TOOL_CALL.equals(m.type) ? View.VISIBLE : View.GONE);
+                // Only show the spinner for tool_call rows (in-flight).
+                boolean inFlight = ChatMessage.TYPE_TOOL_CALL.equals(m.type);
+                progress.setVisibility(inFlight ? View.VISIBLE : View.GONE);
+                if (imgToolStatus != null) imgToolStatus.setVisibility(View.GONE);
+                if (textToolStatus != null) {
+                    textToolStatus.setVisibility(inFlight ? View.VISIBLE : View.GONE);
+                    if (inFlight) textToolStatus.setText("Running…");
+                }
+                if (imgExpand != null) imgExpand.setVisibility(View.GONE);
+                if (toolStatusIcon != null) toolStatusIcon.setVisibility(View.VISIBLE);
             }
+            // Default collapsed when result arrives; auto-expand while in-flight
+            if (layoutToolDetails != null) {
+                if (hasResult && !expanded) {
+                    layoutToolDetails.setVisibility(View.GONE);
+                } else if (!hasResult) {
+                    // Show args during in-flight calls so user can see what's happening
+                    layoutToolDetails.setVisibility(ChatMessage.TYPE_TOOL_CALL.equals(m.type) ? View.VISIBLE : View.GONE);
+                } else {
+                    layoutToolDetails.setVisibility(expanded ? View.VISIBLE : View.GONE);
+                }
+            }
+            // Toggle expand on header click
+            if (imgExpand != null && layoutToolDetails != null) {
+                View headerTarget = itemView;
+                headerTarget.setOnClickListener(v -> {
+                    expanded = !expanded;
+                    layoutToolDetails.setVisibility(expanded ? View.VISIBLE : View.GONE);
+                    imgExpand.setImageResource(expanded ? R.drawable.ic_mtrl_arrow_down : R.drawable.ic_mtrl_arrow_down);
+                    imgExpand.setRotation(expanded ? 180f : 0f);
+                });
+            }
+            // Approval row (hidden by default — surfaced by ChatFragment when a tool needs approval)
+            if (approvalRow != null) approvalRow.setVisibility(View.GONE);
         }
     }
 

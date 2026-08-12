@@ -56,9 +56,9 @@ public final class ChatFragment extends Fragment {
 
     private RecyclerView recycler;
     private TextInputEditText input;
-    private com.google.android.material.button.MaterialButton btnSend;
-    private com.google.android.material.button.MaterialButton btnStop;
-    private com.google.android.material.button.MaterialButton btnAttach;
+    private View btnSend;
+    private View btnStop;
+    private View btnAttach;
     private com.google.android.material.button.MaterialButton btnMode;
     private com.google.android.material.materialswitch.MaterialSwitch autoApproveToggle;
     private com.google.android.material.progressindicator.LinearProgressIndicator contextProgress;
@@ -76,6 +76,7 @@ public final class ChatFragment extends Fragment {
     private android.widget.ImageView btnModelSelectorIcon;
     private android.widget.TextView btnModelSelectorLabel;
     private android.widget.ProgressBar contextProgressBar;
+    private androidx.drawerlayout.widget.DrawerLayout chatDrawerRoot;
 
     private ChatAdapter adapter;
     private final MessageReducer reducer = new MessageReducer();
@@ -185,13 +186,17 @@ public final class ChatFragment extends Fragment {
 
         // The old toolbar-based menu has been replaced by individual icon
         // buttons in the new chat header. Wire each one to its action.
+        chatDrawerRoot = root.findViewById(R.id.chat_drawer_root);
         View btnChatMenu = root.findViewById(R.id.btn_chat_menu);
         View btnChatSettings = root.findViewById(R.id.btn_chat_settings);
         View btnChatClear = root.findViewById(R.id.btn_chat_clear);
         if (btnChatMenu != null) {
-            // "Menu" — for now, opens settings (no drawer in chat itself).
-            btnChatMenu.setOnClickListener(v ->
-                    startActivity(AISettingsActivity.newIntent(requireContext(), AISettingsActivity.FRAGMENT_PROVIDER)));
+            // "Menu" — opens the chat threads side drawer.
+            btnChatMenu.setOnClickListener(v -> {
+                if (chatDrawerRoot != null) {
+                    chatDrawerRoot.openDrawer(androidx.core.view.GravityCompat.START);
+                }
+            });
         }
         if (btnChatSettings != null) {
             btnChatSettings.setOnClickListener(v ->
@@ -199,6 +204,23 @@ public final class ChatFragment extends Fragment {
         }
         if (btnChatClear != null) {
             btnChatClear.setOnClickListener(v -> clearConversation());
+        }
+
+        // Drawer footer buttons (settings shortcut on drawer)
+        View btnDrawerSettings = root.findViewById(R.id.btn_drawer_settings);
+        if (btnDrawerSettings != null) {
+            btnDrawerSettings.setOnClickListener(v -> {
+                if (chatDrawerRoot != null) chatDrawerRoot.closeDrawer(androidx.core.view.GravityCompat.START);
+                startActivity(AISettingsActivity.newIntent(requireContext(), AISettingsActivity.FRAGMENT_PROVIDER));
+            });
+        }
+        View btnDrawerHistory = root.findViewById(R.id.btn_drawer_history);
+        if (btnDrawerHistory != null) {
+            btnDrawerHistory.setOnClickListener(v -> {
+                if (chatDrawerRoot != null) chatDrawerRoot.closeDrawer(androidx.core.view.GravityCompat.START);
+                // History button opens the same provider list as a shortcut.
+                startActivity(AISettingsActivity.newIntent(requireContext(), AISettingsActivity.FRAGMENT_PROVIDER));
+            });
         }
 
         // Model selector chip in the input bar — opens the model picker

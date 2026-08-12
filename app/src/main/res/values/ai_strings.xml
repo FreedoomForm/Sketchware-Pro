@@ -123,6 +123,38 @@
     <string name="ai_chat_status_chip_done">Done</string>
     <string name="ai_chat_status_chip_error">Error</string>
 
+    <!-- ===== Drawer / threads (ported from reference layout_kelivo_drawer) ===== -->
+    <string name="ai_chat_drawer_search_hint">Search chats…</string>
+    <string name="ai_chat_drawer_history">History</string>
+    <string name="ai_chat_drawer_settings">Settings</string>
+    <string name="ai_chat_drawer_default_user">You</string>
+    <string name="ai_chat_thread_title_default">New chat</string>
+    <string name="ai_chat_thread_subtitle_empty">No messages yet</string>
+    <string name="ai_chat_thread_delete">Delete</string>
+    <string name="ai_chat_thread_rename">Rename</string>
+    <string name="ai_chat_threads_empty">No previous chats</string>
+    <string name="ai_chat_threads_empty_hint">Start a new chat to see it here</string>
+    <string name="ai_chat_profile_avatar">Your avatar</string>
+    <string name="ai_chat_model_icon">Model icon</string>
+
+    <!-- ===== Input area extras (ported from reference activity_chat) ===== -->
+    <string name="ai_chat_compile_button">Compile project</string>
+    <string name="ai_chat_header_new_chat">New chat</string>
+    <string name="ai_chat_input_hint_v2">Ask anything…</string>
+    <string name="ai_chat_model_selector_desc">Change model</string>
+    <string name="ai_chat_input_web">Web search</string>
+    <string name="ai_chat_input_tools">Tools</string>
+    <string name="ai_chat_mode_agent">Agent</string>
+    <string name="ai_chat_cancel_run">Cancel current run</string>
+    <string name="ai_chat_changed_files_placeholder">No files changed</string>
+    <string name="ai_chat_selected_context_placeholder">No context selected</string>
+
+    <!-- ===== Model sheet extras (ported from reference bottom_sheet_kelivo_model) ===== -->
+    <string name="ai_model_sheet_tag_chat">Chat</string>
+    <string name="ai_model_sheet_tag_text">Text</string>
+    <string name="ai_model_sheet_tag_image_in">Image in</string>
+    <string name="ai_model_sheet_favorite">Favorite</string>
+
     <!-- ===== Provider display names ===== -->
     <string name="ai_provider_openai">OpenAI</string>
     <string name="ai_provider_anthropic">Anthropic</string>

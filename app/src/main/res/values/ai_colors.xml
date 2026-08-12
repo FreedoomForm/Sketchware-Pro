@@ -57,4 +57,22 @@
 
     <!-- ===== Bottom sheet handle ===== -->
     <color name="ai_sheet_handle">#D1D1D6</color>
+
+    <!-- ===== Soft surfaces &amp; borders ported for richer chat UI ===== -->
+    <color name="ai_chat_surface_alt">#F2F2F7</color>
+    <color name="ai_chat_border_soft">#ECECF1</color>
+    <color name="ai_chat_code_background">#F5F5F7</color>
+
+    <!-- ===== Selected row (model picker) ===== -->
+    <color name="ai_selected_row">#EFEAFE</color>
+
+    <!-- ===== Status chip text colors ===== -->
+    <color name="ai_status_chip_running_text">#6B5CE7</color>
+    <color name="ai_status_chip_done_text">#22C55E</color>
+    <color name="ai_status_chip_error_text">#EF4444</color>
+    <color name="ai_status_chip_thinking_text">#C77A1F</color>
+
+    <!-- ===== Token meter colors ===== -->
+    <color name="ai_token_meter_progress">#6B5CE7</color>
+    <color name="ai_token_meter_track">#E5E5EA</color>
 </resources>
