@@ -122,13 +122,15 @@ public final class WebFetchTool implements SketchwareTool {
             if (resp.body() == null) {
                 body = "";
             } else {
-                java.io.InputStream raw = resp.body().byteStream();
+                // Note: 'rawStream' (not 'raw') — the method already has a
+                // boolean 'raw' parameter at line 86 for the "raw HTML" flag.
+                java.io.InputStream rawStream = resp.body().byteStream();
                 java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream(64 * 1024);
                 byte[] buf = new byte[16 * 1024];
                 long total = 0;
                 int n;
                 boolean tooBig = false;
-                while ((n = raw.read(buf)) > 0) {
+                while ((n = rawStream.read(buf)) > 0) {
                     total += n;
                     if (total > MAX_CONTENT_BYTES) {
                         tooBig = true;
