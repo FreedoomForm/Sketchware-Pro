@@ -31,6 +31,11 @@ public class AgenticCompactor implements Compactor {
     }
 
     @Override
+    public String strategyName() {
+        return "agentic-legacy";
+    }
+
+    @Override
     public LinkedList<AgentMessage> compact(LinkedList<AgentMessage> history,
                                             int maxInputTokens,
                                             int preserveRecentMessages) {

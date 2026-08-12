@@ -6,6 +6,7 @@ import com.sketchware.ai.context.AgenticCompactor;
 import com.sketchware.ai.context.BasicCompactor;
 import com.sketchware.ai.context.Compactor;
 import com.sketchware.ai.context.ContextTruncator;
+import com.sketchware.ai.context.OhMyPiCompactor;
 import com.sketchware.ai.llm.ApiStreamChunk;
 import com.sketchware.ai.llm.LlmProvider;
 import com.sketchware.ai.llm.LlmRequest;
@@ -70,6 +71,12 @@ public final class AgentRuntime {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final AtomicReference<Future<?>> currentRun = new AtomicReference<>();
     private final AbortController abortController = new AbortController();
+
+    /**
+     * Current run's listener. Set at the start of {@link #run(String, AgentListener)}
+     * and cleared in {@code finally}. Null-safe accessors use {@link #warnListener(String)}.
+     */
+    private volatile AgentListener currentListener;
 
     /**
      * Loop detector — tracks repeated identical tool calls and injects warnings.
@@ -235,6 +242,7 @@ public final class AgentRuntime {
     }
 
     private void run(String userInput, AgentListener listener) {
+        this.currentListener = listener;
         try {
             conversationHistory.add(AgentMessage.user(userInput));
 
@@ -450,6 +458,7 @@ public final class AgentRuntime {
             listener.onError(t);
         } finally {
             currentRun.set(null);
+            this.currentListener = null;
         }
     }
 
@@ -564,16 +573,43 @@ public final class AgentRuntime {
         return sum;
     }
 
+    /** Forward a warning to the listener if one is attached. Null-safe. */
+    private void warnListener(String message) {
+        AgentListener l = currentListener;
+        if (l != null && message != null) {
+            try {
+                l.onWarning(message);
+            } catch (Throwable ignored) {
+                // Listener exceptions must not break the compaction pipeline.
+            }
+        }
+    }
+
     private void compactConversation(int maxInputTokens) {
+        // Strategy selection (mirrors oh-my-pi's compaction pipeline):
+        //  - Reasoning-enabled profile: try context-full (LLM summarizer) first.
+        //    On summarizer failure, OhMyPiCompactor falls back to shake internally.
+        //  - Reasoning-disabled profile: use shake (BasicCompactor) directly.
+        //    No LLM call is made — safe for overflow recovery where a second
+        //    failing LLM call would only compound the problem.
         Compactor c;
         if (profile.enableReasoning) {
-            c = new AgenticCompactor(provider, profile.apiKey, profile.modelId);
+            OhMyPiCompactor.Listener listener = event ->
+                warnListener("Compaction (context-full): " + event);
+            c = new OhMyPiCompactor(provider, profile.apiKey, profile.modelId,
+                    OhMyPiCompactor.DEFAULT_KEEP_RECENT_TOKENS, listener);
         } else {
             c = new BasicCompactor();
         }
+        String strategy = c.strategyName();
+        int before = estimateTokens();
         LinkedList<AgentMessage> compacted = c.compact(conversationHistory, maxInputTokens, COMPACTION_PRESERVE_RECENT);
         conversationHistory.clear();
         conversationHistory.addAll(compacted);
+        int after = estimateTokens();
+        warnListener("Context compacted (" + strategy + "): "
+                + before + " -> " + after + " tokens, "
+                + compacted.size() + " messages retained.");
     }
 
     private List<LlmRequest.ExtraHeader> toExtraHeaders(List<ProviderConfigStore.ExtraHeader> headers) {
