@@ -37,7 +37,11 @@ public class AutoApproverTest {
 
     @Test public void perToolActionRuleStillMatches() {
         AutoApprover a = new AutoApprover();
-        a.addRule(new AutoApprover.Rule(null, null, "list", null,
+        // Per-action rule uses exact-match semantics. After the subcategory
+        // support was added to Rule.matches, the action field still works
+        // the same way — this test verifies that adding subcategory support
+        // did not break the pre-existing per-action matching path.
+        a.addRule(new AutoApprover.Rule(null, null, "list_events", null,
                 AutoApprover.Decision.AUTO_APPROVE));
         SketchwareTool umbrella = new FakeTool("view_manage");
         JsonObject args = new JsonObject();
