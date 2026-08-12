@@ -62,5 +62,38 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="Reset to Defaults" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Context Compaction"
+            android:textStyle="bold" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Strategy used when the conversation approaches the model's max input context window."
+            android:textSize="12sp"
+            android:textColor="?android:textColorSecondary" />
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Compaction strategy">
+            <AutoCompleteTextView
+                android:id="@+id/et_compaction_strategy"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <TextView
+            android:id="@+id/tv_compaction_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="12sp"
+            android:textColor="?android:textColorSecondary" />
     </LinearLayout>
 </ScrollView>

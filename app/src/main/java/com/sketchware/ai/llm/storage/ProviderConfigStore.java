@@ -90,6 +90,36 @@ public final class ProviderConfigStore {
         public String imageModel;
         public boolean enableImageGeneration;
         public boolean backgroundEditing;
+        /**
+         * Context-window compaction strategy used when the conversation
+         * approaches the model's max input context. Values:
+         * <ul>
+         *   <li><b>{@code auto}</b> (default) — pick the best strategy for
+         *       the model: SnapCompactCompactor for vision-capable models,
+         *       OhMyPiCompactor for reasoning-enabled non-vision models,
+         *       BasicCompactor for everything else.</li>
+         *   <li><b>{@code snapcompact}</b> — render discarded history into
+         *       dense PNG frames of pixel-font glyphs that vision LLMs read
+         *       back directly as image content blocks. No LLM call during
+         *       compaction; fully local and deterministic. Requires a
+         *       vision-capable model.</li>
+         *   <li><b>{@code context-full}</b> — LLM-summarizer approach: send
+         *       the older portion to a summarizer model with a structured
+         *       prompt (Goal / Progress / Key Decisions / Next Steps / ...)
+         *       and replace it with the structured summary. Costs an extra
+         *       API call per compaction.</li>
+         *   <li><b>{@code shake}</b> — mechanical strategy, no LLM call.
+         *       Replaces heavy tool results older than the 16K-token
+         *       protected window with {@code [Output truncated - N tokens]}
+         *       placeholders and drops old reasoning blocks. Used for
+         *       overflow recovery.</li>
+         *   <li><b>{@code agentic-legacy}</b> — legacy LLM-summarizer
+         *       strategy with a simpler prompt. Retained for debugging.</li>
+         * </ul>
+         *
+         * <p>Set via the "Context Compaction" dropdown in Advanced settings.
+         */
+        public String compactionStrategy;
 
         public Profile() {
             id = java.util.UUID.randomUUID().toString();
@@ -120,6 +150,7 @@ public final class ProviderConfigStore {
             imageModel = "";
             enableImageGeneration = false;
             backgroundEditing = false;
+            compactionStrategy = "auto";
         }
     }
 

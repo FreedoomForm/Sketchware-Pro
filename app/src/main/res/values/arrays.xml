@@ -69,4 +69,22 @@
         <item>com.google.android.material.progressindicator.CircularProgressIndicator</item>
         <item>com.google.android.material.progressindicator.LinearProgressIndicator</item>
     </string-array>
+
+    <!-- AI context compaction strategy display labels. Order MUST match the
+         compaction_strategy_values array below; the value at index i is the
+         internal string stored in ProviderConfigStore.Profile.compactionStrategy. -->
+    <string-array name="compaction_strategy_labels">
+        <item>Auto (recommended)</item>
+        <item>SnapCompact — bitmap frames (vision models only)</item>
+        <item>Context-full — LLM summarizer</item>
+        <item>Shake — mechanical truncation (no LLM call)</item>
+        <item>Agentic-legacy — old LLM summarizer</item>
+    </string-array>
+    <string-array name="compaction_strategy_values">
+        <item>auto</item>
+        <item>snapcompact</item>
+        <item>context-full</item>
+        <item>shake</item>
+        <item>agentic-legacy</item>
+    </string-array>
 </resources>

@@ -587,17 +587,28 @@ public final class AgentRuntime {
     }
 
     private void compactConversation(int maxInputTokens) {
-        // Strategy selection (mirrors oh-my-pi's compaction pipeline):
-        //  - Vision-capable model (supportsImages): use SnapCompactCompactor —
-        //    renders discarded history into PNG frames that the LLM reads
-        //    back directly. No LLM call during compaction; fully local.
-        //  - Reasoning-enabled profile (non-vision): try context-full
-        //    (LLM summarizer) first. On summarizer failure, OhMyPiCompactor
-        //    falls back to shake internally.
-        //  - Reasoning-disabled profile (non-vision): use shake
-        //    (BasicCompactor) directly. No LLM call is made — safe for
-        //    overflow recovery where a second failing LLM call would only
-        //    compound the problem.
+        // Strategy selection: the user's "Context Compaction" dropdown in
+        // Advanced settings (Profile.compactionStrategy) picks the strategy.
+        // "auto" (default) mirrors the oh-my-pi pipeline:
+        //   - Vision-capable model (supportsImages): SnapCompactCompactor —
+        //     renders discarded history into PNG frames that the LLM reads
+        //     back directly. No LLM call during compaction; fully local.
+        //   - Reasoning-enabled profile (non-vision): OhMyPiCompactor
+        //     (context-full LLM summarizer). Falls back to shake internally
+        //     on summarizer failure.
+        //   - Reasoning-disabled profile (non-vision): BasicCompactor (shake).
+        //     No LLM call — safe for overflow recovery where a second
+        //     failing LLM call would only compound the problem.
+        // Explicit overrides:
+        //   - "snapcompact" forces SnapCompactCompactor (skipped if model
+        //     is not vision-capable — falls through to auto's non-vision
+        //     branch with a warning).
+        //   - "context-full" forces OhMyPiCompactor.
+        //   - "shake" forces BasicCompactor.
+        //   - "agentic-legacy" forces AgenticCompactor.
+        String strategyPref = profile.compactionStrategy;
+        if (strategyPref == null || strategyPref.isEmpty()) strategyPref = "auto";
+
         ModelInfo model = null;
         try {
             model = provider.getModel(profile.modelId);
@@ -608,21 +619,62 @@ public final class AgentRuntime {
         boolean modelSupportsImages = model != null && model.supportsImages;
 
         Compactor c;
-        if (modelSupportsImages && toolContext != null) {
-            SnapCompactCompactor.Listener listener = event ->
-                warnListener("Compaction (snapcompact): " + event);
-            c = new SnapCompactCompactor(
-                    profile.modelId,
-                    toolContext.getContext(),
-                    SnapCompactCompactor.DEFAULT_KEEP_RECENT_TOKENS,
-                    listener);
-        } else if (profile.enableReasoning) {
-            OhMyPiCompactor.Listener listener = event ->
-                warnListener("Compaction (context-full): " + event);
-            c = new OhMyPiCompactor(provider, profile.apiKey, profile.modelId,
-                    OhMyPiCompactor.DEFAULT_KEEP_RECENT_TOKENS, listener);
-        } else {
-            c = new BasicCompactor();
+        switch (strategyPref) {
+            case "snapcompact":
+                if (modelSupportsImages && toolContext != null) {
+                    SnapCompactCompactor.Listener listener = event ->
+                        warnListener("Compaction (snapcompact): " + event);
+                    c = new SnapCompactCompactor(
+                            profile.modelId,
+                            toolContext.getContext(),
+                            SnapCompactCompactor.DEFAULT_KEEP_RECENT_TOKENS,
+                            listener);
+                } else {
+                    // User asked for snapcompact but the model is not
+                    // vision-capable — fall back to the auto path's
+                    // non-vision branch and warn.
+                    warnListener("Compaction: snapcompact requested but model '"
+                            + profile.modelId + "' is not vision-capable; "
+                            + "falling back to "
+                            + (profile.enableReasoning ? "context-full" : "shake")
+                            + ".");
+                    c = profile.enableReasoning
+                        ? new OhMyPiCompactor(provider, profile.apiKey, profile.modelId,
+                                OhMyPiCompactor.DEFAULT_KEEP_RECENT_TOKENS,
+                                event -> warnListener("Compaction (context-full): " + event))
+                        : new BasicCompactor();
+                }
+                break;
+            case "context-full":
+                c = new OhMyPiCompactor(provider, profile.apiKey, profile.modelId,
+                        OhMyPiCompactor.DEFAULT_KEEP_RECENT_TOKENS,
+                        event -> warnListener("Compaction (context-full): " + event));
+                break;
+            case "shake":
+                c = new BasicCompactor();
+                break;
+            case "agentic-legacy":
+                c = new AgenticCompactor(provider, profile.apiKey, profile.modelId);
+                break;
+            case "auto":
+            default:
+                if (modelSupportsImages && toolContext != null) {
+                    SnapCompactCompactor.Listener listener = event ->
+                        warnListener("Compaction (snapcompact): " + event);
+                    c = new SnapCompactCompactor(
+                            profile.modelId,
+                            toolContext.getContext(),
+                            SnapCompactCompactor.DEFAULT_KEEP_RECENT_TOKENS,
+                            listener);
+                } else if (profile.enableReasoning) {
+                    OhMyPiCompactor.Listener listener = event ->
+                        warnListener("Compaction (context-full): " + event);
+                    c = new OhMyPiCompactor(provider, profile.apiKey, profile.modelId,
+                            OhMyPiCompactor.DEFAULT_KEEP_RECENT_TOKENS, listener);
+                } else {
+                    c = new BasicCompactor();
+                }
+                break;
         }
         String strategy = c.strategyName();
         int before = estimateTokens();
