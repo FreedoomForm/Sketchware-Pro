@@ -1,38 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Single model row inside the model-picker bottom sheet. Shows provider
-     icon on the left, model name + provider name in the middle, and a
-     "selected" check on the right when this is the active model. -->
+<!-- Single model row inside the model-picker bottom sheet. Shows:
+       - 36dp avatar (provider icon, or fallback brain icon)
+       - Model name (bold)
+       - Capability tag row: "Chat" pill, IO tag (Text → Image? → Text),
+         and a hammer pill indicating tool/agent support
+       - Favorite heart toggle on the right
+     The whole row gets a soft accent background when selected.
+     Ported from reference item_kelivo_model_row.xml. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
+    android:layout_marginStart="12dp"
+    android:layout_marginTop="3dp"
+    android:layout_marginEnd="12dp"
+    android:layout_marginBottom="3dp"
+    android:background="@android:color/transparent"
     android:gravity="center_vertical"
-    android:minHeight="52dp"
     android:orientation="horizontal"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp">
+    android:paddingStart="12dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="8dp">
 
     <FrameLayout
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginEnd="12dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:background="@drawable/ai_avatar_bg">
 
         <ImageView
             android:id="@+id/model_icon"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:layout_gravity="center"
-            android:contentDescription="@null"
+            android:contentDescription="@string/ai_chat_model_icon"
             android:scaleType="centerInside"
-            tools:src="@drawable/ic_provider_openai" />
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/model_avatar"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/ai_chat_model_icon"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_brain_avatar"
+            app:tint="@color/ai_chat_accent" />
     </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
         android:layout_weight="1"
         android:orientation="vertical">
 
@@ -43,27 +62,89 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="@color/ai_chat_text_primary"
-            android:textSize="14sp"
-            tools:text="gpt-4o-mini" />
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/model_provider"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="@color/ai_chat_text_secondary"
-            android:textSize="11sp"
-            tools:text="OpenAI" />
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:background="@drawable/ai_tag_bg"
+                android:gravity="center"
+                android:paddingStart="7dp"
+                android:paddingEnd="7dp"
+                android:text="@string/ai_model_sheet_tag_chat"
+                android:textColor="@color/ai_chat_accent"
+                android:textSize="10sp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/ai_tag_bg"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp">
+
+                <ImageView
+                    android:layout_width="11dp"
+                    android:layout_height="11dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_type_tag"
+                    app:tint="@color/ai_chat_accent" />
+
+                <ImageView
+                    android:id="@+id/model_input_image_icon"
+                    android:layout_width="11dp"
+                    android:layout_height="11dp"
+                    android:layout_marginStart="2dp"
+                    android:contentDescription="@string/ai_model_sheet_tag_image_in"
+                    android:src="@drawable/ic_image_input"
+                    android:visibility="gone"
+                    app:tint="@color/ai_chat_accent" />
+
+                <ImageView
+                    android:layout_width="11dp"
+                    android:layout_height="11dp"
+                    android:layout_marginStart="2dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_chevron_right_small"
+                    app:tint="@color/ai_chat_accent" />
+
+                <ImageView
+                    android:layout_width="11dp"
+                    android:layout_height="11dp"
+                    android:layout_marginStart="2dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_type_tag"
+                    app:tint="@color/ai_chat_accent" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/ai_tag_bg"
+                android:contentDescription="@null"
+                android:padding="5dp"
+                android:src="@drawable/ic_hammer_tag"
+                app:tint="@color/ai_chat_accent" />
+        </LinearLayout>
     </LinearLayout>
 
     <ImageView
-        android:id="@+id/selected_check"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_marginStart="8dp"
-        android:contentDescription="@null"
-        android:src="@drawable/ic_check"
-        android:visibility="gone"
-        app:tint="@color/ai_chat_accent" />
+        android:id="@+id/model_favorite"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/ai_model_sheet_favorite"
+        android:padding="8dp"
+        android:src="@drawable/ic_heart_outline" />
 </LinearLayout>

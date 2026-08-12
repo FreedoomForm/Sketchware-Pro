@@ -57,6 +57,7 @@ import com.sketchware.ai.tools.ToolRegistry;
 import com.sketchware.ai.tools.ToolRegistryInitializer;
 import com.sketchware.ai.ui.chat.adapter.ChatAdapter;
 import com.sketchware.ai.ui.chat.adapter.ChatThreadsAdapter;
+import com.sketchware.ai.ui.chat.sheet.AiModelPickerSheet;
 import com.sketchware.ai.ui.chat.sheet.AiToolsBottomSheet;
 import com.sketchware.ai.ui.settings.AISettingsActivity;
 import com.sketchware.ai.ui.settings.AutoApproveFragment;
@@ -444,71 +445,34 @@ public final class ChatFragment extends Fragment {
     }
 
     /**
-     * Show a dialog letting the user switch models for the active provider.
-     * The list combines built-in catalog models + any user-saved custom
-     * models for that provider. Picking one updates the active profile,
-     * saves it, and refreshes the chat header / chip.
+     * Show the full-featured model picker bottom sheet (ported from
+     * FabioSilva11/Sketchware-IA's {@code KelivoModelBottomSheet}).
+     *
+     * <p>Lists ALL configured providers and their models in one sheet,
+     * with a Favorites section pinned to the top, search filter, and
+     * provider-chip quick-jump. The user can switch provider AND model
+     * in one tap. On selection, the sheet persists the new (provider,
+     * model) to the active profile; this callback then reloads the
+     * profile, rebuilds the agent, and refreshes the chat header / chip.
      */
     private void showModelPicker() {
-        if (profile == null) return;
-        String providerId = profile.providerId == null ? "" : profile.providerId;
-        com.sketchware.ai.llm.ProviderCatalog.Entry entry =
-                com.sketchware.ai.llm.ProviderCatalog.getOrDefault(providerId);
-
-        java.util.List<String> models = new java.util.ArrayList<>(entry.builtinModels);
-        // Append any user-saved custom models for this provider.
-        try {
-            String raw = requireContext()
-                    .getSharedPreferences("ai_custom_models", Context.MODE_PRIVATE)
-                    .getString("models_" + providerId, "");
-            if (raw != null && !raw.isEmpty()) {
-                for (String s : raw.split("\n")) {
-                    String t = s.trim();
-                    if (!t.isEmpty() && !models.contains(t)) models.add(t);
-                }
+        if (getActivity() == null) return;
+        AiModelPickerSheet.show(getActivity(), (providerId, modelId) -> {
+            // The sheet already persisted the selection; reload it.
+            try {
+                ProviderConfigStore s = new ProviderConfigStore(requireContext());
+                profile = s.getActiveProfile();
+            } catch (Throwable ignored) { }
+            // Force agent rebuild on next send so it uses the new model
+            // (and possibly the new provider's API client).
+            if (agent != null) {
+                agent.abort();
+                agent = null;
             }
-        } catch (Throwable ignored) { }
-
-        if (models.isEmpty()) {
-            com.google.android.material.snackbar.Snackbar.make(btnSend,
-                    getString(R.string.ai_model_sheet_no_models),
-                    com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
-            // Take the user to the provider detail so they can add one.
-            com.sketchware.ai.ui.settings.ProviderDetailActivity.start(
-                    requireContext(), providerId, entry.displayName);
-            return;
-        }
-
-        String[] arr = models.toArray(new String[0]);
-        int currentIdx = -1;
-        String current = profile.modelId == null ? "" : profile.modelId;
-        for (int i = 0; i < arr.length; i++) {
-            if (arr[i].equals(current)) { currentIdx = i; break; }
-        }
-        final String[] selected = new String[]{currentIdx >= 0 ? arr[currentIdx] : ""};
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                .setTitle(R.string.ai_model_sheet_title)
-                .setSingleChoiceItems(arr, currentIdx, (d, w) -> selected[0] = arr[w])
-                .setPositiveButton(android.R.string.ok, (d, w) -> {
-                    if (selected[0] == null || selected[0].isEmpty()) return;
-                    profile.modelId = selected[0];
-                    // Persist the change so it survives a fragment recreate.
-                    try {
-                        ProviderConfigStore s = new ProviderConfigStore(requireContext());
-                        s.upsertProfile(profile);
-                        s.setActiveProfile(profile.id);
-                    } catch (Throwable ignored) { }
-                    // Force agent rebuild on next send so it uses the new model.
-                    if (agent != null) {
-                        agent.abort();
-                        agent = null;
-                    }
-                    lastProfileSignature = ""; // force refresh
-                    refreshChatHeader();
-                    refreshModelSelectorChip();
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+            lastProfileSignature = ""; // force refresh
+            refreshChatHeader();
+            refreshModelSelectorChip();
+        });
     }
 
     /**

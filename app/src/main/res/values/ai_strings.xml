@@ -154,6 +154,9 @@
     <string name="ai_model_sheet_tag_text">Text</string>
     <string name="ai_model_sheet_tag_image_in">Image in</string>
     <string name="ai_model_sheet_favorite">Favorite</string>
+    <string name="ai_model_sheet_favorites_jump">Jump to favorites</string>
+    <string name="ai_model_sheet_filter_empty">No models match \"%1$s\"</string>
+    <string name="ai_model_sheet_provider_section_favorites">Favorites</string>
 
     <!-- ===== Attach tools bottom sheet (ported from reference bottom_sheet_kelivo_tools) ===== -->
     <string name="ai_attach_sheet_title">Attach</string>
