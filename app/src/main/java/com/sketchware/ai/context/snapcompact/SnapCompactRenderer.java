@@ -8,9 +8,8 @@ import java.util.Base64;
 
 /**
  * Renders normalized snapcompact text into black-on-white PNG frames using
- * a bundled BDF bitmap font. Mirrors the role of {@code renderSnapcompactPng}
- * in oh-my-pi's {@code crates/pi-natives/src/snapcompact.rs}, but in pure
- * Java using Android's {@link Bitmap} for PNG encoding.
+ * a bundled BDF bitmap font, with a Silver TrueType fallback for non-ASCII
+ * code points outside the BDF font's coverage (notably CJK).
  *
  * <p>One {@link Shape} defines the font, the cell pitch (cell-width and
  * cell-height in pixels), the frame edge size, and the per-frame token
@@ -26,9 +25,38 @@ import java.util.Base64;
  * line-leading, which is exactly what the {@code 8on16-bw} / {@code 8on22-bw}
  * / {@code 11on16-bw} shape variants rely on for legibility).
  *
+ * <p><b>CJK fallback (Silver TrueType)</b> — since 2026-08-12. When the
+ * BDF font lacks a glyph for a code point, the renderer falls back to
+ * {@link SilverFontRegistry#renderGlyph}, which rasterizes the code point
+ * via Android {@link android.graphics.Typeface}+{@link android.graphics.Canvas}
+ * using the bundled {@code assets/fonts/Silver.ttf}. Silver covers ASCII,
+ * Latin Extended, CJK Unified Ideographs (basic), Hiragana, Katakana,
+ * Bopomofo, CJK Symbols and Punctuation, and CJK Compatibility forms.
+ * If Silver also lacks the glyph, the cell is left blank (no {@code '?'}
+ * substitution — the BDF font's missing-glyph rendering is already a
+ * visible mark).
+ *
  * <p>{@link SnapCompactText#NEWLINE_GLYPH} ("\u2588") renders as a fully
  * ink-filled cell — line structure survives whitespace collapsing at a
  * one-cell cost, exactly like the upstream native renderer.
+ *
+ * <h2>Foveated HQ/LQ/HQ rendering (since 2026-08-12)</h2>
+ *
+ * <p>The renderer now supports three frame-size tiers:
+ * <ul>
+ *   <li><b>1568px</b> — mobile default (LQ tier)</li>
+ *   <li><b>1932px</b> — Claude HQ tier (Claude's vision model performs
+ *       better at this resolution)</li>
+ *   <li><b>2048px</b> — Gemini HQ tier (Gemini's vision model performs
+ *       better at this resolution)</li>
+ * </ul>
+ *
+ * <p>The compactor ({@link SnapCompact}) partitions the archived pages
+ * into three groups — oldest third, middle third, newest third — and
+ * renders the oldest and newest groups at the HQ tier, the middle at
+ * the LQ tier. This preserves high visual quality at the boundaries
+ * (most relevant to the live turn) while saving billed tokens in the
+ * middle (less relevant historical context).
  */
 public final class SnapCompactRenderer {
 
@@ -58,49 +86,75 @@ public final class SnapCompactRenderer {
     }
 
     /**
-     * Pre-defined shape variants matching snapcompact.ts SHAPE_VARIANTS
-     * (only the {@code bw} (black-on-white) subset is supported; the
-     * {@code sent} multi-color-ink and {@code doc} two-column variants
-     * are skipped as mobile bandwidth savers).
+     * Pre-defined shape variants matching snapcompact.ts SHAPE_VARIANTS.
+     * Each variant comes in three frame-size tiers (1568 / 1932 / 2048)
+     * so the compactor can pick the foveated HQ/LQ/HQ distribution.
      */
     public static final class Shapes {
         /** 5x8 X.org legacy font on its 5x8 cell. Used by the {@code legacy} shape. */
-        public static final Shape FONT_5x8 = new Shape(
-                BdfFontRegistry.FontName.FONT_5x8, 5, 8, 1568, 3025);
+        public static final Shape FONT_5x8       = new Shape(BdfFontRegistry.FontName.FONT_5x8,  5,  8, 1568, 3025);
+        public static final Shape FONT_5x8_1932  = new Shape(BdfFontRegistry.FontName.FONT_5x8,  5,  8, 1932, 4550);
+        public static final Shape FONT_5x8_2048  = new Shape(BdfFontRegistry.FontName.FONT_5x8,  5,  8, 2048, 5100);
         /** 6x12 X.org misc font. Used by the {@code 6x12-dim} research variant. */
-        public static final Shape FONT_6x12 = new Shape(
-                BdfFontRegistry.FontName.FONT_6x12, 6, 12, 1568, 3025);
+        public static final Shape FONT_6x12      = new Shape(BdfFontRegistry.FontName.FONT_6x12, 6, 12, 1568, 3025);
+        public static final Shape FONT_6x12_1932 = new Shape(BdfFontRegistry.FontName.FONT_6x12, 6, 12, 1932, 4550);
+        public static final Shape FONT_6x12_2048 = new Shape(BdfFontRegistry.FontName.FONT_6x12, 6, 12, 2048, 5100);
         /** 8x13 glyphs on 8x16 cell pitch (extra leading). */
-        public static final Shape ON_8x16 = new Shape(
-                BdfFontRegistry.FontName.FONT_8x13, 8, 16, 1568, 3025);
+        public static final Shape ON_8x16        = new Shape(BdfFontRegistry.FontName.FONT_8x13, 8, 16, 1568, 3025);
+        public static final Shape ON_8x16_1932   = new Shape(BdfFontRegistry.FontName.FONT_8x13, 8, 16, 1932, 4550);
+        public static final Shape ON_8x16_2048   = new Shape(BdfFontRegistry.FontName.FONT_8x13, 8, 16, 2048, 5100);
         /** 8x13 glyphs on 22px pitch (more leading — eval winner for
          *  Gemini 3.x and GPT-5.x). */
-        public static final Shape ON_8x22 = new Shape(
-                BdfFontRegistry.FontName.FONT_8x13, 8, 22, 1568, 3025);
+        public static final Shape ON_8x22        = new Shape(BdfFontRegistry.FontName.FONT_8x13, 8, 22, 1568, 3025);
+        public static final Shape ON_8x22_1932   = new Shape(BdfFontRegistry.FontName.FONT_8x13, 8, 22, 1932, 4550);
+        public static final Shape ON_8x22_2048   = new Shape(BdfFontRegistry.FontName.FONT_8x13, 8, 22, 2048, 5100);
         /** 8x13 glyphs on 11px advance (extra tracking — eval winner for
          *  Claude). */
-        public static final Shape ON_11x16 = new Shape(
-                BdfFontRegistry.FontName.FONT_8x13, 11, 16, 1568, 3025);
+        public static final Shape ON_11x16       = new Shape(BdfFontRegistry.FontName.FONT_8x13, 11, 16, 1568, 3025);
+        public static final Shape ON_11x16_1932  = new Shape(BdfFontRegistry.FontName.FONT_8x13, 11, 16, 1932, 4550);
+        public static final Shape ON_11x16_2048  = new Shape(BdfFontRegistry.FontName.FONT_8x13, 11, 16, 2048, 5100);
     }
 
     /**
-     * Pick the eval-winning shape for a model id. Mirrors
-     * {@code resolveShape()} from snapcompact.ts (only the {@code bw}
-     * variants; we skip the high-res 1932px Claude tier and the 2048px
-     * Gemini tier to keep the implementation simple).
+     * Foveated shape pair: one HQ shape + one LQ shape for the same
+     * font/cell combination. The compactor partitions archived pages
+     * into HQ/LQ/HQ thirds and renders each third at the matching shape.
+     */
+    public static final class FoveatedShapes {
+        public final Shape hq;
+        public final Shape lq;
+        public FoveatedShapes(Shape hq, Shape lq) {
+            this.hq = hq;
+            this.lq = lq;
+        }
+    }
+
+    /**
+     * Pick the eval-winning foveated shape pair for a model id. Mirrors
+     * {@code resolveShape()} from snapcompact.ts, extended with the
+     * 1932px Claude HQ tier and the 2048px Gemini HQ tier.
      *
-     * <p>Defaults to {@link Shapes#ON_8x22} (the safe unknown-provider
-     * shape).
+     * <p>Defaults to the 1568/1932 {@link Shapes#ON_8x22} pair (the
+     * safe unknown-provider combination).
+     */
+    public static FoveatedShapes resolveFoveatedShapes(String modelId) {
+        if (modelId == null) return new FoveatedShapes(Shapes.ON_8x22_1932, Shapes.ON_8x22);
+        String lower = modelId.toLowerCase();
+        if (lower.contains("claude")) return new FoveatedShapes(Shapes.ON_11x16_1932, Shapes.ON_11x16);
+        if (lower.contains("gemini")) return new FoveatedShapes(Shapes.ON_8x22_2048, Shapes.ON_8x22);
+        if (lower.contains("gpt") || lower.contains("codex")) return new FoveatedShapes(Shapes.ON_8x22_1932, Shapes.ON_8x22);
+        if (lower.contains("glm")) return new FoveatedShapes(Shapes.ON_8x16_1932, Shapes.ON_8x16);
+        if (lower.contains("kimi")) return new FoveatedShapes(Shapes.ON_8x22_1932, Shapes.ON_8x22);
+        return new FoveatedShapes(Shapes.ON_8x22_1932, Shapes.ON_8x22);
+    }
+
+    /**
+     * Pick the eval-winning shape for a model id (single-tier API,
+     * preserved for backward compatibility). Returns the LQ shape from
+     * the foveated pair.
      */
     public static Shape resolveShape(String modelId) {
-        if (modelId == null) return Shapes.ON_8x22;
-        String lower = modelId.toLowerCase();
-        if (lower.contains("claude")) return Shapes.ON_11x16;
-        if (lower.contains("gemini")) return Shapes.ON_8x22;
-        if (lower.contains("gpt") || lower.contains("codex")) return Shapes.ON_8x22;
-        if (lower.contains("glm")) return Shapes.ON_8x16;
-        if (lower.contains("kimi")) return Shapes.ON_8x22;
-        return Shapes.ON_8x22;
+        return resolveFoveatedShapes(modelId).lq;
     }
 
     /**
@@ -108,6 +162,9 @@ public final class SnapCompactRenderer {
      * must already be normalized via {@link SnapCompactText#normalize} and
      * must fit within the shape's capacity — excess characters are clipped
      * at the frame's right/bottom edge.
+     *
+     * <p>Code points outside the BDF font's coverage fall back to the
+     * Silver TrueType renderer ({@link SilverFontRegistry#renderGlyph}).
      *
      * @param text  normalized text to render
      * @param shape shape controlling font + grid + frame size
@@ -143,28 +200,29 @@ public final class SnapCompactRenderer {
                 }
                 continue;
             }
+            // Try BDF first.
             BdfFont.Glyph g = font.glyph(cp);
-            if (g == null) continue;
-            // Place the glyph at the cell origin with its BDF bounding-box
-            // offset. BDF yOffset is positive-above-baseline; we draw
-            // top-down so convert: pen origin is at (cellX - xOffset,
-            // cellY + cellHeight - 1 + yOffset). For simplicity and to
-            // match the snapcompact renderer's "natural-size on the cell
-            // pitch" behaviour, we draw the glyph's BBX top-left at
-            // (cellX + xOffset, cellY + cellHeight - 1 - yOffset - height + 1).
-            // In practice the bundled fonts have BBX offsets that place
-            // glyphs correctly with this formula.
-            int gx = cellX + g.xOffset;
-            int gy = cellY + (shape.cellHeight - 1) - (g.yOffset + g.height - 1);
-            for (int dy = 0; dy < g.height; dy++) {
-                for (int dx = 0; dx < g.width; dx++) {
-                    if (g.pixels[dy * g.width + dx] == 0) continue;
-                    int px = gx + dx;
-                    int py = gy + dy;
-                    if (px < 0 || px >= width || py < 0 || py >= height) continue;
-                    pixels[py * width + px] = Color.BLACK;
+            if (g != null && font.hasGlyph(cp)) {
+                int gx = cellX + g.xOffset;
+                int gy = cellY + (shape.cellHeight - 1) - (g.yOffset + g.height - 1);
+                for (int dy = 0; dy < g.height; dy++) {
+                    for (int dx = 0; dx < g.width; dx++) {
+                        if (g.pixels[dy * g.width + dx] == 0) continue;
+                        int px = gx + dx;
+                        int py = gy + dy;
+                        if (px < 0 || px >= width || py < 0 || py >= height) continue;
+                        pixels[py * width + px] = Color.BLACK;
+                    }
                 }
+                continue;
             }
+            // BDF lacks the glyph → try Silver TrueType fallback.
+            // Silver covers CJK + Latin Extended; if Silver also lacks the
+            // glyph, the cell is left blank (no '?' substitution — the
+            // BDF font's missing-glyph rendering is already a visible mark
+            // and we don't want to double-render).
+            SilverFontRegistry.renderGlyph(cp, pixels, width, height,
+                    cellX, cellY, shape.cellWidth, shape.cellHeight);
         }
 
         Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -182,7 +240,8 @@ public final class SnapCompactRenderer {
      * Paginate normalized text into chunks of {@code capacity} code points,
      * preserving code-point boundaries. Mirrors the row-major grid path of
      * {@code paginateCells} in snapcompact.ts (we skip the doc-2-column
-     * and CJK-wide-cell paths for simplicity).
+     * path for simplicity; the foveated HQ/LQ/HQ split happens at the
+     * compactor level, not the paginator).
      */
     public static String[] paginate(String text, int capacity) {
         if (text == null || text.isEmpty()) return new String[0];

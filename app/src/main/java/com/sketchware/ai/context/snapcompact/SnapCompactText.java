@@ -248,10 +248,13 @@ public final class SnapCompactText {
             if (folded != null) {
                 out.append(folded);
             } else {
-                // Non-ASCII non-foldable. The bundled BDF fonts have wide
-                // Latin-1 coverage; outside that we substitute '?'. CJK
-                // is not supported without the Silver TrueType fallback.
-                out.append('?');
+                // Non-ASCII non-foldable. The bundled BDF fonts cover
+                // ASCII + Latin-1; outside that we pass the code point
+                // through unchanged so the renderer can fall back to the
+                // Silver TrueType font (which covers CJK, Hiragana,
+                // Katakana, and Latin Extended). If Silver also lacks
+                // the glyph, the renderer leaves the cell blank.
+                out.append(ch);
             }
         }
         // 5. Collapse double spaces created by multi-char folds (e.g. "<-" + " " = "<- ").

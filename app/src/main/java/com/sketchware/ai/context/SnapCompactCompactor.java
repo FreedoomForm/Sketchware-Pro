@@ -92,9 +92,10 @@ public class SnapCompactCompactor implements Compactor {
                                             int preserveRecentMessages) {
         if (history == null) return new LinkedList<>();
 
-        // Ensure the BDF font registry is bound to a context (idempotent).
+        // Ensure the BDF + Silver font registries are bound to a context (idempotent).
         if (appContext instanceof android.content.Context) {
             BdfFontRegistry.init((android.content.Context) appContext);
+            SilverFontRegistry.init((android.content.Context) appContext);
         }
 
         int start = 0;
