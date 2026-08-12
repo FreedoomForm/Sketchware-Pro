@@ -5,7 +5,7 @@
     android:viewportHeight="24">
     <path
         android:fillColor="@android:color/transparent"
-        android:strokeColor="@color/chat_accent"
+        android:strokeColor="@color/ai_chat_accent"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"

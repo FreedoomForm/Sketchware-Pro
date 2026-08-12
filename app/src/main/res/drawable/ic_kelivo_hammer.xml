@@ -5,21 +5,21 @@
     android:viewportHeight="24">
     <path
         android:fillColor="@android:color/transparent"
-        android:strokeColor="@color/chat_accent"
+        android:strokeColor="@color/ai_chat_accent"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:pathData="m15 12-9.373 9.373a1 1 0 0 1-3.001-3L12 9" />
     <path
         android:fillColor="@android:color/transparent"
-        android:strokeColor="@color/chat_accent"
+        android:strokeColor="@color/ai_chat_accent"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:pathData="m18 15 4-4" />
     <path
         android:fillColor="@android:color/transparent"
-        android:strokeColor="@color/chat_accent"
+        android:strokeColor="@color/ai_chat_accent"
         android:strokeWidth="2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
