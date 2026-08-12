@@ -498,12 +498,24 @@ public final class AgentRuntime {
                     + " (raw: " + truncateForError(call.argumentsJson) + ")");
         }
         // Permission gate: use AutoApprover for fine-grained per-tool/action/path
-        // rules. Falls back to legacy gate's per-tool overrides if set.
+        // rules. Falls back to legacy gate's per-tool + per-subcategory overrides
+        // if set.
         AutoApprover.Decision decision = autoApprover.decide(tool, args);
-        // Legacy gate override: if the user explicitly set a per-tool override
-        // in the old UI, honor it (only when AutoApprover didn't already DENY).
+        // Legacy gate override: if the user explicitly set a per-tool or
+        // per-tool+subcategory override in the old UI, honor it (only when
+        // AutoApprover didn't already DENY).
         if (decision != AutoApprover.Decision.DENY && legacyGate != null) {
-            Boolean override = legacyGate.getToolAutoApprove(call.name);
+            // Per-tool+subcategory override takes precedence (umbrella tools).
+            String subcategory = null;
+            if (args != null && args.has("subcategory") && !args.get("subcategory").isJsonNull()) {
+                subcategory = args.get("subcategory").getAsString();
+            }
+            Boolean override = (subcategory != null)
+                    ? legacyGate.getToolSubcategoryAutoApprove(call.name, subcategory)
+                    : null;
+            if (override == null) {
+                override = legacyGate.getToolAutoApprove(call.name);
+            }
             if (override != null) {
                 decision = override ? AutoApprover.Decision.AUTO_APPROVE : AutoApprover.Decision.REQUIRE_APPROVAL;
             }

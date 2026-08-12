@@ -58,6 +58,33 @@ public class ToolPermissionGateTest {
         assertThat(gate.decide(null)).isEqualTo(ToolPermissionGate.Decision.DENY);
     }
 
+    @Test public void perToolSubcategoryOverrideTakesPrecedence() {
+        ToolPermissionGate gate = new ToolPermissionGate();
+        gate.setMode(AgentMode.ACT);
+        // The umbrella tool itself is not auto-approved by default.
+        SketchwareTool umbrella = new FakeTool("manifest_manage", false);
+        // Without subcategory override → falls back to tool default (REQUIRE_APPROVAL).
+        com.google.gson.JsonObject args = new com.google.gson.JsonObject();
+        args.addProperty("subcategory", "appcompat");
+        assertThat(gate.decide(umbrella, args)).isEqualTo(ToolPermissionGate.Decision.REQUIRE_APPROVAL);
+        // With per-tool+subcategory override → auto-approve.
+        gate.setToolSubcategoryAutoApprove("manifest_manage", "appcompat", true);
+        assertThat(gate.decide(umbrella, args)).isEqualTo(ToolPermissionGate.Decision.AUTO_APPROVE);
+        // Without args (subcategory not extractable) → falls back to per-tool or default.
+        assertThat(gate.decide(umbrella)).isEqualTo(ToolPermissionGate.Decision.REQUIRE_APPROVAL);
+    }
+
+    @Test public void perToolOverrideStillRespectedWhenNoSubcategoryOverride() {
+        ToolPermissionGate gate = new ToolPermissionGate();
+        gate.setMode(AgentMode.ACT);
+        SketchwareTool umbrella = new FakeTool("manifest_manage", false);
+        gate.setToolAutoApprove("manifest_manage", true);
+        com.google.gson.JsonObject args = new com.google.gson.JsonObject();
+        args.addProperty("subcategory", "appcompat");
+        // No per-tool+subcategory override, but per-tool override exists.
+        assertThat(gate.decide(umbrella, args)).isEqualTo(ToolPermissionGate.Decision.AUTO_APPROVE);
+    }
+
     static final class FakeTool implements SketchwareTool {
         private final String name;
         private final boolean readOnly;

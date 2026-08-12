@@ -7,17 +7,46 @@ import org.junit.Test;
 /**
  * Unit tests for {@link ToolRegistryInitializer}.
  *
- * <p>Verifies that the default registry contains all 238 expected tools with
- * unique names and valid JSON schemas.
+ * <p>Verifies that the default registry contains exactly 45 tools with
+ * unique names and valid JSON schemas, after the 2026-08-12 umbrella
+ * consolidation that collapsed 68 tools into 45 via {@link CategoryUmbrellaTool}.
  */
 public class ToolRegistryInitializerTest {
 
     @Test public void defaultRegistryHasAllExpectedTools() {
         ToolRegistry r = ToolRegistryInitializer.createDefault();
-        // After the universal-tool refactor (2026-08-11): the 223 stubs were
-        // collapsed into 29 universal tools + 16 specialized = 45 tools
-        // covering all 240 operations. Asserting at least 45.
-        assertThat(r.size()).isAtLeast(45);
+        // After the universal-tool refactor (2026-08-11): 223 stubs → 29 universal
+        // + 16 specialized = 45 tools covering all 240 operations.
+        //
+        // After the umbrella consolidation (2026-08-12): 68 tools → 45 tools via
+        // CategoryUmbrellaTool wrappers that group 2-8 related universal tools
+        // under a single name + subcategory enum. The 8 umbrellas are:
+        //   view_manage, event_manage, component_misc, project_manage,
+        //   build_manage, library_manage, manifest_manage, resource_manage.
+        //
+        // Asserting exactly 45 — further reduction below this point would
+        // require merging Block tools (kept standalone for LLM disambiguation)
+        // or removing functionality.
+        assertThat(r.size()).isEqualTo(45);
+    }
+
+    @Test public void expectedUmbrellaToolsAreRegistered() {
+        ToolRegistry r = ToolRegistryInitializer.createDefault();
+        // The 8 category umbrellas introduced in the 2026-08-12 consolidation.
+        String[] umbrellas = {
+            "view_manage", "event_manage", "component_misc", "project_manage",
+            "build_manage", "library_manage", "manifest_manage", "resource_manage"
+        };
+        for (String name : umbrellas) {
+            assertThat(r.has(name)).isTrue();
+            SketchwareTool t = r.all().stream()
+                    .filter(x -> x.name().equals(name)).findFirst().orElse(null);
+            assertThat(t).isNotNull();
+            assertThat(t).isInstanceOf(CategoryUmbrellaTool.class);
+            // Umbrellas are write + not auto-approved (conservative default).
+            assertThat(t.isReadOnly()).isFalse();
+            assertThat(t.isAutoApprovedByDefault()).isFalse();
+        }
     }
 
     @Test public void allToolsHaveUniqueNames() {
