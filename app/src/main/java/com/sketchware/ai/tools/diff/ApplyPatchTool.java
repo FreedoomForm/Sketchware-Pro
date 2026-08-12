@@ -6,6 +6,7 @@ import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.SketchwareToolContext;
 import com.sketchware.ai.tools.ToolResult;
 import com.sketchware.ai.tools.ToolResultFormatter;
+import com.sketchware.ai.util.PathSafety;
 
 import android.os.Environment;
 
@@ -131,7 +132,15 @@ public final class ApplyPatchTool implements SketchwareTool {
     }
 
     private String applyOp(File base, PatchParser.PatchOp op) {
-        File target = new File(base, op.path);
+        // Path-traversal guard: reject `..` and absolute paths before
+        // resolving, otherwise an LLM could overwrite arbitrary files like
+        // `/sdcard/Android/data/.../files/evil.dex` via an `add_file` op.
+        String abs = PathSafety.resolveUnderRoot(base.getAbsolutePath(), op.path);
+        if (abs == null) {
+            return "FAIL: " + op.path + " is not a safe project-relative path "
+                    + "(path traversal and absolute paths are not allowed)";
+        }
+        File target = new File(abs);
         try {
             switch (op.type) {
                 case ADD: {

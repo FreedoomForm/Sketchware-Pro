@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.SketchwareToolContext;
 import com.sketchware.ai.tools.ToolResult;
+import com.sketchware.ai.util.PathSafety;
 import com.sketchware.ai.util.SketchwareApi;
 
 import java.io.File;
@@ -80,7 +81,21 @@ public final class ListFilesTool implements SketchwareTool {
             return ToolResult.error("Project root not found for sc_id='" + ctx.getScId() + "'. "
                     + "Tried wq.b(sc_id) and fallback paths. Make sure the project is open in the editor.");
         }
-        File target = relPath.isEmpty() ? projectRoot : new File(projectRoot, relPath);
+        // Path-traversal guard: reject `..` segments and any path that
+        // resolves outside the project root. Without this, an LLM (or an
+        // attacker via prompt injection in a shared .sc project) can read
+        // arbitrary files like `/sdcard/Android/data/.../shared_prefs`.
+        File target;
+        if (relPath.isEmpty()) {
+            target = projectRoot;
+        } else {
+            String abs = PathSafety.resolveUnderRoot(projectRoot.getAbsolutePath(), relPath);
+            if (abs == null) {
+                return ToolResult.error("Path '" + relPath + "' is not a safe project-relative "
+                        + "path. Path traversal (..) and absolute paths are not allowed.");
+            }
+            target = new File(abs);
+        }
         if (!target.exists()) {
             // Helpful error: show what DOES exist at the root.
             StringBuilder hint = new StringBuilder();

@@ -43,6 +43,16 @@ public class AgenticCompactor implements Compactor {
             return history != null ? history : new LinkedList<>();
         }
 
+        // Capture the original system prompt (if any) before partitioning —
+        // we must carry it through the compaction rather than replacing it
+        // with the summary. Losing the system prompt drops the agent's
+        // persona/instructions, and every subsequent turn silently degrades.
+        // OhMyPiCompactor does the same; see OhMyPiCompactor.compact.
+        AgentMessage systemMsg = null;
+        if (!history.isEmpty() && "system".equals(history.get(0).role)) {
+            systemMsg = history.get(0);
+        }
+
         // Split: summary part + recent part.
         int summaryCount = history.size() - preserveRecentMessages;
         List<AgentMessage> toSummarize = new ArrayList<>(history.subList(0, summaryCount));
@@ -50,7 +60,25 @@ public class AgenticCompactor implements Compactor {
 
         String summary = summarizeWithLLM(toSummarize);
 
+        // On summarizer failure, fall back to BasicCompactor-style behavior
+        // (keep recent, drop old) instead of substituting the error string
+        // as the new system message. Substituting the error permanently
+        // replaces the agent's instructions with literal "[Summary failed: ...]"
+        // text, breaking every subsequent turn.
+        if (summary == null) {
+            LinkedList<AgentMessage> fallback = new LinkedList<>();
+            if (systemMsg != null) fallback.add(systemMsg);
+            fallback.add(AgentMessage.system("[Context compacted: summarizer failed, "
+                    + "older messages were dropped to fit the context window.]"));
+            fallback.addAll(recent);
+            return fallback;
+        }
+
         LinkedList<AgentMessage> result = new LinkedList<>();
+        // Preserve the original system prompt FIRST, then add the summary as
+        // a separate system message so the agent retains both its instructions
+        // and the conversation context.
+        if (systemMsg != null) result.add(systemMsg);
         result.add(AgentMessage.system("[Conversation summary]\n" + summary));
         result.addAll(recent);
         return result;
@@ -98,7 +126,10 @@ public class AgenticCompactor implements Compactor {
             }
             return result.toString();
         } catch (Exception e) {
-            return "[Summary failed: " + e.getMessage() + "]";
+            // Return null so the caller knows summarization failed and can
+            // fall back to BasicCompactor-style truncation rather than
+            // substituting the error text as the system message.
+            return null;
         }
     }
 }

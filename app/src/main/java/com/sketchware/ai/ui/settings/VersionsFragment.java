@@ -102,6 +102,19 @@ public final class VersionsFragment extends Fragment {
                         rv.setVisibility(View.VISIBLE);
                     }
                 });
+            } catch (ReleasesFetcher.RateLimitedException rle) {
+                // GitHub rate limit (60 req/hour unauthenticated) — surface
+                // a dedicated message so the user knows to wait, instead of
+                // the misleading generic "network error".
+                final String msg = rle.getMessage() != null ? rle.getMessage()
+                        : "GitHub rate limit exhausted. Try again later.";
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    progress.setVisibility(View.GONE);
+                    errorText.setText(msg);
+                    errorText.setVisibility(View.VISIBLE);
+                    retryBtn.setVisibility(View.VISIBLE);
+                });
             } catch (Exception e) {
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() -> {

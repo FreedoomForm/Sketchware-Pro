@@ -77,12 +77,36 @@ public final class GeminiProvider implements LlmProvider {
             // Tolerate /v1 (older endpoint alias) — strip and use /v1beta below.
             base = base.substring(0, base.length() - "/v1".length());
         }
-        String url = base + "/v1beta/models/" + request.model.id
-                + ":streamGenerateContent?alt=sse&key=" + (request.apiKey == null ? "" : request.apiKey);
+        // URL-encode the model ID so a future user-typed custom model with
+        // `/`, `?`, or `:` doesn't corrupt the path.
+        String encodedModel;
+        try {
+            encodedModel = java.net.URLEncoder.encode(request.model.id, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            encodedModel = request.model.id;
+        }
+        // Pass the API key via the `x-goog-api-key` header instead of the
+        // `?key=` query param. The query string is logged by OkHttp's logging
+        // interceptor, appears in proxy access logs, and is captured verbatim
+        // in crash reports — all of which leak the secret. The header is the
+        // Google-recommended auth method for the v1beta Generative Language
+        // API and avoids URL-encoding pitfalls for keys containing special
+        // chars.
+        String url = base + "/v1beta/models/" + encodedModel + ":streamGenerateContent?alt=sse";
 
         JsonObject body = buildRequestBody(request);
+        // Compose the header list: caller-supplied extraHeaders + our injected
+        // x-goog-api-key. We don't mutate request.extraHeaders in place so the
+        // LlmRequest stays immutable from the caller's perspective.
+        java.util.List<com.sketchware.ai.llm.LlmRequest.ExtraHeader> headers =
+                new java.util.ArrayList<>();
+        if (request.extraHeaders != null) headers.addAll(request.extraHeaders);
+        if (request.apiKey != null && !request.apiKey.isEmpty()) {
+            headers.add(new com.sketchware.ai.llm.LlmRequest.ExtraHeader(
+                    "x-goog-api-key", request.apiKey));
+        }
         // Use postStreamWithRetry for automatic 429/5xx retry with backoff.
-        Response response = HttpClient.postStreamWithRetry(url, body.toString(), null, request.extraHeaders, true);
+        Response response = HttpClient.postStreamWithRetry(url, body.toString(), null, headers, true);
         if (!response.isSuccessful()) {
             String errBody = response.body() != null ? response.body().string() : "";
             int code = response.code();

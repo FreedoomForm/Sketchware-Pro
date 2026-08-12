@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.SketchwareToolContext;
 import com.sketchware.ai.tools.ToolResult;
+import com.sketchware.ai.util.PathSafety;
 
 import java.io.File;
 import java.io.IOException;
@@ -107,7 +108,18 @@ public final class SearchFilesTool implements SketchwareTool {
         if (projectRoot == null || !projectRoot.exists()) {
             return ToolResult.error("Project root not found");
         }
-        File target = relPath.isEmpty() ? projectRoot : new File(projectRoot, relPath);
+        // Path-traversal guard (see ListFilesTool for rationale).
+        File target;
+        if (relPath.isEmpty()) {
+            target = projectRoot;
+        } else {
+            String abs = PathSafety.resolveUnderRoot(projectRoot.getAbsolutePath(), relPath);
+            if (abs == null) {
+                return ToolResult.error("Path '" + relPath + "' is not a safe project-relative "
+                        + "path. Path traversal (..) and absolute paths are not allowed.");
+            }
+            target = new File(abs);
+        }
         if (!target.exists()) {
             return ToolResult.error("Path does not exist: " + relPath);
         }

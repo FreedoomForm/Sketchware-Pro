@@ -140,6 +140,12 @@ public final class SilverFontRegistry {
      * Per-cell-size paint + bitmap + canvas cache. Allocated once per
      * distinct (cellWidth, cellHeight) pair, then reused for every
      * subsequent glyph at that size.
+     *
+     * <p><b>Thread safety:</b> {@code draw()} mutates {@code scratch} and
+     * {@code canvas}, so concurrent calls at the same cell-size would
+     * interleave pixel writes and produce garbled frames. We synchronize
+     * on the PaintState instance to serialize per-cell-size calls. Different
+     * cell sizes can render in parallel (different PaintState instances).
      */
     private static final class PaintState {
         final Paint paint;
@@ -149,6 +155,9 @@ public final class SilverFontRegistry {
         final int cellHeight;
         final float textSize;
         final float baseline;
+        /** Reused across draw() calls to avoid per-glyph allocation.
+         *  Guarded by synchronizing on {@code this}. */
+        final int[] scratchPixels;
 
         PaintState(Typeface tf, int cellWidth, int cellHeight) {
             this.cellWidth = cellWidth;
@@ -164,10 +173,25 @@ public final class SilverFontRegistry {
             this.textSize = pickTextSize(cellWidth, cellHeight);
             paint.setTextSize(textSize);
             Paint.FontMetrics fm = paint.getFontMetrics();
-            this.baseline = -fm.top;
+            // Compute baseline so the rendered glyph's vertical center
+            // matches the BDF path's. The BDF renderer pins the baseline at
+            // the bottom of the cell (cellY + cellHeight - 1) so descenders
+            // extend below; for TrueType we instead place the baseline so
+            // ascent+descent fits inside the cell, with the descent room
+            // reserved at the bottom to match BDF's descender behavior.
+            // fm.top is negative (ascent), fm.bottom is positive (descent).
+            float ascent = -fm.top;
+            float descent = fm.bottom;
+            // Reserve enough descent so common descenders (g, p, q, y) don't
+            // get clipped at the cell's bottom edge.
+            this.baseline = Math.max(ascent, (cellHeight - 1) - descent);
             // Scratch bitmap for rasterizing one glyph at a time.
             this.scratch = Bitmap.createBitmap(cellWidth, cellHeight, Bitmap.Config.ARGB_8888);
             this.canvas = new Canvas(scratch);
+            // Pre-allocate the pixel readback buffer once per PaintState
+            // instead of per draw() call — a CJK-heavy archive can trigger
+            // 240-480K allocations per compaction, ~150 MB of GC churn.
+            this.scratchPixels = new int[cellWidth * cellHeight];
         }
 
         float pickTextSize(int cw, int ch) {
@@ -183,31 +207,37 @@ public final class SilverFontRegistry {
         boolean draw(int codePoint, int[] pixels, int width, int height, int cellX, int cellY) {
             String s = new String(Character.toChars(codePoint));
             if (!paint.hasGlyph(s)) return false;
-            // Clear scratch bitmap to transparent.
-            scratch.eraseColor(Color.TRANSPARENT);
-            // Center the glyph horizontally; baseline at the cell bottom minus 1px.
-            float advance = paint.measureText(s);
-            float x = Math.max(0, (cellWidth - advance) / 2f);
-            float y = baseline - 1;
-            canvas.drawText(s, x, y, paint);
-            // Read back pixels and composite black-ink pixels onto the frame buffer.
-            int[] scratchPixels = new int[cellWidth * cellHeight];
-            scratch.getPixels(scratchPixels, 0, cellWidth, 0, 0, cellWidth, cellHeight);
-            for (int dy = 0; dy < cellHeight; dy++) {
-                int py = cellY + dy;
-                if (py < 0 || py >= height) continue;
-                for (int dx = 0; dx < cellWidth; dx++) {
-                    int px = cellX + dx;
-                    if (px < 0 || px >= width) continue;
-                    int argb = scratchPixels[dy * cellWidth + dx];
-                    // Alpha channel of the rasterized glyph indicates ink coverage.
-                    int alpha = (argb >>> 24) & 0xff;
-                    if (alpha >= 128) {
-                        pixels[py * width + px] = Color.BLACK;
+            // Synchronize on the PaintState to serialize concurrent callers
+            // at the same cell size — scratch/canvas/scratchPixels are not
+            // thread-safe and would interleave pixel writes.
+            synchronized (this) {
+                // Clear scratch bitmap to transparent.
+                scratch.eraseColor(Color.TRANSPARENT);
+                // Center the glyph horizontally; baseline placed so the glyph
+                // visually sits in the lower portion of the cell to match the
+                // BDF path (which pins baseline at cellY + cellHeight - 1).
+                float advance = paint.measureText(s);
+                float x = Math.max(0, (cellWidth - advance) / 2f);
+                float y = baseline;
+                canvas.drawText(s, x, y, paint);
+                // Read back pixels into the reused scratchPixels buffer.
+                scratch.getPixels(scratchPixels, 0, cellWidth, 0, 0, cellWidth, cellHeight);
+                for (int dy = 0; dy < cellHeight; dy++) {
+                    int py = cellY + dy;
+                    if (py < 0 || py >= height) continue;
+                    for (int dx = 0; dx < cellWidth; dx++) {
+                        int px = cellX + dx;
+                        if (px < 0 || px >= width) continue;
+                        int argb = scratchPixels[dy * cellWidth + dx];
+                        // Alpha channel of the rasterized glyph indicates ink coverage.
+                        int alpha = (argb >>> 24) & 0xff;
+                        if (alpha >= 128) {
+                            pixels[py * width + px] = Color.BLACK;
+                        }
                     }
                 }
+                return true;
             }
-            return true;
         }
     }
 }

@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.SketchwareToolContext;
 import com.sketchware.ai.tools.ToolResult;
+import com.sketchware.ai.util.PathSafety;
 
 import android.os.Environment;
 import java.io.File;
@@ -45,11 +46,19 @@ public final class JavaReadFileTool implements SketchwareTool {
         if (scId == null) return ToolResult.error("No active project.");
         try {
             File base = new File(Environment.getExternalStorageDirectory(), ".sketchware/data/" + scId + "/files");
-            String fullPath = new File(base, relativePath).getAbsolutePath();
-            if (!FileUtil.isExistFile(fullPath)) {
+            // Path-traversal guard: reject `..` and absolute paths before
+            // resolving, otherwise an LLM could read arbitrary files like
+            // `/sdcard/Android/data/.../shared_prefs/SketchwarePro.xml`.
+            String abs = PathSafety.resolveUnderRoot(base.getAbsolutePath(), relativePath);
+            if (abs == null) {
+                return ToolResult.error("file_path '" + relativePath + "' is not a safe "
+                        + "project-relative path. Path traversal (..) and absolute paths "
+                        + "are not allowed.");
+            }
+            if (!FileUtil.isExistFile(abs)) {
                 return ToolResult.error("File not found: " + relativePath);
             }
-            String content = FileUtil.readFile(fullPath);
+            String content = FileUtil.readFile(abs);
             return ToolResult.success(content);
         } catch (Throwable t) {
             return ToolResult.error(t);

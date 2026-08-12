@@ -75,6 +75,12 @@ public final class LoopDetector {
         boolean hard = count >= HARD_THRESHOLD;
         if (hard) {
             consecutiveMistakeCount++;
+        } else if (count < SOFT_THRESHOLD) {
+            // A non-looping call clears the streak — otherwise a single loop
+            // early in the session dooms the agent forever (every subsequent
+            // different tool call still had consecutiveMistakeCount >= max
+            // from the prior escalation, so shouldAbort stayed true).
+            consecutiveMistakeCount = 0;
         }
         return new LoopResult(soft, hard, count, consecutiveMistakeCount, maxConsecutiveMistakes);
     }

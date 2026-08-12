@@ -100,6 +100,15 @@ public final class AgentMessage {
     /**
      * Estimate the number of tokens this message consumes.
      * Uses a rough heuristic: 1 token ~= 4 chars.
+     *
+     * <p>For messages carrying images (e.g. snapcompact compaction frames),
+     * a vision-token estimate is added on top of the text estimate. The
+     * vision estimate uses OpenAI's tile-based formula: each 512×512 tile
+     * costs ~170 tokens, with a base of 85 tokens per image. Without this
+     * offset, snapcompact frames (typically ~80 frames × ~3000 tokens each
+     * = ~240K tokens) would be invisible to {@code estimateTokens}, the
+     * next overflow check would not fire, and the next {@code stream(req)}
+     * call would hit a guaranteed context-length API error.
      */
     public int estimateTokens() {
         int chars = 0;
@@ -115,6 +124,56 @@ public final class AgentMessage {
             chars += (r.toolName == null ? 0 : r.toolName.length());
             chars += (r.toolCallId == null ? 0 : r.toolCallId.length());
         }
-        return Math.max(1, chars / 4);
+        int textTokens = Math.max(1, chars / 4);
+        // Vision token estimate for attached images. Each base64 data-URL
+        // image is decoded to its pixel dimensions; cost is computed using
+        // OpenAI's formula: 85 base tokens + 170 per 512×512 tile.
+        int imageTokens = 0;
+        if (images != null) {
+            for (String img : images) {
+                int[] dims = decodeImageDimensions(img);
+                if (dims != null) {
+                    int tilesW = (dims[0] + 511) / 512;
+                    int tilesH = (dims[1] + 511) / 512;
+                    imageTokens += 85 + 170 * (tilesW * tilesH);
+                } else {
+                    // Unknown dimensions — assume one tile.
+                    imageTokens += 255;
+                }
+            }
+        }
+        return textTokens + imageTokens;
+    }
+
+    /**
+     * Best-effort decode of an image's pixel dimensions from a base64
+     * data-URL or raw base64 PNG/JPEG. Returns {@code null} if the format
+     * is unrecognized or parsing fails — the caller falls back to a
+     * one-tile estimate.
+     */
+    private static int[] decodeImageDimensions(String dataUrlOrBase64) {
+        if (dataUrlOrBase64 == null || dataUrlOrBase64.isEmpty()) return null;
+        try {
+            String b64;
+            // Strip data-URL prefix if present ("data:image/png;base64,AAAA...").
+            int comma = dataUrlOrBase64.indexOf(',');
+            if (dataUrlOrBase64.startsWith("data:") && comma > 0) {
+                b64 = dataUrlOrBase64.substring(comma + 1);
+            } else {
+                b64 = dataUrlOrBase64;
+            }
+            byte[] bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+            // Use BitmapFactory just to read dimensions — no full decode.
+            android.graphics.BitmapFactory.Options opts =
+                    new android.graphics.BitmapFactory.Options();
+            opts.inJustDecodeBounds = true;
+            android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.length, opts);
+            if (opts.outWidth > 0 && opts.outHeight > 0) {
+                return new int[]{opts.outWidth, opts.outHeight};
+            }
+        } catch (Throwable t) {
+            // Fall through to null return.
+        }
+        return null;
     }
 }

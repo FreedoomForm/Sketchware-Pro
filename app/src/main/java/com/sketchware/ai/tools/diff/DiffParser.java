@@ -147,8 +147,22 @@ public final class DiffParser {
 
     private static String applyOne(String source, Block b, int blockIdx) throws DiffApplyException {
         // Tier 1: exact match.
+        // Replace ONLY the first occurrence — String.replace would rewrite
+        // every occurrence, which is unsafe when the SEARCH block legitimately
+        // appears more than once in the file (e.g. a single `}` line, or a
+        // common `return;` statement). The SEARCH/REPLACE contract the LLM
+        // is taught is "first match wins; if ambiguous, add more surrounding
+        // lines to disambiguate", so we explicitly reject ambiguous blocks.
         if (!b.search.isEmpty() && source.contains(b.search)) {
-            return source.replace(b.search, b.replace);
+            int first = source.indexOf(b.search);
+            int second = source.indexOf(b.search, first + 1);
+            if (second >= 0) {
+                throw new DiffApplyException(blockIdx, snippet(b.search),
+                        "Block " + blockIdx + ": SEARCH content is ambiguous — it appears at least "
+                                + "twice in the source. Add more surrounding context lines to your "
+                                + "SEARCH block so it matches exactly one location.");
+            }
+            return source.substring(0, first) + b.replace + source.substring(first + b.search.length());
         }
         if (b.search.isEmpty()) {
             // Empty search means "insert at end of file".
@@ -158,7 +172,15 @@ public final class DiffParser {
         // Tier 2: line-trimmed match.
         String trimmed = lineTrimmedMatch(source, b.search);
         if (trimmed != null) {
-            return source.replace(trimmed, b.replace);
+            int first = source.indexOf(trimmed);
+            int second = source.indexOf(trimmed, first + 1);
+            if (second >= 0) {
+                throw new DiffApplyException(blockIdx, snippet(b.search),
+                        "Block " + blockIdx + ": SEARCH content (whitespace-normalized) is "
+                                + "ambiguous — appears at least twice. Add more surrounding "
+                                + "context to disambiguate.");
+            }
+            return source.substring(0, first) + b.replace + source.substring(first + trimmed.length());
         }
 
         // Tier 3: block-anchor match.

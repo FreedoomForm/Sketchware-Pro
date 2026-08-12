@@ -21,6 +21,13 @@ public final class HttpClient {
     // abort(). This is sufficient for Sketchware-Pro's single-request-at-a-time
     // usage model (the agent runtime issues one LLM stream at a time).
     private static final AtomicReference<Call> lastCall = new AtomicReference<>();
+    // Track the thread currently sleeping inside postStreamWithRetry's retry
+    // backoff. OkHttp's Call.cancel() only interrupts threads *inside*
+    // Call.execute(); once we've returned the 429/5xx response and are sleeping
+    // in Thread.sleep() between retries, Call.cancel() is a no-op. To make the
+    // user's Stop button actually abort the backoff, abortCurrent() interrupts
+    // this thread directly.
+    private static final AtomicReference<Thread> sleepingThread = new AtomicReference<>();
 
     /** A client with long read timeouts (LLM streams can be slow). */
     public static synchronized OkHttpClient getClient() {
@@ -119,7 +126,7 @@ public final class HttpClient {
         for (int attempt = 0; attempt <= RateLimitHandler.MAX_RETRIES; attempt++) {
             // Close any previous response before retrying.
             if (lastResponse != null) {
-                try { lastResponse.close(); } catch (Throwable ignored) {}
+                try { lastResponse.close(); } catch (Exception ignored) {}
             }
 
             lastResponse = postStream(url, jsonBody, apiKey, extraHeaders, sse);
@@ -151,13 +158,22 @@ public final class HttpClient {
             // for the retry decision, only the status code (which we already
             // captured). Reading the body here would consume the stream and
             // prevent OkHttp from reusing the connection.
-            try { lastResponse.close(); } catch (Throwable ignored) {}
+            try { lastResponse.close(); } catch (Exception ignored) {}
             lastResponse = null;
 
             // Sleep (interruptible). If interrupted (e.g. user aborted),
             // surface as a RuntimeException so the provider's caller sees it.
-            if (!RateLimitHandler.sleepInterruptible(delay)) {
-                throw new RuntimeException("Request aborted during retry backoff");
+            // We register the current thread on sleepingThread so abortCurrent()
+            // can interrupt us — OkHttp's Call.cancel() alone cannot break a
+            // Thread.sleep() between retries.
+            Thread current = Thread.currentThread();
+            sleepingThread.set(current);
+            try {
+                if (!RateLimitHandler.sleepInterruptible(delay)) {
+                    throw new RuntimeException("Request aborted during retry backoff");
+                }
+            } finally {
+                sleepingThread.compareAndSet(current, null);
             }
         }
 
@@ -181,9 +197,18 @@ public final class HttpClient {
      * repeatedly. Implemented by providers' {@code abort()} methods.
      */
     public static void abortCurrent() {
+        // Cancel any in-flight HTTP call. This interrupts threads inside
+        // Call.execute() (OkHttp's internal I/O wait).
         Call c = lastCall.getAndSet(null);
         if (c != null && !c.isCanceled()) {
             c.cancel();
+        }
+        // Also interrupt the thread sleeping in retry backoff, if any.
+        // Call.cancel() alone is a no-op there — the thread is parked in
+        // Thread.sleep(), not inside Call.execute().
+        Thread t = sleepingThread.getAndSet(null);
+        if (t != null && t != Thread.currentThread()) {
+            t.interrupt();
         }
     }
 

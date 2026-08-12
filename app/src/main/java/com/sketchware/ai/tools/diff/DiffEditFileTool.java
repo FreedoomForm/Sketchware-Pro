@@ -6,6 +6,7 @@ import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.SketchwareToolContext;
 import com.sketchware.ai.tools.ToolResult;
 import com.sketchware.ai.tools.ToolResultFormatter;
+import com.sketchware.ai.util.PathSafety;
 
 import android.os.Environment;
 
@@ -106,7 +107,13 @@ public final class DiffEditFileTool implements SketchwareTool {
         if (scId == null) return ToolResult.error("No active project.");
 
         File base = new File(Environment.getExternalStorageDirectory(), ".sketchware/data/" + scId + "/files");
-        String fullPath = new File(base, relativePath).getAbsolutePath();
+        // Path-traversal guard (see JavaReadFileTool for rationale).
+        String fullPath = PathSafety.resolveUnderRoot(base.getAbsolutePath(), relativePath);
+        if (fullPath == null) {
+            return ToolResult.error("file_path '" + relativePath + "' is not a safe "
+                    + "project-relative path. Path traversal (..) and absolute paths "
+                    + "are not allowed.");
+        }
         if (!FileUtil.isExistFile(fullPath)) {
             return ToolResult.error(ToolResultFormatter.notFound(
                     "File", relativePath, "project files/",

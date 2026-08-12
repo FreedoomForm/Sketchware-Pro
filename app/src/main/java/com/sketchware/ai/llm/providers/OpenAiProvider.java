@@ -277,10 +277,14 @@ public class OpenAiProvider implements LlmProvider {
         }
 
         // Reasoning effort (OpenAI Responses / o1 / o3).
-        // Suppress for flat-format endpoints: Z.AI's GLM uses `thinking.type`
-        // (added by OpenAiCompatProvider.buildRequestBody) and rejects
-        // `reasoning_effort` as extra_forbidden.
-        if (!flat && request.reasoning != null && request.reasoning.effort != null
+        // Suppress for non-native OpenAI-compat endpoints: Z.AI's GLM uses
+        // `thinking.type` (added by OpenAiCompatProvider.buildRequestBody) and
+        // rejects `reasoning_effort` as extra_forbidden (HTTP 422). DeepSeek
+        // and OpenRouter have their own reasoning fields and treat the bare
+        // `reasoning_effort` string as an unknown field. Only emit it for the
+        // native OpenAI provider — compat providers own their reasoning
+        // serialization in their own buildRequestBody override.
+        if (isOpenAiNative && request.reasoning != null && request.reasoning.effort != null
                 && request.reasoning.effort != com.sketchware.ai.llm.reasoning.ReasoningEffort.NONE) {
             root.addProperty("reasoning_effort", request.reasoning.effort.name().toLowerCase());
         }
@@ -301,7 +305,12 @@ public class OpenAiProvider implements LlmProvider {
         JsonObject obj = new JsonObject();
         obj.addProperty("role", "tool");
         obj.addProperty("tool_call_id", r.toolCallId);
-        obj.addProperty("content", r.isError ? ("ERROR: " + r.output) : r.output);
+        // String.valueOf(null) returns the literal "null" — better than NPE
+        // from JsonObject.addProperty(String, String) which rejects null. A
+        // tool returning null output is rare but possible (e.g. a formatter
+        // bug), and crashing the request build is worse than sending "null".
+        String safeOutput = String.valueOf(r.output);
+        obj.addProperty("content", r.isError ? ("ERROR: " + safeOutput) : safeOutput);
         return obj;
     }
 

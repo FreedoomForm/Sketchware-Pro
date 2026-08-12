@@ -699,7 +699,16 @@ public final class ChatFragment extends Fragment {
                     .show();
         });
         try {
-            latch.await();
+            // 5-minute timeout: prevents the agent from being parked forever
+            // if the user backgrounds the app or never taps Approve/Deny.
+            // On timeout we treat as deny and let the agent continue with a
+            // denied tool result rather than hanging the whole run. The
+            // AbortController.abort() path also interrupts this thread — see
+            // AgentRuntime.abort() which calls currentRun.cancel(true) — so
+            // the user's Stop button is responsive during an approval prompt.
+            if (!latch.await(5, java.util.concurrent.TimeUnit.MINUTES)) {
+                return false;
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return false;

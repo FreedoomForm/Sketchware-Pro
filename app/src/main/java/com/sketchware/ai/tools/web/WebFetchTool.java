@@ -111,7 +111,37 @@ public final class WebFetchTool implements SketchwareTool {
             if (contentLength > MAX_CONTENT_BYTES) {
                 return ToolResult.error("Content too large (" + contentLength + " bytes). Max: " + MAX_CONTENT_BYTES);
             }
-            String body = resp.body() != null ? resp.body().string() : "";
+            // Bound the read regardless of Content-Length. For chunked
+            // responses (HTTP/1.1 Transfer-Encoding: chunked) contentLength
+            // is -1, so the check above is bypassed. Without an explicit
+            // cap on the stream itself, resp.body().string() would buffer
+            // the entire body into a Java String — potentially gigabytes
+            // for a malicious or misconfigured server, OOM-crashing the
+            // agent process.
+            String body;
+            if (resp.body() == null) {
+                body = "";
+            } else {
+                java.io.InputStream raw = resp.body().byteStream();
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream(64 * 1024);
+                byte[] buf = new byte[16 * 1024];
+                long total = 0;
+                int n;
+                boolean tooBig = false;
+                while ((n = raw.read(buf)) > 0) {
+                    total += n;
+                    if (total > MAX_CONTENT_BYTES) {
+                        tooBig = true;
+                        break;
+                    }
+                    baos.write(buf, 0, n);
+                }
+                if (tooBig) {
+                    return ToolResult.error("Content too large (> " + MAX_CONTENT_BYTES
+                            + " bytes streamed). Max: " + MAX_CONTENT_BYTES);
+                }
+                body = baos.toString(java.nio.charset.StandardCharsets.UTF_8.name());
+            }
             if (body.isEmpty()) {
                 return ToolResult.success("(empty body)");
             }

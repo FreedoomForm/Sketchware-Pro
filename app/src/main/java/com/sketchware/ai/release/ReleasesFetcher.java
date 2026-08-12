@@ -31,7 +31,7 @@ public final class ReleasesFetcher {
     public static final String REPO  = "Sketchware-Pro";
 
     private static final String ENDPOINT =
-            "https://api.github.com/repos/" + OWNER + "/" + REPO + "/releases?per_page=30";
+            "https://api.github.com/repos/" + OWNER + "/" + REPO + "/releases?per_page=100";
 
     private static final Gson GSON = new Gson();
 
@@ -41,6 +41,10 @@ public final class ReleasesFetcher {
      * Fetch and parse the list of published releases, newest first.
      *
      * @return a non-null, possibly-empty list of {@link GitHubRelease}
+     * @throws RateLimitedException when GitHub's unauthenticated rate limit
+     *         is exhausted (HTTP 403 + {@code X-RateLimit-Remaining: 0}).
+     *         The caller should surface a dedicated "rate-limited" message
+     *         rather than the generic network-error message.
      * @throws Exception on network or parse error
      */
     public static List<GitHubRelease> fetchReleases() throws Exception {
@@ -52,12 +56,46 @@ public final class ReleasesFetcher {
                 .build();
 
         try (Response resp = HttpClient.getClient().newCall(req).execute()) {
+            // GitHub's unauthenticated rate limit returns HTTP 403 (NOT 429)
+            // with `X-RateLimit-Remaining: 0`. Detect this and surface a
+            // dedicated exception so the VersionsFragment can show a clearer
+            // "rate-limited" message and disable the Retry button until the
+            // reset time, instead of the generic "network error" message.
+            if (resp.code() == 403) {
+                String remaining = resp.header("X-RateLimit-Remaining");
+                String resetHdr  = resp.header("X-RateLimit-Reset");
+                if ("0".equals(remaining)) {
+                    long resetEpochSecs = 0;
+                    try {
+                        resetEpochSecs = resetHdr != null ? Long.parseLong(resetHdr) : 0;
+                    } catch (NumberFormatException ignored) {}
+                    throw new RateLimitedException(
+                            "GitHub rate limit exhausted. Resets at "
+                                    + (resetEpochSecs > 0
+                                            ? new java.util.Date(resetEpochSecs * 1000L).toString()
+                                            : "unknown"),
+                            resetEpochSecs);
+                }
+            }
             if (!resp.isSuccessful()) {
                 throw new RuntimeException("GitHub HTTP " + resp.code() + ": "
                         + (resp.body() != null ? resp.body().string() : ""));
             }
             String body = resp.body() != null ? resp.body().string() : "[]";
             return parse(body);
+        }
+    }
+
+    /**
+     * Thrown when GitHub's unauthenticated rate limit (60 req/hour per IP)
+     * is exhausted. Carries the epoch-seconds reset time so the caller can
+     * compute the wait duration and disable the retry button until then.
+     */
+    public static final class RateLimitedException extends Exception {
+        public final long resetEpochSeconds;
+        public RateLimitedException(String message, long resetEpochSeconds) {
+            super(message);
+            this.resetEpochSeconds = resetEpochSeconds;
         }
     }
 
