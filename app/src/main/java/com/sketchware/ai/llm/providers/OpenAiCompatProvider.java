@@ -93,6 +93,34 @@ public class OpenAiCompatProvider extends OpenAiProvider {
                     true, false, true,
                     0.50, 1.50, 0.0, 0.0);
         }
+        if ("groq".equals(providerId)) {
+            // Groq runs Llama / Qwen / Mixtral with very low latency.
+            // 128k context, 8k output, supports tools.
+            return new ModelInfo(modelId, "Groq " + modelId,
+                    128_000, 128_000, 8_192,
+                    true, false, false,
+                    0.59, 0.79, 0.0, 0.0);
+        }
+        if ("grok_xai".equals(providerId) || (modelId != null && modelId.toLowerCase().contains("grok"))) {
+            return new ModelInfo(modelId, "Grok " + modelId,
+                    131_000, 131_000, 8_192,
+                    true, false, false,
+                    2.00, 10.00, 0.0, 0.0);
+        }
+        if ("huggingface".equals(providerId)) {
+            return new ModelInfo(modelId, "HF " + modelId,
+                    128_000, 128_000, 8_192,
+                    true, false, false,
+                    0.50, 0.50, 0.0, 0.0);
+        }
+        if ("minimax".equals(providerId)) {
+            return new ModelInfo(modelId, "MiniMax " + modelId,
+                    1_000_000, 1_000_000, 8_192,
+                    true, false, false,
+                    1.00, 1.00, 0.0, 0.0);
+        }
+        // vllm / lm_studio / litellm / openai-compat fall through to default;
+        // these are user-hosted runtimes whose model catalog is unknown.
         return ModelInfo.defaultFor(modelId);
     }
 

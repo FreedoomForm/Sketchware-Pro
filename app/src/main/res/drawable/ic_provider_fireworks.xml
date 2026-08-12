@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Provider icon: ic_provider_fireworks. Auto-generated single-tone 24dp vector.
+     Tint via app:tint to recolor for dark/light themes; brand color is
+     baked in as the default fillColor so the icon is recognizable when
+     untinted. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorOnSurface">
+    <path
+        android:fillColor="#EF5335"
+        android:pathData="M12,2 L13,9 L20,9 L14,13 L16,20 L12,16 L8,20 L10,13 L4,9 L11,9 Z" />
+</vector>

@@ -18,7 +18,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import pro.sketchware.R;
@@ -66,7 +65,17 @@ public final class ChatFragment extends Fragment {
     private View statusDot;
     private android.widget.TextView statusText;
     private android.widget.TextView tokensText;
+    private android.widget.TextView tokensPercent;
     private android.widget.TextView modeLabel;
+    private android.widget.TextView chatSubtitle;
+    private android.widget.ImageView chatModelIcon;
+    private android.widget.View runStatusRow;
+    private android.widget.TextView runStatusText;
+    private com.sketchware.ai.ui.chat.TypingDotsView runStatusDots;
+    private android.view.View btnModelSelector;
+    private android.widget.ImageView btnModelSelectorIcon;
+    private android.widget.TextView btnModelSelectorLabel;
+    private android.widget.ProgressBar contextProgressBar;
 
     private ChatAdapter adapter;
     private final MessageReducer reducer = new MessageReducer();
@@ -139,7 +148,19 @@ public final class ChatFragment extends Fragment {
         statusDot = root.findViewById(R.id.status_dot);
         statusText = root.findViewById(R.id.status_text);
         tokensText = root.findViewById(R.id.tokens_text);
+        tokensPercent = root.findViewById(R.id.tokens_percent);
         modeLabel = root.findViewById(R.id.mode_label);
+
+        // New UI elements (enriched layout).
+        chatSubtitle = root.findViewById(R.id.chat_subtitle);
+        chatModelIcon = root.findViewById(R.id.chat_model_icon);
+        runStatusRow = root.findViewById(R.id.run_status_row);
+        runStatusText = root.findViewById(R.id.run_status_text);
+        runStatusDots = root.findViewById(R.id.run_status_dots);
+        btnModelSelector = root.findViewById(R.id.btn_model_selector);
+        btnModelSelectorIcon = root.findViewById(R.id.btn_model_selector_icon);
+        btnModelSelectorLabel = root.findViewById(R.id.btn_model_selector_label);
+        contextProgressBar = root.findViewById(R.id.context_progress_bar);
 
         adapter = new ChatAdapter();
         recycler.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -162,34 +183,29 @@ public final class ChatFragment extends Fragment {
             btnSend.setEnabled(true);
         }
 
-        // Wire up toolbar menu (AI Settings / Clear / Export).
-        MaterialToolbar toolbar = root.findViewById(R.id.toolbar);
-        toolbar.setNavigationOnClickListener(v -> {
-            // No drawer here; ignore.
-        });
-        toolbar.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.menu_ai_settings) {
-                startActivity(AISettingsActivity.newIntent(requireContext(), AISettingsActivity.FRAGMENT_PROVIDER));
-                return true;
-            } else if (id == R.id.menu_ai_clear) {
-                clearConversation();
-                return true;
-            } else if (id == R.id.menu_ai_export) {
-                exportConversation();
-                return true;
-            } else if (id == R.id.menu_ai_history) {
-                showTaskHistory();
-                return true;
-            } else if (id == R.id.menu_ai_cost) {
-                showCostSummary();
-                return true;
-            } else if (id == R.id.menu_ai_auto_approve) {
-                startActivity(AISettingsActivity.newIntent(requireContext(), AISettingsActivity.FRAGMENT_AUTO_APPROVE));
-                return true;
-            }
-            return false;
-        });
+        // The old toolbar-based menu has been replaced by individual icon
+        // buttons in the new chat header. Wire each one to its action.
+        View btnChatMenu = root.findViewById(R.id.btn_chat_menu);
+        View btnChatSettings = root.findViewById(R.id.btn_chat_settings);
+        View btnChatClear = root.findViewById(R.id.btn_chat_clear);
+        if (btnChatMenu != null) {
+            // "Menu" — for now, opens settings (no drawer in chat itself).
+            btnChatMenu.setOnClickListener(v ->
+                    startActivity(AISettingsActivity.newIntent(requireContext(), AISettingsActivity.FRAGMENT_PROVIDER)));
+        }
+        if (btnChatSettings != null) {
+            btnChatSettings.setOnClickListener(v ->
+                    startActivity(AISettingsActivity.newIntent(requireContext(), AISettingsActivity.FRAGMENT_PROVIDER)));
+        }
+        if (btnChatClear != null) {
+            btnChatClear.setOnClickListener(v -> clearConversation());
+        }
+
+        // Model selector chip in the input bar — opens the model picker
+        // dialog so the user can switch models without leaving the chat.
+        if (btnModelSelector != null) {
+            btnModelSelector.setOnClickListener(v -> showModelPicker());
+        }
 
         // Send on Enter (without shift). Only consume the action when it's
         // actually the IME's "send" action — returning true unconditionally
@@ -276,6 +292,144 @@ public final class ChatFragment extends Fragment {
         }
     }
 
+    /**
+     * Refresh the chat header subtitle ("Provider • Model") and the small
+     * provider icon to the left of the subtitle. Called from {@link #onResume}
+     * and after every profile change so the user always sees which model
+     * they're talking to.
+     */
+    private void refreshChatHeader() {
+        if (profile == null) return;
+        String providerId = profile.providerId == null ? "" : profile.providerId;
+        String providerLabel = com.sketchware.ai.llm.ProviderCatalog.safeDisplayName(providerId);
+        String model = profile.modelId == null ? "" : profile.modelId;
+        String subtitle = model.isEmpty()
+                ? providerLabel
+                : providerLabel + " • " + model;
+        if (chatSubtitle != null) chatSubtitle.setText(subtitle);
+        if (chatModelIcon != null) {
+            int iconRes = com.sketchware.ai.ui.settings.ProviderIconResolver
+                    .resolveProvider(providerId, providerLabel);
+            chatModelIcon.setImageResource(iconRes);
+            chatModelIcon.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Refresh the model-selector chip in the input bar so it shows the
+     * currently-active model id and the right provider icon.
+     */
+    private void refreshModelSelectorChip() {
+        if (profile == null) return;
+        String providerId = profile.providerId == null ? "" : profile.providerId;
+        String model = profile.modelId == null ? "" : profile.modelId;
+        if (model.isEmpty()) model = "Pick model";
+        if (btnModelSelectorLabel != null) btnModelSelectorLabel.setText(model);
+        if (btnModelSelectorIcon != null) {
+            int iconRes = com.sketchware.ai.ui.settings.ProviderIconResolver
+                    .resolveProvider(providerId, com.sketchware.ai.llm.ProviderCatalog.safeDisplayName(providerId));
+            btnModelSelectorIcon.setImageResource(iconRes);
+        }
+    }
+
+    /**
+     * Show a dialog letting the user switch models for the active provider.
+     * The list combines built-in catalog models + any user-saved custom
+     * models for that provider. Picking one updates the active profile,
+     * saves it, and refreshes the chat header / chip.
+     */
+    private void showModelPicker() {
+        if (profile == null) return;
+        String providerId = profile.providerId == null ? "" : profile.providerId;
+        com.sketchware.ai.llm.ProviderCatalog.Entry entry =
+                com.sketchware.ai.llm.ProviderCatalog.getOrDefault(providerId);
+
+        java.util.List<String> models = new java.util.ArrayList<>(entry.builtinModels);
+        // Append any user-saved custom models for this provider.
+        try {
+            String raw = requireContext()
+                    .getSharedPreferences("ai_custom_models", Context.MODE_PRIVATE)
+                    .getString("models_" + providerId, "");
+            if (raw != null && !raw.isEmpty()) {
+                for (String s : raw.split("\n")) {
+                    String t = s.trim();
+                    if (!t.isEmpty() && !models.contains(t)) models.add(t);
+                }
+            }
+        } catch (Throwable ignored) { }
+
+        if (models.isEmpty()) {
+            com.google.android.material.snackbar.Snackbar.make(btnSend,
+                    getString(R.string.ai_model_sheet_no_models),
+                    com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show();
+            // Take the user to the provider detail so they can add one.
+            com.sketchware.ai.ui.settings.ProviderDetailActivity.start(
+                    requireContext(), providerId, entry.displayName);
+            return;
+        }
+
+        String[] arr = models.toArray(new String[0]);
+        int currentIdx = -1;
+        String current = profile.modelId == null ? "" : profile.modelId;
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i].equals(current)) { currentIdx = i; break; }
+        }
+        final String[] selected = new String[]{currentIdx >= 0 ? arr[currentIdx] : ""};
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.ai_model_sheet_title)
+                .setSingleChoiceItems(arr, currentIdx, (d, w) -> selected[0] = arr[w])
+                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                    if (selected[0] == null || selected[0].isEmpty()) return;
+                    profile.modelId = selected[0];
+                    // Persist the change so it survives a fragment recreate.
+                    try {
+                        ProviderConfigStore s = new ProviderConfigStore(requireContext());
+                        s.upsertProfile(profile);
+                        s.setActiveProfile(profile.id);
+                    } catch (Throwable ignored) { }
+                    // Force agent rebuild on next send so it uses the new model.
+                    if (agent != null) {
+                        agent.abort();
+                        agent = null;
+                    }
+                    lastProfileSignature = ""; // force refresh
+                    refreshChatHeader();
+                    refreshModelSelectorChip();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    /**
+     * Show or hide the running-status row (typing dots + label) above the
+     * input box. Called from agent listener callbacks when a turn starts or
+     * ends.
+     */
+    private void setRunStatusVisible(boolean visible, String label) {
+        if (runStatusRow == null) return;
+        runStatusRow.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (visible && runStatusText != null) {
+            runStatusText.setText(label == null ? "" : label);
+        }
+    }
+
+    /**
+     * Update the token-meter progress bar (top of chat) and the percentage
+     * label. Uses the active profile's context window as the denominator;
+     * if the profile's contextWindowSize is 0 (auto), falls back to the
+     * provider's catalog default context window (best effort — actual model
+     * context may differ).
+     */
+    private void updateTokenMeter(int totalTokens) {
+        if (profile == null) return;
+        int window = profile.contextWindowSize > 0
+                ? profile.contextWindowSize
+                : 128_000; // safe default; most modern models are 128k+.
+        int pct = window > 0 ? (int) Math.min(100L, (100L * totalTokens) / window) : 0;
+        if (contextProgressBar != null) contextProgressBar.setProgress(pct);
+        if (tokensPercent != null) tokensPercent.setText(pct + "%");
+    }
+
     @Override public void onResume() {
         super.onResume();
         // Reload profile from storage (in case the user changed it in
@@ -296,7 +450,14 @@ public final class ChatFragment extends Fragment {
             if (btnStop != null) btnStop.setVisibility(View.GONE);
             if (btnAttach != null) btnAttach.setVisibility(View.VISIBLE);
         }
-
+        // Refresh the chat header subtitle & model selector chip to reflect
+        // the current profile. This runs every resume — including the first
+        // one — so the user always sees which model they're talking to.
+        refreshChatHeader();
+        refreshModelSelectorChip();
+        if (adapter != null && profile != null) {
+            adapter.setProviderId(profile.providerId == null ? "" : profile.providerId);
+        }
         // One-shot in-app update check — fires on the first resume after
         // the fragment is created. If a newer GitHub Release exists, the
         // UpdateDialog is shown. We deliberately do NOT auto-download —
@@ -554,7 +715,10 @@ public final class ChatFragment extends Fragment {
                 });
             }
             @Override public void onToolStart(String toolCallId, String toolName, String argsJson) {
-                runOnUiIfAlive(() -> setStatus("Running " + toolName, true));
+                runOnUiIfAlive(() -> {
+                    setStatus("Running " + toolName, true);
+                    setRunStatusVisible(true, "Running " + toolName);
+                });
             }
             @Override public void onToolResult(String toolCallId, AgentMessage.ToolResultContent result) {
                 runOnUiIfAlive(() -> {
@@ -570,6 +734,11 @@ public final class ChatFragment extends Fragment {
                     if (tokensText != null) {
                         tokensText.setText(inT + " in · " + outT + " out");
                     }
+                    // Update the token-meter progress bar based on context
+                    // window fill. We compare total tokens seen so far
+                    // against the active profile's context window (or the
+                    // provider's default if the profile has it set to 0).
+                    updateTokenMeter(inT + outT);
                 });
             }
             @Override public void onComplete(String finalText) {
@@ -597,6 +766,7 @@ public final class ChatFragment extends Fragment {
                     }
                     finishRun("Task complete");
                     setStatus("Complete", false);
+                    setRunStatusVisible(false, null);
                 });
             }
             @Override public void onAborted(String partialText) {
@@ -615,6 +785,7 @@ public final class ChatFragment extends Fragment {
                     adapter.submitList(reducer.getMessages());
                     finishRun("Stopped");
                     setStatus("Stopped", false);
+                    setRunStatusVisible(false, null);
                 });
             }
             @Override public void onWarning(String message) {
@@ -632,6 +803,7 @@ public final class ChatFragment extends Fragment {
                     adapter.submitList(reducer.getMessages());
                     finishRun("Error: " + msg);
                     setStatus("Error", false);
+                    setRunStatusVisible(false, null);
                 });
             }
             @Override public void onMaxIterationsReached(int max) {
@@ -748,19 +920,36 @@ public final class ChatFragment extends Fragment {
 
     private LlmProvider buildProvider(ProviderConfigStore.Profile profile) {
         String pid = profile.providerId == null ? "" : profile.providerId;
+        // Resolve base URL via the catalog so every provider — including the
+        // six new ones (groq, grok_xai, huggingface, minimax, litellm, vllm,
+        // lm_studio) — gets the right well-known URL even if the user left
+        // profile.baseUrl empty. Previously the switch below only handled the
+        // original 11 providers; anything else fell through to OpenAiCompat
+        // with an empty base URL and the request failed with a confusing
+        // "no host" error.
+        String baseUrl = (profile.baseUrl == null || profile.baseUrl.isEmpty())
+                ? com.sketchware.ai.llm.ProviderCatalog.defaultBaseUrlFor(pid)
+                : profile.baseUrl;
         switch (pid) {
             case "anthropic":   return new AnthropicProvider();
             case "openai":      return new OpenAiProvider();
             case "gemini":      return new GeminiProvider();
             case "ollama":      return new OllamaProvider();
             case "mistral":     return new OpenAiCompatProvider("mistral", "https://api.mistral.ai/v1");
-            case "openrouter":  return new OpenAiCompatProvider("openrouter", "https://openrouter.ai/api");
+            case "openrouter":  return new OpenAiCompatProvider("openrouter", "https://openrouter.ai/api/v1");
             case "deepseek":    return new OpenAiCompatProvider("deepseek", "https://api.deepseek.com");
             case "zai":         return new OpenAiCompatProvider("zai", "https://api.z.ai/api/paas/v4");
-            case "together":    return new OpenAiCompatProvider("together", "https://api.together.xyz");
-            case "fireworks":   return new OpenAiCompatProvider("fireworks", "https://api.fireworks.ai/inference");
+            case "together":    return new OpenAiCompatProvider("together", "https://api.together.xyz/v1");
+            case "fireworks":   return new OpenAiCompatProvider("fireworks", "https://api.fireworks.ai/inference/v1");
+            case "groq":        return new OpenAiCompatProvider("groq", "https://api.groq.com/openai/v1");
+            case "grok_xai":    return new OpenAiCompatProvider("grok_xai", "https://api.x.ai/v1");
+            case "huggingface": return new OpenAiCompatProvider("huggingface", "https://router.huggingface.co/v1");
+            case "minimax":     return new OpenAiCompatProvider("minimax", "https://api.minimax.io/v1");
+            case "litellm":     return new OpenAiCompatProvider("litellm", baseUrl);
+            case "vllm":        return new OpenAiCompatProvider("vllm", baseUrl);
+            case "lm_studio":   return new OpenAiCompatProvider("lm_studio", baseUrl);
             case "openai-compat":
-            default:            return new OpenAiCompatProvider("openai-compat", profile.baseUrl);
+            default:            return new OpenAiCompatProvider("openai-compat", baseUrl);
         }
     }
 

@@ -1,22 +1,34 @@
 package com.sketchware.ai.ui.chat.adapter;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.sketchware.ai.llm.ProviderCatalog;
 import com.sketchware.ai.ui.chat.ChatMessage;
+import com.sketchware.ai.ui.settings.ProviderIconResolver;
 import pro.sketchware.R;
 
 /**
  * RecyclerView adapter for the chat. Renders different row types based on
  * {@link ChatMessage#type}. Mirrors Cline's {@code ChatRow.tsx} dispatch.
+ *
+ * <p>The TextHolder now binds a provider avatar (icon) and a "copy" action
+ * button on each assistant message — inspired by
+ * FabioSilva11/Sketchware-IA's item_message_bot.xml.
  */
 public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.ViewHolder> {
 
@@ -29,6 +41,18 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
     private static final int TYPE_COMPLETION = 7;
     private static final int TYPE_API_REQ = 8;
     private static final int TYPE_COMPACTION = 9;
+
+    /**
+     * Provider id of the active profile, used to resolve the bot avatar
+     * icon for assistant messages. Updated by {@link ChatFragment} on
+     * resume / profile change.
+     */
+    private String providerId = "";
+
+    public void setProviderId(String providerId) {
+        this.providerId = providerId == null ? "" : providerId;
+        notifyDataSetChanged();
+    }
 
     public ChatAdapter() {
         super(new DiffUtil.ItemCallback<ChatMessage>() {
@@ -105,7 +129,7 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
         if (h instanceof UserHolder) {
             ((UserHolder) h).bind(m);
         } else if (h instanceof TextHolder) {
-            ((TextHolder) h).bind(m);
+            ((TextHolder) h).bind(m, providerId);
         } else if (h instanceof ReasoningHolder) {
             ((ReasoningHolder) h).bind(m);
         } else if (h instanceof ToolHolder) {
@@ -129,22 +153,87 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
 
     static final class TextHolder extends RecyclerView.ViewHolder {
         final TextView text;
-        TextHolder(@NonNull View v) { super(v); text = v.findViewById(R.id.text); }
-        void bind(ChatMessage m) {
+        final ImageView avatarIcon;
+        final View avatarContainer;
+        final LinearLayout messageActions;
+        final View actionCopy;
+        final TextView tokenCount;
+        final com.sketchware.ai.ui.chat.TypingDotsView streamingDots;
+        TextHolder(@NonNull View v) {
+            super(v);
+            text = v.findViewById(R.id.text);
+            avatarIcon = v.findViewById(R.id.avatar_icon);
+            avatarContainer = v.findViewById(R.id.avatar_container);
+            messageActions = v.findViewById(R.id.message_actions);
+            actionCopy = v.findViewById(R.id.action_copy);
+            tokenCount = v.findViewById(R.id.token_count);
+            streamingDots = v.findViewById(R.id.streaming_dots);
+        }
+        void bind(ChatMessage m, String providerId) {
             // API req info row takes precedence over generic text rendering.
             if (ChatMessage.TYPE_API_REQ_DONE.equals(m.type)) {
                 text.setText("API: in=" + m.inputTokens + " out=" + m.outputTokens + " cost=$" + String.format("%.4f", m.cost));
+                if (avatarContainer != null) avatarContainer.setVisibility(View.GONE);
+                if (messageActions != null) messageActions.setVisibility(View.GONE);
+                if (streamingDots != null) streamingDots.setVisibility(View.GONE);
                 return;
             } else if (ChatMessage.TYPE_API_REQ_START.equals(m.type)) {
                 text.setText("Calling API...");
+                if (avatarContainer != null) avatarContainer.setVisibility(View.GONE);
+                if (messageActions != null) messageActions.setVisibility(View.GONE);
+                if (streamingDots != null) streamingDots.setVisibility(View.GONE);
                 return;
             } else if (ChatMessage.TYPE_COMPACTION.equals(m.type)) {
                 text.setText("Conversation compacted to fit context window.");
+                if (avatarContainer != null) avatarContainer.setVisibility(View.GONE);
+                if (messageActions != null) messageActions.setVisibility(View.GONE);
+                if (streamingDots != null) streamingDots.setVisibility(View.GONE);
                 return;
             }
+            // Real assistant text row — show avatar + actions.
+            if (avatarContainer != null) avatarContainer.setVisibility(View.VISIBLE);
+            if (avatarIcon != null) {
+                int iconRes = ProviderIconResolver.resolveProvider(providerId,
+                        ProviderCatalog.safeDisplayName(providerId));
+                avatarIcon.setImageResource(iconRes);
+            }
             String t = m.text == null ? "" : m.text;
+            // Show typing dots while streaming AND no text yet; once text
+            // starts arriving, hide the dots and show the typewriter cursor.
+            if (streamingDots != null) {
+                streamingDots.setVisibility(m.isStreaming && t.isEmpty() ? View.VISIBLE : View.GONE);
+            }
             if (m.isStreaming) t = t + "▋"; // typewriter cursor
             text.setText(t);
+
+            // Show the copy action on non-streaming assistant messages.
+            if (messageActions != null) {
+                boolean showActions = !m.isStreaming && t.length() > 0
+                        && !ChatMessage.TYPE_API_REQ_DONE.equals(m.type)
+                        && !ChatMessage.TYPE_API_REQ_START.equals(m.type)
+                        && !ChatMessage.TYPE_COMPACTION.equals(m.type);
+                messageActions.setVisibility(showActions ? View.VISIBLE : View.GONE);
+            }
+            if (actionCopy != null) {
+                actionCopy.setOnClickListener(v -> {
+                    Context ctx = v.getContext();
+                    try {
+                        ClipboardManager cm = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
+                        if (cm != null) {
+                            cm.setPrimaryClip(ClipData.newPlainText("AI response", m.text));
+                            Toast.makeText(ctx, R.string.ai_chat_action_copy_done, Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Throwable ignored) { }
+                });
+            }
+            if (tokenCount != null) {
+                if (m.inputTokens > 0 || m.outputTokens > 0) {
+                    tokenCount.setVisibility(View.VISIBLE);
+                    tokenCount.setText((m.inputTokens + m.outputTokens) + " tokens");
+                } else {
+                    tokenCount.setVisibility(View.GONE);
+                }
+            }
         }
     }
 

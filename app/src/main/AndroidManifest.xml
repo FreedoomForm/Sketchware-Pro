@@ -289,6 +289,10 @@
             android:exported="false"
             android:label="AI Settings" />
 
+        <activity android:name="com.sketchware.ai.ui.settings.ProviderDetailActivity"
+            android:exported="false"
+            android:label="Provider" />
+
         <activity android:name="pro.sketchware.activities.resourceseditor.ResourcesEditorActivity" />
 
         <activity

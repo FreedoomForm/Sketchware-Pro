@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Small rounded chip background for the status label that appears above
+     the assistant message body while streaming ("Thinking", "Running", …). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/ai_chat_accent_soft" />
+    <corners android:radius="10dp" />
+</shape>

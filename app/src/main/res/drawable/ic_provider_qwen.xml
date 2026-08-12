@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Provider icon: ic_provider_qwen. Auto-generated single-tone 24dp vector.
+     Tint via app:tint to recolor for dark/light themes; brand color is
+     baked in as the default fillColor so the icon is recognizable when
+     untinted. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorOnSurface">
+    <path
+        android:fillColor="#6D28D9"
+        android:pathData="M12,3 L21,9 V15 L12,21 L3,15 V9 Z M12,8 L8,11 V13 L12,16 L16,13 V11 Z" />
+</vector>

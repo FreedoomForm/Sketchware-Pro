@@ -14,6 +14,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import pro.sketchware.R;
+import com.sketchware.ai.llm.ProviderCatalog;
 import com.sketchware.ai.llm.storage.ProviderConfigStore;
 
 import java.net.MalformedURLException;
@@ -69,44 +70,33 @@ public final class ApiConfigurationFragment extends Fragment {
         promptCaching.setChecked(profile.promptCaching);
         forceFlatToolFormat.setChecked(profile.forceFlatToolFormat);
 
-        // Provider spinner
+        // Provider spinner — uses ProviderCatalog as the single source of truth.
+        // Previously this was a hard-coded 11-item array with a parallel switch
+        // for base URLs and a third switch for default models; the three lists
+        // kept diverging (OpenRouter base URL was /api here vs /api/v1 in
+        // ChatFragment, etc.). Going through the catalog keeps them in sync
+        // and surfaces every supported provider, not just the 11 originally
+        // listed.
         com.google.android.material.textfield.MaterialAutoCompleteTextView providerSpinner =
                 root.findViewById(R.id.spinner_provider);
-        String[] providers = {"openai-compat", "mistral", "anthropic", "openai", "openrouter", "deepseek", "zai", "together", "fireworks", "gemini", "ollama"};
-        providerSpinner.setText(profile.providerId, false);
-        providerSpinner.setSimpleItems(providers);
+        String[] providerIds = ProviderCatalog.ids().toArray(new String[0]);
+        String[] providerLabels = ProviderCatalog.displayNames().toArray(new String[0]);
+        providerSpinner.setText(ProviderCatalog.safeDisplayName(profile.providerId), false);
+        providerSpinner.setSimpleItems(providerLabels);
         providerSpinner.setOnItemClickListener((p, v, pos, id) -> {
-            profile.providerId = providers[pos];
-            // Pre-fill well-known base URLs for convenience.
-            switch (profile.providerId) {
-                case "mistral":    profile.baseUrl = "https://api.mistral.ai/v1"; break;
-                case "anthropic":  profile.baseUrl = "https://api.anthropic.com"; break;
-                case "openai":     profile.baseUrl = "https://api.openai.com/v1"; break;
-                case "openrouter": profile.baseUrl = "https://openrouter.ai/api/v1"; break;
-                case "deepseek":   profile.baseUrl = "https://api.deepseek.com"; break;
-                case "zai":        profile.baseUrl = "https://api.z.ai/api/paas/v4"; break;
-                case "together":   profile.baseUrl = "https://api.together.xyz/v1"; break;
-                case "fireworks":  profile.baseUrl = "https://api.fireworks.ai/inference/v1"; break;
-                case "gemini":     profile.baseUrl = "https://generativelanguage.googleapis.com"; break;
-                case "ollama":     profile.baseUrl = "http://localhost:11434"; break;
+            profile.providerId = providerIds[pos];
+            ProviderCatalog.Entry entry = ProviderCatalog.getOrDefault(profile.providerId);
+            // Pre-fill well-known base URL.
+            if (entry.defaultBaseUrl != null && !entry.defaultBaseUrl.isEmpty()) {
+                profile.baseUrl = entry.defaultBaseUrl;
+                baseUrl.setText(profile.baseUrl);
             }
-            baseUrl.setText(profile.baseUrl);
             // Clear any stale error when the provider changes.
             findTextInputLayout(baseUrl).setError(null);
-            // Pre-fill a default model id if empty.
-            if (profile.modelId == null || profile.modelId.isEmpty()) {
-                switch (profile.providerId) {
-                    case "mistral":    profile.modelId = "mistral-large-latest"; break;
-                    case "anthropic":  profile.modelId = "claude-sonnet-4-20250514"; break;
-                    case "openai":     profile.modelId = "gpt-4o"; break;
-                    case "openrouter": profile.modelId = "anthropic/claude-3.5-sonnet"; break;
-                    case "deepseek":   profile.modelId = "deepseek-chat"; break;
-                    case "zai":        profile.modelId = "glm-4.6"; break;
-                    case "together":   profile.modelId = "meta-llama/Llama-3.3-70B-Instruct-Turbo"; break;
-                    case "fireworks":  profile.modelId = "accounts/fireworks/models/llama-v3p1-70b-instruct"; break;
-                    case "gemini":     profile.modelId = "gemini-2.0-flash"; break;
-                    case "ollama":     profile.modelId = "llama3.2"; break;
-                }
+            // Pre-fill a default model id if the user hasn't picked one yet.
+            if ((profile.modelId == null || profile.modelId.isEmpty())
+                    && entry.defaultModel != null && !entry.defaultModel.isEmpty()) {
+                profile.modelId = entry.defaultModel;
                 modelId.setText(profile.modelId);
             }
         });

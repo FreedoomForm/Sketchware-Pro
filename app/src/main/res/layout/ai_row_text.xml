@@ -1,30 +1,153 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Cline-style assistant text: full-width with left accent bar.
-     The accent bar gives assistant messages a visual anchor on the left,
-     matching Cline's sidebar layout where assistant responses have a
-     subtle left-border accent. -->
+<!-- Assistant message row: bot avatar on the left, message bubble on the right.
+     Inspired by FabioSilva11/Sketchware-IA's item_message_bot.xml.
+     Avatar shows the provider icon (e.g. OpenAI logo) so the user can tell
+     at a glance which provider produced the response. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:paddingStart="10dp"
+    android:paddingStart="12dp"
     android:paddingEnd="48dp"
-    android:paddingTop="5dp"
-    android:paddingBottom="5dp">
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
 
-    <!-- Left accent bar (Cline-style) -->
-    <View
-        android:layout_width="3dp"
-        android:layout_height="match_parent"
+    <!-- Bot avatar -->
+    <FrameLayout
+        android:id="@+id/avatar_container"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:layout_marginEnd="10dp"
-        android:background="?attr/colorPrimary" />
+        android:background="@drawable/ai_avatar_bg">
 
-    <TextView
-        android:id="@+id/text"
+        <ImageView
+            android:id="@+id/avatar_icon"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_ai" />
+    </FrameLayout>
+
+    <!-- Message body column -->
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textColor="?attr/colorOnSurface"
-        android:textSize="14sp"
-        android:lineSpacingExtra="3dp" />
+        android:orientation="vertical">
+
+        <!-- Optional status chip ("Thinking", "Running", "Done") -->
+        <TextView
+            android:id="@+id/status_chip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/ai_status_chip_bg"
+            android:paddingStart="8dp"
+            android:paddingTop="3dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="3dp"
+            android:textColor="@color/ai_chat_accent"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- Optional reasoning block (collapsible) -->
+        <LinearLayout
+            android:id="@+id/reasoning_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/ai_reasoning_chip_bg"
+            android:orientation="vertical"
+            android:padding="10dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_ai"
+                    app:tint="@color/ai_chat_accent" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:text="@string/ai_chat_reasoning_label"
+                    android:textColor="@color/ai_chat_accent"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/reasoning_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:lineSpacingExtra="2dp"
+                android:textColor="@color/ai_chat_text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Streaming typing dots (shown while waiting for first token) -->
+        <com.sketchware.ai.ui.chat.TypingDotsView
+            android:id="@+id/streaming_dots"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:visibility="gone" />
+
+        <!-- Main message text -->
+        <TextView
+            android:id="@+id/text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="3dp"
+            android:textColor="@color/ai_chat_text_primary"
+            android:textSize="14sp" />
+
+        <!-- Message action row (copy, regenerate, edit) -->
+        <LinearLayout
+            android:id="@+id/message_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/action_copy"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/ai_chat_action_copy"
+                android:padding="5dp"
+                android:src="@drawable/ic_mtrl_copy"
+                app:tint="@color/ai_chat_text_secondary" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/token_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/ai_chat_text_hint"
+                android:textSize="10sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

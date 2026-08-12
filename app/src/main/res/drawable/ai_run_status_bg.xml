@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Background for the running-status row (animated dots + label) above
+     the chat input box. Visible while the agent is working. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/ai_chat_surface_soft" />
+    <corners android:radius="10dp" />
+</shape>

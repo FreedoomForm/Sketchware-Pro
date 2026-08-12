@@ -86,7 +86,12 @@ public final class AISettingsActivity extends AppCompatActivity {
             case FRAGMENT_EXPERIMENTAL:  f = new ExperimentalFragment(); break;
             case FRAGMENT_VERSIONS:      f = new VersionsFragment(); break;
             case FRAGMENT_PROVIDER:
-            default:                     f = new ApiConfigurationFragment(); break;
+            default:
+                // Use the new richer providers list (search + status badges
+                // + per-provider detail) instead of the old single-profile
+                // form. The old fragment is retained for fallback; tapping
+                // a provider row launches ProviderDetailActivity.
+                f = new ProvidersListFragment(); break;
         }
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.content_frame, f)

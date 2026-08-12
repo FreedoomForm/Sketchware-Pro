@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AI / chat color palette ported from FabioSilva11/Sketchware-IA reference.
+  These coexist with the existing Material3 theme attributes (?attr/colorPrimary etc.)
+  — fragments may still use M3 attrs; the new AI surfaces bind to these names so
+  the look matches the reference app's "Kelivo" chat theme.
+-->
+<resources>
+    <!-- ===== Surfaces ===== -->
+    <color name="ai_chat_background">#F8F9FA</color>
+    <color name="ai_chat_surface">#FFFFFF</color>
+    <color name="ai_chat_surface_soft">#F2F2F7</color>
+    <color name="ai_chat_border">#E5E5EA</color>
+    <color name="ai_chat_divider">#E5E5EA</color>
+
+    <!-- ===== Accent / brand ===== -->
+    <color name="ai_chat_accent">#6B5CE7</color>
+    <color name="ai_chat_accent_soft">#EDE9FE</color>
+    <color name="ai_chat_accent_ripple">#33B6A0FF</color>
+
+    <!-- ===== Text ===== -->
+    <color name="ai_chat_text_primary">#1C1C1E</color>
+    <color name="ai_chat_text_secondary">#8E8E93</color>
+    <color name="ai_chat_text_hint">#AEAEB2</color>
+
+    <!-- ===== Avatars ===== -->
+    <color name="ai_avatar_bg">#E8E4F8</color>
+    <color name="ai_avatar_text">#5B4FCF</color>
+    <color name="ai_user_avatar_bg">#D8E4FF</color>
+    <color name="ai_user_avatar_text">#1A4FB6</color>
+
+    <!-- ===== Provider status badge ===== -->
+    <color name="ai_provider_status_on_bg">#DCF5E3</color>
+    <color name="ai_provider_status_on_text">#1F9D55</color>
+    <color name="ai_provider_status_off_bg">#FCEFD9</color>
+    <color name="ai_provider_status_off_text">#C77A1F</color>
+
+    <!-- ===== Status dot states ===== -->
+    <color name="ai_status_idle">#AEAEB2</color>
+    <color name="ai_status_running">#6B5CE7</color>
+    <color name="ai_status_error">#EF4444</color>
+    <color name="ai_status_ok">#22C55E</color>
+
+    <!-- ===== Tool-call card ===== -->
+    <color name="ai_tool_bg">#F5F5F7</color>
+    <color name="ai_tool_bg_error">#FEF2F2</color>
+    <color name="ai_tool_text">#374151</color>
+    <color name="ai_tool_text_error">#991B1B</color>
+
+    <!-- ===== Reasoning chip ===== -->
+    <color name="ai_reasoning_bg">#F3EEFF</color>
+    <color name="ai_reasoning_text">#5B4FCF</color>
+
+    <!-- ===== Model selector chip ===== -->
+    <color name="ai_model_chip_bg">#EFEAFE</color>
+    <color name="ai_model_chip_text">#5B4FCF</color>
+
+    <!-- ===== Bottom sheet handle ===== -->
+    <color name="ai_sheet_handle">#D1D1D6</color>
+</resources>
