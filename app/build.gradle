@@ -17,8 +17,8 @@ android {
         //noinspection ExpiredTargetSdkVersion since we don't target getting Sketchware Pro on Google Play.
         targetSdk = 28
         minSdk = 26
-        versionCode = 163
-        versionName = "v7.0.2+0b64f3b.1+76f80c1.1+421bf16.1+e7713fe.1+600cfc9.1+fd98e33.1+d33e20d.1.1+1320135.1+4301bfe.1+56b4005.1+d3608d2"
+        versionCode = 164
+        versionName = "v7.0.2+0b64f3b.1+76f80c1.1+421bf16.1+e7713fe.1+600cfc9.1+fd98e33.1+d33e20d.1.1+1320135.1+4301bfe.1+56b4005.1+d3608d2.1+f3868bb"
 
         buildConfigField("String", "GIT_HASH", "\"${gitCommitHash}\"")
 
