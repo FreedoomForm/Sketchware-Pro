@@ -667,7 +667,7 @@ public final class ProviderDetailActivity extends AppCompatActivity {
         @NonNull @Override
         public ModelVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.ai_model_sheet_row, parent, false);
+                    .inflate(R.layout.ai_provider_detail_model_row, parent, false);
             return new ModelVH(v);
         }
 
