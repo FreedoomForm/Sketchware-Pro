@@ -73,7 +73,7 @@ public final class UpdateChecker {
     }
 
     /** Pick the newest non-prerelease release, or null if the list is empty. */
-    static GitHubRelease pickLatestStable(List<GitHubRelease> releases) {
+    public static GitHubRelease pickLatestStable(List<GitHubRelease> releases) {
         if (releases == null || releases.isEmpty()) return null;
         for (GitHubRelease r : releases) {
             // The GitHub API returns releases newest-first, so the first
@@ -86,7 +86,7 @@ public final class UpdateChecker {
     }
 
     /** Read the installed app's versionCode from the PackageManager. */
-    static int getInstalledVersionCode(Context context) {
+    public static int getInstalledVersionCode(Context context) {
         try {
             PackageManager pm = context.getApplicationContext().getPackageManager();
             PackageInfo info = pm.getPackageInfo(context.getPackageName(), 0);
