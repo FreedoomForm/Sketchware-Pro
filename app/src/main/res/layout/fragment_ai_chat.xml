@@ -39,13 +39,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- ============= Top Header ============= -->
+        <!-- ============= Top Header =============
+             Background uses ai_chat_background (not ai_chat_surface) so the
+             header is the SAME color as the messages RecyclerView below it.
+             This eliminates a visible color seam between the header strip
+             and the chat pane that previously looked like a horizontal
+             divider line whenever the layout was resized (e.g. when the
+             soft keyboard appeared). -->
         <LinearLayout
             android:id="@+id/chat_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
-            android:background="@color/ai_chat_surface"
+            android:background="@color/ai_chat_background"
             android:gravity="center_vertical"
             android:minHeight="56dp"
             android:orientation="horizontal"
@@ -132,13 +138,15 @@
                 app:tint="@color/ai_chat_text_primary" />
         </LinearLayout>
 
-        <!-- ============= Token Meter ============= -->
+        <!-- ============= Token Meter =============
+             Same background color as the chat pane (ai_chat_background)
+             to avoid a horizontal color seam below the header. -->
         <LinearLayout
             android:id="@+id/layout_token_meter"
             android:layout_width="match_parent"
             android:layout_height="34dp"
             android:layout_below="@id/chat_header"
-            android:background="@color/ai_chat_surface"
+            android:background="@color/ai_chat_background"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="12dp"
@@ -187,12 +195,16 @@
         </LinearLayout>
 
         <!-- ============= Status Row (status dot + status text + mode chip) ============= -->
+        <!-- Same background color as the chat pane (ai_chat_background) to
+             avoid a horizontal color seam above the messages list that
+             previously looked like a divider line after the soft keyboard
+             appeared and the layout was resized. -->
         <LinearLayout
             android:id="@+id/status_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/layout_token_meter"
-            android:background="@color/ai_chat_surface"
+            android:background="@color/ai_chat_background"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="12dp"
@@ -275,6 +287,12 @@
         </HorizontalScrollView>
 
         <!-- ============= Bottom Input Area ============= -->
+        <!-- strokeWidth=0dp removes the 1dp border around the input card
+             that previously looked like a horizontal divider line below
+             the chat pane (especially visible after the soft keyboard
+             appeared and the layout was resized). The card still stands
+             out from the background because cardBackgroundColor (white)
+             differs from the chat background (very light gray). -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/input_container"
             android:layout_width="match_parent"
@@ -286,8 +304,8 @@
             app:cardBackgroundColor="@color/ai_chat_surface"
             app:cardCornerRadius="20dp"
             app:cardElevation="0dp"
-            app:strokeColor="@color/ai_chat_border_soft"
-            app:strokeWidth="1dp">
+            app:strokeColor="@android:color/transparent"
+            app:strokeWidth="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
