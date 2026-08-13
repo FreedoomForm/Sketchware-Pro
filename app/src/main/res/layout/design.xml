@@ -36,11 +36,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@android:color/transparent" />
-
-                <com.google.android.material.divider.MaterialDivider
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:dividerColor="?attr/colorSurfaceContainerHighest" />
             </com.google.android.material.appbar.AppBarLayout>
 
             <androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -54,11 +49,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
             </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-            <com.google.android.material.divider.MaterialDivider
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:dividerColor="?attr/colorSurfaceContainerHighest" />
 
             <LinearLayout
                 android:id="@+id/progress_container"
