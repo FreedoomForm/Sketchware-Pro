@@ -47,7 +47,6 @@ public final class TaskHistoryStore {
     private final Gson gson;
 
     public TaskHistoryStore(File filesDir) {
-        this.historyDir = new File(filesDir, "ai_task_history");
         // Be defensive about dir creation: mkdirs() returns false both when
         // creation failed AND when the dir already existed, so we have to
         // re-check exists() to know whether we actually have a usable dir.
@@ -58,18 +57,25 @@ public final class TaskHistoryStore {
         // the save was silently swallowed by ChatFragment.autoSaveTask's
         // catch (Throwable ignored). With FileOutputStream we still have
         // to ensure the parent dir is real.
-        if (!this.historyDir.exists()) {
-            boolean created = this.historyDir.mkdirs();
-            if (!created && !this.historyDir.exists()) {
+        //
+        // Compute the effective directory first, then assign to the final
+        // field exactly once. (Earlier code assigned `historyDir` twice and
+        // javac rejected it with "variable historyDir might already have
+        // been assigned" — see CI run 31739819515.)
+        File dir = new File(filesDir, "ai_task_history");
+        if (!dir.exists()) {
+            boolean created = dir.mkdirs();
+            if (!created && !dir.exists()) {
                 // Last-resort fallback: try to use the parent (filesDir)
                 // directly. Better than crashing — at least saves will go
                 // somewhere list() can find them.
                 System.err.println("TaskHistoryStore: could not create "
-                        + this.historyDir + "; falling back to " + filesDir);
-                this.historyDir = filesDir;
-                if (!this.historyDir.exists()) this.historyDir.mkdirs();
+                        + dir + "; falling back to " + filesDir);
+                dir = filesDir;
+                if (!dir.exists()) dir.mkdirs();
             }
         }
+        this.historyDir = dir;
         this.gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     }
 
