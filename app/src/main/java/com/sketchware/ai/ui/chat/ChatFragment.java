@@ -1779,7 +1779,7 @@ public final class ChatFragment extends Fragment {
     }
 
     /** Format a unix-ms timestamp as a short relative string ("5m ago"). */
-    private static String formatRelativeTimestamp(long ts) {
+    private String formatRelativeTimestamp(long ts) {
         long now = System.currentTimeMillis();
         long diff = now - ts;
         if (diff < 60_000L) return "just now";
