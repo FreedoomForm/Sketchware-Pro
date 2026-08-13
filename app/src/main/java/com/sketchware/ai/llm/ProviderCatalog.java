@@ -154,16 +154,25 @@ public final class ProviderCatalog {
                         "MiniMax-M2.1", "MiniMax-M2.1-highspeed", "MiniMax-M2", "M2-her")),
 
         // --- AgentRouter (multi-model aggregator, OpenAI-compatible endpoint) ---
-        // AgentRouter exposes two protocols per its docs:
-        //   * Anthropic native (base URL https://agentrouter.org, no /v1) for
-        //     Claude Opus models.
-        //   * OpenAI-compatible (base URL https://agentrouter.org/v1) for
-        //     GPT-5.5, GLM-5.2 and other non-Claude models.
-        // Sketchware Pro's chat runtime talks one protocol per profile, so we
-        // register AgentRouter here as an OpenAI-compatible entry (the generic
-        // path that works for all models). Users who specifically want the
-        // Anthropic-native Claude Opus path can pick the "Anthropic" provider
-        // and override the base URL to https://agentrouter.org.
+        // AgentRouter (agentrouter.org) is a non-profit OpenAI-compatible
+        // gateway aggregating Claude Opus, GPT-5, GLM, DeepSeek and 30+ other
+        // models behind a single API key. Wire format is OpenAI Chat
+        // Completions on https://agentrouter.org/v1.
+        //
+        // IMPORTANT — client fingerprinting:
+        // AgentRouter fingerprints the HTTP client and rejects non-Claude-Code
+        // requests with HTTP 401 "unauthorized_client_error" even when the
+        // API key is valid. OpenAiCompatProvider.stream() transparently
+        // injects the Claude Code identifying headers (User-Agent, x-stainless-*,
+        // anthropic-*) on every agentrouter request so the fingerprinter
+        // accepts us. See:
+        //   * https://github.com/diegosouzapw/OmniRoute/issues/1921
+        //   * https://github.com/anomalyco/opencode/issues/2784
+        // If AgentRouter tightens the fingerprint check in the future, switch
+        // this entry's base URL to https://agentrouter.org/ and family to
+        // "anthropic" — AgentRouter documents the Anthropic-native path
+        // (ANTHROPIC_BASE_URL=https://agentrouter.org/) for Claude Code, and
+        // our AnthropicProvider already sends the right headers natively.
         new Entry("agentrouter", "AgentRouter",
                 "https://agentrouter.org/v1", "/chat/completions",
                 "claude-opus-4-1", true, "openai-compat",

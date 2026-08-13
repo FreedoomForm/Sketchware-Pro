@@ -17,6 +17,7 @@ import com.sketchware.ai.llm.reasoning.ReasoningEffort;
 import com.sketchware.ai.llm.reasoning.ReasoningRequest;
 import com.sketchware.ai.llm.storage.ProviderConfigStore;
 import com.sketchware.ai.prompt.SystemPromptBuilder;
+import com.sketchware.ai.prompt.UserInputModeWrapper;
 import com.sketchware.ai.tools.AutoApprover;
 import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.SketchwareToolContext;
@@ -107,6 +108,16 @@ public final class AgentRuntime {
 
     private final LinkedList<AgentMessage> conversationHistory = new LinkedList<>();
     private AgentMode mode = AgentMode.ACT;
+    /**
+     * Mode that was active before the most recent {@link #setMode} call.
+     * Used by {@link #run} to prepend a {@code <mode_notice>} block to
+     * the next user message when the user toggled Plan/Act mid-
+     * conversation. Reset to the current mode after each user message is
+     * wrapped, so subsequent messages in the same mode do not get a
+     * notice. Mirrors Cline's {@code previousMode} tracking in the
+     * runtime's turn-preparation step.
+     */
+    private volatile AgentMode pendingModeSwitchFrom = null;
     private int maxIterations = DEFAULT_MAX_ITERATIONS;
 
     public AgentRuntime(LlmProvider provider,
@@ -148,6 +159,15 @@ public final class AgentRuntime {
     }
 
     public void setMode(AgentMode mode) {
+        if (mode == null) mode = AgentMode.ACT;
+        if (mode != this.mode) {
+            // Record the switch so the next user message gets a
+            // <mode_notice> block prepended via UserInputModeWrapper.
+            // Only set when the mode actually changes — calling setMode
+            // with the same value (which the UI does on every rebuild)
+            // must NOT inject a notice, or every message would carry one.
+            this.pendingModeSwitchFrom = this.mode;
+        }
         this.mode = mode;
         autoApprover.setMode(mode);
         if (legacyGate != null) legacyGate.setMode(mode);
@@ -199,6 +219,12 @@ public final class AgentRuntime {
             conversationHistory.clear();
             if (history != null) conversationHistory.addAll(history);
         }
+        // Reset the pending mode-switch flag so a freshly-resumed chat
+        // does not get a spurious <mode_notice> on its first message
+        // after load. The notice only makes sense for live mid-
+        // conversation switches, not for the boundary between a saved
+        // session and the next turn.
+        this.pendingModeSwitchFrom = null;
     }
 
     /** Reset the loop detector and TODO list (call when starting a new task). */
@@ -260,10 +286,27 @@ public final class AgentRuntime {
     private void run(String userInput, List<String> images, AgentListener listener) {
         this.currentListener = listener;
         try {
+            // Wrap the user message in a <user_input mode="..."> tag and
+            // (when the user just toggled Plan/Act) prepend a
+            // <mode_notice> block. The system prompt's MODE_TAG_INSTRUCTIONS
+            // tells the model to expect this wrapper — without it, a
+            // mid-conversation mode switch is an invisible system-prompt
+            // swap the model cannot diff, and it has no way to tell which
+            // mode was active when an earlier message was sent. Direct
+            // port of Cline's prepareTurnInput / formatUserInputBlock.
+            //
+            // We capture the pending switch flag BEFORE adding the message
+            // (so it gets consumed by this turn) and pass the previous
+            // mode to the wrapper. After wrapping, the flag is cleared —
+            // subsequent messages in the same mode do not get a notice.
+            AgentMode previousMode = this.pendingModeSwitchFrom;
+            this.pendingModeSwitchFrom = null;
+            String wrappedInput = UserInputModeWrapper.wrap(userInput, mode, previousMode);
+
             if (images != null && !images.isEmpty()) {
-                conversationHistory.add(AgentMessage.userWithImages(userInput, images));
+                conversationHistory.add(AgentMessage.userWithImages(wrappedInput, images));
             } else {
-                conversationHistory.add(AgentMessage.user(userInput));
+                conversationHistory.add(AgentMessage.user(wrappedInput));
             }
 
             ModelInfo model = provider.getModel(profile.modelId);

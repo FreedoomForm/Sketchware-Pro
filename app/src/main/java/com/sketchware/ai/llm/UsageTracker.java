@@ -152,6 +152,15 @@ public final class UsageTracker {
             case "ollama":
                 // Local models have no monetary cost.
                 return 0;
+            case "agentrouter":
+                // AgentRouter proxies to upstream models; pricing depends on
+                // which upstream model is selected. Use the upstream model's
+                // public list price as an estimate.
+                if (m.contains("claude-opus-4"))   return (inputTokens * 15.0 + outputTokens * 75.0) / 1_000_000;
+                if (m.contains("claude-sonnet"))   return (inputTokens * 3.0  + outputTokens * 15.0) / 1_000_000;
+                if (m.contains("gpt-5"))           return (inputTokens * 5.0  + outputTokens * 15.0) / 1_000_000;
+                if (m.contains("glm-5"))           return (inputTokens * 0.70 + outputTokens * 2.80) / 1_000_000;
+                break;
         }
         // Default fallback: $1/M input, $3/M output.
         return (inputTokens * 1.0 + outputTokens * 3.0) / 1_000_000;

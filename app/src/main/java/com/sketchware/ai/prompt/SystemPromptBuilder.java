@@ -147,12 +147,33 @@ public final class SystemPromptBuilder {
         sb.append("- `@git-changes` - inline the current diff\n");
         sb.append("Mentions are expanded to text before the message reaches you.\n\n");
 
-        // Mode tag instructions
+        // Plan / Act mode tag instructions — included for BOTH modes, since
+        // after a switch the transcript still contains messages tagged with
+        // the other mode. The model needs to know what the mode="..."
+        // attribute means and what a <mode_notice> block signals, otherwise
+        // a mid-conversation mode switch is an invisible system-prompt swap
+        // it cannot diff. Verbatim port of Cline's MODE_TAG_INSTRUCTIONS.
+        sb.append(PlanActPrompts.MODE_TAG_INSTRUCTIONS).append("\n\n");
+
+        // Plan-mode behavioral contract — only in PLAN mode. Sketchware Pro
+        // uses the MANUAL_SWITCH variant because there is no
+        // switch_to_act_mode tool in the toolset; the user flips the
+        // segmented Act/Plan toggle in the chat bar to change modes.
+        // Mirrors Cline's VS Code extension behavior. Verbatim port of
+        // Cline's PLAN_MODE_INSTRUCTIONS_MANUAL_SWITCH.
+        if (mode == AgentMode.PLAN) {
+            sb.append(PlanActPrompts.PLAN_MODE_INSTRUCTIONS_MANUAL_SWITCH).append("\n\n");
+        }
+
+        // Mode-specific one-liner after the contract — keeps the chat
+        // status legible to the model in a single sentence at the end of
+        // the prompt header. The full contract above is authoritative;
+        // this is just a quick orientation.
         sb.append("# Mode\n");
         if (mode == AgentMode.PLAN) {
             sb.append("You are in PLAN mode. Do not invoke any write tools. ")
               .append("Read the project, ask clarifying questions, and produce a step-by-step plan. ")
-              .append("When the user approves, switch to ACT mode.\n");
+              .append("When the user approves, ask them to \"toggle to Act mode\" (use those words).\n");
         } else if (mode == AgentMode.YOLO) {
             sb.append("You are in YOLO mode. All tool calls are auto-approved. Be efficient but careful.\n");
         } else {

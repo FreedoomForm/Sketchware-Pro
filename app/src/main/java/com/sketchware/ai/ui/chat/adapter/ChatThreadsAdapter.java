@@ -134,10 +134,28 @@ public final class ChatThreadsAdapter extends
      * Cache the full list so search-filtering can re-derive a filtered view
      * without re-querying the storage. Call this every time the drawer is
      * refreshed from {@link TaskHistoryStore}.
+     *
+     * <p>After {@link ListAdapter#submitList(List)} (which schedules an
+     * async {@link DiffUtil} computation), we also call
+     * {@link #notifyDataSetChanged()} as a defensive fallback. The reason:
+     * {@code submitList} has a known edge case where, if the previous list
+     * was empty (drawer first opened) and the new list is non-empty, the
+     * diff computation can sometimes be a no-op on certain RecyclerView
+     * versions, leaving the drawer visually empty even though
+     * {@code getItem(0)} would return a valid item. Forcing
+     * {@code notifyDataSetChanged()} guarantees the rows are rebound even
+     * if DiffUtil decided there was nothing to do. The cost is one extra
+     * full rebind of the visible items, which is negligible for a list
+     * that's typically <100 items.
      */
     public void submitAll(@NonNull List<TaskHistoryStore.TaskMetadata> all) {
         this.allItems = new ArrayList<>(all);
         submitList(all);
+        // Defensive: see javadoc above. Forces a rebind in case DiffUtil
+        // decided the new list was equivalent to the current list (which
+        // could happen if both were empty, or if the AsyncListDiffer's
+        // background diff hasn't been flushed yet).
+        notifyDataSetChanged();
     }
 
     /**

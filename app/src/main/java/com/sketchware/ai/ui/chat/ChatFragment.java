@@ -75,6 +75,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 
+import android.os.Handler;
+import android.os.Looper;
+
 public final class ChatFragment extends Fragment {
 
     private RecyclerView recycler;
@@ -176,8 +179,38 @@ public final class ChatFragment extends Fragment {
      * Lazily-initialized task history store. Persists completed conversations
      * so the user can resume or branch them later. Mirrors Cline's
      * {@code HistoryItem} + task-history controller.
+     *
+     * <p>Marked {@code volatile} because the field is initialised lazily from
+     * both the UI thread (via {@link #onResume()} → {@link #refreshThreads()})
+     * and the agent's background thread (via {@link #autoSaveTask()}). Without
+     * {@code volatile} the background thread could see a stale {@code null}
+     * even after the UI thread had already cached a store, and the resulting
+     * second initialisation could land on the {@code /tmp} fallback path
+     * (because {@link #getContext()} returns null once the fragment is
+     * detached) — producing a store that writes to {@code /tmp} while the
+     * drawer's adapter still reads from {@code getFilesDir()}, so new chats
+     * silently disappeared. Synchronising {@link #getTaskHistoryStore()} plus
+     * this {@code volatile} tag closes that race.
      */
-    private TaskHistoryStore taskHistoryStore;
+    private volatile TaskHistoryStore taskHistoryStore;
+
+    /**
+     * Handler tied to the main Looper, used to schedule deferred UI work from
+     * background threads. Used by {@link #autoSaveTask()} to fire a backup
+     * {@link #refreshThreads()} 300ms after the agent's {@code onComplete}
+     * callback, in case the immediate {@code runOnUiIfAlive(this::refreshThreads)}
+     * was a no-op because {@link #getView()} was momentarily null (which
+     * happens during fragment recreation).
+     */
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    /**
+     * Delegates to {@link #refreshThreads()}. Kept as a field so we can call
+     * {@link Handler#removeCallbacks(Runnable)} on it — without a stable
+     * reference, repeated {@code onComplete} callbacks would pile up
+     * duplicate delayed refreshes.
+     */
+    private final Runnable refreshThreadsRunnable = this::refreshThreads;
 
     /**
      * Tracks whether the agent loop is currently running. Set to {@code true}
@@ -1001,6 +1034,13 @@ public final class ChatFragment extends Fragment {
                 isRunning = false;
                 String msg = error.getMessage() == null
                         ? error.getClass().getSimpleName() : error.getMessage();
+                // Auto-save even on error so the user's input is preserved in
+                // the chat list. Previously only onComplete / onAborted saved,
+                // which meant a 401 from the provider (or any other failure
+                // before the first assistant chunk landed) silently dropped
+                // the conversation — the user's message vanished from the
+                // drawer list and they had to retype it.
+                autoSaveTask();
                 runOnUiIfAlive(() -> {
                     reducer.addError(msg);
                     adapter.submitList(reducer.getMessages());
@@ -1159,6 +1199,10 @@ public final class ChatFragment extends Fragment {
             case "grok_xai":    return new OpenAiCompatProvider("grok_xai", "https://api.x.ai/v1");
             case "huggingface": return new OpenAiCompatProvider("huggingface", "https://router.huggingface.co/v1");
             case "minimax":     return new OpenAiCompatProvider("minimax", "https://api.minimax.io/v1");
+            // AgentRouter — multi-model aggregator (Claude Opus, GPT-5.5, GLM-5.2, ...).
+            // Exposed as OpenAI-compatible at https://agentrouter.org/v1; reasoning
+            // is forwarded the same way as OpenRouter (object form {effort, max_tokens}).
+            case "agentrouter": return new OpenAiCompatProvider("agentrouter", "https://agentrouter.org/v1");
             case "litellm":     return new OpenAiCompatProvider("litellm", baseUrl);
             case "vllm":        return new OpenAiCompatProvider("vllm", baseUrl);
             case "lm_studio":   return new OpenAiCompatProvider("lm_studio", baseUrl);
@@ -1585,7 +1629,14 @@ public final class ChatFragment extends Fragment {
 
     /**
      * Auto-save the current conversation to task history. Called from the
-     * onComplete and onAborted listeners.
+     * onComplete, onAborted AND onError listeners.
+     *
+     * <p>Saving on error is intentional — without it, any failed request
+     * (provider 401, network drop, tool-internal exception, ...) silently
+     * discards the user's input. The chat list never grows a new entry and
+     * the user can't retry from the drawer; they have to retype the prompt.
+     * Saving the partial conversation lets them open it, fix the cause of
+     * the failure (e.g. swap the API key), and resend.
      *
      * <p>If {@link #currentTaskId} is null (fresh conversation), creates a new
      * task file via {@code store.save(...)} and stores the returned ID. If
@@ -1603,45 +1654,112 @@ public final class ChatFragment extends Fragment {
         if (agent == null) return;
         try {
             java.util.LinkedList<AgentMessage> conv = agent.getConversationHistory();
-            if (conv.size() < 2) return;  // nothing to save
+            // Save as soon as the user has sent at least one message — even if
+            // the assistant never replied (e.g. provider returned 401, network
+            // dropped, or the user aborted before the first token arrived).
+            // Previously we required >= 2 messages (user + assistant), which
+            // meant failed conversations never made it to the chat list and
+            // the user had no way to retry them from the drawer.
+            if (conv == null || conv.isEmpty()) {
+                android.util.Log.w("ChatFragment",
+                        "autoSaveTask: conversation empty, skipping save.");
+                return;
+            }
             TaskHistoryStore store = getTaskHistoryStore();
             String scId = readScIdFromActivity();
             // Record which provider/model this chat used so the chat list
             // can show the provider's emblem instead of a generic bot icon.
             String pid = profile != null ? profile.providerId : null;
             String mid = profile != null ? profile.modelId : null;
+            String savedTaskId;
             if (currentTaskId == null) {
-                currentTaskId = store.save(conv, scId, "Sketchware Project", pid, mid);
+                savedTaskId = store.save(conv, scId, "Sketchware Project", pid, mid);
+                currentTaskId = savedTaskId;
             } else {
                 try {
                     store.update(currentTaskId, conv, pid, mid);
+                    savedTaskId = currentTaskId;
                 } catch (IOException updateFailed) {
                     // The task file may have been deleted from disk (e.g. the
                     // user wiped app data, or removed the chat from the
                     // drawer while the agent was running). Fall back to
                     // creating a new task so the conversation is not lost.
-                    currentTaskId = store.save(conv, scId, "Sketchware Project", pid, mid);
+                    savedTaskId = store.save(conv, scId, "Sketchware Project", pid, mid);
+                    currentTaskId = savedTaskId;
                 }
             }
+            android.util.Log.i("ChatFragment",
+                    "autoSaveTask: saved task " + savedTaskId
+                            + " (" + conv.size() + " msgs) to " + store.getHistoryDir());
             // Refresh the drawer list so the new/updated entry shows up
             // immediately. Without this, the user only saw new chats after
             // closing and reopening the drawer.
             runOnUiIfAlive(this::refreshThreads);
-        } catch (Throwable ignored) {
-            // Auto-save failures should be silent.
+            // Defensive backup refresh: if the immediate refresh was a no-op
+            // because getView() was momentarily null (e.g. fragment is in
+            // the middle of a recreation cycle while the agent's bg thread
+            // is delivering onComplete), schedule another refresh 300ms later
+            // so the drawer still picks up the new entry once the view is
+            // back. Without this, a chat that completed during a config
+            // change would silently fail to appear in the drawer until the
+            // user manually reopened it.
+            mainHandler.removeCallbacks(refreshThreadsRunnable);
+            mainHandler.postDelayed(refreshThreadsRunnable, 300);
+        } catch (Throwable t) {
+            // Surface save errors so they aren't completely invisible. The
+            // previous `catch (Throwable ignored)` here swallowed EVERY
+            // failure — disk-full, permission denied, Gson serialization
+            // errors, NoSuchFileException from mkdirs() races — and the user
+            // just saw "the chat doesn't appear in the list" with zero
+            // diagnostic output. Now we log to logcat AND show a snackbar
+            // so the user knows something went wrong.
+            android.util.Log.e("ChatFragment",
+                    "autoSaveTask: FAILED to save conversation", t);
+            runOnUiIfAlive(() -> {
+                View v = getView();
+                if (v == null) return;
+                String msg = t.getMessage() == null
+                        ? t.getClass().getSimpleName() : t.getMessage();
+                Snackbar.make(v, "Chat not saved: " + msg,
+                        Snackbar.LENGTH_LONG).show();
+            });
         }
     }
 
-    private TaskHistoryStore getTaskHistoryStore() {
-        if (taskHistoryStore == null) {
-            android.content.Context ctx = getContext();
-            if (ctx == null) {
-                // Fallback — should not happen since this is called from a live fragment.
-                taskHistoryStore = new TaskHistoryStore(new File("/tmp"));
-            } else {
-                taskHistoryStore = new TaskHistoryStore(ctx.getFilesDir());
-            }
+    /**
+     * Get the lazily-initialised task history store.
+     *
+     * <p>Synchronised + volatile-tagged field: the store can be initialised
+     * from either the UI thread (via {@link #onResume()} → {@link #refreshThreads()})
+     * or the agent's background thread (via {@link #autoSaveTask()}). Without
+     * synchronisation, two threads could race and end up with two different
+     * store instances pointing at different directories — e.g. the UI thread
+     * creates a store backed by {@code getFilesDir()/ai_task_history} while
+     * the background thread (seeing the field still null) creates a fallback
+     * store backed by {@code /tmp}. The agent would then save to {@code /tmp}
+     * while the drawer reads from {@code getFilesDir()}, and new chats would
+     * silently fail to appear in the list.
+     *
+     * <p>The {@code /tmp} fallback is now NEVER cached: if {@link #getContext()}
+     * returns null (fragment detached), we return a throwaway store for the
+     * current call but leave {@link #taskHistoryStore} null, so a later call
+     * from an attached fragment can populate it with the proper filesDir path.
+     */
+    private synchronized TaskHistoryStore getTaskHistoryStore() {
+        if (taskHistoryStore != null) return taskHistoryStore;
+        android.content.Context ctx = getContext();
+        if (ctx == null) {
+            // Fragment detached — return a transient store but DON'T cache it.
+            // Previously we cached /tmp forever, which meant if the first call
+            // happened to land while the fragment was briefly detached, all
+            // subsequent saves went to /tmp (which on Android is not a real
+            // app-writable dir) and the drawer stayed empty forever.
+            android.util.Log.w("ChatFragment",
+                    "getTaskHistoryStore: getContext() returned null — returning "
+                            + "transient /tmp store, NOT caching.");
+            return new TaskHistoryStore(new File("/tmp"));
         }
+        taskHistoryStore = new TaskHistoryStore(ctx.getFilesDir());
         return taskHistoryStore;
     }
 
@@ -1700,6 +1818,9 @@ public final class ChatFragment extends Fragment {
         new Thread(() -> {
             try {
                 final List<TaskHistoryStore.TaskMetadata> tasks = store.list();
+                android.util.Log.i("ChatFragment",
+                        "refreshThreads: list() returned " + tasks.size()
+                                + " task(s) from " + store.getHistoryDir());
                 runOnUiIfAlive(() -> {
                     if (threadsAdapter != null) {
                         threadsAdapter.submitAll(tasks);
@@ -1709,6 +1830,10 @@ public final class ChatFragment extends Fragment {
                         java.util.Set<String> pinned = prefs.getStringSet(
                                 PINNED_THREADS_KEY, java.util.Collections.emptySet());
                         threadsAdapter.setPinnedIds(pinned);
+                    } else {
+                        android.util.Log.w("ChatFragment",
+                                "refreshThreads: threadsAdapter is null — "
+                                        + "drawer not yet initialised?");
                     }
                     if (drawerEmptyState != null) {
                         drawerEmptyState.setVisibility(tasks.isEmpty() ? View.VISIBLE : View.GONE);
@@ -1717,8 +1842,12 @@ public final class ChatFragment extends Fragment {
                         drawerThreadsList.setVisibility(tasks.isEmpty() ? View.GONE : View.VISIBLE);
                     }
                 });
-            } catch (Throwable ignored) {
-                // Best-effort — the drawer just shows empty.
+            } catch (Throwable t) {
+                // Was `catch (Throwable ignored)` — best-effort, but completely
+                // silent. Now we log so a broken filesystem / corrupted JSON
+                // doesn't look like "user has no chats".
+                android.util.Log.e("ChatFragment",
+                        "refreshThreads: list() threw — drawer will show empty", t);
             }
         }, "ai-threads-refresh").start();
     }

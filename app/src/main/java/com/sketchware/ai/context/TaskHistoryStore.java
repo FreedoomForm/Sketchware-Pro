@@ -6,10 +6,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sketchware.ai.agent.AgentMessage;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -45,7 +48,28 @@ public final class TaskHistoryStore {
 
     public TaskHistoryStore(File filesDir) {
         this.historyDir = new File(filesDir, "ai_task_history");
-        if (!historyDir.exists()) historyDir.mkdirs();
+        // Be defensive about dir creation: mkdirs() returns false both when
+        // creation failed AND when the dir already existed, so we have to
+        // re-check exists() to know whether we actually have a usable dir.
+        // Previously we ignored the return value, which meant if filesDir
+        // itself didn't exist (e.g. getContext() returned a wrapper whose
+        // getFilesDir() was lazily computed and the dir wasn't yet there),
+        // subsequent Files.write calls would throw NoSuchFileException and
+        // the save was silently swallowed by ChatFragment.autoSaveTask's
+        // catch (Throwable ignored). With FileOutputStream we still have
+        // to ensure the parent dir is real.
+        if (!this.historyDir.exists()) {
+            boolean created = this.historyDir.mkdirs();
+            if (!created && !this.historyDir.exists()) {
+                // Last-resort fallback: try to use the parent (filesDir)
+                // directly. Better than crashing — at least saves will go
+                // somewhere list() can find them.
+                System.err.println("TaskHistoryStore: could not create "
+                        + this.historyDir + "; falling back to " + filesDir);
+                this.historyDir = filesDir;
+                if (!this.historyDir.exists()) this.historyDir.mkdirs();
+            }
+        }
         this.gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     }
 
@@ -127,8 +151,47 @@ public final class TaskHistoryStore {
         root.add("conversation", conv);
 
         File file = new File(historyDir, id + ".json");
-        Files.write(file.toPath(), gson.toJson(root).getBytes(StandardCharsets.UTF_8));
+        writeUtf8(file, gson.toJson(root));
         return id;
+    }
+
+    /**
+     * Write {@code text} to {@code file} as UTF-8, replacing the previous
+     * contents. Uses {@link FileOutputStream} rather than {@code Files.write}
+     * because {@code java.nio.file.Files} on Android API 26-30 has known
+     * quirks on certain vendors (Samsung One UI 2.x in particular) where
+     * {@code Files.write} throws {@code AccessDeniedException} for app-private
+     * directories even though {@code FileOutputStream} works fine. The
+     * try-with-resources also guarantees the stream is closed even on
+     * IOException, which {@code Files.write} does not.
+     */
+    private static void writeUtf8(File file, String text) throws IOException {
+        File parent = file.getParentFile();
+        if (parent != null && !parent.exists()) parent.mkdirs();
+        byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(bytes);
+            fos.flush();
+        }
+    }
+
+    /**
+     * Read {@code file} fully as UTF-8. Same reasoning as {@link #writeUtf8}:
+     * prefer {@link FileInputStream} over {@code Files.readAllBytes} for
+     * Android compatibility.
+     */
+    private static String readUtf8(File file) throws IOException {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            return readAll(fis);
+        }
+    }
+
+    private static String readAll(InputStream in) throws IOException {
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        byte[] tmp = new byte[8192];
+        int n;
+        while ((n = in.read(tmp)) > 0) buf.write(tmp, 0, n);
+        return new String(buf.toByteArray(), StandardCharsets.UTF_8);
     }
 
     /** Update an existing task with the latest conversation state. */
@@ -145,7 +208,7 @@ public final class TaskHistoryStore {
                        String providerId, String modelId) throws IOException {
         File file = new File(historyDir, taskId + ".json");
         if (!file.exists()) throw new IOException("Task not found: " + taskId);
-        JsonObject root = gson.fromJson(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8), JsonObject.class);
+        JsonObject root = gson.fromJson(readUtf8(file), JsonObject.class);
         root.addProperty("updatedAt", System.currentTimeMillis());
         root.addProperty("messageCount", conversation.size());
         if (providerId != null) root.addProperty("lastProviderId", providerId);
@@ -163,14 +226,14 @@ public final class TaskHistoryStore {
         for (AgentMessage m : conversation) conv.add(serialize(m));
         root.add("conversation", conv);
 
-        Files.write(file.toPath(), gson.toJson(root).getBytes(StandardCharsets.UTF_8));
+        writeUtf8(file, gson.toJson(root));
     }
 
     /** Load a saved task's conversation. Returns null if not found. */
     public LinkedList<AgentMessage> load(String taskId) throws IOException {
         File file = new File(historyDir, taskId + ".json");
         if (!file.exists()) return null;
-        JsonObject root = gson.fromJson(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8), JsonObject.class);
+        JsonObject root = gson.fromJson(readUtf8(file), JsonObject.class);
         JsonArray conv = root.getAsJsonArray("conversation");
         LinkedList<AgentMessage> messages = new LinkedList<>();
         for (int i = 0; i < conv.size(); i++) {
@@ -183,10 +246,15 @@ public final class TaskHistoryStore {
     public List<TaskMetadata> list() {
         List<TaskMetadata> result = new ArrayList<>();
         File[] files = historyDir.listFiles((d, n) -> n.endsWith(".json"));
-        if (files == null) return result;
+        if (files == null) {
+            System.err.println("TaskHistoryStore.list: historyDir.listFiles() "
+                    + "returned null — dir does not exist or is not readable: "
+                    + historyDir);
+            return result;
+        }
         for (File f : files) {
             try {
-                JsonObject root = gson.fromJson(new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8), JsonObject.class);
+                JsonObject root = gson.fromJson(readUtf8(f), JsonObject.class);
                 result.add(new TaskMetadata(
                         root.has("id") ? root.get("id").getAsString() : f.getName(),
                         root.has("createdAt") ? root.get("createdAt").getAsLong() : f.lastModified(),
@@ -200,8 +268,13 @@ public final class TaskHistoryStore {
                                 ? root.get("lastProviderId").getAsString() : null,
                         root.has("lastModelId") && !root.get("lastModelId").isJsonNull()
                                 ? root.get("lastModelId").getAsString() : null));
-            } catch (Throwable ignored) {
-                // Skip malformed files.
+            } catch (Throwable t) {
+                // Skip malformed files but log so the user/dev can see WHY
+                // a file was skipped. Previously this was silently ignored,
+                // which meant a half-written file (e.g. disk full mid-save)
+                // would just disappear from the list with no explanation.
+                System.err.println("TaskHistoryStore.list: skipped malformed "
+                        + "file " + f + ": " + t);
             }
         }
         result.sort(Comparator.comparingLong((TaskMetadata m) -> m.updatedAt).reversed());

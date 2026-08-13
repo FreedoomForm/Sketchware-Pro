@@ -67,6 +67,7 @@ public final class ProviderIconResolver {
             case "grok_xai":        return R.drawable.ic_provider_grok;
             case "huggingface":     return R.drawable.ic_provider_huggingface;
             case "minimax":         return R.drawable.ic_provider_minimax;
+            case "agentrouter":      return R.drawable.ic_provider_agentrouter;
             case "litellm":         return R.drawable.ic_provider_litellm;
             case "vllm":            return R.drawable.ic_provider_vllm;
             case "lm_studio":       return R.drawable.ic_provider_lm_studio;
@@ -103,6 +104,7 @@ public final class ProviderIconResolver {
         if (containsAny(s, "fireworks"))             return R.drawable.ic_provider_fireworks;
         if (containsAny(s, "huggingface", "hf.co"))  return R.drawable.ic_provider_huggingface;
         if (containsAny(s, "minimax"))               return R.drawable.ic_provider_minimax;
+        if (containsAny(s, "agentrouter", "agent_router", "agent-router", "agent router")) return R.drawable.ic_provider_agentrouter;
         if (containsAny(s, "litellm"))               return R.drawable.ic_provider_litellm;
         if (containsAny(s, "vllm"))                  return R.drawable.ic_provider_vllm;
         if (containsAny(s, "lmstudio", "lm studio")) return R.drawable.ic_provider_lm_studio;

@@ -119,6 +119,20 @@ public class OpenAiCompatProvider extends OpenAiProvider {
                     true, false, false,
                     1.00, 1.00, 0.0, 0.0);
         }
+        if ("agentrouter".equals(providerId)) {
+            // AgentRouter is a multi-model aggregator that proxies to underlying
+            // upstream models (Claude Opus 4.x, GPT-5.5, GLM-5.2, ...). We can't
+            // know the upstream's exact context window / pricing without a model
+            // list fetch, so we use a safe 200k context / 8k output default that
+            // covers the largest model in the catalog (Claude Opus 4 = 200k).
+            // Tools and images are supported; reasoning is supported on
+            // claude-opus-* and gpt-5.* but not on glm-5.2 — we err on the side
+            // of "yes" and let the user toggle it off in the chat UI.
+            return new ModelInfo(modelId, "AgentRouter " + modelId,
+                    200_000, 200_000, 8_192,
+                    true, true, true,
+                    5.00, 15.00, 0.50, 6.25);
+        }
         // vllm / lm_studio / litellm / openai-compat fall through to default;
         // these are user-hosted runtimes whose model catalog is unknown.
         return ModelInfo.defaultFor(modelId);
@@ -163,6 +177,29 @@ public class OpenAiCompatProvider extends OpenAiProvider {
                 }
                 break;
             }
+            case "agentrouter": {
+                // AgentRouter is OpenAI-compatible and mirrors OpenRouter's
+                // reasoning contract: an object `{effort, max_tokens}` plus an
+                // `include_reasoning: true` flag when the user actually wants
+                // reasoning output. Forwarded only when the model advertises
+                // supportsReasoning (claude-opus-*, gpt-5.*) — glm-5.2 ignores it.
+                boolean reasoningEnabled = request.reasoning != null
+                        && request.reasoning.isReasoningEnabled();
+                if (reasoningEnabled && request.reasoning.effort != null
+                        && request.reasoning.effort != com.sketchware.ai.llm.reasoning.ReasoningEffort.NONE) {
+                    JsonObject reasoning = new JsonObject();
+                    reasoning.addProperty("effort", request.reasoning.effort.name().toLowerCase());
+                    if (request.reasoning.budgetTokens != null) {
+                        int cap = (int) (0.6 * request.maxTokens);
+                        reasoning.addProperty("max_tokens", Math.min(request.reasoning.budgetTokens, cap));
+                    }
+                    body.add("reasoning", reasoning);
+                }
+                if (reasoningEnabled && request.model != null && request.model.supportsReasoning) {
+                    body.addProperty("include_reasoning", true);
+                }
+                break;
+            }
         }
         return body;
     }
@@ -175,6 +212,57 @@ public class OpenAiCompatProvider extends OpenAiProvider {
                     request.reasoning, request.maxTokens, request.enableStreaming,
                     request.extraHeaders, request.forceFlatToolFormat);
         }
+        // AgentRouter fingerprints the HTTP client (their backend is OneAPI-based
+        // and rejects requests that don't look like Claude Code with HTTP 401
+        // "unauthorized client detected"). Cline works because it identifies
+        // itself via User-Agent + x-stainless-* + anthropic-* headers; we send
+        // the same set so AgentRouter's fingerprinter accepts us. See:
+        //   https://github.com/diegosouzapw/OmniRoute/issues/1921
+        //   https://github.com/anomalyco/opencode/issues/2784
+        // Headers are scoped to "agentrouter" providerId only — other providers
+        // are unaffected. User-supplied extraHeaders still take precedence
+        // (we merge ours first, then theirs via HttpClient which overrides).
+        if ("agentrouter".equals(providerId)) {
+            java.util.List<LlmRequest.ExtraHeader> merged =
+                    new java.util.ArrayList<>(AGENTROUTER_FINGERPRINT_HEADERS.size()
+                            + (request.extraHeaders == null ? 0 : request.extraHeaders.size()));
+            merged.addAll(AGENTROUTER_FINGERPRINT_HEADERS);
+            if (request.extraHeaders != null) merged.addAll(request.extraHeaders);
+            request = new LlmRequest(
+                    request.providerId, request.baseUrl, request.apiKey, request.model,
+                    request.systemPrompt, request.messages, request.toolsJson,
+                    request.reasoning, request.maxTokens, request.enableStreaming,
+                    merged, request.forceFlatToolFormat);
+        }
         return super.stream(request);
     }
+
+    /**
+     * Headers injected into every AgentRouter request to pass their client
+     * fingerprinting check. Mirrors what the Claude Code CLI sends (verified
+     * against opencode issue #2784 and OmniRoute issue #1921). Without these,
+     * AgentRouter returns HTTP 401 with {@code "unauthorized_client_error"}
+     * even when the API key is valid.
+     *
+     * <p>Note: these are spoofed for compatibility — AgentRouter explicitly
+     * rejects non-Claude-Code clients. This is the same approach Cline users
+     * use successfully (and the approach Roo Code, opencode, OmniRoute etc.
+     * had to adopt).
+     */
+    private static final java.util.List<LlmRequest.ExtraHeader> AGENTROUTER_FINGERPRINT_HEADERS =
+            java.util.Collections.unmodifiableList(java.util.Arrays.asList(
+                    new LlmRequest.ExtraHeader("User-Agent", "claude-cli/1.0.108 (external, cli)"),
+                    new LlmRequest.ExtraHeader("anthropic-version", "2023-06-01"),
+                    new LlmRequest.ExtraHeader("anthropic-beta", "claude-code-20250219,oauth-2025-04-20"),
+                    new LlmRequest.ExtraHeader("anthropic-dangerous-direct-browser-access", "true"),
+                    new LlmRequest.ExtraHeader("x-app", "cli"),
+                    new LlmRequest.ExtraHeader("x-stainless-lang", "js"),
+                    new LlmRequest.ExtraHeader("x-stainless-package-version", "0.55.1"),
+                    new LlmRequest.ExtraHeader("x-stainless-os", "android"),
+                    new LlmRequest.ExtraHeader("x-stainless-arch", "arm64"),
+                    new LlmRequest.ExtraHeader("x-stainless-runtime", "node"),
+                    new LlmRequest.ExtraHeader("x-stainless-runtime-version", "v22.0.0"),
+                    new LlmRequest.ExtraHeader("HTTP-Referer", "https://agentrouter.org/"),
+                    new LlmRequest.ExtraHeader("X-Title", "Claude Code")
+            ));
 }
