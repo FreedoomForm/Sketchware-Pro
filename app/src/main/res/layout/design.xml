@@ -19,7 +19,9 @@
             <com.google.android.material.appbar.AppBarLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fitsSystemWindows="true">
+                android:fitsSystemWindows="true"
+                app:elevation="0dp"
+                android:stateListAnimator="@null">
 
                 <androidx.appcompat.widget.Toolbar
                     android:id="@+id/toolbar"
@@ -54,7 +56,7 @@
                 android:id="@+id/progress_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?attr/colorSurfaceContainer"
+                android:background="@color/ai_chat_background"
                 android:orientation="vertical"
                 android:visibility="gone"
                 tools:visibility="visible">
@@ -85,7 +87,7 @@
                 android:id="@+id/bottom_bar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?attr/colorSurfaceContainer"
+                android:background="@color/ai_chat_background"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingVertical="4dp">
