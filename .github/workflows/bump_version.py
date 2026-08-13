@@ -42,8 +42,27 @@ def short_sha() -> str:
 
 
 def strip_build_suffix(name: str) -> str:
-    """Drop a trailing +suffix or -bsuffix from versionName."""
-    return re.split(r"[+\-]b", name, maxsplit=1)[0]
+    """Drop a trailing +suffix or -suffix from versionName.
+
+    Examples:
+      v7.0.2+0b64f3b        -> v7.0.2
+      v7.0.2-rc1            -> v7.0.2
+      v7.0.2+b1.2.3+abc123  -> v7.0.2
+      v7.0.2                -> v7.0.2
+
+    Bug history: the original regex was ``[+\\-]b`` which requires a literal
+    'b' after the ``+`` or ``-``. For a typical short-SHA suffix like
+    ``+0b64f3b`` the first character after ``+`` is ``0``, not ``b``, so the
+    split silently failed and the whole string was returned unchanged. The
+    downstream ``bump_patch`` then couldn't match ``v7.0.2+0b64f3b`` against
+    ``^v?(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?$`` and fell back to
+    ``name + ".1"``, producing ``v7.0.2+0b64f3b.1``. Every subsequent release
+    appended another ``.1+<sha>`` and the version name grew without bound
+    until the APK rename step hit ext4's 255-byte filename limit and the
+    Release workflow failed (CI runs 31740622566, 31739819515). Fix: drop
+    the spurious ``b`` so the regex matches any ``+`` or ``-`` separator.
+    """
+    return re.split(r"[+\-]", name, maxsplit=1)[0]
 
 
 def bump_patch(name: str) -> str:
