@@ -153,6 +153,23 @@ public final class ProviderCatalog {
                         "MiniMax-M2.5", "MiniMax-M2.5-highspeed",
                         "MiniMax-M2.1", "MiniMax-M2.1-highspeed", "MiniMax-M2", "M2-her")),
 
+        // --- AgentRouter (multi-model aggregator, OpenAI-compatible endpoint) ---
+        // AgentRouter exposes two protocols per its docs:
+        //   * Anthropic native (base URL https://agentrouter.org, no /v1) for
+        //     Claude Opus models.
+        //   * OpenAI-compatible (base URL https://agentrouter.org/v1) for
+        //     GPT-5.5, GLM-5.2 and other non-Claude models.
+        // Sketchware Pro's chat runtime talks one protocol per profile, so we
+        // register AgentRouter here as an OpenAI-compatible entry (the generic
+        // path that works for all models). Users who specifically want the
+        // Anthropic-native Claude Opus path can pick the "Anthropic" provider
+        // and override the base URL to https://agentrouter.org.
+        new Entry("agentrouter", "AgentRouter",
+                "https://agentrouter.org/v1", "/chat/completions",
+                "claude-opus-4-1", true, "openai-compat",
+                Arrays.asList("claude-opus-4-1", "claude-opus-4-6", "claude-opus-4-8",
+                        "claude-opus-4-7", "gpt-5.5", "glm-5.2")),
+
         // --- Local runtimes ---
         new Entry("ollama", "Ollama",
                 "http://127.0.0.1:11434", "",
@@ -310,6 +327,7 @@ public final class ProviderCatalog {
         if ("openai-compatible".equals(s) || "compat".equals(s)) return "openai-compat";
         if ("xai".equals(s) || "grok".equals(s)) return "grok_xai";
         if ("hf".equals(s)) return "huggingface";
+        if ("agent_router".equals(s) || "agent-router".equals(s)) return "agentrouter";
         if ("lmstudio".equals(s) || "lm studio".equals(s)) return "lm_studio";
         return s;
     }
