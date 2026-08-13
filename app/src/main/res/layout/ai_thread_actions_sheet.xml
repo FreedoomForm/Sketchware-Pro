@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom-sheet for thread (chat) actions, opened from the three-dots
+     menu in the chat list drawer. Replaces the previous AlertDialog that
+     just showed the chat title — this sheet shows a header (icon + title
+     + subtitle) plus five full-width action rows with icons. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/ai_chat_surface"
+    android:orientation="vertical"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <!-- Drag handle -->
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/ai_sheet_handle" />
+
+    <!-- Header: chat icon + title + subtitle (timestamp / msg count) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingTop="6dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="10dp">
+
+        <FrameLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/ai_avatar_bg">
+
+            <ImageView
+                android:id="@+id/sheet_thread_icon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/kelivo_lucide_bot_message_square"
+                app:tint="@color/ai_avatar_text" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/sheet_thread_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/ai_chat_text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="My chat about something" />
+
+            <TextView
+                android:id="@+id/sheet_thread_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/ai_chat_text_secondary"
+                android:textSize="12sp"
+                tools:text="2h ago · 14 msgs" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="4dp"
+        android:background="@color/ai_chat_border_soft" />
+
+    <!-- Action: Open -->
+    <LinearLayout
+        android:id="@+id/sheet_action_open"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_mtrl_track_started"
+            app:tint="@color/ai_chat_text_primary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="18dp"
+            android:text="@string/ai_thread_action_open"
+            android:textColor="@color/ai_chat_text_primary"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+    <!-- Action: Rename -->
+    <LinearLayout
+        android:id="@+id/sheet_action_rename"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_mtrl_edit"
+            app:tint="@color/ai_chat_text_primary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="18dp"
+            android:text="@string/ai_thread_action_rename"
+            android:textColor="@color/ai_chat_text_primary"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+    <!-- Action: Export -->
+    <LinearLayout
+        android:id="@+id/sheet_action_export"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_mtrl_export"
+            app:tint="@color/ai_chat_text_primary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="18dp"
+            android:text="@string/ai_thread_action_export"
+            android:textColor="@color/ai_chat_text_primary"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+    <!-- Action: Pin / Unpin (star) -->
+    <LinearLayout
+        android:id="@+id/sheet_action_pin"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:id="@+id/sheet_pin_icon"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_mtrl_star"
+            app:tint="@color/ai_chat_accent" />
+
+        <TextView
+            android:id="@+id/sheet_pin_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="18dp"
+            android:text="@string/ai_thread_action_pin"
+            android:textColor="@color/ai_chat_text_primary"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+    <!-- Divider before destructive action -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:background="@color/ai_chat_border_soft" />
+
+    <!-- Action: Delete (destructive) -->
+    <LinearLayout
+        android:id="@+id/sheet_action_delete"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_mtrl_delete"
+            app:tint="@color/ai_chat_danger" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="18dp"
+            android:text="@string/ai_thread_action_delete"
+            android:textColor="@color/ai_chat_danger"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+</LinearLayout>

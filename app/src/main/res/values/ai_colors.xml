@@ -23,6 +23,9 @@
     <color name="ai_chat_text_secondary">#8E8E93</color>
     <color name="ai_chat_text_hint">#AEAEB2</color>
 
+    <!-- ===== Destructive / danger ===== -->
+    <color name="ai_chat_danger">#FF3B30</color>
+
     <!-- ===== Avatars ===== -->
     <color name="ai_avatar_bg">#E8E4F8</color>
     <color name="ai_avatar_text">#5B4FCF</color>

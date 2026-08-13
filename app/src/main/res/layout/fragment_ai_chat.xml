@@ -368,30 +368,58 @@
                         android:layout_height="0dp"
                         android:layout_weight="1" />
 
-                    <com.google.android.material.materialswitch.MaterialSwitch
+                    <!-- Act / Plan segmented toggle: two side-by-side
+                         labels inside a rounded pill track. Tapping a
+                         label selects that mode (Act = execute tools,
+                         Plan = think only, no tool execution).
+                         Replaces the previous MaterialSwitch + icon +
+                         label row that the user found confusing. -->
+                    <LinearLayout
                         android:id="@+id/btn_mode"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:contentDescription="@string/ai_chat_mode_plan"
-                        app:thumbTint="@color/ai_chat_accent"
-                        app:trackTint="@color/ai_chat_border" />
+                        android:layout_height="28dp"
+                        android:background="@drawable/ai_mode_segment_bg"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="3dp"
+                        android:paddingEnd="3dp">
 
-                    <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
-                        android:layout_marginStart="6dp"
-                        android:contentDescription="@null"
-                        android:src="@drawable/ic_play"
-                        app:tint="@color/ai_chat_text_secondary" />
+                        <TextView
+                            android:id="@+id/mode_segment_act"
+                            android:layout_width="44dp"
+                            android:layout_height="22dp"
+                            android:background="@drawable/ai_mode_segment_item"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:text="@string/ai_chat_mode_act"
+                            android:textColor="@color/ai_mode_segment_text"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
 
+                        <TextView
+                            android:id="@+id/mode_segment_plan"
+                            android:layout_width="44dp"
+                            android:layout_height="22dp"
+                            android:layout_marginStart="2dp"
+                            android:background="@drawable/ai_mode_segment_item"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:text="@string/ai_chat_mode_plan"
+                            android:textColor="@color/ai_mode_segment_text"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Inline label kept for backward-compat with existing
+                         code that reads modeLabelInline; now hidden since
+                         the segmented toggle already shows the labels. -->
                     <TextView
                         android:id="@+id/mode_label_inline"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
-                        android:text="@string/ai_chat_mode_act"
-                        android:textColor="@color/ai_chat_text_secondary"
-                        android:textSize="11sp" />
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:visibility="gone" />
                 </LinearLayout>
 
                 <!-- EditText -->

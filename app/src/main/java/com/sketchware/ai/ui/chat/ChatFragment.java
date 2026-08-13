@@ -38,6 +38,7 @@ import pro.sketchware.R;
 import com.sketchware.ai.agent.AgentListener;
 import com.sketchware.ai.agent.AgentMessage;
 import com.sketchware.ai.agent.AgentMode;
+import com.sketchware.ai.ui.settings.ProviderIconResolver;
 import com.sketchware.ai.agent.AgentRuntime;
 import com.sketchware.ai.context.ContextMentionParser;
 import com.sketchware.ai.context.TaskHistoryStore;
@@ -81,7 +82,35 @@ public final class ChatFragment extends Fragment {
     private View btnSend;
     private View btnStop;
     private View btnAttach;
-    private com.google.android.material.materialswitch.MaterialSwitch btnMode;
+    /**
+     * Segmented Act/Plan toggle container. Two TextViews inside a pill —
+     * tapping one side selects that mode. The container itself holds the
+     * id {@code btn_mode} (kept from the previous MaterialSwitch for
+     * layout continuity); the two segment labels are found by their own
+     * ids {@code mode_segment_act} and {@code mode_segment_plan}.
+     */
+    private android.view.ViewGroup btnMode;
+    private android.widget.TextView modeSegmentAct;
+    private android.widget.TextView modeSegmentPlan;
+    /**
+     * {@code true} when the segmented toggle is in PLAN position,
+     * {@code false} when in ACT position. Mirrors what the previous
+     * MaterialSwitch's {@code isChecked()} returned.
+     */
+    private boolean modePlanActive = false;
+    /**
+     * YOLO mode disables the toggle (Act/Plan distinction is meaningless).
+     * Tracked separately so the visuals can be faded without losing state.
+     */
+    private boolean modeToggleDisabled = false;
+    /**
+     * Listener invoked when the user taps a segment. Receives
+     * {@code true} when PLAN is selected, {@code false} when ACT.
+     */
+    public interface OnModeToggleListener {
+        void onModeToggle(boolean planActive);
+    }
+    private OnModeToggleListener modeToggleListener;
     private android.widget.TextView modeLabelInline;
     private com.google.android.material.materialswitch.MaterialSwitch autoApproveToggle;
     private com.google.android.material.progressindicator.LinearProgressIndicator contextProgress;
@@ -190,6 +219,8 @@ public final class ChatFragment extends Fragment {
         btnStop = root.findViewById(R.id.btn_stop);
         btnAttach = root.findViewById(R.id.btn_attach);
         btnMode = root.findViewById(R.id.btn_mode);
+        modeSegmentAct = root.findViewById(R.id.mode_segment_act);
+        modeSegmentPlan = root.findViewById(R.id.mode_segment_plan);
         modeLabelInline = root.findViewById(R.id.mode_label_inline);
         autoApproveToggle = root.findViewById(R.id.auto_approve_toggle);
         contextProgress = root.findViewById(R.id.context_progress);
@@ -347,20 +378,36 @@ public final class ChatFragment extends Fragment {
             btnAttach.setVisibility(View.VISIBLE);
         });
 
-        // Mode toggle (Act/Plan) — now a MaterialSwitch, mirroring the YOLO
-        // toggle's look & feel. OFF = Act (execute), ON = Plan (think only).
-        // Updates the inline label + top status chip, and notifies the agent
-        // if running.
+        // Mode toggle (Act/Plan) — now a segmented toggle: two labels
+        // "Act" and "Plan" side by side inside a pill track. Tapping a
+        // label selects that mode (Act = execute tools, Plan = think only).
+        // Updates the top status chip and notifies the agent if running.
         java.util.concurrent.atomic.AtomicReference<AgentMode> currentMode =
                 new java.util.concurrent.atomic.AtomicReference<>(AgentMode.ACT);
         updateModeUi(currentMode.get());
-        btnMode.setOnCheckedChangeListener((b, checked) -> {
-            if (updatingModeUi) return;  // ignore programmatic setChecked
-            AgentMode next = checked ? AgentMode.PLAN : AgentMode.ACT;
+        modeToggleListener = planActive -> {
+            if (updatingModeUi) return;  // ignore programmatic updates
+            AgentMode next = planActive ? AgentMode.PLAN : AgentMode.ACT;
             currentMode.set(next);
             updateModeUi(next);
             if (agent != null) agent.setMode(next);
-        });
+        };
+        if (modeSegmentAct != null) {
+            modeSegmentAct.setOnClickListener(v -> {
+                if (modeToggleDisabled || !modePlanActive) return;
+                modePlanActive = false;
+                applyModeSegmentVisuals();
+                if (modeToggleListener != null) modeToggleListener.onModeToggle(false);
+            });
+        }
+        if (modeSegmentPlan != null) {
+            modeSegmentPlan.setOnClickListener(v -> {
+                if (modeToggleDisabled || modePlanActive) return;
+                modePlanActive = true;
+                applyModeSegmentVisuals();
+                if (modeToggleListener != null) modeToggleListener.onModeToggle(true);
+            });
+        }
 
         // Auto-approve (YOLO) toggle — reads/writes the AutoApproveFragment
         // shared preference so it stays in sync with the settings page.
@@ -383,15 +430,15 @@ public final class ChatFragment extends Fragment {
         return root;
     }
 
-    /** Guard flag so updateModeUi's setChecked doesn't re-enter the listener. */
+    /** Guard flag so updateModeUi's programmatic state changes don't re-enter the click listener. */
     private boolean updatingModeUi = false;
 
-    /** Update the mode toggle label + chip text based on AgentMode. */
+    /** Update the segmented toggle + chip text based on AgentMode. */
     private void updateModeUi(AgentMode mode) {
-        // The inline label next to the toggle shows the current mode name;
-        // the top status-row chip mirrors it. Previously the chip showed the
-        // raw enum name (e.g. "YOLO") while the button showed "Act" — that
-        // was inconsistent and confusing when YOLO mode was enabled.
+        // The top status-row chip shows the current mode name. The segmented
+        // toggle below the input also reflects it (Act segment highlighted
+        // in ACT mode, Plan segment highlighted in PLAN mode, both faded
+        // and disabled in YOLO mode).
         String label;
         boolean planChecked;
         switch (mode) {
@@ -401,17 +448,35 @@ public final class ChatFragment extends Fragment {
         }
         updatingModeUi = true;
         try {
-            if (btnMode != null) {
-                btnMode.setChecked(planChecked);
-                // In YOLO mode the Act/Plan distinction is meaningless, so
-                // disable the toggle to signal that.
-                btnMode.setEnabled(mode != AgentMode.YOLO);
-            }
+            modePlanActive = planChecked;
+            modeToggleDisabled = (mode == AgentMode.YOLO);
+            applyModeSegmentVisuals();
         } finally {
             updatingModeUi = false;
         }
         if (modeLabelInline != null) modeLabelInline.setText(label);
         if (modeLabel != null) modeLabel.setText(label);
+    }
+
+    /**
+     * Refresh the segmented Act/Plan toggle's visuals based on
+     * {@link #modePlanActive} and {@link #modeToggleDisabled}.
+     *
+     * <p>The active segment gets the {@code selected} state (accent
+     * background + white text via the {@code ai_mode_segment_item} and
+     * {@code ai_mode_segment_text} selectors). When disabled (YOLO mode),
+     * both segments get the {@code enabled=false} state so the text color
+     * selector fades them to the hint color.
+     */
+    private void applyModeSegmentVisuals() {
+        if (modeSegmentAct != null) {
+            modeSegmentAct.setSelected(!modePlanActive);
+            modeSegmentAct.setEnabled(!modeToggleDisabled);
+        }
+        if (modeSegmentPlan != null) {
+            modeSegmentPlan.setSelected(modePlanActive);
+            modeSegmentPlan.setEnabled(!modeToggleDisabled);
+        }
     }
 
     /**
@@ -748,7 +813,7 @@ public final class ChatFragment extends Fragment {
             AgentMode initialMode = AgentMode.ACT;
             if (isYoloEnabled()) {
                 initialMode = AgentMode.YOLO;
-            } else if (btnMode != null && btnMode.isChecked()) {
+            } else if (modePlanActive) {
                 initialMode = AgentMode.PLAN;
             }
             agent.setMode(initialMode);
@@ -1607,43 +1672,125 @@ public final class ChatFragment extends Fragment {
     }
 
     /**
-     * Show the rename / delete action sheet for a thread in the drawer.
-     * Triggered by long-press or the overflow icon on a thread row.
+     * Show the actions bottom-sheet for a thread in the drawer.
+     * Triggered by long-press or the overflow (three-dots) icon on a thread
+     * row. Shows a header (provider icon + title + subtitle) and five
+     * full-width action rows: Open / Rename / Export / Pin / Delete.
+     *
+     * <p>Previously this used an {@link AlertDialog} with {@code setMessage(title)}
+     * which on some themes crowded the action list out — the user saw only
+     * the chat title in the dialog. Switching to a BottomSheetDialog gives
+     * a proper Material bottom sheet with explicit action rows + icons.
      */
     private void showThreadActionsSheet(TaskHistoryStore.TaskMetadata thread) {
         Activity a = getActivity();
         if (a == null) return;
-        String title = thread.firstUserMessage == null ? "(no title)" : thread.firstUserMessage;
+        if (thread == null || thread.id == null) return;
+
+        final View sheet = getLayoutInflater().inflate(
+                R.layout.ai_thread_actions_sheet, null);
+        final com.google.android.material.bottomsheet.BottomSheetDialog dialog =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(a);
+        dialog.setContentView(sheet);
+        dialog.setCancelable(true);
+        dialog.setCanceledOnTouchOutside(true);
+
+        // ---- Header ----
+        String title = thread.firstUserMessage == null
+                ? getString(R.string.ai_thread_rename_hint)
+                : thread.firstUserMessage;
         if (title.length() > 60) title = title.substring(0, 60) + "...";
+        TextView titleView = sheet.findViewById(R.id.sheet_thread_title);
+        TextView subtitleView = sheet.findViewById(R.id.sheet_thread_subtitle);
+        ImageView iconView = sheet.findViewById(R.id.sheet_thread_icon);
+        if (titleView != null) titleView.setText(title);
+        if (subtitleView != null) {
+            StringBuilder sb = new StringBuilder();
+            if (thread.projectName != null && !thread.projectName.isEmpty()) {
+                sb.append(thread.projectName).append(" · ");
+            }
+            sb.append(formatRelativeTimestamp(thread.updatedAt));
+            sb.append(" · ").append(thread.messageCount).append(" msgs");
+            subtitleView.setText(sb.toString());
+        }
+        if (iconView != null) {
+            // Mirror the same provider-icon resolution used by the list row,
+            // so the sheet's header icon matches the chat list's icon.
+            int iconRes = 0;
+            if (thread.lastProviderId != null && !thread.lastProviderId.isEmpty()) {
+                iconRes = ProviderIconResolver.resolveProvider(thread.lastProviderId, null);
+            }
+            if (iconRes == 0 || iconRes == R.drawable.ic_ai) {
+                if (thread.lastModelId != null && !thread.lastModelId.isEmpty()) {
+                    iconRes = ProviderIconResolver.resolveModel(thread.lastModelId);
+                }
+            }
+            if (iconRes != 0) {
+                iconView.setImageResource(iconRes);
+                iconView.setImageTintList(null);
+            } else {
+                iconView.setImageResource(R.drawable.kelivo_lucide_bot_message_square);
+                iconView.setImageTintList(androidx.core.content.ContextCompat
+                        .getColorStateList(a, R.color.ai_avatar_text));
+            }
+        }
+
+        // ---- Pin/unpin label + icon swap ----
         boolean pinned = isThreadPinned(thread.id);
-        new AlertDialog.Builder(a)
-                .setTitle(R.string.ai_thread_actions_title)
-                .setMessage(title)
-                .setItems(new CharSequence[]{
-                        getString(R.string.ai_thread_action_open),
-                        getString(R.string.ai_thread_action_rename),
-                        getString(R.string.ai_thread_action_export),
-                        pinned ? getString(R.string.ai_thread_action_unpin)
-                               : getString(R.string.ai_thread_action_pin),
-                        getString(R.string.ai_thread_action_delete)
-                }, (dlg, which) -> {
-                    if (which == 0) {
-                        if (chatDrawerRoot != null) {
-                            chatDrawerRoot.closeDrawer(androidx.core.view.GravityCompat.START);
-                        }
-                        loadTask(thread.id);
-                    } else if (which == 1) {
-                        showRenameDialog(thread);
-                    } else if (which == 2) {
-                        exportThread(thread);
-                    } else if (which == 3) {
-                        togglePinThread(thread);
-                    } else if (which == 4) {
-                        confirmDeleteThread(thread);
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+        TextView pinLabel = sheet.findViewById(R.id.sheet_pin_label);
+        ImageView pinIcon = sheet.findViewById(R.id.sheet_pin_icon);
+        if (pinLabel != null) {
+            pinLabel.setText(pinned
+                    ? getString(R.string.ai_thread_action_unpin)
+                    : getString(R.string.ai_thread_action_pin));
+        }
+        if (pinIcon != null) {
+            pinIcon.setImageResource(pinned
+                    ? R.drawable.ic_star
+                    : R.drawable.ic_mtrl_star);
+        }
+
+        // ---- Action handlers ----
+        sheet.findViewById(R.id.sheet_action_open).setOnClickListener(v -> {
+            dialog.dismiss();
+            if (chatDrawerRoot != null) {
+                chatDrawerRoot.closeDrawer(androidx.core.view.GravityCompat.START);
+            }
+            loadTask(thread.id);
+        });
+        sheet.findViewById(R.id.sheet_action_rename).setOnClickListener(v -> {
+            dialog.dismiss();
+            showRenameDialog(thread);
+        });
+        sheet.findViewById(R.id.sheet_action_export).setOnClickListener(v -> {
+            dialog.dismiss();
+            exportThread(thread);
+        });
+        sheet.findViewById(R.id.sheet_action_pin).setOnClickListener(v -> {
+            dialog.dismiss();
+            togglePinThread(thread);
+        });
+        sheet.findViewById(R.id.sheet_action_delete).setOnClickListener(v -> {
+            dialog.dismiss();
+            confirmDeleteThread(thread);
+        });
+
+        dialog.show();
+    }
+
+    /** Format a unix-ms timestamp as a short relative string ("5m ago"). */
+    private static String formatRelativeTimestamp(long ts) {
+        long now = System.currentTimeMillis();
+        long diff = now - ts;
+        if (diff < 60_000L) return "just now";
+        if (diff < 3_600_000L) return (diff / 60_000L) + "m ago";
+        if (diff < 86_400_000L) return (diff / 3_600_000L) + "h ago";
+        if (diff < 7L * 86_400_000L) return (diff / 86_400_000L) + "d ago";
+        return android.text.format.DateUtils.formatDateTime(
+                requireContext(), ts,
+                android.text.format.DateUtils.FORMAT_ABBREV_RELATIVE
+                        | android.text.format.DateUtils.FORMAT_ABBREV_MONTH
+                        | android.text.format.DateUtils.FORMAT_SHOW_DATE);
     }
 
     // ------------------------------------------------------------------
