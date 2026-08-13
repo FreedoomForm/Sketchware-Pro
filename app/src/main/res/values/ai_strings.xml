@@ -124,6 +124,7 @@
     <string name="ai_chat_status_chip_error">Error</string>
 
     <!-- ===== Drawer / threads (ported from reference layout_kelivo_drawer) ===== -->
+    <string name="ai_chat_drawer_title">Chats</string>
     <string name="ai_chat_drawer_search_hint">Search chats…</string>
     <string name="ai_chat_drawer_history">History</string>
     <string name="ai_chat_drawer_settings">Settings</string>

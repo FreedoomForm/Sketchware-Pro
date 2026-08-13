@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Chat thread row inside the side drawer — inspired by
      FabioSilva11/Sketchware-IA's item_kelivo_drawer_thread.xml.
-     Layout: thread icon + title (single line) + subtitle (last message preview). -->
+     Layout: thread icon + title (single line) + subtitle (last message preview)
+     + pinned star (shown only for pinned threads).
+     The previous three-dots overflow button was removed — long-press the
+     row to open the same actions bottom-sheet (Open / Rename / Export /
+     Pin / Delete). One less icon per row makes the list cleaner. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -12,9 +16,9 @@
     android:gravity="center_vertical"
     android:minHeight="56dp"
     android:orientation="horizontal"
-    android:paddingStart="12dp"
+    android:paddingStart="10dp"
     android:paddingTop="8dp"
-    android:paddingEnd="8dp"
+    android:paddingEnd="10dp"
     android:paddingBottom="8dp">
 
     <FrameLayout
@@ -70,13 +74,11 @@
         android:visibility="gone"
         app:tint="@color/ai_chat_accent" />
 
+    <!-- Kept for backward compatibility with adapter.findViewById lookups.
+         Hidden because long-press already opens the actions sheet. -->
     <ImageView
         android:id="@+id/btn_thread_more"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/ai_chat_action_more"
-        android:padding="8dp"
-        android:src="@drawable/kelivo_lucide_more_horizontal"
-        app:tint="@color/ai_chat_text_hint" />
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
 </LinearLayout>

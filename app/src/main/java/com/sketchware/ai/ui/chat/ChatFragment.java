@@ -339,20 +339,18 @@ public final class ChatFragment extends Fragment {
             });
         }
 
-        // Drawer footer buttons (settings shortcut on drawer)
-        View btnDrawerSettings = root.findViewById(R.id.btn_drawer_settings);
-        if (btnDrawerSettings != null) {
-            btnDrawerSettings.setOnClickListener(v -> {
-                if (chatDrawerRoot != null) chatDrawerRoot.closeDrawer(androidx.core.view.GravityCompat.START);
-                startActivity(AISettingsActivity.newIntent(requireContext(), AISettingsActivity.FRAGMENT_PROVIDER));
-            });
-        }
-        View btnDrawerHistory = root.findViewById(R.id.btn_drawer_history);
-        if (btnDrawerHistory != null) {
-            btnDrawerHistory.setOnClickListener(v -> {
-                // History button on the drawer just re-opens the thread list
-                // view (which is what the drawer already shows). Refresh it.
-                refreshThreads();
+        // Drawer header: "new chat" shortcut button. Starts a fresh
+        // conversation and closes the drawer so the user can begin typing
+        // immediately. Previously the drawer had two redundant buttons
+        // (history = just refreshed the list; settings = duplicated the
+        // hammer icon in the chat header) which cluttered the UI.
+        View btnDrawerNewChat = root.findViewById(R.id.btn_drawer_new_chat);
+        if (btnDrawerNewChat != null) {
+            btnDrawerNewChat.setOnClickListener(v -> {
+                if (chatDrawerRoot != null) {
+                    chatDrawerRoot.closeDrawer(androidx.core.view.GravityCompat.START);
+                }
+                clearConversation();
             });
         }
 
