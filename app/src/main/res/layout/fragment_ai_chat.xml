@@ -31,8 +31,7 @@
     android:id="@+id/chat_drawer_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/ai_chat_background"
-    android:fitsSystemWindows="true">
+    android:background="@color/ai_chat_background">
 
     <RelativeLayout
         android:id="@+id/chat_root"
