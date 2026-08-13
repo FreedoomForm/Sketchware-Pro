@@ -1,6 +1,8 @@
 package com.sketchware.ai.tools;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -84,5 +86,101 @@ public final class ToolRegistry {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    /**
+     * Attempt to infer the intended tool from its arguments when the provider
+     * returned an empty or {@code "unknown"} tool name.
+     *
+     * <p>This is a fallback for proxies (notably AgentRouter when proxying
+     * Claude) that occasionally emit {@code "name":""} in tool_call deltas.
+     * The model clearly knows which tool it wanted (the arguments match a
+     * specific tool's schema), but the name was stripped in transit. Without
+     * this inference, the tool executor returns {@code "Unknown tool: ''"},
+     * the model retries the same empty-name call, and the loop detector
+     * escalates to an abort — leaving the user with a dead chat.
+     *
+     * <p><b>Matching algorithm</b> (conservative,优先 precision over recall):
+     * <ol>
+     *   <li>Parse {@code argsJson} as a JSON object. If parsing fails, return
+     *       {@code null} (no inference possible).</li>
+     *   <li>For each registered tool, extract its schema's property names
+     *       (from the {@code properties} object) and required-field names.</li>
+     *   <li>A tool is a <b>candidate</b> if:
+     *       <ul>
+     *         <li>Every required field in the schema is present in {@code argsJson}, AND</li>
+     *         <li>Every key in {@code argsJson} exists in the schema's properties.</li>
+     *       </ul>
+     *       This means the args are a valid instantiation of the schema
+     *       (modulo type-checking, which we skip for performance).</li>
+     *   <li>If exactly one candidate remains, return it. If zero or multiple
+     *       candidates remain, return {@code null} — ambiguous inference is
+     *       worse than no inference because it could silently invoke the
+     *       wrong tool.</li>
+     * </ol>
+     *
+     * <p>Example: args {@code {"question":"..."}} matches only
+     * {@code ask_question} (the only tool with a {@code question} property),
+     * so the inference succeeds. Args {@code {"action":"delete"}} would match
+     * many universal tools and thus return {@code null}.
+     *
+     * @param argsJson the raw JSON arguments string from the tool_call
+     * @return the inferred tool, or {@code null} if inference is ambiguous
+     */
+    public SketchwareTool inferFromArgs(String argsJson) {
+        if (argsJson == null || argsJson.isEmpty() || "{}".equals(argsJson)) {
+            return null;
+        }
+        JsonObject args;
+        try {
+            args = JsonParser.parseString(argsJson).getAsJsonObject();
+        } catch (Exception e) {
+            return null;
+        }
+        if (args.size() == 0) return null;
+
+        SketchwareTool match = null;
+        int matchCount = 0;
+        for (SketchwareTool t : tools.values()) {
+            if (isCandidate(args, t)) {
+                match = t;
+                matchCount++;
+                if (matchCount > 1) return null;  // ambiguous — bail
+            }
+        }
+        return match;
+    }
+
+    /**
+     * Check whether {@code args} is a valid instantiation of {@code tool}'s
+     * schema: every required field is present, and every arg key exists in
+     * the schema's properties.
+     */
+    private boolean isCandidate(JsonObject args, SketchwareTool tool) {
+        JsonObject schema;
+        try {
+            schema = tool.jsonSchema();
+        } catch (Throwable t) {
+            return false;
+        }
+        if (schema == null || !schema.has("properties")) {
+            // No properties declared — only matches if args is empty (which
+            // we already excluded in the caller).
+            return false;
+        }
+        JsonObject props = schema.getAsJsonObject("properties");
+        // Every key in args must exist in schema properties.
+        for (String key : args.keySet()) {
+            if (!props.has(key)) return false;
+        }
+        // Every required field must be present in args.
+        if (schema.has("required") && schema.get("required").isJsonArray()) {
+            for (JsonElement e : schema.getAsJsonArray("required")) {
+                if (!e.isJsonPrimitive()) continue;
+                String req = e.getAsString();
+                if (!args.has(req)) return false;
+            }
+        }
+        return true;
     }
 }

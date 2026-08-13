@@ -445,6 +445,26 @@ public final class AgentRuntime {
                 // later iteration gets a fresh set of retries.
                 compactionRetries = 0;
 
+                // Tool-name inference: some proxies (notably AgentRouter when
+                // proxying Claude) occasionally emit "name":"" in the tool_call
+                // delta. The OpenAiProvider parser converts this to "unknown".
+                // When we see an empty or "unknown" name, try to infer the
+                // intended tool by matching the argument keys against every
+                // registered tool's JSON schema. If exactly one tool matches,
+                // replace the call with a corrected version. This happens
+                // BEFORE the assistant message is added to history so that
+                // both the conversation history and the execution loop see
+                // the corrected name — otherwise the next LLM round-trip
+                // would receive an assistant message with tool_calls:[{name:""}]
+                // which confuses the model into retrying the empty-name call.
+                if (!pendingToolCalls.isEmpty()) {
+                    List<AgentMessage.ToolCall> resolved = new ArrayList<>(pendingToolCalls.size());
+                    for (AgentMessage.ToolCall c : pendingToolCalls) {
+                        resolved.add(resolveToolName(c, listener));
+                    }
+                    pendingToolCalls = resolved;
+                }
+
                 // Add assistant message to history.
                 conversationHistory.add(AgentMessage.assistant(
                         textBuf.toString(),
@@ -490,7 +510,8 @@ public final class AgentRuntime {
                 // Execute tools sequentially.
                 List<AgentMessage.ToolResultContent> results = new ArrayList<>();
                 boolean submitAndExit = false;
-                for (AgentMessage.ToolCall call : pendingToolCalls) {
+                for (int callIdx = 0; callIdx < pendingToolCalls.size(); callIdx++) {
+                    AgentMessage.ToolCall call = pendingToolCalls.get(callIdx);
                     if (abortController.isAborted()) break;
                     listener.onToolStart(call.id, call.name, call.argumentsJson);
                     // Loop detection: observe the call before executing.
@@ -613,7 +634,49 @@ public final class AgentRuntime {
                 profile.forceFlatToolFormat);
     }
 
+    /**
+     * Resolve the effective tool name for a call, applying schema-matching
+     * inference when the provider returned an empty or "unknown" name.
+     *
+     * <p>Symptom this fixes: AgentRouter (and possibly other proxies) sometimes
+     * emit {@code "name":""} in the tool_call delta when proxying Claude. The
+     * OpenAiProvider parser converts this to "unknown". Without inference, the
+     * tool executor returns "Unknown tool: ''", the model retries the same
+     * empty-name call, and the loop detector escalates to an abort — leaving
+     * the user with a dead chat.
+     *
+     * <p>If inference succeeds (exactly one registered tool's schema matches
+     * the call's arguments), a NEW ToolCall with the corrected name is
+     * returned. Otherwise the original call is returned unchanged. The
+     * listener is notified with a warning when inference fires, so the user
+     * can see what happened in the chat UI.
+     *
+     * @see ToolRegistry#inferFromArgs(String)
+     */
+    private AgentMessage.ToolCall resolveToolName(AgentMessage.ToolCall call, AgentListener listener) {
+        String name = call.name;
+        if (name != null && !name.isEmpty() && !"unknown".equals(name)) {
+            return call;  // name is valid — no inference needed
+        }
+        SketchwareTool inferred = toolRegistry.inferFromArgs(call.argumentsJson);
+        if (inferred == null) {
+            return call;  // ambiguous or no match — leave as-is, let executeTool error out
+        }
+        String inferredName = inferred.name();
+        listener.onWarning("Inferred tool '" + inferredName
+                + "' from arguments (provider returned empty/unknown name).");
+        // Return a new ToolCall with the corrected name. The id and
+        // argumentsJson are preserved so the provider's tool_call_id
+        // correlation and the argument payload remain intact.
+        return new AgentMessage.ToolCall(call.id, inferredName, call.argumentsJson);
+    }
+
     private ToolResult executeTool(AgentMessage.ToolCall call, AgentListener listener) {
+        // NOTE: tool-name inference happens in resolveToolName() at the top
+        // of the execute loop, BEFORE this method is called. By the time we
+        // get here, call.name has already been rewritten to the inferred
+        // name (if inference was needed). See resolveToolName() for the
+        // full rationale.
         SketchwareTool tool = toolRegistry.get(call.name);
         if (tool == null) {
             return ToolResult.error("Unknown tool: '" + call.name

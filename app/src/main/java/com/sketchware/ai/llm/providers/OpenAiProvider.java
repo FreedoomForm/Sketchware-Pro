@@ -505,7 +505,22 @@ public class OpenAiProvider implements LlmProvider {
                                 // field entirely, so don't gate on type == "function".
                                 JsonObject fn = tc.has("function") ? tc.getAsJsonObject("function") : tc;
                                 if (fn.has("name") && !fn.get("name").isJsonNull()) {
-                                    toolNames.put(idx, fn.get("name").getAsString());
+                                    String n = fn.get("name").getAsString();
+                                    // CRITICAL: don't store empty strings as tool names.
+                                    // Some proxies (notably AgentRouter when proxying
+                                    // Claude) occasionally emit "name":"" in the
+                                    // tool_call delta. If we store "", the downstream
+                                    // toolNames.getOrDefault(idx,"unknown") returns ""
+                                    // (the key exists), and the tool executor fails
+                                    // with "Unknown tool: ''" — triggering an infinite
+                                    // loop as the model retries the same empty-name
+                                    // call. By skipping empty names here, we let the
+                                    // "unknown" fallback kick in, and AgentRuntime's
+                                    // schema-matching inference can then identify the
+                                    // intended tool from its arguments.
+                                    if (n != null && !n.isEmpty()) {
+                                        toolNames.put(idx, n);
+                                    }
                                 }
                                 if (fn.has("arguments") && !fn.get("arguments").isJsonNull()) {
                                     String partial = fn.get("arguments").getAsString();
@@ -678,7 +693,14 @@ public class OpenAiProvider implements LlmProvider {
                                             : "call_" + toolCalls.size() + "_" + System.currentTimeMillis();
                                     JsonObject fn = tc.has("function") ? tc.getAsJsonObject("function") : tc;
                                     String name = fn.has("name") && !fn.get("name").isJsonNull()
-                                            ? fn.get("name").getAsString() : "unknown";
+                                            ? fn.get("name").getAsString() : "";
+                                    // Don't pass empty string through — let the
+                                    // "unknown" fallback trigger schema-matching
+                                    // inference in AgentRuntime. See streaming
+                                    // parser above for the full rationale.
+                                    if (name == null || name.isEmpty()) {
+                                        name = "unknown";
+                                    }
                                     String args = fn.has("arguments") && !fn.get("arguments").isJsonNull()
                                             ? fn.get("arguments").getAsString() : "{}";
                                     toolCalls.add(new AgentMessage.ToolCall(id, name, args));
