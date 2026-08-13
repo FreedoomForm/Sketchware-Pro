@@ -158,6 +158,21 @@ public final class ChatFragment extends Fragment {
     private ProviderConfigStore.Profile profile;
 
     /**
+     * ID of the currently-loaded task in {@link #taskHistoryStore}, or null
+     * if the user is on a fresh conversation that hasn't been saved yet.
+     * <p>
+     * When the user sends the first message in a new chat, {@link #autoSaveTask()}
+     * calls {@code store.save(...)} to create a new task file and stores the
+     * returned ID here. Subsequent saves for the same conversation call
+     * {@code store.update(currentTaskId, ...)} so all messages land in the
+     * same task file instead of spawning a new file per turn.
+     * <p>
+     * Reset to null by {@link #clearConversation()} (the "new chat" button)
+     * so the next run starts a fresh task file again.
+     */
+    private String currentTaskId;
+
+    /**
      * Lazily-initialized task history store. Persists completed conversations
      * so the user can resume or branch them later. Mirrors Cline's
      * {@code HistoryItem} + task-history controller.
@@ -690,6 +705,10 @@ public final class ChatFragment extends Fragment {
             agent = null;
         }
         isRunning = false;
+        // Drop the current task ID so the next autoSaveTask() creates a NEW
+        // task file instead of overwriting the previous conversation the
+        // user just cleared.
+        currentTaskId = null;
         reducer.reset();
         if (adapter != null) adapter.submitList(reducer.getMessages());
         if (btnSend != null) btnSend.setEnabled(true);
@@ -956,6 +975,10 @@ public final class ChatFragment extends Fragment {
                 // streaming indicator but show a "Stopped" snackbar instead
                 // of "Task complete".
                 isRunning = false;
+                // Auto-save the partial conversation so the user can resume
+                // the aborted task later from the chat list. Same logic as
+                // onComplete — uses currentTaskId to update vs. create.
+                autoSaveTask();
                 runOnUiIfAlive(() -> {
                     reducer.finishStreaming();
                     // Same duplicate-avoidance as onComplete: only emit a
@@ -1532,6 +1555,9 @@ public final class ChatFragment extends Fragment {
             agent.abort();
             agent.setConversationHistory(conv);
         }
+        // Track the loaded task ID so subsequent autoSaveTask() calls update
+        // this task file instead of creating a new one for every reply.
+        currentTaskId = taskId;
         // Rebuild the UI reducer from the loaded conversation.
         reducer.reset();
         for (AgentMessage m : conv) {
@@ -1561,7 +1587,19 @@ public final class ChatFragment extends Fragment {
 
     /**
      * Auto-save the current conversation to task history. Called from the
-     * onComplete listener.
+     * onComplete and onAborted listeners.
+     *
+     * <p>If {@link #currentTaskId} is null (fresh conversation), creates a new
+     * task file via {@code store.save(...)} and stores the returned ID. If
+     * non-null (continuing an existing conversation), updates the existing
+     * task file in-place via {@code store.update(currentTaskId, ...)} so all
+     * messages land in the same task file instead of spawning a new file per
+     * turn — which previously caused the chat list to fill up with one entry
+     * per assistant reply.
+     *
+     * <p>After writing, calls {@link #refreshThreads()} so the drawer list
+     * reflects the new/updated entry immediately (previously the user had to
+     * close and reopen the drawer to see new chats).
      */
     private void autoSaveTask() {
         if (agent == null) return;
@@ -1574,7 +1612,23 @@ public final class ChatFragment extends Fragment {
             // can show the provider's emblem instead of a generic bot icon.
             String pid = profile != null ? profile.providerId : null;
             String mid = profile != null ? profile.modelId : null;
-            store.save(conv, scId, "Sketchware Project", pid, mid);
+            if (currentTaskId == null) {
+                currentTaskId = store.save(conv, scId, "Sketchware Project", pid, mid);
+            } else {
+                try {
+                    store.update(currentTaskId, conv, pid, mid);
+                } catch (IOException updateFailed) {
+                    // The task file may have been deleted from disk (e.g. the
+                    // user wiped app data, or removed the chat from the
+                    // drawer while the agent was running). Fall back to
+                    // creating a new task so the conversation is not lost.
+                    currentTaskId = store.save(conv, scId, "Sketchware Project", pid, mid);
+                }
+            }
+            // Refresh the drawer list so the new/updated entry shows up
+            // immediately. Without this, the user only saw new chats after
+            // closing and reopening the drawer.
+            runOnUiIfAlive(this::refreshThreads);
         } catch (Throwable ignored) {
             // Auto-save failures should be silent.
         }
