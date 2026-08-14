@@ -87,8 +87,9 @@ public class ToolPermissionGate {
      */
     public Decision decide(SketchwareTool tool, JsonObject args) {
         if (tool == null) return Decision.DENY;
-        if (mode == AgentMode.PLAN) {
-            // In plan mode only read-only tools are allowed.
+        // Both RESEARCH and PLAN modes are read-only — only read-only
+        // tools are allowed. Mirrors AutoApprover's RESEARCH+PLAN gate.
+        if (mode == AgentMode.PLAN || mode == AgentMode.RESEARCH) {
             return tool.isReadOnly() ? Decision.AUTO_APPROVE : Decision.DENY;
         }
         if (mode == AgentMode.YOLO) {

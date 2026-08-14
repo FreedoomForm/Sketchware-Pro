@@ -488,9 +488,10 @@ public final class ChatFragment extends Fragment {
         String label;
         boolean planChecked;
         switch (mode) {
-            case PLAN: label = "Plan";  planChecked = true;  break;
-            case YOLO: label = "Yolo";  planChecked = false; break;
-            default:   label = "Act";   planChecked = false; break;
+            case RESEARCH: label = "Research"; planChecked = false; break;
+            case PLAN:     label = "Plan";     planChecked = true;  break;
+            case YOLO:     label = "Yolo";     planChecked = false; break;
+            default:       label = "Act";      planChecked = false; break;
         }
         updatingModeUi = true;
         try {
@@ -1291,7 +1292,7 @@ public final class ChatFragment extends Fragment {
      * <ul>
      *   <li>{@code /new} {@code /clear} — discard the conversation.</li>
      *   <li>{@code /help} — show command help as a system message.</li>
-     *   <li>{@code /mode <act|plan|yolo>} — switch agent mode.</li>
+     *   <li>{@code /mode <research|plan|act|yolo>} — switch agent mode.</li>
      *   <li>{@code /cost} — show token usage / cost summary.</li>
      *   <li>{@code /tools} — list registered tool names.</li>
      *   <li>{@code /context} — show context window usage estimate.</li>
@@ -1318,11 +1319,13 @@ public final class ChatFragment extends Fragment {
                 String modeArg = cmd.arg == null ? "" : cmd.arg.toLowerCase();
                 AgentMode newMode;
                 switch (modeArg) {
-                    case "act":  newMode = AgentMode.ACT; break;
-                    case "plan": newMode = AgentMode.PLAN; break;
-                    case "yolo": newMode = AgentMode.YOLO; break;
+                    case "act":      newMode = AgentMode.ACT; break;
+                    case "plan":     newMode = AgentMode.PLAN; break;
+                    case "research": newMode = AgentMode.RESEARCH; break;
+                    case "yolo":     newMode = AgentMode.YOLO; break;
                     default:
-                        reducer.addError("Unknown mode: " + cmd.arg + ". Use act, plan, or yolo.");
+                        reducer.addError("Unknown mode: " + cmd.arg
+                                + ". Use research, plan, act, or yolo.");
                         if (adapter != null) adapter.submitList(reducer.getMessages());
                         return true;
                 }

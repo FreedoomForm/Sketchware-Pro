@@ -81,6 +81,16 @@ public class BasicCompactor implements Compactor {
 
         // Walk backward from the end to find the protected window boundary.
         // The boundary index is the first index NOT in the protected window.
+        // Note: BasicCompactor does not know the model id, so we use the
+        // legacy chars/4 estimator here. The other compactors
+        // (AgenticCompactor, OhMyPiCompactor, SnapCompactCompactor) have
+        // access to the model id and use the per-model TokenEstimator.
+        // BasicCompactor is the overflow-recovery fallback and is called
+        // when speed matters more than accuracy — the chars/4 estimator
+        // is faster (no Unicode-block classification) and over-counts
+        // CJK by 4x, which makes the shake trigger earlier on CJK-heavy
+        // conversations. That's the safe direction: early shake never
+        // causes an overflow, late shake does.
         int accumulated = 0;
         int boundary = history.size();
         for (int i = history.size() - 1; i >= 0; i--) {

@@ -16,6 +16,7 @@ import com.sketchware.ai.llm.UsageTracker;
 import com.sketchware.ai.llm.reasoning.ReasoningEffort;
 import com.sketchware.ai.llm.reasoning.ReasoningRequest;
 import com.sketchware.ai.llm.storage.ProviderConfigStore;
+import com.sketchware.ai.prompt.PlanActPrompts;
 import com.sketchware.ai.prompt.SystemPromptBuilder;
 import com.sketchware.ai.prompt.UserInputModeWrapper;
 import com.sketchware.ai.tools.AutoApprover;
@@ -118,6 +119,16 @@ public final class AgentRuntime {
      * runtime's turn-preparation step.
      */
     private volatile AgentMode pendingModeSwitchFrom = null;
+
+    /**
+     * Research summary captured from the most recent RESEARCH-mode turn.
+     * When the user toggles RESEARCH → PLAN, this summary is prepended
+     * to the next user message as a {@code <prior_research>} block so
+     * the planner starts from the researcher's findings. Mirrors Cline
+     * 3.x's research-summary handoff.
+     */
+    private volatile String pendingResearchSummary = null;
+
     private int maxIterations = DEFAULT_MAX_ITERATIONS;
 
     public AgentRuntime(LlmProvider provider,
@@ -303,6 +314,25 @@ public final class AgentRuntime {
             this.pendingModeSwitchFrom = null;
             String wrappedInput = UserInputModeWrapper.wrap(userInput, mode, previousMode);
 
+            // RESEARCH → PLAN handoff: if the user just switched from
+            // RESEARCH to PLAN and we have a stashed research summary,
+            // prepend it to the user's message as a <prior_research>
+            // block. The system prompt's PRIOR_RESEARCH_HEADER tells the
+            // planner to build on these findings instead of redoing the
+            // research. Mirrors Cline 3.x's research-summary handoff.
+            if (mode == AgentMode.PLAN
+                    && previousMode == AgentMode.RESEARCH
+                    && pendingResearchSummary != null) {
+                String priorResearchBlock = PlanActPrompts.PRIOR_RESEARCH_HEADER
+                        + "<prior_research>\n"
+                        + pendingResearchSummary
+                        + "\n</prior_research>\n\n";
+                wrappedInput = priorResearchBlock + wrappedInput;
+                // Clear the stash so a subsequent PLAN→PLAN message
+                // doesn't get the same prior_research block twice.
+                pendingResearchSummary = null;
+            }
+
             if (images != null && !images.isEmpty()) {
                 conversationHistory.add(AgentMessage.userWithImages(wrappedInput, images));
             } else {
@@ -471,6 +501,21 @@ public final class AgentRuntime {
                         reasonBuf.toString(),
                         pendingToolCalls.isEmpty() ? null : pendingToolCalls));
 
+                // RESEARCH mode: extract any <research_summary> block from
+                // the assistant's text and stash it for the next PLAN
+                // session. When the user toggles RESEARCH → PLAN, the
+                // next user message will be prepended with a
+                // <prior_research> block so the planner starts from the
+                // researcher's findings instead of from scratch.
+                // Mirrors Cline 3.x's research-summary handoff.
+                if (mode == AgentMode.RESEARCH) {
+                    String summary = extractResearchSummary(textBuf.toString());
+                    if (summary != null) {
+                        pendingResearchSummary = summary;
+                        listener.onWarning("Research summary captured. Toggle to Plan mode to build on it.");
+                    }
+                }
+
                 // No tool calls = end of turn.
                 if (pendingToolCalls.isEmpty()) {
                     listener.onComplete(textBuf.toString());
@@ -506,6 +551,49 @@ public final class AgentRuntime {
                 pendingToolCalls = dedupedCalls;
 
                 listener.onToolCalls(pendingToolCalls);
+
+                // TodoList active-todo guard (Cline 3.x requireTodosInRange).
+                // Before executing any non-meta tool, check that at least
+                // one TODO item is in_progress. If not, inject a warning
+                // and a synthetic tool_result telling the LLM to mark one
+                // in_progress. This forces the agent to track progress
+                // through multi-step tasks instead of running tools
+                // blindly, which was a major source of "agent did 12
+                // things, none of them what I asked for" complaints.
+                //
+                // The guard is skipped:
+                //   - when the TODO list is empty (the LLM may not need
+                //     a list for trivial single-step tasks),
+                //   - for meta tools (todo_list itself, ask_question,
+                //     submit_and_exit) which manage the list,
+                //   - in RESEARCH mode (research is exploratory, not
+                //     task-tracked).
+                if (mode != AgentMode.RESEARCH
+                        && !com.sketchware.ai.tools.meta.TodoListTool.isEmpty()
+                        && !com.sketchware.ai.tools.meta.TodoListTool.hasActiveTodo()
+                        && pendingToolCalls.stream().anyMatch(c -> isNonMetaTool(c.name))) {
+                    String nudge = "No TODO item is marked in_progress, but you have a TODO list. "
+                            + "Before calling any tool, mark exactly one TODO item as in_progress "
+                            + "with action=update (or action=write) and provide an active_form. "
+                            + "This tracks what you are doing right now so the user can follow along.";
+                    listener.onWarning(nudge);
+                    // Inject a synthetic tool_result for every pending call
+                    // so the LLM sees explicit feedback that its calls were
+                    // skipped — instead of silently executing them.
+                    List<AgentMessage.ToolResultContent> skippedResults = new ArrayList<>();
+                    for (AgentMessage.ToolCall c : pendingToolCalls) {
+                        if (!isNonMetaTool(c.name)) continue;
+                        skippedResults.add(new AgentMessage.ToolResultContent(
+                                c.id, c.name, nudge, true));
+                    }
+                    if (!skippedResults.isEmpty()) {
+                        conversationHistory.add(AgentMessage.toolResult(skippedResults));
+                        // Skip actual execution this iteration — the LLM
+                        // will see the warning and (hopefully) call
+                        // todo_list first, then retry.
+                        continue;
+                    }
+                }
 
                 // Execute tools sequentially.
                 List<AgentMessage.ToolResultContent> results = new ArrayList<>();
@@ -771,15 +859,57 @@ public final class AgentRuntime {
         return "Task complete.";
     }
 
+    /**
+     * Regex used to extract a {@code <research_summary>...</research_summary>}
+     * block from the assistant's text. Non-greedy so it stops at the first
+     * closing tag. Mirrors Cline 3.x's research-summary extractor.
+     */
+    private static final java.util.regex.Pattern RESEARCH_SUMMARY_RE =
+        java.util.regex.Pattern.compile("<research_summary>\\s*([\\s\\S]*?)\\s*</research_summary>");
+
+    /**
+     * Extract the contents of a {@code <research_summary>} block from
+     * the assistant's text. Returns null if no block is present.
+     */
+    private static String extractResearchSummary(String text) {
+        if (text == null || text.isEmpty()) return null;
+        java.util.regex.Matcher m = RESEARCH_SUMMARY_RE.matcher(text);
+        if (m.find()) return m.group(1).trim();
+        return null;
+    }
+
     private static String truncateForError(String s) {
         if (s == null) return "null";
         return s.length() <= 200 ? s : s.substring(0, 200) + "...(" + s.length() + " chars)";
     }
 
     private int estimateTokens() {
-        int sum = 0;
-        for (AgentMessage m : conversationHistory) sum += m.estimateTokens();
-        return sum;
+        // Use the per-model TokenEstimator (CJK-aware, family-specific
+        // ratios) instead of the legacy chars/4 heuristic. The legacy
+        // estimator under-counts CJK by 4x and Claude by 12%, which
+        // caused the compaction trigger to fire too late on mixed
+        // conversations. The estimator is a no-op when profile.modelId
+        // is empty (falls back to the generic family with chars/4).
+        String modelId = profile != null ? profile.modelId : null;
+        return com.sketchware.ai.llm.TokenEstimator.estimateTokens(conversationHistory, modelId);
+    }
+
+    /**
+     * Return true if the tool name is NOT one of the meta tools that
+     * manage the TODO list or terminate the conversation. Used by the
+     * TodoList active-todo guard to skip the guard when the LLM is
+     * itself trying to update the TODO list.
+     */
+    private static boolean isNonMetaTool(String name) {
+        if (name == null) return false;
+        switch (name) {
+            case "todo_list":
+            case "ask_question":
+            case "submit_and_exit":
+                return false;
+            default:
+                return true;
+        }
     }
 
     /** Forward a warning to the listener if one is attached. Null-safe. */

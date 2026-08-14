@@ -15,7 +15,7 @@ import java.util.List;
  *   <li>{@code /compact} - manually trigger context compaction.</li>
  *   <li>{@code /help} - show available commands.</li>
  *   <li>{@code /export} - export the conversation to a file.</li>
- *   <li>{@code /mode <act|plan|yolo>} - switch agent mode.</li>
+ *   <li>{@code /mode <research|plan|act|yolo>} - switch agent mode.</li>
  *   <li>{@code /cost} - show token usage and cost summary.</li>
  *   <li>{@code /undo} - undo the last user message + assistant response.</li>
  *   <li>{@code /exit} - close the chat session.</li>
@@ -42,7 +42,7 @@ public final class SlashCommandProcessor {
             new CommandSpec("compact",  "Manually trigger context compaction",                   "",          false),
             new CommandSpec("help",     "Show available slash commands",                         "",          false),
             new CommandSpec("export",   "Export conversation to a file",                         "[path]",    false),
-            new CommandSpec("mode",     "Switch agent mode (act, plan, yolo)",                   "<mode>",    true),
+            new CommandSpec("mode",     "Switch agent mode (research, plan, act, yolo)",         "<mode>",    true),
             new CommandSpec("cost",     "Show token usage and cost summary",                     "",          false),
             new CommandSpec("undo",     "Undo the last user message + assistant response",       "",          false),
             new CommandSpec("exit",     "Close the chat session",                                "",          false),

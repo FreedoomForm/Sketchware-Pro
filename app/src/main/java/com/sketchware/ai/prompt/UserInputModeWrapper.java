@@ -126,15 +126,16 @@ public final class UserInputModeWrapper {
     /**
      * Map an {@link AgentMode} to the wire name used in the
      * {@code mode="..."} attribute. Matches Cline's vocabulary:
-     * {@code "plan"}, {@code "act"}, {@code "yolo"}.
+     * {@code "research"}, {@code "plan"}, {@code "act"}, {@code "yolo"}.
      */
     static String modeName(AgentMode mode) {
         if (mode == null) return "act";
         switch (mode) {
-            case PLAN: return "plan";
-            case YOLO: return "yolo";
+            case RESEARCH: return "research";
+            case PLAN:     return "plan";
+            case YOLO:     return "yolo";
             case ACT:
-            default:   return "act";
+            default:       return "act";
         }
     }
 
@@ -142,11 +143,14 @@ public final class UserInputModeWrapper {
      * One-sentence summary of a mode's constraints, used inside
      * {@code <mode_notice>}. Keeps the notice scannable — the full
      * contract lives in the system prompt via
-     * {@link PlanActPrompts#PLAN_MODE_INSTRUCTIONS_MANUAL_SWITCH}.
+     * {@link PlanActPrompts#PLAN_MODE_INSTRUCTIONS_MANUAL_SWITCH} /
+     * {@link PlanActPrompts#RESEARCH_MODE_INSTRUCTIONS}.
      */
     static String modeConstraintSummary(AgentMode mode) {
         if (mode == null) return "Act-mode constraints apply.";
         switch (mode) {
+            case RESEARCH:
+                return "Research-mode constraints now apply: read-only exploration, no edits or state-changing commands. End with a <research_summary> block.";
             case PLAN:
                 return "Plan-mode constraints now apply: no edits or state-changing commands until the user toggles to Act.";
             case YOLO:

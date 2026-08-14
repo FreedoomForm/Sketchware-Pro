@@ -162,11 +162,13 @@ public class SnapCompactCompactor implements Compactor {
     }
 
     /** Find the cut point: walk backward from the end until accumulated
-     *  tokens ≥ {@code keepTokens}. */
+     *  tokens ≥ {@code keepTokens}. Uses the per-model TokenEstimator
+     *  for accurate CJK/Latin/code ratios. */
     private int findCutPoint(LinkedList<AgentMessage> history, int start, int keepTokens) {
         int accumulated = 0;
         for (int i = history.size() - 1; i >= start; i--) {
-            accumulated += history.get(i).estimateTokens();
+            accumulated += com.sketchware.ai.llm.TokenEstimator.estimateTokens(
+                    history.get(i), modelId);
             if (accumulated >= keepTokens) {
                 return i;
             }

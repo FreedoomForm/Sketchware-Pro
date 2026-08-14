@@ -182,7 +182,12 @@ public class OhMyPiCompactor implements Compactor {
     private int findCutPoint(LinkedList<AgentMessage> history, int start, int keepTokens) {
         int accumulated = 0;
         for (int i = history.size() - 1; i >= start; i--) {
-            accumulated += history.get(i).estimateTokens();
+            // Use the per-model TokenEstimator for accurate CJK/Latin/code
+            // ratios. The legacy chars/4 heuristic under-counts CJK by 4x,
+            // causing the cut point to be placed too late on mixed-language
+            // conversations.
+            accumulated += com.sketchware.ai.llm.TokenEstimator.estimateTokens(
+                    history.get(i), modelId);
             if (accumulated >= keepTokens) {
                 return i;
             }

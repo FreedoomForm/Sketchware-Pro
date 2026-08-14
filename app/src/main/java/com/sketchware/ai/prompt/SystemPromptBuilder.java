@@ -128,7 +128,7 @@ public final class SystemPromptBuilder {
         sb.append("- `/compact` - manually trigger context compaction\n");
         sb.append("- `/help` - show available commands\n");
         sb.append("- `/export` - export the conversation\n");
-        sb.append("- `/mode <act|plan|yolo>` - switch agent mode\n");
+        sb.append("- `/mode <research|plan|act|yolo>` - switch agent mode\n");
         sb.append("- `/cost` - show token usage and cost summary\n");
         sb.append("- `/undo` - undo the last exchange\n");
         sb.append("- `/tools` - list all registered tools\n");
@@ -164,13 +164,25 @@ public final class SystemPromptBuilder {
         if (mode == AgentMode.PLAN) {
             sb.append(PlanActPrompts.PLAN_MODE_INSTRUCTIONS_MANUAL_SWITCH).append("\n\n");
         }
+        // Research-mode behavioral contract — only in RESEARCH mode.
+        // New in Cline 3.x. Read-only exploration that produces a
+        // <research_summary> block carried forward to the next PLAN
+        // session.
+        if (mode == AgentMode.RESEARCH) {
+            sb.append(PlanActPrompts.RESEARCH_MODE_INSTRUCTIONS).append("\n\n");
+        }
 
         // Mode-specific one-liner after the contract — keeps the chat
         // status legible to the model in a single sentence at the end of
         // the prompt header. The full contract above is authoritative;
         // this is just a quick orientation.
         sb.append("# Mode\n");
-        if (mode == AgentMode.PLAN) {
+        if (mode == AgentMode.RESEARCH) {
+            sb.append("You are in RESEARCH mode. Do not invoke any write tools. ")
+              .append("Read the project, search the web, gather context, and produce a ")
+              .append("<research_summary> block. When done, ask the user to ")
+              .append("\"toggle to Plan mode\" (use those words).\n");
+        } else if (mode == AgentMode.PLAN) {
             sb.append("You are in PLAN mode. Do not invoke any write tools. ")
               .append("Read the project, ask clarifying questions, and produce a step-by-step plan. ")
               .append("When the user approves, ask them to \"toggle to Act mode\" (use those words).\n");

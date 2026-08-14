@@ -119,7 +119,13 @@ public class AutoApprover {
     public Decision decide(SketchwareTool tool, JsonObject args) {
         if (tool == null) return Decision.DENY;
         if (mode == com.sketchware.ai.agent.AgentMode.YOLO) return Decision.AUTO_APPROVE;
-        if (mode == com.sketchware.ai.agent.AgentMode.PLAN) {
+        // Both RESEARCH and PLAN modes are read-only — only tools whose
+        // isReadOnly() flag is true are allowed. RESEARCH is identical to
+        // PLAN from the permission-gate perspective; the difference is the
+        // prompt contract (research produces a <research_summary>, plan
+        // produces a plan). Mirrors Cline 3.x's research-mode gate.
+        if (mode == com.sketchware.ai.agent.AgentMode.RESEARCH
+                || mode == com.sketchware.ai.agent.AgentMode.PLAN) {
             return tool.isReadOnly() ? Decision.AUTO_APPROVE : Decision.DENY;
         }
 
