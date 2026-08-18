@@ -100,6 +100,22 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void rejectsConditionalWithMissingSubstackReference() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean branch = new BlockBean("1", "", "", "if_state_equals");
+        branch.parameters.add("status");
+        branch.parameters.add("approved");
+        branch.subStack1 = 99;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Collections.singletonList(branch));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        assertThat(result.getDocument().getEvents()).isEmpty();
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(1);
+    }
+
     @Test public void importsProjectMetadataAndBlocksArbitraryNativeLibraries() {
         ProjectFileBean activity = new ProjectFileBean(ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY, "main");
         ProjectLibraryBean firebase = new ProjectLibraryBean(ProjectLibraryBean.PROJECT_LIB_TYPE_FIREBASE);

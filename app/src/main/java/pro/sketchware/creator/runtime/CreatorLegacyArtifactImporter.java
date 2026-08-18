@@ -228,8 +228,14 @@ public final class CreatorLegacyArtifactImporter {
             if (values.size() < 2 || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
             List<CreatorRuntimeBlock> thenBlocks = new ArrayList<>();
             List<CreatorRuntimeBlock> elseBlocks = new ArrayList<>();
-            convertChain(byId.get(block.subStack1), byId, visited, thenBlocks, unsupported);
-            if (block.subStack2 >= 0) convertChain(byId.get(block.subStack2), byId, visited, elseBlocks, unsupported);
+            BlockBean thenStart = byId.get(block.subStack1);
+            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+            convertChain(thenStart, byId, visited, thenBlocks, unsupported);
+            if (block.subStack2 >= 0) {
+                BlockBean elseStart = byId.get(block.subStack2);
+                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+                convertChain(elseStart, byId, visited, elseBlocks, unsupported);
+            }
             payload.put("stateId", values.get(0));
             payload.put("equals", values.get(1));
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_STATE_EQUALS, payload, thenBlocks, elseBlocks);
