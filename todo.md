@@ -57,3 +57,6 @@
 - [ ] Add test fixtures proving each component capability is either runtime-native, permission-aware host-plugin, or revision-pinned native fallback.
 - [x] Create a stable component capability matrix for every `ComponentBean` type with no implicit default classification.
 - [x] Validate the complete ComponentBean classification matrix with Creator Runtime regression tests.
+- [ ] Connect CreatorNativeBuildQueue to a real legacy ProjectBuilder invocation with revision provenance and compiler diagnostics.
+- [ ] Add an end-to-end fallback fixture proving an R3 capability creates a pinned build request and surfaces its result to the user.
+- [ ] Continue implementation and evidence collection without declaring completion until every audit record is closed and 100% coverage is independently verified.
