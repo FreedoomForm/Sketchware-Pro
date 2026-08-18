@@ -16,6 +16,7 @@ import com.sketchware.ai.tools.build.ProguardManageTool;
 import com.sketchware.ai.tools.component.ComponentAddTool;
 import com.sketchware.ai.tools.component.ComponentManageTool;
 import com.sketchware.ai.tools.component.ComponentSetPropertyTool;
+import com.sketchware.ai.tools.creator.CreatorRuntimeTool;
 import com.sketchware.ai.tools.component.CustomComponentManageTool;
 import com.sketchware.ai.tools.event.CustomEventManageTool;
 import com.sketchware.ai.tools.event.EventAttachTool;
@@ -89,7 +90,7 @@ import java.util.Map;
  * functional behaviour — not stubs.
  *
  * <p>Refactor pass 2 (2026-08-12): the 68-tool registry was further
- * consolidated into <b>45 tools</b> via {@link CategoryUmbrellaTool} —
+ * consolidated into <b>45 Sketchware tools</b> via {@link CategoryUmbrellaTool} —
  * a thin wrapper that groups 2-8 semantically related universal tools
  * under a single name + a {@code subcategory} enum parameter. The
  * umbrella forwards args to the matching underlying tool, which then
@@ -97,9 +98,9 @@ import java.util.Map;
  * full functional coverage while shrinking the LLM-visible tool list
  * by ~34%, improving tool-selection accuracy further.
  *
- * <h3>Final tool inventory (45 tools total)</h3>
+ * <h3>Current tool inventory (46 tools total)</h3>
  * <ul>
- *   <li><b>Specialized tools (24)</b> — bespoke logic that doesn't fit
+ *   <li><b>Specialized tools (25)</b> — bespoke logic that doesn't fit
  *       the action-enum pattern (e.g. ViewAddWidgetTool has 40-value
  *       type enum + library gating; BlockAddTool assembles block beans
  *       with complex param schemas; JavaEditFileTool does diff-based
@@ -227,6 +228,11 @@ public final class ToolRegistryInitializer {
         r.register(new AskQuestionTool());
         r.register(new SubmitAndExitTool());
         r.register(new TodoListTool());
+
+        // ===== Creator Runtime (1) =====
+        // This adapter submits exactly the same typed Project IR operations
+        // as Creator Home and never writes files outside the shared runtime.
+        r.register(new CreatorRuntimeTool());
 
         // ===== Filesystem tools (2) =====
         r.register(new ListFilesTool());

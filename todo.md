@@ -14,3 +14,16 @@
 - [x] Remove stale hidden layout-tool names from live tool descriptions injected into the system prompt.
 - [x] Add regression tests for the corrected tool execution and prompt contract.
 - [x] Validate and publish the corrected AI-agent behavior.
+- [x] Map the proposed white launcher, project entry button, editable in-app entry control, auto-save/build, preview, and shake-recovery flow onto current architecture.
+- [x] Define a safe phased implementation plan for the creator mode without removing recoverability or project transparency.
+- [x] Map the current Sketchware feature surface that a live-update runtime must preserve.
+- [x] Compare Dart/Flutter, an interpreted runtime, and a hybrid migration path for live project updates.
+- [x] Write and review the Creator Runtime product charter, compatibility policy, and success criteria.
+- [x] Define the versioned Project IR, operation log, checkpoint, recovery, and diagnostic contracts.
+- [x] Build the core runtime state layer with deterministic operations and regression tests.
+- [x] Build Creator Home, live preview, editable editor-entry control, and shake recovery.
+- [x] Route AI and manual edits through the same validated operation pipeline with visible history.
+- [x] Add plugin migration tiers, revision-pinned native-build queue contracts, and background diagnostic logging foundations.
+- [ ] Implement production plugin bridges and connect the native-build queue to the existing Sketchware compiler.
+- [x] Validate deterministic user/AI operation flows, document persistence, recovery protection, compatibility tiers, and build-queue provenance with JVM regression tests.
+- [ ] Complete device or emulator interaction tests, migration import tests, and a full debug APK package; the sandbox stalls during external dex merging.

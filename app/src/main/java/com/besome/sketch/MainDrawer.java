@@ -27,6 +27,7 @@ import dev.chrisbanes.insetter.Side;
 import mod.hilal.saif.activities.tools.AppSettings;
 import pro.sketchware.R;
 import pro.sketchware.activities.about.AboutActivity;
+import pro.sketchware.creator.CreatorHomeActivity;
 import pro.sketchware.utility.UI;
 
 public class MainDrawer extends NavigationView {
@@ -105,6 +106,10 @@ public class MainDrawer extends NavigationView {
             activity.startActivity(intent);
         } else if (id == R.id.create_release_keystore) {
             Intent intent = new Intent(activity, NewKeyStoreActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            activity.startActivity(intent);
+        } else if (id == R.id.creator_runtime) {
+            Intent intent = new Intent(activity, CreatorHomeActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             activity.startActivity(intent);
         }

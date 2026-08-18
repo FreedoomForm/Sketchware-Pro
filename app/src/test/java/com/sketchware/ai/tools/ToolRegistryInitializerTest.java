@@ -7,7 +7,7 @@ import org.junit.Test;
 /**
  * Unit tests for {@link ToolRegistryInitializer}.
  *
- * <p>Verifies that the default registry contains exactly 45 tools with
+ * <p>Verifies that the default registry contains exactly 46 tools with
  * unique names and valid JSON schemas, after the 2026-08-12 umbrella
  * consolidation that collapsed 68 tools into 45 via {@link CategoryUmbrellaTool}.
  */
@@ -24,10 +24,10 @@ public class ToolRegistryInitializerTest {
         //   view_manage, event_manage, component_misc, project_manage,
         //   build_manage, library_manage, manifest_manage, resource_manage.
         //
-        // Asserting exactly 45 — further reduction below this point would
-        // require merging Block tools (kept standalone for LLM disambiguation)
-        // or removing functionality.
-        assertThat(r.size()).isEqualTo(45);
+        // The Creator Runtime adapter is intentionally additive: it exposes
+        // the same validated operation pipeline as the visual Creator UI.
+        assertThat(r.size()).isEqualTo(46);
+        assertThat(r.has("creator_runtime")).isTrue();
     }
 
     @Test public void expectedUmbrellaToolsAreRegistered() {

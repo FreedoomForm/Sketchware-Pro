@@ -90,6 +90,16 @@
             android:windowSoftInputMode="adjustNothing|stateHidden"
             android:theme="@style/Theme.SketchwarePro.SmallToolbar" />
         <activity
+            android:name="pro.sketchware.creator.CreatorProjectActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="false"
+            android:theme="@style/Theme.SketchwarePro.Starting" />
+        <activity
+            android:name="pro.sketchware.creator.CreatorHomeActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="false"
+            android:theme="@style/Theme.SketchwarePro.Starting" />
+        <activity
             android:name="pro.sketchware.activities.main.activities.MainActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"

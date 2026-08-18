@@ -24,6 +24,11 @@
         android:id="@+id/app_settings"
         android:icon="@drawable/ic_mtrl_settings"
         android:title="Settings" />
+
+    <item
+        android:id="@+id/creator_runtime"
+        android:icon="@drawable/ic_mtrl_arrow_right"
+        android:title="Creator Runtime" />
     <item android:title="Apps">
         <menu>
             <item
