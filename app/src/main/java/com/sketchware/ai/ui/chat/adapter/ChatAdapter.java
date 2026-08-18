@@ -150,7 +150,7 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
             if (time != null) time.setVisibility(View.GONE);
             // Show copy action on user messages too (handy for re-running prompts)
             if (messageActions != null) {
-                messageActions.setVisibility(View.GONE);
+                messageActions.setVisibility(m.text == null || m.text.isEmpty() ? View.GONE : View.VISIBLE);
             }
             if (actionCopy != null) {
                 actionCopy.setOnClickListener(v -> {
@@ -354,7 +354,8 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
                 progress.setVisibility(View.GONE);
                 if (imgToolStatus != null) {
                     imgToolStatus.setVisibility(View.VISIBLE);
-                    imgToolStatus.setImageResource(R.drawable.ic_mtrl_check);
+                    imgToolStatus.setImageResource(m.isError
+                            ? R.drawable.ic_mtrl_close : R.drawable.ic_mtrl_check);
                 }
                 if (textToolStatus != null) {
                     textToolStatus.setVisibility(View.VISIBLE);

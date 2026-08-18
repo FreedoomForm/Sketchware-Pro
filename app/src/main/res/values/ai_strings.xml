@@ -145,6 +145,9 @@
     <string name="ai_chat_model_selector_desc">Change model</string>
     <string name="ai_chat_input_web">Web search</string>
     <string name="ai_chat_input_tools">Tools</string>
+    <string name="ai_tool_catalog_title">AI tools</string>
+    <string name="ai_tool_catalog_description">Browse the capabilities available to your current agent.</string>
+    <string name="ai_tool_catalog_safety">Read-only tools run automatically. Changes request your approval unless Auto-approve is enabled.</string>
     <string name="ai_chat_mode_agent">Agent</string>
     <string name="ai_chat_cancel_run">Cancel current run</string>
     <string name="ai_chat_changed_files_placeholder">No files changed</string>

@@ -59,6 +59,7 @@ import com.sketchware.ai.tools.ToolRegistryInitializer;
 import com.sketchware.ai.ui.chat.adapter.ChatAdapter;
 import com.sketchware.ai.ui.chat.adapter.ChatThreadsAdapter;
 import com.sketchware.ai.ui.chat.sheet.AiModelPickerSheet;
+import com.sketchware.ai.ui.chat.sheet.AiToolCatalogSheet;
 import com.sketchware.ai.ui.chat.sheet.AiToolsBottomSheet;
 import com.sketchware.ai.ui.settings.AISettingsActivity;
 import com.sketchware.ai.ui.settings.AutoApproveFragment;
@@ -85,6 +86,7 @@ public final class ChatFragment extends Fragment {
     private View btnSend;
     private View btnStop;
     private View btnAttach;
+    private View btnTools;
     /**
      * Segmented Act/Plan toggle container. Two TextViews inside a pill —
      * tapping one side selects that mode. The container itself holds the
@@ -266,6 +268,7 @@ public final class ChatFragment extends Fragment {
         btnSend = root.findViewById(R.id.btn_send);
         btnStop = root.findViewById(R.id.btn_stop);
         btnAttach = root.findViewById(R.id.btn_attach);
+        btnTools = root.findViewById(R.id.btn_tools);
         btnMode = root.findViewById(R.id.btn_mode);
         modeSegmentAct = root.findViewById(R.id.mode_segment_act);
         modeSegmentPlan = root.findViewById(R.id.mode_segment_plan);
@@ -396,6 +399,9 @@ public final class ChatFragment extends Fragment {
         // ready before onStart. Here we just wire the click listener.
         if (btnAttach != null) {
             btnAttach.setOnClickListener(v -> showAttachSheet());
+        }
+        if (btnTools != null) {
+            btnTools.setOnClickListener(v -> AiToolCatalogSheet.show(requireContext(), toolRegistry));
         }
 
         // Model selector chip in the input bar — opens the model picker
@@ -1348,12 +1354,7 @@ public final class ChatFragment extends Fragment {
                 return true;
             }
             case "tools": {
-                if (toolRegistry == null) return true;
-                StringBuilder sb = new StringBuilder("Registered tools (" + toolRegistry.size() + "):\n");
-                for (SketchwareToolInterface t : listToolInterfaces()) {
-                    sb.append("  ").append(t.name).append(" — ").append(t.category).append("\n");
-                }
-                reducer.addCompletion(sb.toString());
+                reducer.addCompletion(AiToolCatalogSheet.summary(toolRegistry));
                 if (adapter != null) adapter.submitList(reducer.getMessages());
                 return true;
             }
