@@ -49,7 +49,7 @@ public final class ListFilesTool implements SketchwareTool {
                 + "'view' (all widget data), 'logic' (all blocks), 'file' (project file list), "
                 + "'library' (lib config), 'resource' (resource zip), 'project_config', "
                 + "'permission'. There is NO 'resource/layout' directory. To list layouts, "
-                + "use view_manage_layout with action='list' instead.";
+                + "use view_manage with subcategory='layout' and action='list' instead.";
     }
 
     @Override public JsonObject jsonSchema() {
@@ -107,7 +107,7 @@ public final class ListFilesTool implements SketchwareTool {
                     hint.append(children[i].getName());
                 }
                 hint.append(". NOTE: Sketchware stores data as FILES not directories. "
-                        + "Use view_manage_layout action='list' to see layouts.");
+                        + "Use view_manage with subcategory='layout' and action='list' to see layouts.");
             }
             return ToolResult.error("Path does not exist: '" + relPath + "'." + hint);
         }

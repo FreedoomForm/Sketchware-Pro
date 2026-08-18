@@ -79,18 +79,13 @@ public final class PlanActPrompts {
      * Used as the building block for both {@link #PLAN_MODE_INSTRUCTIONS}
      * and {@link #PLAN_MODE_INSTRUCTIONS_MANUAL_SWITCH}.
      *
-     * <p>The {@code run_commands} tool in Cline maps to our
-     * {@code run_command} tool. In Sketchware Pro the equivalent
-     * state-changing tools are {@code write_file}, {@code edit_file},
-     * {@code apply_patch}, {@code diff_edit_file}, {@code view_add_widget},
-     * {@code view_set_property}, {@code view_delete_widget},
-     * {@code java_edit_file}, {@code manifest_manage}, etc. — all
-     * mutating tools are blocked by {@link ToolPermissionGate} in
-     * PLAN mode. Read-only tools ({@code read_file}, {@code list_files},
-     * {@code search_files}, {@code view_list_widgets},
-     * {@code view_list_layouts}, {@code web_search}, {@code web_fetch})
-     * remain available, matching Cline's "run_commands remains available
-     * strictly for read-only inspection" semantics.
+     * <p>Sketchware Pro does not expose Cline's {@code run_commands} tool.
+     * In Plan mode, use only registered read-only tools such as
+     * {@code list_files}, {@code search_files}, {@code java_read_file},
+     * {@code view_list_widgets},
+     * {@code view_manage(subcategory="layout", action="list")},
+     * {@code web_search}, and {@code web_fetch}. All mutating tools are
+     * blocked by {@link ToolPermissionGate} in PLAN mode.
      */
     static final String PLAN_MODE_INSTRUCTIONS_BASE =
         "# Plan Mode\n\n" +
@@ -101,7 +96,7 @@ public final class PlanActPrompts {
         "- Explain tradeoffs between different approaches when they exist\n" +
         "- Do NOT edit files, write code, run destructive commands, or make any changes\n" +
         "- Do NOT implement anything -- focus on understanding and alignment first\n\n" +
-        "The run_commands tool remains available in plan mode strictly for read-only inspection -- listing files, searching (grep), reading configs, inspecting git history and diffs, checking tool versions, and the like. Never use it to change anything: no creating, modifying, or deleting files, no writing scripts that make changes, and no state-changing commands (installs, migrations, database or schema changes, container commands that mutate state, etc.). File-editing commands (rm/mv/cp, in-place edits like sed -i, output redirection to files outside /tmp, git commands that change the working tree, package installs) are hard-blocked in plan mode: they are not executed and return a tool error instead, so do not attempt them. If the task requires a mutation, put it in the plan; it happens only after the user switches to act mode.";
+        "Use only tools marked read-only in their schema while researching: list_files, search_files, java_read_file, view_list_widgets, view_manage with subcategory=\"layout\" and action=\"list\", web_search, and web_fetch. Never attempt a mutating tool in Plan mode. If the task requires a change, include it in the plan and wait until the user switches to Act mode.";
 
     /**
      * Plan-mode contract with the {@code switch_to_act_mode} tool tail.
@@ -190,7 +185,7 @@ public final class PlanActPrompts {
         "- Read files, search the codebase, list widgets/layouts/components, fetch web pages\n" +
         "- Use web_search and web_fetch to look up docs, error messages, library APIs\n" +
         "- Use list_files / search_files to map the project structure\n" +
-        "- Use view_list_widgets / view_list_layouts to understand the current UI state\n" +
+        "- Use view_list_widgets and view_manage(subcategory=\"layout\", action=\"list\") to understand the current UI state\n" +
         "- Use java_read_file to read existing Java/Kotlin code\n" +
         "- Ask clarifying questions when requirements are ambiguous\n" +
         "- Do NOT edit files, write code, run destructive commands, or make any changes\n" +

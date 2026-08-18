@@ -91,7 +91,7 @@ public final class CategoryUmbrellaTool implements SketchwareTool {
         for (Map.Entry<String, SketchwareTool> e : subtools.entrySet()) {
             SketchwareTool t = e.getValue();
             sb.append("- ").append(e.getKey())
-                    .append(" (").append(t.name()).append("): ");
+                    .append(": ");
             if (t instanceof UniversalTool) {
                 String[] actions = ((UniversalTool) t).getActions();
                 sb.append(String.join(", ", actions));
@@ -136,9 +136,13 @@ public final class CategoryUmbrellaTool implements SketchwareTool {
                         + "See the tool description for the per-subcategory action lists.");
         props.add("action", actionProp);
 
-        // Allow any additional properties — the umbrella forwards them as-is
-        // to the underlying tool, which validates them against its own schema.
-        props.addProperty("additionalProperties", true);
+        // Allow action-specific arguments at the OBJECT level — the umbrella
+        // forwards them as-is to the underlying tool, which validates them
+        // against its own schema. Keeping this keyword inside `properties`
+        // made it look like a malformed boolean-valued argument named
+        // `additionalProperties`, so function-calling providers could reject
+        // legitimate layout/widget arguments before the tool ever ran.
+        schema.addProperty("additionalProperties", true);
 
         schema.add("properties", props);
 

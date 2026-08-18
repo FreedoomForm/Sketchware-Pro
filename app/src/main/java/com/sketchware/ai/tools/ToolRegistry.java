@@ -139,6 +139,14 @@ public final class ToolRegistry {
         }
         if (args.size() == 0) return null;
 
+        // Umbrella calls carry the public `subcategory` selector plus
+        // action-specific arguments that intentionally are not enumerated in
+        // the umbrella's outer schema. Resolve a unique matching umbrella
+        // before the generic schema matcher, which cannot distinguish shared
+        // action names such as "list" or "create" by itself.
+        SketchwareTool umbrella = inferUmbrellaFromSubcategory(args);
+        if (umbrella != null) return umbrella;
+
         SketchwareTool match = null;
         int matchCount = 0;
         for (SketchwareTool t : tools.values()) {
@@ -147,6 +155,37 @@ public final class ToolRegistry {
                 matchCount++;
                 if (matchCount > 1) return null;  // ambiguous — bail
             }
+        }
+        return match;
+    }
+
+    private SketchwareTool inferUmbrellaFromSubcategory(JsonObject args) {
+        if (!args.has("subcategory") || args.get("subcategory").isJsonNull()) return null;
+        String requested;
+        try {
+            requested = args.get("subcategory").getAsString();
+        } catch (Exception ignored) {
+            return null;
+        }
+        SketchwareTool match = null;
+        for (SketchwareTool tool : tools.values()) {
+            if (!(tool instanceof CategoryUmbrellaTool)) continue;
+            JsonObject schema = tool.jsonSchema();
+            if (schema == null || !schema.has("properties")) continue;
+            JsonObject props = schema.getAsJsonObject("properties");
+            if (!props.has("subcategory")) continue;
+            JsonObject subcategory = props.getAsJsonObject("subcategory");
+            if (!subcategory.has("enum")) continue;
+            boolean supportsRequested = false;
+            for (JsonElement value : subcategory.getAsJsonArray("enum")) {
+                if (value.isJsonPrimitive() && requested.equals(value.getAsString())) {
+                    supportsRequested = true;
+                    break;
+                }
+            }
+            if (!supportsRequested) continue;
+            if (match != null) return null; // ambiguous selector: do not guess.
+            match = tool;
         }
         return match;
     }
@@ -169,9 +208,15 @@ public final class ToolRegistry {
             return false;
         }
         JsonObject props = schema.getAsJsonObject("properties");
-        // Every key in args must exist in schema properties.
+        // Every key in args must exist in schema properties unless the tool
+        // explicitly accepts action-specific additional properties. Category
+        // umbrellas deliberately use this to forward the selected
+        // subtool's parameters after matching their `subcategory` + `action`.
+        boolean allowsAdditionalProperties = !schema.has("additionalProperties")
+                || (schema.get("additionalProperties").isJsonPrimitive()
+                && schema.get("additionalProperties").getAsBoolean());
         for (String key : args.keySet()) {
-            if (!props.has(key)) return false;
+            if (!props.has(key) && !allowsAdditionalProperties) return false;
         }
         // Every required field must be present in args.
         if (schema.has("required") && schema.get("required").isJsonArray()) {

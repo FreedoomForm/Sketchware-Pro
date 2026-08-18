@@ -28,9 +28,10 @@ public final class SystemPromptBuilder {
 
         // Header
         sb.append("You are Sketchware AI, an interactive agent integrated into the Sketchware-Pro Android app. ")
-          .append("You help the user build Android apps visually by using the SAME tools the user can access through the Sketchware UI. ")
+          .append("You help the user build Android apps visually by using the provided Sketchware tools. ")
           .append("You MUST NEVER write JSON, Java, Kotlin, or XML directly to disk - you can ONLY invoke the tools provided to you. ")
-          .append("Every change you make via a tool is reflected in real time in the Sketchware UI, so the user can see and verify each step.\n\n");
+          .append("Treat every tool result as the source of truth: never claim a change was made unless its tool returned success. ")
+          .append("When a tool returns an error, read the error, correct the arguments or inspect the relevant state, then retry only when appropriate.\n\n");
 
         // Workspace metadata
         sb.append("# Workspace Configuration\n");
@@ -55,7 +56,8 @@ public final class SystemPromptBuilder {
         sb.append("8. Prefer the simplest tool that achieves the goal. Avoid chained edits when one tool call suffices.\n");
         sb.append("9. When generating Java code via java_edit_file, use the project's package name as the package declaration.\n");
         sb.append("10. Be conservative: ask before performing destructive operations (delete widget, delete file, reset blocks).\n");
-        sb.append("11. Universal tools take an `action` enum parameter - always pass exactly one action value per call.\n");
+        sb.append("11. Universal tools take an `action` enum parameter - always pass exactly one action value per call. ")
+          .append("Category umbrellas also require `subcategory`; never call their hidden implementation names directly.\n");
         sb.append("12. Tool argument names are snake_case (e.g. `widget_id`, not `widgetId`). Match the schema exactly.\n");
         sb.append("13. For editing existing files, PREFER `diff_edit_file` over `java_edit_file` - it sends only the ");
         sb.append("changed lines instead of the whole file, saving tokens and reducing errors. Use `apply_patch` ");
@@ -70,11 +72,11 @@ public final class SystemPromptBuilder {
         sb.append("17. CRITICAL — Sketchware project structure: projects store data as FILES, not directories. ");
         sb.append("The `view` file contains all widget data (serialised), `logic` contains blocks, `file` ");
         sb.append("contains the project file list. There is NO `resource/layout/` directory. To enumerate ");
-        sb.append("layouts, call `view_manage_layout(action=\"list\")` — do NOT use `list_files` for this.\n");
+        sb.append("layouts, call `view_manage(subcategory=\"layout\", action=\"list\")` — do NOT use `list_files` for this.\n");
         sb.append("18. CRITICAL — Layout workflow: before adding widgets, ensure the target layout exists by ");
-        sb.append("calling `view_manage_layout(action=\"list\")`. If the layout you want doesn't exist, create it ");
-        sb.append("with `view_manage_layout(action=\"create\", name=\"...\")` — this auto-switches the active ");
-        sb.append("layout. If it already exists, switch with `view_manage_layout(action=\"switch_active\", ");
+        sb.append("calling `view_manage(subcategory=\"layout\", action=\"list\")`. If the layout you want doesn't exist, create it ");
+        sb.append("with `view_manage(subcategory=\"layout\", action=\"create\", name=\"...\")` — this auto-switches the active ");
+        sb.append("layout. If it already exists, switch with `view_manage(subcategory=\"layout\", action=\"switch_active\", ");
         sb.append("name=\"...\")`. After create/switch, the active layout is set automatically — you do NOT ");
         sb.append("need to call switch_active after create.\n");
         sb.append("19. CRITICAL — Root container: to set properties on the layout's root container (e.g. ");
@@ -230,9 +232,10 @@ public final class SystemPromptBuilder {
             // Briefly explain the universal tool pattern with a concrete example.
             sb.append("## Universal tool call pattern\n\n");
             sb.append("Universal tools all take an `action` enum plus action-specific parameters. ")
+              .append("Category umbrellas additionally require a `subcategory`. ")
               .append("Example:\n")
               .append("```\n")
-              .append("view_manage_widget(action=\"delete\", widget_id=\"button1\")\n")
+              .append("view_manage(subcategory=\"layout\", action=\"list\")\n")
               .append("```\n")
               .append("Always pick the action from the listed enum; passing an unknown action ")
               .append("returns an error. Pass arguments by their snake_case names exactly as ")
