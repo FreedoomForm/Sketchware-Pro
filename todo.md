@@ -40,3 +40,9 @@
 - [x] Implement and test deterministic core blocks for property updates, variables, messages, and navigation.
 - [x] Connect supported live-preview widget events to the runtime executor without hidden code paths.
 - [x] Validate and publish the interactive runtime milestone.
+- [ ] Inventory every current Sketchware capability, storage model, editor action, component, block, and build path with source evidence.
+- [ ] Publish the definitive R1/R2/R3/R0 compatibility matrix with acceptance tests and no unclassified capabilities.
+- [ ] Migrate and validate all core layout, widget, resource, styling, state, block, event, navigation, and component capabilities.
+- [ ] Implement and audit all permitted device/integration plugins and the transparent native fallback path.
+- [ ] Build user-visible import, migration, fallback, and compatibility-report controls for existing Sketchware projects.
+- [ ] Execute reproducible behavior-parity, regression, recovery, migration, and build audits; publish evidence and remaining exceptions.
