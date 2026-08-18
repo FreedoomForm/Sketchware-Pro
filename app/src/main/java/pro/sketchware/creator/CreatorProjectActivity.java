@@ -38,6 +38,7 @@ import pro.sketchware.creator.runtime.CreatorProjectOperation;
 import pro.sketchware.creator.runtime.CreatorRuntimeCompatibilityInspector;
 import pro.sketchware.creator.runtime.CreatorRuntimeEnvironment;
 import pro.sketchware.creator.runtime.CreatorRuntimeExecutor;
+import pro.sketchware.creator.runtime.CreatorRuntimeResourceResolver;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 import pro.sketchware.creator.runtime.CreatorRuntimeServices;
 import pro.sketchware.creator.runtime.CreatorWidget;
@@ -343,7 +344,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if ("image".equals(widget.getType())) {
             ImageView image = new ImageView(this);
-            applyImageProperties(image, widget);
+            applyImageProperties(image, document, widget);
             image.setContentDescription(propertyString(widget, "contentDescription", "Image"));
             image.setPadding(dp(28), dp(28), dp(28), dp(28));
             return registerRuntimeWidget(widget, image);
@@ -657,7 +658,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if ("circle_image".equals(widget.getType())) {
             de.hdodenhof.circleimageview.CircleImageView image = new de.hdodenhof.circleimageview.CircleImageView(this);
-            applyImageProperties(image, widget);
+            applyImageProperties(image, document, widget);
             image.setContentDescription(propertyString(widget, "contentDescription", "Image"));
             return registerRuntimeWidget(widget, image);
         }
@@ -714,17 +715,33 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         return value instanceof Boolean ? (Boolean) value : fallback;
     }
 
-    private void applyImageProperties(ImageView image, CreatorWidget widget) {
+    private void applyImageProperties(ImageView image, CreatorProjectDocument document, CreatorWidget widget) {
         String resourceName = propertyString(widget, "resourceName", "");
         int resourceId = resourceName.isEmpty() ? 0
                 : getResources().getIdentifier(resourceName, "drawable", getPackageName());
-        image.setImageResource(resourceId == 0 ? R.drawable.ic_mtrl_image : resourceId);
+        java.io.File projectImage = resolveProjectImage(document, resourceName);
+        if (projectImage != null) image.setImageURI(android.net.Uri.fromFile(projectImage));
+        else image.setImageResource(resourceId == 0 ? R.drawable.ic_mtrl_image : resourceId);
         image.setRotation(propertyInt(widget, "rotation", 0));
         try {
             image.setScaleType(ImageView.ScaleType.valueOf(propertyString(widget, "scaleType", "CENTER")));
         } catch (IllegalArgumentException ignored) {
             image.setScaleType(ImageView.ScaleType.CENTER);
         }
+    }
+
+    private java.io.File resolveProjectImage(CreatorProjectDocument document, String resourceName) {
+        Object rawResources = document.getState().get("legacy.resources");
+        if (!(rawResources instanceof java.util.List)) return null;
+        for (Object raw : (java.util.List<?>) rawResources) {
+            if (!(raw instanceof Map)) continue;
+            Map<?, ?> resource = (Map<?, ?>) raw;
+            if (!resourceName.equals(String.valueOf(resource.get("name")))) continue;
+            Object source = resource.get("source");
+            return source == null ? null : CreatorRuntimeResourceResolver.resolveProjectImage(
+                    document.getProjectId(), String.valueOf(source));
+        }
+        return null;
     }
 
     private void dispatchRuntimeEvent(String widgetId, String eventName) {
