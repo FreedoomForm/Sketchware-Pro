@@ -9,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class CreatorRuntimeCompatibilityInspectorTest {
-    @Test public void reportSeparatesLiveRuntimeWidgetsFromNativeFallbackWidgets() {
+    @Test public void reportSeparatesLiveRuntimeWidgetsFromExplicitlyBlockedWidgets() {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         widgets.put("root", new CreatorWidget("root", "column", null,
                 java.util.Arrays.asList("title", "legacy"), null));
@@ -23,7 +23,7 @@ public class CreatorRuntimeCompatibilityInspectorTest {
         CreatorCompatibilityReport report = CreatorRuntimeCompatibilityInspector.inspect(document);
 
         assertThat(report.count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(4);
-        assertThat(report.count(CreatorCompatibilityTier.R3_NATIVE_FALLBACK)).isEqualTo(1);
+        assertThat(report.count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(1);
         assertThat(report.canPreviewImmediately()).isFalse();
     }
 }

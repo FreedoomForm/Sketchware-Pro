@@ -74,6 +74,10 @@ public final class CreatorOperationValidator {
         String type = string(payload, "widgetType");
         String parentId = string(payload, "parentId");
         if (widgetId == null || type == null || parentId == null) return invalid("widgetId, widgetType and parentId are required");
+        if (!CreatorRuntimeWidgetCatalog.isRuntimeNative(type)) {
+            return CreatorValidationResult.error(CreatorValidationResult.Code.INVALID_PAYLOAD,
+                    "widgetType is not available in Creator Runtime: " + type);
+        }
         if (document.getWidgets().containsKey(widgetId)) {
             return CreatorValidationResult.error(CreatorValidationResult.Code.DUPLICATE_ID,
                     "widgetId already exists");

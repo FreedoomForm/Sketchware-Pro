@@ -17,10 +17,10 @@ public final class CreatorRuntimeExecutor {
         public String getValue() { return value; }
     }
 
-    private final CreatorRuntimePluginDispatcher runtimeServices;
+    private final CreatorRuntimeServiceDispatcher runtimeServices;
 
     public CreatorRuntimeExecutor() { this(null); }
-    public CreatorRuntimeExecutor(CreatorRuntimePluginDispatcher runtimeServices) { this.runtimeServices = runtimeServices; }
+    public CreatorRuntimeExecutor(CreatorRuntimeServiceDispatcher runtimeServices) { this.runtimeServices = runtimeServices; }
 
     public List<Effect> dispatch(CreatorRuntimeEngine engine, String targetWidgetId, String eventName) {
         if (engine == null) return Collections.emptyList();
@@ -45,7 +45,7 @@ public final class CreatorRuntimeExecutor {
                     Object rawArguments = payload.get("arguments");
                     @SuppressWarnings("unchecked") Map<String, Object> arguments = rawArguments instanceof Map
                             ? (Map<String, Object>) rawArguments : Collections.<String, Object>emptyMap();
-                    CreatorRuntimePlugin.Result result = runtimeServices.dispatch(serviceId, arguments);
+                    CreatorRuntimeService.Result result = runtimeServices.dispatch(serviceId, arguments);
                     effects.add(new Effect("runtime_service", serviceId + ":" + result.getStatus().name()));
                 }
             }

@@ -36,7 +36,7 @@ public class CreatorRuntimeWorkflowTest {
         CreatorApplyResult entryControl = engine.apply(operation("user-entry", 2,
                 CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE,
                 map("label", "Open editor", "placement", "top_end")));
-        CreatorCompatibilityAnalyzer analyzer = new CreatorCompatibilityAnalyzer(CreatorRuntimePluginRegistry.defaults());
+        CreatorCompatibilityAnalyzer analyzer = new CreatorCompatibilityAnalyzer(CreatorRuntimeServiceCatalog.defaults());
 
         assertThat(screen.isApplied()).isTrue();
         assertThat(aiWidget.isApplied()).isTrue();
@@ -45,8 +45,8 @@ public class CreatorRuntimeWorkflowTest {
         assertThat(engine.getCurrent().getWidgets().get("root").getChildren()).containsExactly("continue_button");
         assertThat(engine.getCurrent().getEntryControl().getPlacement()).isEqualTo("top_end");
         assertThat(engine.getRevisionStore().getCheckpointRevision("empty-home")).isEqualTo(1L);
-        assertThat(analyzer.classify("plugin:camera")).isEqualTo(CreatorCompatibilityTier.R2_RUNTIME_PLUGIN);
-        assertThat(analyzer.classify("java:CustomActivity")).isEqualTo(CreatorCompatibilityTier.R3_NATIVE_FALLBACK);
+        assertThat(analyzer.classify("service:camera")).isEqualTo(CreatorCompatibilityTier.R1_RUNTIME_NATIVE);
+        assertThat(analyzer.classify("java:CustomActivity")).isEqualTo(CreatorCompatibilityTier.R0_UNSUPPORTED);
         assertThat(engine.getEventLog().snapshot()).isNotEmpty();
     }
 

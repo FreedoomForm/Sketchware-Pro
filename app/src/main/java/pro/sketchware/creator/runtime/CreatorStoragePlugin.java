@@ -7,8 +7,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Host-owned runtime implementation of the legacy SharedPreferences component. */
-public final class CreatorStoragePlugin implements CreatorRuntimePlugin {
+/** Runtime-native implementation of the legacy SharedPreferences component. */
+public final class CreatorStoragePlugin implements CreatorRuntimeService {
     private final SharedPreferences preferences;
 
     public CreatorStoragePlugin(Context context, String projectId) {

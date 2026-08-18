@@ -17,10 +17,10 @@ public final class CreatorRuntimeCompatibilityInspector {
                 "Visible entry control is runtime-native; shake recovery remains host-owned.");
         for (CreatorWidget widget : document.getWidgets().values()) {
             CreatorCompatibilityTier tier = CreatorRuntimeWidgetCatalog.isRuntimeNative(widget.getType())
-                    ? CreatorCompatibilityTier.R1_RUNTIME_NATIVE : CreatorCompatibilityTier.R3_NATIVE_FALLBACK;
+                    ? CreatorCompatibilityTier.R1_RUNTIME_NATIVE : CreatorCompatibilityTier.R0_UNSUPPORTED;
             String message = tier == CreatorCompatibilityTier.R1_RUNTIME_NATIVE
                     ? "Renders directly in the live runtime."
-                    : "This widget is retained for native fallback until a runtime renderer or plugin is added.";
+                    : "No Creator Runtime renderer is registered; execution is blocked rather than falling back.";
             report.add(widget.getId(), widget.getType(), tier, message);
         }
         return report;

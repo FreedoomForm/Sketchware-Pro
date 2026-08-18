@@ -14,4 +14,10 @@ public class CreatorLegacyViewCapabilityMatrixTest {
         assertThat(CreatorLegacyViewCapabilityMatrix.tierFor(ViewBean.VIEW_TYPE_WIDGET_BUTTON))
                 .isEqualTo(CreatorCompatibilityTier.R1_RUNTIME_NATIVE);
     }
+
+    @Test public void everyInventoriedLegacyViewUsesTheRuntimeNativeTier() {
+        for (CreatorCompatibilityTier tier : CreatorLegacyViewCapabilityMatrix.all().values()) {
+            assertThat(tier).isEqualTo(CreatorCompatibilityTier.R1_RUNTIME_NATIVE);
+        }
+    }
 }

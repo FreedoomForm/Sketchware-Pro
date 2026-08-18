@@ -29,23 +29,24 @@ public class CreatorLegacyViewImporterTest {
 
         CreatorProjectDocument document = result.getDocument();
         assertThat(document.getScreens().get("main").getRootWidgetId()).isEqualTo("root_main");
-        assertThat(document.getWidgets().get("root_main").getChildren()).containsExactly("title", "input").inOrder();
+        assertThat(document.getWidgets().get("root_main").getChildren()).containsExactly("title", "input", "web").inOrder();
         assertThat(document.getWidgets().get("title").getType()).isEqualTo("text");
         assertThat(document.getWidgets().get("title").getProperties().get("text")).isEqualTo("Hello");
         assertThat(document.getWidgets().get("input").getProperties().get("hint")).isEqualTo("Your name");
-        assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(2);
-        assertThat(result.getReport().count(CreatorCompatibilityTier.R2_RUNTIME_PLUGIN)).isEqualTo(1);
+        assertThat(document.getWidgets().get("web").getType()).isEqualTo("web");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(3);
         assertThat(result.getReport().canPreviewImmediately()).isTrue();
     }
 
-    @Test public void reportsLegacyNativeOnlyWidgetAsFallbackRatherThanSilentlyDroppingIt() {
+    @Test public void importsLegacyListWidgetIntoDirectRuntimeNativeRenderer() {
         ViewBean list = new ViewBean("list", ViewBean.VIEW_TYPE_WIDGET_LISTVIEW);
 
         CreatorLegacyViewImporter.Result result = new CreatorLegacyViewImporter().importLayout(
                 "project", "Imported", "main", "/", Arrays.asList(list));
 
-        assertThat(result.getDocument().getWidgets().containsKey("list")).isFalse();
-        assertThat(result.getReport().count(CreatorCompatibilityTier.R3_NATIVE_FALLBACK)).isEqualTo(1);
-        assertThat(result.getReport().canPreviewImmediately()).isFalse();
+        assertThat(result.getDocument().getWidgets().containsKey("list")).isTrue();
+        assertThat(result.getDocument().getWidgets().get("list").getType()).isEqualTo("list");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(1);
+        assertThat(result.getReport().canPreviewImmediately()).isTrue();
     }
 }

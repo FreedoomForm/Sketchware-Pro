@@ -2,6 +2,7 @@ package pro.sketchware.creator.runtime;
 
 import com.besome.sketch.beans.LayoutBean;
 import com.besome.sketch.beans.ViewBean;
+import mod.agus.jcoderz.beans.ViewBeans;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,14 +48,14 @@ public final class CreatorLegacyViewImporter {
             }
             String runtimeType = toRuntimeType(view.type);
             if (runtimeType == null) {
-                report.add(view.id, ViewBean.getViewTypeName(view.type), tierForUnsupportedLegacyType(view.type),
-                        "This legacy widget remains visible in compatibility reporting and requires a plugin or native fallback.");
+                report.add(view.id, ViewBean.getViewTypeName(view.type), CreatorCompatibilityTier.R0_UNSUPPORTED,
+                        "No Creator Runtime widget mapping exists; import is blocked rather than using fallback execution.");
                 continue;
             }
             String parentId = view.parent == null || view.parent.trim().isEmpty() || "root".equals(view.parent)
                     ? rootId : view.parent;
             if (!widgets.containsKey(parentId)) {
-                report.add(view.id, ViewBean.getViewTypeName(view.type), CreatorCompatibilityTier.R3_NATIVE_FALLBACK,
+                report.add(view.id, ViewBean.getViewTypeName(view.type), CreatorCompatibilityTier.R0_UNSUPPORTED,
                         "Parent is not runtime-native, so this widget cannot be placed safely in the live preview.");
                 continue;
             }
@@ -76,21 +77,54 @@ public final class CreatorLegacyViewImporter {
             case ViewBean.VIEW_TYPE_LAYOUT_LINEAR: return "column";
             case ViewBean.VIEW_TYPE_LAYOUT_RELATIVE: return "stack";
             case ViewBean.VIEW_TYPE_LAYOUT_VSCROLLVIEW: return "scroll";
+            case ViewBean.VIEW_TYPE_LAYOUT_HSCROLLVIEW: return "hscroll";
             case ViewBean.VIEW_TYPE_WIDGET_BUTTON: return "button";
             case ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW: return "text";
             case ViewBean.VIEW_TYPE_WIDGET_EDITTEXT: return "input";
             case ViewBean.VIEW_TYPE_WIDGET_IMAGEVIEW: return "image";
             case ViewBean.VIEW_TYPE_WIDGET_CHECKBOX: return "checkbox";
             case ViewBean.VIEW_TYPE_WIDGET_SWITCH: return "switch";
+            case ViewBean.VIEW_TYPE_WIDGET_PROGRESSBAR: return "progress";
+            case ViewBean.VIEW_TYPE_WIDGET_SPINNER: return "spinner";
+            case ViewBean.VIEW_TYPE_WIDGET_SEEKBAR: return "slider";
+            case ViewBean.VIEW_TYPE_WIDGET_CALENDARVIEW: return "calendar_view";
+            case ViewBean.VIEW_TYPE_WIDGET_FAB: return "fab";
+            case ViewBean.VIEW_TYPE_WIDGET_WEBVIEW:
+            case ViewBean.VIEW_TYPE_WIDGET_MAPVIEW:
+            case ViewBeans.VIEW_TYPE_WIDGET_YOUTUBEPLAYERVIEW: return "web";
+            case ViewBeans.VIEW_TYPE_WIDGET_VIDEOVIEW: return "video";
+            case ViewBeans.VIEW_TYPE_WIDGET_LOTTIEANIMATIONVIEW: return "lottie";
+            case ViewBean.VIEW_TYPE_WIDGET_ADVIEW: return "ad_banner";
+            case ViewBean.VIEW_TYPE_WIDGET_LISTVIEW: return "list";
+            case ViewBeans.VIEW_TYPE_WIDGET_RECYCLERVIEW: return "list";
+            case ViewBeans.VIEW_TYPE_WIDGET_GRIDVIEW: return "grid";
+            case ViewBeans.VIEW_TYPE_WIDGET_RADIOBUTTON: return "radio";
+            case ViewBeans.VIEW_TYPE_WIDGET_RATINGBAR: return "rating";
+            case ViewBeans.VIEW_TYPE_WIDGET_SEARCHVIEW: return "search";
+            case ViewBeans.VIEW_TYPE_WIDGET_AUTOCOMPLETETEXTVIEW:
+            case ViewBeans.VIEW_TYPE_WIDGET_MULTIAUTOCOMPLETETEXTVIEW: return "autocomplete";
+            case ViewBeans.VIEW_TYPE_WIDGET_ANALOGCLOCK:
+            case ViewBeans.VIEW_TYPE_WIDGET_DIGITALCLOCK: return "clock";
+            case ViewBeans.VIEW_TYPE_WIDGET_DATEPICKER: return "date_picker";
+            case ViewBeans.VIEW_TYPE_WIDGET_TIMEPICKER: return "time_picker";
+            case ViewBeans.VIEW_TYPE_LAYOUT_TABLAYOUT: return "tabs";
+            case ViewBeans.VIEW_TYPE_LAYOUT_VIEWPAGER: return "pager";
+            case ViewBeans.VIEW_TYPE_LAYOUT_BOTTOMNAVIGATIONVIEW: return "bottom_navigation";
+            case ViewBeans.VIEW_TYPE_WIDGET_BADGEVIEW: return "badge";
+            case ViewBeans.VIEW_TYPE_WIDGET_PATTERNLOCKVIEW: return "pattern";
+            case ViewBeans.VIEW_TYPE_WIDGET_WAVESIDEBAR: return "sidebar";
+            case ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW: return "card";
+            case ViewBeans.VIEW_TYPE_LAYOUT_COLLAPSINGTOOLBARLAYOUT: return "collapsing";
+            case ViewBeans.VIEW_TYPE_LAYOUT_TEXTINPUTLAYOUT: return "text_input";
+            case ViewBeans.VIEW_TYPE_LAYOUT_SWIPEREFRESHLAYOUT: return "swipe_refresh";
+            case ViewBeans.VIEW_TYPE_LAYOUT_RADIOGROUP: return "radio_group";
+            case ViewBeans.VIEW_TYPE_WIDGET_MATERIALBUTTON: return "button";
+            case ViewBeans.VIEW_TYPE_WIDGET_SIGNINBUTTON: return "sign_in";
+            case ViewBeans.VIEW_TYPE_WIDGET_CIRCLEIMAGEVIEW: return "circle_image";
+            case ViewBeans.VIEW_TYPE_WIDGET_OTPVIEW: return "otp";
+            case ViewBeans.VIEW_TYPE_WIDGET_CODEVIEW: return "code";
             default: return null;
         }
-    }
-
-    private static CreatorCompatibilityTier tierForUnsupportedLegacyType(int legacyType) {
-        if (legacyType == ViewBean.VIEW_TYPE_WIDGET_WEBVIEW || legacyType == ViewBean.VIEW_TYPE_WIDGET_MAPVIEW) {
-            return CreatorCompatibilityTier.R2_RUNTIME_PLUGIN;
-        }
-        return CreatorCompatibilityTier.R3_NATIVE_FALLBACK;
     }
 
     private static Map<String, Object> propertiesFrom(ViewBean view) {
@@ -101,6 +135,8 @@ public final class CreatorLegacyViewImporter {
             properties.put("textSize", view.text.textSize);
             properties.put("singleLine", view.text.singleLine != 0);
             properties.put("checked", view.checked != 0);
+            properties.put("progress", view.progress);
+            properties.put("max", view.max);
         }
         LayoutBean layout = view.layout;
         if (layout != null) {
@@ -114,6 +150,7 @@ public final class CreatorLegacyViewImporter {
             }
         }
         properties.put("legacyType", ViewBean.getViewTypeName(view.type));
+        properties.put("adUnitId", view.adUnitId == null ? "" : view.adUnitId);
         return properties;
     }
 }

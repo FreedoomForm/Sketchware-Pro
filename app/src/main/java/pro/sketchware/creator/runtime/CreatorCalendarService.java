@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Runtime-native calendar operations corresponding to the legacy Calendar component. */
-public final class CreatorCalendarService implements CreatorRuntimePlugin {
+public final class CreatorCalendarService implements CreatorRuntimeService {
     @Override public String getId() { return "calendar"; }
 
     @Override public Result execute(Map<String, Object> arguments) {

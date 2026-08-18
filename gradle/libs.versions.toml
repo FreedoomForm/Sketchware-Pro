@@ -57,6 +57,11 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fir
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
+firebase-auth = { module = "com.google.firebase:firebase-auth" }
+firebase-database = { module = "com.google.firebase:firebase-database" }
+firebase-storage = { module = "com.google.firebase:firebase-storage" }
+google-play-services-auth = { module = "com.google.android.gms:play-services-auth", version = "21.3.0" }
+google-mobile-ads = { module = "com.google.android.gms:play-services-ads", version = "24.6.0" }
 
 flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexbox" }
 lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
@@ -120,4 +125,4 @@ bundletool = ["bundletool", "protobuf-java"]
 shrinker = ["r8", "proguard-core"]
 kotlin_compiler = ["kotlinc-for1-sketchware", "nb-javac-android", "woodstox-core"]
 editor_and_lang = ["editor", "language-java", "language-textmate"]
-firebase = ["firebase-analytics", "firebase-crashlytics", "firebase-messaging"]
+firebase = ["firebase-analytics", "firebase-crashlytics", "firebase-messaging", "firebase-auth", "firebase-database", "firebase-storage", "google-play-services-auth", "google-mobile-ads"]

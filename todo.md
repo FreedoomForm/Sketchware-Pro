@@ -60,9 +60,14 @@
 - [ ] Connect CreatorNativeBuildQueue to a real legacy ProjectBuilder invocation with revision provenance and compiler diagnostics.
 - [ ] Add an end-to-end fallback fixture proving an R3 capability creates a pinned build request and surfaces its result to the user.
 - [ ] Continue implementation and evidence collection without declaring completion until every audit record is closed and 100% coverage is independently verified.
-- [ ] Remove R3 native-build fallback as an acceptable capability tier; every inventoried Sketchware capability must have a verified R1 live-runtime or R2 host-runtime implementation.
+- [x] Remove R3 native-build fallback as an acceptable capability tier; every inventoried Sketchware capability must have a verified R1 live-runtime or R2 host-runtime implementation.
 - [ ] Replace each current R3 component classification with a concrete runtime implementation, including capability-specific success, denial, error, and recovery evidence where applicable.
 - [ ] Replace legacy build/export dependence with runtime project execution, live resource handling, and portable project revision persistence without APK reinstallation.
 - [ ] Require the final audit to report zero R3 fallback entries, zero R0 omissions, and zero unclassified capabilities before user notification.
-- [ ] Eliminate the R2 host-plugin layer as an accepted architecture; consolidate all device and integration capabilities into the Creator Runtime-native service and execution model.
+- [x] Eliminate the R2 host-plugin layer as an accepted architecture; consolidate all device and integration capabilities into the Creator Runtime-native service and execution model.
 - [ ] Require the final evidence audit to report zero R2, zero R3, zero R0, and zero unclassified capability entries before notification.
+- [ ] Implement concrete Creator Runtime-native services for all remaining `ComponentBean` capabilities, replacing R2/R3 fallback architecture.
+- [ ] Wire Creator Runtime services to the live project activity, rendered widget registry, lifecycle, permissions, and event effects.
+- [ ] Add capability-specific behavior tests and close evidence records only after verified runtime execution.
+- [x] Remove the retired Creator Runtime plugin and native-build fallback classes from the active execution path.
+- [x] Persist imported component descriptors and typed event blocks in the versioned Project IR codec.

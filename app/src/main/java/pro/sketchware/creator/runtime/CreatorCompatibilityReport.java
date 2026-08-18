@@ -40,7 +40,6 @@ public final class CreatorCompatibilityReport {
     }
 
     public boolean canPreviewImmediately() {
-        return count(CreatorCompatibilityTier.R3_NATIVE_FALLBACK) == 0
-                && count(CreatorCompatibilityTier.R0_UNSUPPORTED) == 0;
+        return count(CreatorCompatibilityTier.R0_UNSUPPORTED) == 0;
     }
 }

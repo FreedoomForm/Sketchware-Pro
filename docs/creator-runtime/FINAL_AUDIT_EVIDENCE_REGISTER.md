@@ -4,17 +4,17 @@ This register is intentionally incomplete until the migration is complete. A bla
 
 | Capability domain | Stable source | Tier | Import evidence | Behavior test | Recovery/native provenance | Status |
 |---|---|---|---|---|---|---|
-| Legacy views 0–48 | `ViewBean`, `ViewBeans` | Matrix exists | Partial | Partial | Partial | Open |
-| Block and event models | `BlockBean`, `EventBean` | Open | Open | Runtime v1 partial | Open | Open |
-| Component models | `ComponentBean` | 30-item matrix, currently R3 | Open | Permission bridge foundation | R3 queue regression for Firebase Cloud Messaging | Open |
-| Project/library/resource models | `Project*Bean`, resource beans | Open | Open | Open | Open | Open |
-| Build/export paths | Compiler and `ProjectBuilder` families | R3 adapter implemented | Open | Focused JVM regression passes | Revision 42 queue/event provenance regression passes; production session wiring remains open | Open |
-| Editor and AI actions | Tool registry and editor actions | Partial | N/A | Partial | Revision history | Open |
+| Legacy views 0–48 | `ViewBean`, `ViewBeans` | **R1 only** via `CreatorLegacyViewCapabilityMatrix` and `CreatorRuntimeWidgetCatalog` | `CreatorLegacyViewImporter` maps every inventoried type to a typed runtime widget | JVM matrix and importer regressions pass; device interaction coverage is still pending | No native fallback is permitted; unsupported rendering is blocked as R0 | **Open** — device behavior parity is not yet evidenced |
+| Block and event models | `BlockBean`, `EventBean` | **R1 subset / visible R0 remainder** | `CreatorLegacyArtifactImporter` imports supported view events and block chains into `CreatorEventBinding` | Importer tests cover typed message blocks and rejection of `executeJava` | Unsupported opcodes are reported as R0 and never delegated to code generation | **Open** — opcode and activity-event coverage remains incomplete |
+| Component models | `ComponentBean` | **R1 only**; all 30 types map through `CreatorRuntimeComponentServiceMatrix` | Component descriptors persist in `legacy.components` and bind to reviewed runtime service IDs | Component matrix, dispatcher, service compilation, and permission-status tests pass | R2/R3 plugin and native-build tiers removed from the active runtime path | **Open** — device/configuration behavior tests remain incomplete for hardware, Firebase, and Ads |
+| Project/library/resource models | `Project*Bean`, resource beans | Open | Open | Open | Open | **Open** |
+| Build/export paths | Compiler and `ProjectBuilder` families | Not accepted as a runtime execution tier | Open | Legacy queue tests remain historical only and must be removed or re-scoped | Creator Runtime live execution must not install a rebuilt APK | **Open** — legacy build adapter removal and portable resource import remain incomplete |
+| Editor and AI actions | Tool registry and editor actions | Runtime operation pipeline | N/A | User and AI operation regression coverage passes | Revision history and shake recovery remain transparent and host-protected | **Open** — full legacy editor-action import inventory remains incomplete |
 
 ## Release gate
 
-The 100% declaration is permitted only when every `Open` row has been decomposed into capability-level records with passing import, behavior, and fallback/provenance evidence. An unsupported item must remain a visible R0 exception; it cannot be omitted from the denominator.
+The 100% declaration is permitted only when every `Open` row has been decomposed into capability-level records with passing import and behavior evidence. The final audit must contain **zero R0 entries** and **zero R2/R3 execution paths**. An unsupported item must remain a visible R0 exception; it cannot be omitted from the denominator.
 
 ## Incremental evidence
 
-`CreatorNativeBuildQueueTest.r3ComponentFallbackCreatesRevisionPinnedBuildRequest` verifies that the explicitly classified R3 Firebase Cloud Messaging component produces a native build lifecycle carrying the immutable source revision (`42`) from enqueue through completion. `CreatorNativeBuildAdapter` now delegates a synchronized pinned legacy project to Sketchware's `ProjectBuilder` resource, Kotlin, Java, DEX, packaging, and signing stages. This is partial evidence only: source synchronization and user-facing build-result wiring still require their own behavior tests before this row can close.
+`CreatorRuntimeComponentServiceMatrixTest` verifies that all 30 `ComponentBean` identifiers bind to an explicit R1 runtime service. `CreatorLegacyViewCapabilityMatrixTest` verifies that every inventoried legacy view type resolves to R1. `CreatorLegacyArtifactImporterTest` demonstrates import of a component descriptor plus view event block and verifies that executable legacy Java is rejected instead of being sent to a plugin or native-build fallback. `CreatorProjectDocumentCodecTest` verifies imported service descriptors and typed event blocks survive document serialization. These are JVM-level evidence only; they do **not** close the device behavior, project/library/resource, or legacy build-removal gates.

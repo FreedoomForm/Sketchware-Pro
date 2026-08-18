@@ -4,6 +4,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -27,6 +28,28 @@ public class CreatorProjectDocumentCodecTest {
         assertThat(decoded.getEntryControl().getLabel()).isEqualTo("Edit");
         assertThat(decoded.getEntryControl().getPlacement()).isEqualTo("top_end");
         assertThat(decoded.getWidgets().get("button").getProperties().get("text")).isEqualTo("Open");
+    }
+
+    @Test public void codecPreservesImportedRuntimeStateAndTypedEventBlocks() {
+        Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
+        widgets.put("root", new CreatorWidget("root", "column", null, Arrays.asList("button"), null));
+        widgets.put("button", new CreatorWidget("button", "button", "root", null, null));
+        Map<String, CreatorScreen> screens = new LinkedHashMap<>();
+        screens.put("home", new CreatorScreen("home", "/", "root"));
+        Map<String, Object> state = map("legacy.components", map("camera1", map("serviceId", "camera")));
+        Map<String, CreatorEventBinding> events = new LinkedHashMap<>();
+        events.put("tap", new CreatorEventBinding("tap", "button", "click", Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE, map("message", "Live")))));
+        CreatorProjectDocument document = new CreatorProjectDocument(CreatorProjectDocument.SCHEMA_VERSION,
+                "project", 4L, "Demo", "home", screens, widgets, CreatorEntryControl.defaultControl(), state, events);
+
+        CreatorProjectDocument decoded = CreatorProjectDocumentCodec.decode(CreatorProjectDocumentCodec.encode(document));
+
+        assertThat(decoded.getState()).containsKey("legacy.components");
+        assertThat(decoded.getEvents()).containsKey("tap");
+        assertThat(decoded.getEvents().get("tap").getBlocks().get(0).getType())
+                .isEqualTo(CreatorRuntimeBlock.Type.SHOW_MESSAGE);
+        assertThat(decoded.getEvents().get("tap").getBlocks().get(0).getPayload().get("message")).isEqualTo("Live");
     }
 
     private static CreatorProjectOperation operation(String id, long revision,

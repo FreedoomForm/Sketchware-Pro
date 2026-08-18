@@ -76,6 +76,20 @@ public class CreatorRuntimeEngineTest {
         assertThat(engine.getCurrent().getRevision()).isEqualTo(0L);
     }
 
+    @Test public void unsupportedWidgetTypesAreRejectedForBothUserAndAiOperations() {
+        CreatorRuntimeEngine engine = newEngine();
+        engine.apply(operation("op-screen", 0, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        CreatorApplyResult rejected = engine.apply(operation("op-unknown", 1,
+                CreatorProjectOperation.ActorKind.AI, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "unknown", "widgetType", "unreviewed_native_widget", "parentId", "root")));
+
+        assertThat(rejected.isApplied()).isFalse();
+        assertThat(rejected.getValidation().getCode()).isEqualTo(CreatorValidationResult.Code.INVALID_PAYLOAD);
+        assertThat(engine.getCurrent().getRevision()).isEqualTo(1L);
+    }
+
     @Test public void restoreCreatesANewRevisionFromAnAvailableHistoricalSnapshot() {
         CreatorRuntimeEngine engine = newEngine();
         engine.apply(operation("op-screen", 0, CreatorProjectOperation.ActorKind.USER,

@@ -17,6 +17,12 @@
     <!-- AI chat: camera attachment (paperclip button). Runtime permission
          requested on demand when the user picks the Camera tile. -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <!-- AI chat: gallery attachment on Android 13+ (replaces READ_EXTERNAL_STORAGE). -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 

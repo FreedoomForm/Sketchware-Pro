@@ -6,8 +6,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/** Runtime scheduler for the legacy TimerTask component. */
-public final class CreatorTimerPlugin implements CreatorRuntimePlugin {
+/** Runtime-native scheduler for the legacy TimerTask component. */
+public final class CreatorTimerPlugin implements CreatorRuntimeService {
     public interface Listener { void onTick(String timerId); }
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final Listener listener;

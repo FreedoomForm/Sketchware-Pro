@@ -16,10 +16,13 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,8 +36,10 @@ import pro.sketchware.creator.runtime.CreatorCompatibilityTier;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectOperation;
 import pro.sketchware.creator.runtime.CreatorRuntimeCompatibilityInspector;
+import pro.sketchware.creator.runtime.CreatorRuntimeEnvironment;
 import pro.sketchware.creator.runtime.CreatorRuntimeExecutor;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
+import pro.sketchware.creator.runtime.CreatorRuntimeServices;
 import pro.sketchware.creator.runtime.CreatorWidget;
 
 /**
@@ -50,7 +55,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private TextView revisionLabel;
     private MaterialButton entryControl;
     private CreatorShakeRecovery shakeRecovery;
-    private final CreatorRuntimeExecutor runtimeExecutor = new CreatorRuntimeExecutor();
+    private CreatorRuntimeEnvironment runtimeEnvironment;
+    private CreatorRuntimeExecutor runtimeExecutor;
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(this::render);
     private static final String[] ENTRY_PLACEMENTS = {
             "bottom_end", "bottom_start", "top_end", "top_start", "center"
@@ -60,6 +66,12 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_creator_project);
         session = CreatorRuntimeSession.get(this);
+        runtimeEnvironment = new CreatorRuntimeEnvironment(this, (serviceId, eventName, payload) ->
+                runOnUiThread(() -> handleRuntimeServiceEvent(serviceId, eventName, payload)));
+        runtimeExecutor = new CreatorRuntimeExecutor(CreatorRuntimeServices.defaults(this,
+                session.getDocument().getProjectId(), runtimeEnvironment,
+                timerId -> runtimeEnvironment.publish("timer", "tick",
+                        java.util.Collections.<String, Object>singletonMap("timerId", timerId))));
         previewCanvas = findViewById(R.id.creator_preview_canvas);
         revisionLabel = findViewById(R.id.creator_revision_label);
         entryControl = findViewById(R.id.creator_project_entry_control);
@@ -89,6 +101,16 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         session.removeListener(documentListener);
         if (shakeRecovery != null) shakeRecovery.stop();
         super.onPause();
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        if (runtimeEnvironment != null && runtimeEnvironment.handleActivityResult(requestCode, resultCode, data)) return;
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (runtimeEnvironment != null && runtimeEnvironment.handlePermissionResult(requestCode, permissions, grantResults)) return;
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     private void ensureStarterScreen() {
@@ -204,10 +226,6 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         StringBuilder message = new StringBuilder();
         appendCompatibilitySection(message, report, CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
                 getString(R.string.creator_compatibility_r1));
-        appendCompatibilitySection(message, report, CreatorCompatibilityTier.R2_RUNTIME_PLUGIN,
-                getString(R.string.creator_compatibility_r2));
-        appendCompatibilitySection(message, report, CreatorCompatibilityTier.R3_NATIVE_FALLBACK,
-                getString(R.string.creator_compatibility_r3));
         appendCompatibilitySection(message, report, CreatorCompatibilityTier.R0_UNSUPPORTED,
                 getString(R.string.creator_compatibility_r0));
         new MaterialAlertDialogBuilder(this)
@@ -265,6 +283,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
 
     private void render() {
         CreatorProjectDocument document = session.getDocument();
+        runtimeEnvironment.clearWidgets();
         revisionLabel.setText(getString(R.string.creator_revision_label, document.getRevision()));
         entryControl.setText(document.getEntryControl().getLabel());
         entryControl.setVisibility(document.getEntryControl().isVisible() ? View.VISIBLE : View.INVISIBLE);
@@ -283,7 +302,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             text.setText(propertyString(widget, "text", "Text"));
             text.setTextSize(propertyInt(widget, "textSize", 18));
             text.setPadding(dp(16), dp(12), dp(16), dp(12));
-            return text;
+            return registerRuntimeWidget(widget, text);
         }
         if ("button".equals(widget.getType())) {
             MaterialButton button = new MaterialButton(this);
@@ -293,7 +312,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             params.setMargins(dp(16), dp(8), dp(16), dp(8));
             button.setLayoutParams(params);
-            return button;
+            return registerRuntimeWidget(widget, button);
         }
         if ("input".equals(widget.getType())) {
             EditText input = new EditText(this);
@@ -304,7 +323,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             params.setMargins(dp(16), dp(8), dp(16), dp(8));
             input.setLayoutParams(params);
-            return input;
+            return registerRuntimeWidget(widget, input);
         }
         if ("checkbox".equals(widget.getType())) {
             MaterialCheckBox checkbox = new MaterialCheckBox(this);
@@ -312,7 +331,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             checkbox.setChecked(propertyBoolean(widget, "checked", false));
             checkbox.setOnCheckedChangeListener((button, checked) -> dispatchRuntimeEvent(widget.getId(), "change"));
             checkbox.setPadding(dp(12), dp(8), dp(12), dp(8));
-            return checkbox;
+            return registerRuntimeWidget(widget, checkbox);
         }
         if ("switch".equals(widget.getType())) {
             SwitchCompat toggle = new SwitchCompat(this);
@@ -320,14 +339,49 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             toggle.setChecked(propertyBoolean(widget, "checked", false));
             toggle.setOnCheckedChangeListener((button, checked) -> dispatchRuntimeEvent(widget.getId(), "change"));
             toggle.setPadding(dp(16), dp(8), dp(16), dp(8));
-            return toggle;
+            return registerRuntimeWidget(widget, toggle);
         }
         if ("image".equals(widget.getType())) {
             ImageView image = new ImageView(this);
             image.setImageResource(R.drawable.ic_mtrl_image);
             image.setContentDescription(propertyString(widget, "contentDescription", "Image"));
             image.setPadding(dp(28), dp(28), dp(28), dp(28));
-            return image;
+            return registerRuntimeWidget(widget, image);
+        }
+        if ("pager".equals(widget.getType())) {
+            ViewPager pager = new ViewPager(this);
+            pager.setId(View.generateViewId());
+            pager.setAdapter(new PagerAdapter() {
+                @Override public int getCount() { return widget.getChildren().size(); }
+                @Override public boolean isViewFromObject(View view, Object object) { return view == object; }
+                @Override public Object instantiateItem(ViewGroup parent, int position) {
+                    String childId = widget.getChildren().get(position);
+                    View child = renderWidget(document, document.getWidgets().get(childId));
+                    if (child == null) child = new View(CreatorProjectActivity.this);
+                    parent.addView(child);
+                    return child;
+                }
+                @Override public void destroyItem(ViewGroup parent, int position, Object object) {
+                    parent.removeView((View) object);
+                }
+            });
+            pager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+                @Override public void onPageSelected(int position) {
+                    dispatchRuntimeEvent(widget.getId(), "page_selected");
+                }
+            });
+            return registerRuntimeWidget(widget, pager);
+        }
+        if ("hscroll".equals(widget.getType())) {
+            android.widget.HorizontalScrollView scroll = new android.widget.HorizontalScrollView(this);
+            LinearLayout childRow = new LinearLayout(this);
+            childRow.setOrientation(LinearLayout.HORIZONTAL);
+            for (String childId : widget.getChildren()) {
+                View child = renderWidget(document, document.getWidgets().get(childId));
+                if (child != null) childRow.addView(child);
+            }
+            scroll.addView(childRow);
+            return registerRuntimeWidget(widget, scroll);
         }
         if ("scroll".equals(widget.getType())) {
             android.widget.ScrollView scroll = new android.widget.ScrollView(this);
@@ -338,7 +392,289 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 if (child != null) childColumn.addView(child);
             }
             scroll.addView(childColumn);
-            return scroll;
+            return registerRuntimeWidget(widget, scroll);
+        }
+        if ("progress".equals(widget.getType())) {
+            android.widget.ProgressBar progress = new android.widget.ProgressBar(this, null,
+                    android.R.attr.progressBarStyleHorizontal);
+            progress.setMax(Math.max(1, propertyInt(widget, "max", 100)));
+            progress.setProgress(Math.max(0, propertyInt(widget, "progress", 0)));
+            return registerRuntimeWidget(widget, progress);
+        }
+        if ("spinner".equals(widget.getType())) {
+            android.widget.Spinner spinner = new android.widget.Spinner(this);
+            java.util.List<String> entries = new java.util.ArrayList<>();
+            Object rawItems = widget.getProperties().get("items");
+            if (rawItems instanceof java.util.List) {
+                for (Object item : (java.util.List<?>) rawItems) entries.add(String.valueOf(item));
+            }
+            if (entries.isEmpty()) entries.add(propertyString(widget, "text", "Item"));
+            spinner.setAdapter(new android.widget.ArrayAdapter<>(this,
+                    android.R.layout.simple_spinner_dropdown_item, entries));
+            spinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+                @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                    dispatchRuntimeEvent(widget.getId(), "item_selected");
+                }
+                @Override public void onNothingSelected(android.widget.AdapterView<?> parent) { }
+            });
+            return registerRuntimeWidget(widget, spinner);
+        }
+        if ("slider".equals(widget.getType())) {
+            android.widget.SeekBar seekBar = new android.widget.SeekBar(this);
+            seekBar.setMax(Math.max(1, propertyInt(widget, "max", 100)));
+            seekBar.setProgress(Math.max(0, propertyInt(widget, "progress", 0)));
+            seekBar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+                @Override public void onProgressChanged(android.widget.SeekBar view, int progress, boolean fromUser) {
+                    if (fromUser) dispatchRuntimeEvent(widget.getId(), "change");
+                }
+                @Override public void onStartTrackingTouch(android.widget.SeekBar view) { }
+                @Override public void onStopTrackingTouch(android.widget.SeekBar view) { }
+            });
+            return registerRuntimeWidget(widget, seekBar);
+        }
+        if ("calendar_view".equals(widget.getType())) {
+            android.widget.CalendarView calendar = new android.widget.CalendarView(this);
+            calendar.setOnDateChangeListener((view, year, month, day) -> dispatchRuntimeEvent(widget.getId(), "date_selected"));
+            return registerRuntimeWidget(widget, calendar);
+        }
+        if ("fab".equals(widget.getType())) {
+            FloatingActionButton fab = new FloatingActionButton(this);
+            fab.setImageResource(android.R.drawable.ic_input_add);
+            fab.setContentDescription(propertyString(widget, "contentDescription", "Action"));
+            fab.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "click"));
+            return registerRuntimeWidget(widget, fab);
+        }
+        if ("radio".equals(widget.getType())) {
+            RadioButton radio = new RadioButton(this);
+            radio.setText(propertyString(widget, "text", "Option"));
+            radio.setChecked(propertyBoolean(widget, "checked", false));
+            radio.setOnCheckedChangeListener((button, checked) -> dispatchRuntimeEvent(widget.getId(), "change"));
+            return registerRuntimeWidget(widget, radio);
+        }
+        if ("rating".equals(widget.getType())) {
+            android.widget.RatingBar rating = new android.widget.RatingBar(this);
+            rating.setNumStars(Math.max(1, propertyInt(widget, "max", 5)));
+            rating.setRating(Math.max(0, propertyInt(widget, "progress", 0)));
+            rating.setOnRatingBarChangeListener((bar, value, fromUser) -> {
+                if (fromUser) dispatchRuntimeEvent(widget.getId(), "change");
+            });
+            return registerRuntimeWidget(widget, rating);
+        }
+        if ("search".equals(widget.getType())) {
+            androidx.appcompat.widget.SearchView search = new androidx.appcompat.widget.SearchView(this);
+            search.setQueryHint(propertyString(widget, "hint", "Search"));
+            search.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+                @Override public boolean onQueryTextSubmit(String query) { dispatchRuntimeEvent(widget.getId(), "submit"); return false; }
+                @Override public boolean onQueryTextChange(String value) { dispatchRuntimeEvent(widget.getId(), "change"); return false; }
+            });
+            return registerRuntimeWidget(widget, search);
+        }
+        if ("autocomplete".equals(widget.getType())) {
+            android.widget.AutoCompleteTextView input = new android.widget.AutoCompleteTextView(this);
+            input.setText(propertyString(widget, "text", ""));
+            input.setHint(propertyString(widget, "hint", "Type here"));
+            input.setOnItemClickListener((parent, view, position, id) -> dispatchRuntimeEvent(widget.getId(), "item_selected"));
+            return registerRuntimeWidget(widget, input);
+        }
+        if ("list".equals(widget.getType()) || "grid".equals(widget.getType())) {
+            LinearLayout list = new LinearLayout(this);
+            list.setOrientation("grid".equals(widget.getType()) ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
+            Object rawItems = widget.getProperties().get("items");
+            java.util.List<?> items = rawItems instanceof java.util.List ? (java.util.List<?>) rawItems
+                    : java.util.Collections.singletonList(propertyString(widget, "text", "Item"));
+            for (Object item : items) {
+                TextView row = new TextView(this);
+                row.setText(String.valueOf(item));
+                row.setPadding(dp(12), dp(10), dp(12), dp(10));
+                row.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "item_click"));
+                list.addView(row);
+            }
+            return registerRuntimeWidget(widget, list);
+        }
+        if ("clock".equals(widget.getType())) {
+            android.widget.TextClock clock = new android.widget.TextClock(this);
+            clock.setFormat12Hour(propertyString(widget, "format12", "h:mm a"));
+            clock.setFormat24Hour(propertyString(widget, "format24", "HH:mm"));
+            return registerRuntimeWidget(widget, clock);
+        }
+        if ("date_picker".equals(widget.getType())) {
+            android.widget.DatePicker picker = new android.widget.DatePicker(this);
+            picker.init(picker.getYear(), picker.getMonth(), picker.getDayOfMonth(),
+                    (view, year, month, day) -> dispatchRuntimeEvent(widget.getId(), "date_selected"));
+            return registerRuntimeWidget(widget, picker);
+        }
+        if ("time_picker".equals(widget.getType())) {
+            android.widget.TimePicker picker = new android.widget.TimePicker(this);
+            picker.setOnTimeChangedListener((view, hour, minute) -> dispatchRuntimeEvent(widget.getId(), "time_selected"));
+            return registerRuntimeWidget(widget, picker);
+        }
+        if ("web".equals(widget.getType())) {
+            android.webkit.WebView web = new android.webkit.WebView(this);
+            web.getSettings().setJavaScriptEnabled(true);
+            String url = propertyString(widget, "url", propertyString(widget, "text", "about:blank"));
+            if (!url.startsWith("http://") && !url.startsWith("https://")) url = "about:blank";
+            web.loadUrl(url);
+            return registerRuntimeWidget(widget, web);
+        }
+        if ("video".equals(widget.getType())) {
+            android.widget.VideoView video = new android.widget.VideoView(this);
+            String source = propertyString(widget, "url", propertyString(widget, "text", ""));
+            if (!source.isEmpty()) video.setVideoURI(android.net.Uri.parse(source));
+            video.setOnCompletionListener(player -> dispatchRuntimeEvent(widget.getId(), "completed"));
+            return registerRuntimeWidget(widget, video);
+        }
+        if ("lottie".equals(widget.getType())) {
+            com.airbnb.lottie.LottieAnimationView animation = new com.airbnb.lottie.LottieAnimationView(this);
+            String source = propertyString(widget, "url", propertyString(widget, "text", ""));
+            if (!source.isEmpty()) animation.setAnimationFromUrl(source);
+            animation.setRepeatCount(propertyBoolean(widget, "loop", true) ? com.airbnb.lottie.LottieDrawable.INFINITE : 0);
+            animation.playAnimation();
+            return registerRuntimeWidget(widget, animation);
+        }
+        if ("ad_banner".equals(widget.getType())) {
+            com.google.android.gms.ads.AdView ad = new com.google.android.gms.ads.AdView(this);
+            String unitId = propertyString(widget, "adUnitId", "");
+            if (!unitId.isEmpty()) {
+                ad.setAdSize(com.google.android.gms.ads.AdSize.BANNER);
+                ad.setAdUnitId(unitId);
+                ad.loadAd(new com.google.android.gms.ads.AdRequest.Builder().build());
+            }
+            return registerRuntimeWidget(widget, ad);
+        }
+        if ("tabs".equals(widget.getType())) {
+            com.google.android.material.tabs.TabLayout tabs = new com.google.android.material.tabs.TabLayout(this);
+            java.util.List<?> items = widget.getProperties().get("items") instanceof java.util.List
+                    ? (java.util.List<?>) widget.getProperties().get("items")
+                    : java.util.Collections.singletonList(propertyString(widget, "text", "Tab"));
+            for (Object item : items) tabs.addTab(tabs.newTab().setText(String.valueOf(item)));
+            tabs.addOnTabSelectedListener(new com.google.android.material.tabs.TabLayout.OnTabSelectedListener() {
+                @Override public void onTabSelected(com.google.android.material.tabs.TabLayout.Tab tab) { dispatchRuntimeEvent(widget.getId(), "tab_selected"); }
+                @Override public void onTabUnselected(com.google.android.material.tabs.TabLayout.Tab tab) { }
+                @Override public void onTabReselected(com.google.android.material.tabs.TabLayout.Tab tab) { }
+            });
+            return registerRuntimeWidget(widget, tabs);
+        }
+        if ("bottom_navigation".equals(widget.getType())) {
+            com.google.android.material.bottomnavigation.BottomNavigationView navigation =
+                    new com.google.android.material.bottomnavigation.BottomNavigationView(this);
+            java.util.List<?> items = widget.getProperties().get("items") instanceof java.util.List
+                    ? (java.util.List<?>) widget.getProperties().get("items")
+                    : java.util.Collections.singletonList(propertyString(widget, "text", "Home"));
+            int id = 1;
+            for (Object item : items) navigation.getMenu().add(0, id++, 0, String.valueOf(item))
+                    .setIcon(android.R.drawable.ic_menu_view);
+            navigation.setOnItemSelectedListener(item -> { dispatchRuntimeEvent(widget.getId(), "item_selected"); return true; });
+            return registerRuntimeWidget(widget, navigation);
+        }
+        if ("badge".equals(widget.getType())) {
+            TextView badge = new TextView(this);
+            badge.setText(propertyString(widget, "text", "0"));
+            badge.setGravity(Gravity.CENTER);
+            badge.setPadding(dp(8), dp(4), dp(8), dp(4));
+            badge.setBackgroundColor(0xFFE0E0E0);
+            return registerRuntimeWidget(widget, badge);
+        }
+        if ("pattern".equals(widget.getType())) {
+            android.widget.GridLayout pattern = new android.widget.GridLayout(this);
+            pattern.setColumnCount(3);
+            for (int i = 0; i < 9; i++) {
+                MaterialButton dot = new MaterialButton(this);
+                dot.setText("•");
+                dot.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "pattern_changed"));
+                pattern.addView(dot, new android.widget.GridLayout.LayoutParams());
+            }
+            return registerRuntimeWidget(widget, pattern);
+        }
+        if ("sidebar".equals(widget.getType())) {
+            LinearLayout sidebar = new LinearLayout(this);
+            sidebar.setOrientation(LinearLayout.VERTICAL);
+            for (char letter = 'A'; letter <= 'Z'; letter++) {
+                TextView index = new TextView(this);
+                index.setText(String.valueOf(letter));
+                index.setGravity(Gravity.CENTER);
+                index.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "letter_selected"));
+                sidebar.addView(index);
+            }
+            return registerRuntimeWidget(widget, sidebar);
+        }
+        if ("card".equals(widget.getType())) {
+            androidx.cardview.widget.CardView card = new androidx.cardview.widget.CardView(this);
+            LinearLayout childColumn = new LinearLayout(this);
+            childColumn.setOrientation(LinearLayout.VERTICAL);
+            for (String childId : widget.getChildren()) {
+                View child = renderWidget(document, document.getWidgets().get(childId));
+                if (child != null) childColumn.addView(child);
+            }
+            card.addView(childColumn);
+            return registerRuntimeWidget(widget, card);
+        }
+        if ("collapsing".equals(widget.getType())) {
+            com.google.android.material.appbar.AppBarLayout appBar = new com.google.android.material.appbar.AppBarLayout(this);
+            LinearLayout content = new LinearLayout(this);
+            content.setOrientation(LinearLayout.VERTICAL);
+            for (String childId : widget.getChildren()) {
+                View child = renderWidget(document, document.getWidgets().get(childId));
+                if (child != null) content.addView(child);
+            }
+            appBar.addView(content);
+            return registerRuntimeWidget(widget, appBar);
+        }
+        if ("text_input".equals(widget.getType())) {
+            com.google.android.material.textfield.TextInputLayout layout = new com.google.android.material.textfield.TextInputLayout(this);
+            EditText input = new EditText(this);
+            input.setText(propertyString(widget, "text", ""));
+            layout.setHint(propertyString(widget, "hint", "Input"));
+            layout.addView(input);
+            input.setOnFocusChangeListener((view, focused) -> { if (!focused) dispatchRuntimeEvent(widget.getId(), "change"); });
+            return registerRuntimeWidget(widget, layout);
+        }
+        if ("swipe_refresh".equals(widget.getType())) {
+            androidx.swiperefreshlayout.widget.SwipeRefreshLayout refresh = new androidx.swiperefreshlayout.widget.SwipeRefreshLayout(this);
+            LinearLayout content = new LinearLayout(this);
+            content.setOrientation(LinearLayout.VERTICAL);
+            for (String childId : widget.getChildren()) {
+                View child = renderWidget(document, document.getWidgets().get(childId));
+                if (child != null) content.addView(child);
+            }
+            refresh.addView(content);
+            refresh.setOnRefreshListener(() -> { refresh.setRefreshing(false); dispatchRuntimeEvent(widget.getId(), "refresh"); });
+            return registerRuntimeWidget(widget, refresh);
+        }
+        if ("radio_group".equals(widget.getType())) {
+            RadioGroup group = new RadioGroup(this);
+            group.setOrientation(LinearLayout.VERTICAL);
+            for (String childId : widget.getChildren()) {
+                View child = renderWidget(document, document.getWidgets().get(childId));
+                if (child != null) group.addView(child);
+            }
+            group.setOnCheckedChangeListener((view, checkedId) -> dispatchRuntimeEvent(widget.getId(), "change"));
+            return registerRuntimeWidget(widget, group);
+        }
+        if ("sign_in".equals(widget.getType())) {
+            com.google.android.gms.common.SignInButton signIn = new com.google.android.gms.common.SignInButton(this);
+            signIn.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "click"));
+            return registerRuntimeWidget(widget, signIn);
+        }
+        if ("circle_image".equals(widget.getType())) {
+            de.hdodenhof.circleimageview.CircleImageView image = new de.hdodenhof.circleimageview.CircleImageView(this);
+            image.setImageResource(R.drawable.ic_mtrl_image);
+            image.setContentDescription(propertyString(widget, "contentDescription", "Image"));
+            return registerRuntimeWidget(widget, image);
+        }
+        if ("otp".equals(widget.getType())) {
+            EditText otp = new EditText(this);
+            otp.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+            otp.setHint(propertyString(widget, "hint", "One-time password"));
+            otp.setSingleLine(true);
+            return registerRuntimeWidget(widget, otp);
+        }
+        if ("code".equals(widget.getType())) {
+            EditText code = new EditText(this);
+            code.setText(propertyString(widget, "text", ""));
+            code.setHint(propertyString(widget, "hint", "Code"));
+            code.setTypeface(android.graphics.Typeface.MONOSPACE);
+            code.setSingleLine(false);
+            return registerRuntimeWidget(widget, code);
         }
         LinearLayout container = new LinearLayout(this);
         container.setOrientation("row".equals(widget.getType())
@@ -351,7 +687,12 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             View child = renderWidget(document, document.getWidgets().get(childId));
             if (child != null) container.addView(child);
         }
-        return container;
+        return registerRuntimeWidget(widget, container);
+    }
+
+    private View registerRuntimeWidget(CreatorWidget widget, View view) {
+        runtimeEnvironment.registerWidget(widget.getId(), view);
+        return view;
     }
 
     private int dp(int value) {
@@ -375,13 +716,35 @@ public final class CreatorProjectActivity extends AppCompatActivity {
 
     private void dispatchRuntimeEvent(String widgetId, String eventName) {
         java.util.List<CreatorRuntimeExecutor.Effect> effects = runtimeExecutor.dispatch(session.getEngine(), widgetId, eventName);
+        renderEffects(effects);
+        render();
+    }
+
+    private void handleRuntimeServiceEvent(String serviceId, String eventName, Map<String, Object> payload) {
+        Object rawComponents = session.getDocument().getState().get("legacy.components");
+        if (rawComponents instanceof Map) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) rawComponents).entrySet()) {
+                if (!(entry.getValue() instanceof Map)) continue;
+                Object boundService = ((Map<?, ?>) entry.getValue()).get("serviceId");
+                if (!serviceId.equals(boundService)) continue;
+                renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(entry.getKey()), eventName));
+            }
+        }
+        String summary = serviceId + " · " + eventName;
+        if ("error".equals(eventName) && payload.get("message") != null) {
+            summary += ": " + payload.get("message");
+        }
+        Toast.makeText(this, summary, Toast.LENGTH_SHORT).show();
+        render();
+    }
+
+    private void renderEffects(java.util.List<CreatorRuntimeExecutor.Effect> effects) {
         for (CreatorRuntimeExecutor.Effect effect : effects) {
             if ("message".equals(effect.getType())) Toast.makeText(this, effect.getValue(), Toast.LENGTH_SHORT).show();
             else if ("navigate".equals(effect.getType())) {
                 Toast.makeText(this, getString(R.string.creator_navigation_effect, effect.getValue()), Toast.LENGTH_SHORT).show();
             }
         }
-        render();
     }
 
     private void applyEntryPlacement(String placement) {

@@ -7,8 +7,8 @@ import android.os.Vibrator;
 import java.util.Collections;
 import java.util.Map;
 
-/** Runtime implementation of the legacy Vibrator component. */
-public final class CreatorVibratorPlugin implements CreatorRuntimePlugin {
+/** Runtime-native implementation of the legacy Vibrator component. */
+public final class CreatorVibratorPlugin implements CreatorRuntimeService {
     private final Vibrator vibrator;
 
     public CreatorVibratorPlugin(Context context) {

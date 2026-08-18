@@ -56,6 +56,24 @@ public final class CreatorProjectDocumentCodec {
             widgets.add(json);
         }
         root.add("widgets", widgets);
+        root.add("state", toJsonObject(document.getState()));
+        JsonArray events = new JsonArray();
+        for (CreatorEventBinding binding : document.getEvents().values()) {
+            JsonObject event = new JsonObject();
+            event.addProperty("id", binding.getId());
+            event.addProperty("targetWidgetId", binding.getTargetWidgetId());
+            event.addProperty("eventName", binding.getEventName());
+            JsonArray blocks = new JsonArray();
+            for (CreatorRuntimeBlock block : binding.getBlocks()) {
+                JsonObject encoded = new JsonObject();
+                encoded.addProperty("type", block.getType().name());
+                encoded.add("payload", toJsonObject(block.getPayload()));
+                blocks.add(encoded);
+            }
+            event.add("blocks", blocks);
+            events.add(event);
+        }
+        root.add("events", events);
         return root.toString();
     }
 
@@ -96,8 +114,25 @@ public final class CreatorProjectDocumentCodec {
                     required(json, "type").getAsString(), parentId, children, properties);
             widgets.put(widget.getId(), widget);
         }
+        Map<String, Object> state = root.has("state") && root.get("state").isJsonObject()
+                ? fromJsonObject(root.getAsJsonObject("state")) : new LinkedHashMap<String, Object>();
+        Map<String, CreatorEventBinding> events = new LinkedHashMap<>();
+        for (JsonElement item : arrayOrEmpty(root, "events")) {
+            JsonObject event = item.getAsJsonObject();
+            List<CreatorRuntimeBlock> blocks = new ArrayList<>();
+            for (JsonElement blockItem : arrayOrEmpty(event, "blocks")) {
+                JsonObject block = blockItem.getAsJsonObject();
+                CreatorRuntimeBlock.Type type = CreatorRuntimeBlock.Type.valueOf(required(block, "type").getAsString());
+                Map<String, Object> payload = block.has("payload") && block.get("payload").isJsonObject()
+                        ? fromJsonObject(block.getAsJsonObject("payload")) : new LinkedHashMap<String, Object>();
+                blocks.add(new CreatorRuntimeBlock(type, payload));
+            }
+            CreatorEventBinding binding = new CreatorEventBinding(required(event, "id").getAsString(),
+                    required(event, "targetWidgetId").getAsString(), required(event, "eventName").getAsString(), blocks);
+            events.put(binding.getId(), binding);
+        }
         return new CreatorProjectDocument(schemaVersion, projectId, revision, name, entryScreenId,
-                screens, widgets, entryControl);
+                screens, widgets, entryControl, state, events);
     }
 
     private static JsonElement required(JsonObject object, String key) {

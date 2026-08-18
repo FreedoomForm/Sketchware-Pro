@@ -4,10 +4,10 @@ import java.util.Locale;
 
 /** Deterministic classification of legacy project features before migration. */
 public final class CreatorCompatibilityAnalyzer {
-    private final CreatorRuntimePluginRegistry plugins;
+    private final CreatorRuntimeServiceCatalog services;
 
-    public CreatorCompatibilityAnalyzer(CreatorRuntimePluginRegistry plugins) {
-        this.plugins = plugins == null ? CreatorRuntimePluginRegistry.defaults() : plugins;
+    public CreatorCompatibilityAnalyzer(CreatorRuntimeServiceCatalog services) {
+        this.services = services == null ? CreatorRuntimeServiceCatalog.defaults() : services;
     }
 
     public CreatorCompatibilityTier classify(String featureId) {
@@ -17,14 +17,14 @@ public final class CreatorCompatibilityAnalyzer {
                 || normalized.startsWith("state:") || normalized.startsWith("navigation:")) {
             return CreatorCompatibilityTier.R1_RUNTIME_NATIVE;
         }
-        if (normalized.startsWith("plugin:")) {
-            return plugins.supports(normalized.substring("plugin:".length()))
-                    ? CreatorCompatibilityTier.R2_RUNTIME_PLUGIN
-                    : CreatorCompatibilityTier.R3_NATIVE_FALLBACK;
+        if (normalized.startsWith("service:") || normalized.startsWith("plugin:")) {
+            String serviceId = normalized.substring(normalized.indexOf(':') + 1);
+            return services.supports(serviceId)
+                    ? CreatorCompatibilityTier.R1_RUNTIME_NATIVE : CreatorCompatibilityTier.R0_UNSUPPORTED;
         }
         if (normalized.startsWith("java:") || normalized.startsWith("kotlin:")
                 || normalized.startsWith("native:") || normalized.startsWith("library:")) {
-            return CreatorCompatibilityTier.R3_NATIVE_FALLBACK;
+            return CreatorCompatibilityTier.R0_UNSUPPORTED;
         }
         if (normalized.startsWith("dex:") || normalized.startsWith("dynamic_code:")) {
             return CreatorCompatibilityTier.R0_UNSUPPORTED;
