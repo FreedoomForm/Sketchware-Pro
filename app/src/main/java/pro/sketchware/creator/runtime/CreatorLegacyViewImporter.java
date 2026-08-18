@@ -138,6 +138,11 @@ public final class CreatorLegacyViewImporter {
             properties.put("progress", view.progress);
             properties.put("max", view.max);
         }
+        if (view.image != null) {
+            properties.put("resourceName", view.image.resName == null ? "" : view.image.resName);
+            properties.put("rotation", view.image.rotate);
+            properties.put("scaleType", view.image.scaleType == null ? "CENTER" : view.image.scaleType);
+        }
         LayoutBean layout = view.layout;
         if (layout != null) {
             properties.put("padding", Math.max(0, layout.paddingLeft));

@@ -52,6 +52,30 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().canPreviewImmediately()).isFalse();
     }
 
+    @Test public void followsLegacyNextBlockChainAndRejectsUntypedControlFlow() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean second = new BlockBean("2", "", "", "showMessage");
+        second.parameters.add("Second");
+        BlockBean first = new BlockBean("1", "", "", "setVar");
+        first.parameters.add("answer");
+        first.parameters.add("42");
+        first.nextBlock = 2;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(second, first));
+
+        CreatorLegacyArtifactImporter.Result ordered = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        assertThat(ordered.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0).getType())
+                .isEqualTo(CreatorRuntimeBlock.Type.SET_STATE);
+
+        first.subStack1 = 2;
+        CreatorLegacyArtifactImporter.Result controlFlow = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+        assertThat(controlFlow.getDocument().getEvents()).isEmpty();
+        assertThat(controlFlow.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(1);
+    }
+
     @Test public void importsProjectMetadataAndBlocksArbitraryNativeLibraries() {
         ProjectFileBean activity = new ProjectFileBean(ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY, "main");
         ProjectLibraryBean firebase = new ProjectLibraryBean(ProjectLibraryBean.PROJECT_LIB_TYPE_FIREBASE);

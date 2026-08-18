@@ -343,7 +343,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if ("image".equals(widget.getType())) {
             ImageView image = new ImageView(this);
-            image.setImageResource(R.drawable.ic_mtrl_image);
+            applyImageProperties(image, widget);
             image.setContentDescription(propertyString(widget, "contentDescription", "Image"));
             image.setPadding(dp(28), dp(28), dp(28), dp(28));
             return registerRuntimeWidget(widget, image);
@@ -657,7 +657,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if ("circle_image".equals(widget.getType())) {
             de.hdodenhof.circleimageview.CircleImageView image = new de.hdodenhof.circleimageview.CircleImageView(this);
-            image.setImageResource(R.drawable.ic_mtrl_image);
+            applyImageProperties(image, widget);
             image.setContentDescription(propertyString(widget, "contentDescription", "Image"));
             return registerRuntimeWidget(widget, image);
         }
@@ -712,6 +712,19 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private boolean propertyBoolean(CreatorWidget widget, String key, boolean fallback) {
         Object value = widget.getProperties().get(key);
         return value instanceof Boolean ? (Boolean) value : fallback;
+    }
+
+    private void applyImageProperties(ImageView image, CreatorWidget widget) {
+        String resourceName = propertyString(widget, "resourceName", "");
+        int resourceId = resourceName.isEmpty() ? 0
+                : getResources().getIdentifier(resourceName, "drawable", getPackageName());
+        image.setImageResource(resourceId == 0 ? R.drawable.ic_mtrl_image : resourceId);
+        image.setRotation(propertyInt(widget, "rotation", 0));
+        try {
+            image.setScaleType(ImageView.ScaleType.valueOf(propertyString(widget, "scaleType", "CENTER")));
+        } catch (IllegalArgumentException ignored) {
+            image.setScaleType(ImageView.ScaleType.CENTER);
+        }
     }
 
     private void dispatchRuntimeEvent(String widgetId, String eventName) {

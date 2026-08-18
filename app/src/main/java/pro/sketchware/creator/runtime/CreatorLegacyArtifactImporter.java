@@ -182,9 +182,13 @@ public final class CreatorLegacyArtifactImporter {
 
     private BlockConversion convertBlocks(List<BlockBean> blocks) {
         BlockConversion result = new BlockConversion();
-        for (BlockBean block : blocks == null ? Collections.<BlockBean>emptyList() : blocks) {
+        for (BlockBean block : orderedBlocks(blocks)) {
             if (block == null || blank(block.opCode)) {
                 result.unsupported.add("empty");
+                continue;
+            }
+            if (block.subStack1 >= 0 || block.subStack2 >= 0) {
+                result.unsupported.add(block.opCode + " (control flow)");
                 continue;
             }
             String op = block.opCode.trim().toLowerCase(Locale.ROOT);
@@ -222,6 +226,31 @@ public final class CreatorLegacyArtifactImporter {
             }
         }
         return result;
+    }
+
+    private List<BlockBean> orderedBlocks(List<BlockBean> blocks) {
+        if (blocks == null || blocks.isEmpty()) return Collections.emptyList();
+        Map<Integer, BlockBean> byId = new LinkedHashMap<>();
+        java.util.Set<Integer> inbound = new java.util.LinkedHashSet<>();
+        for (BlockBean block : blocks) {
+            if (block == null) continue;
+            try { byId.put(Integer.parseInt(block.id), block); } catch (NumberFormatException ignored) { }
+            if (block.nextBlock >= 0) inbound.add(block.nextBlock);
+        }
+        BlockBean start = null;
+        for (Map.Entry<Integer, BlockBean> entry : byId.entrySet()) {
+            if (!inbound.contains(entry.getKey())) { start = entry.getValue(); break; }
+        }
+        if (start == null) return new ArrayList<>(blocks);
+        List<BlockBean> ordered = new ArrayList<>();
+        java.util.Set<BlockBean> visited = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<BlockBean, Boolean>());
+        BlockBean current = start;
+        while (current != null && visited.add(current)) {
+            ordered.add(current);
+            current = byId.get(current.nextBlock);
+        }
+        for (BlockBean block : blocks) if (block != null && visited.add(block)) ordered.add(block);
+        return ordered;
     }
 
     private static String normalizeEventName(String eventName) {
