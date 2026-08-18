@@ -46,3 +46,8 @@
 - [ ] Implement and audit all permitted device/integration plugins and the transparent native fallback path.
 - [ ] Build user-visible import, migration, fallback, and compatibility-report controls for existing Sketchware projects.
 - [ ] Execute reproducible behavior-parity, regression, recovery, migration, and build audits; publish evidence and remaining exceptions.
+- [ ] Classify Camera, Location, Bluetooth, Calendar, Firebase, Intent, Network, Notification, Media, Sensor, File Picker, Ads, Shared Preferences, Timers, and dialogs with exact plugin or fallback contracts.
+- [ ] Implement the first permission-aware Creator Runtime plugin bridge and its success/denial/error evidence.
+- [ ] Add machine-checkable component matrix coverage and import fixtures for the classified component families.
+- [x] Build a host-side permission request/result adapter that uses explicit capability IDs and never grants permissions implicitly.
+- [x] Test permission request, grant, denial, unsupported-capability, and no-context outcomes before exposing the bridge to Creator Runtime plugins.
