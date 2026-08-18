@@ -3,6 +3,7 @@ package pro.sketchware.creator.runtime;
 import android.content.Context;
 
 import a.a.a.ProjectBuilder;
+import a.a.a.jC;
 import a.a.a.yq;
 import mod.hey.studios.compiler.kotlin.KotlinCompilerBridge;
 import mod.jbk.build.BuildProgressReceiver;
@@ -46,6 +47,16 @@ public final class CreatorNativeBuildAdapter implements CreatorNativeBuildQueue.
         preparer.prepare(pinnedRevision, projectSession);
 
         ProjectBuilder builder = new ProjectBuilder(progressReceiver, context, projectSession);
+        // Keep this order aligned with DesignActivity's supported build path:
+        // analyze project dependencies, generate legacy source/resources, then compile.
+        var fileManager = jC.b(scId);
+        var dataManager = jC.a(scId);
+        var libraryManager = jC.c(scId);
+        projectSession.a(libraryManager, fileManager, dataManager);
+        builder.buildBuiltInLibraryInformation();
+        projectSession.b(fileManager, dataManager, libraryManager, builder.getBuiltInLibraryManager());
+        projectSession.f();
+        projectSession.e();
         progressReceiver.onProgress("Creator Runtime revision " + pinnedRevision.getRevision() + ": compiling resources", 8);
         builder.maybeExtractAapt2();
         builder.compileResources();
