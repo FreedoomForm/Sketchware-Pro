@@ -24,7 +24,7 @@ public final class CreatorRuntimeTool implements SketchwareTool {
 
     @Override public String description() {
         return "Apply one transparent Creator Runtime operation to the live, user-editable project. "
-                + "Actions: create_screen, add_widget, set_widget_property, update_entry_control, attach_event, restore_revision. "
+                + "Actions: create_screen, add_widget, set_widget_property, set_state, update_entry_control, attach_event, restore_revision. "
                 + "Every accepted call creates a visible revision and audit record; never claim success unless the result says applied.";
     }
 
@@ -38,6 +38,7 @@ public final class CreatorRuntimeTool implements SketchwareTool {
         actions.add("create_screen");
         actions.add("add_widget");
         actions.add("set_widget_property");
+        actions.add("set_state");
         actions.add("update_entry_control");
         actions.add("attach_event");
         actions.add("restore_revision");
@@ -58,6 +59,7 @@ public final class CreatorRuntimeTool implements SketchwareTool {
         propertiesObject.addProperty("description", "Simple visual properties for the widget.");
         properties.add("properties", propertiesObject);
         addString(properties, "property", "Widget property name.");
+        addString(properties, "state_id", "Stable Creator Runtime state ID.");
         JsonObject value = new JsonObject();
         value.addProperty("description", "New property value.");
         properties.add("value", value);
@@ -71,7 +73,7 @@ public final class CreatorRuntimeTool implements SketchwareTool {
         addString(properties, "event_name", "Event name, for example click or change.");
         JsonObject blocks = new JsonObject();
         blocks.addProperty("type", "array");
-        blocks.addProperty("description", "Ordered visible blocks. Each has type set_widget_property, set_state, show_message, or navigate plus its payload.");
+        blocks.addProperty("description", "Ordered visible blocks. Types are set_widget_property, set_state, show_message, navigate, runtime_service_call, and if_state_equals. An if_state_equals block may contain nested then_blocks and else_blocks arrays.");
         properties.add("blocks", blocks);
         JsonObject targetRevision = new JsonObject();
         targetRevision.addProperty("type", "integer");

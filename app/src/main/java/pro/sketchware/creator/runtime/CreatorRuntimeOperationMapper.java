@@ -49,6 +49,11 @@ public final class CreatorRuntimeOperationMapper {
                 copy(args, payload, "label", "label");
                 copy(args, payload, "placement", "placement");
                 break;
+            case "set_state":
+                type = CreatorProjectOperation.Type.STATE_SET;
+                copy(args, payload, "state_id", "stateId");
+                copy(args, payload, "value", "value");
+                break;
             case "restore_revision":
                 type = CreatorProjectOperation.Type.REVISION_RESTORE;
                 copy(args, payload, "target_revision", "targetRevision");
@@ -85,16 +90,26 @@ public final class CreatorRuntimeOperationMapper {
     }
 
     private static java.util.List<CreatorRuntimeBlock> blocks(JsonObject args) {
+        return args.has("blocks") && args.get("blocks").isJsonArray()
+                ? blocks(args.getAsJsonArray("blocks")) : new ArrayList<CreatorRuntimeBlock>();
+    }
+
+    private static java.util.List<CreatorRuntimeBlock> blocks(com.google.gson.JsonArray source) {
         java.util.List<CreatorRuntimeBlock> result = new ArrayList<>();
-        if (!args.has("blocks") || !args.get("blocks").isJsonArray()) return result;
-        for (JsonElement element : args.getAsJsonArray("blocks")) {
+        for (JsonElement element : source) {
             if (!element.isJsonObject()) throw new IllegalArgumentException("each block must be an object");
             JsonObject block = element.getAsJsonObject();
             String type = requiredString(block, "type");
             Map<String, Object> payload = jsonObjectToMap(block);
             payload.remove("type");
+            payload.remove("then_blocks");
+            payload.remove("else_blocks");
+            java.util.List<CreatorRuntimeBlock> thenBlocks = block.has("then_blocks") && block.get("then_blocks").isJsonArray()
+                    ? blocks(block.getAsJsonArray("then_blocks")) : new ArrayList<CreatorRuntimeBlock>();
+            java.util.List<CreatorRuntimeBlock> elseBlocks = block.has("else_blocks") && block.get("else_blocks").isJsonArray()
+                    ? blocks(block.getAsJsonArray("else_blocks")) : new ArrayList<CreatorRuntimeBlock>();
             result.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.valueOf(
-                    type.toUpperCase(java.util.Locale.ROOT)), payload));
+                    type.toUpperCase(java.util.Locale.ROOT)), payload, thenBlocks, elseBlocks));
         }
         return result;
     }
