@@ -30,6 +30,11 @@ public final class CreatorOperationValidator {
                 return validatePropertySet(document, payload);
             case ENTRY_CONTROL_UPDATE:
                 return validateEntryControlUpdate(payload);
+            case STATE_SET:
+                return string(payload, "stateId") != null && payload.containsKey("value")
+                        ? CreatorValidationResult.ok() : invalid("stateId and value are required");
+            case EVENT_ATTACH:
+                return validateEventAttach(document, payload);
             case REVISION_RESTORE:
                 return payload.get("targetRevision") instanceof Number
                         ? CreatorValidationResult.ok()
@@ -110,6 +115,23 @@ public final class CreatorOperationValidator {
         }
         Object visible = payload.get("visible");
         if (visible != null && !(visible instanceof Boolean)) return invalid("entry-control visible must be boolean");
+        return CreatorValidationResult.ok();
+    }
+
+    private static CreatorValidationResult validateEventAttach(CreatorProjectDocument document,
+                                                                Map<String, Object> payload) {
+        String bindingId = string(payload, "bindingId");
+        String targetWidgetId = string(payload, "targetWidgetId");
+        String eventName = string(payload, "eventName");
+        if (bindingId == null || targetWidgetId == null || eventName == null || !(payload.get("blocks") instanceof java.util.List)) {
+            return invalid("bindingId, targetWidgetId, eventName and blocks are required");
+        }
+        if (document.getEvents().containsKey(bindingId)) {
+            return CreatorValidationResult.error(CreatorValidationResult.Code.DUPLICATE_ID, "bindingId already exists");
+        }
+        if (!document.getWidgets().containsKey(targetWidgetId)) {
+            return CreatorValidationResult.error(CreatorValidationResult.Code.MISSING_REFERENCE, "targetWidgetId does not exist");
+        }
         return CreatorValidationResult.ok();
     }
 

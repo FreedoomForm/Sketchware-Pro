@@ -35,3 +35,8 @@
 - [x] Implement a readable in-project history inspector with safe revision restoration.
 - [x] Surface imported-layout compatibility results in a user-visible report view.
 - [x] Validate and publish the transparency-interface milestone.
+- [x] Define the minimal transparent event graph, variable state, and block execution contract.
+- [x] Extend Project IR and operations for event attachment and explicit state transitions.
+- [x] Implement and test deterministic core blocks for property updates, variables, messages, and navigation.
+- [x] Connect supported live-preview widget events to the runtime executor without hidden code paths.
+- [x] Validate and publish the interactive runtime milestone.

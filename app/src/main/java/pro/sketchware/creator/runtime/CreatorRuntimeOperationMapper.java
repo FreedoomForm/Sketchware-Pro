@@ -7,6 +7,7 @@ import com.google.gson.JsonPrimitive;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.ArrayList;
 
 /** Pure mapper from a normalized AI tool-call payload to a typed Creator operation. */
 public final class CreatorRuntimeOperationMapper {
@@ -52,6 +53,13 @@ public final class CreatorRuntimeOperationMapper {
                 type = CreatorProjectOperation.Type.REVISION_RESTORE;
                 copy(args, payload, "target_revision", "targetRevision");
                 break;
+            case "attach_event":
+                type = CreatorProjectOperation.Type.EVENT_ATTACH;
+                copy(args, payload, "binding_id", "bindingId");
+                copy(args, payload, "target_widget_id", "targetWidgetId");
+                copy(args, payload, "event_name", "eventName");
+                payload.put("blocks", blocks(args));
+                break;
             default:
                 throw new IllegalArgumentException("Unsupported Creator Runtime action: " + action);
         }
@@ -73,6 +81,21 @@ public final class CreatorRuntimeOperationMapper {
     private static Map<String, Object> jsonObjectToMap(JsonObject source) {
         Map<String, Object> result = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : source.entrySet()) result.put(entry.getKey(), jsonToValue(entry.getValue()));
+        return result;
+    }
+
+    private static java.util.List<CreatorRuntimeBlock> blocks(JsonObject args) {
+        java.util.List<CreatorRuntimeBlock> result = new ArrayList<>();
+        if (!args.has("blocks") || !args.get("blocks").isJsonArray()) return result;
+        for (JsonElement element : args.getAsJsonArray("blocks")) {
+            if (!element.isJsonObject()) throw new IllegalArgumentException("each block must be an object");
+            JsonObject block = element.getAsJsonObject();
+            String type = requiredString(block, "type");
+            Map<String, Object> payload = jsonObjectToMap(block);
+            payload.remove("type");
+            result.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.valueOf(
+                    type.toUpperCase(java.util.Locale.ROOT)), payload));
+        }
         return result;
     }
 

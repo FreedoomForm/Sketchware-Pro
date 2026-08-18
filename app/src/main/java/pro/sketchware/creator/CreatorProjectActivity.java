@@ -33,6 +33,7 @@ import pro.sketchware.creator.runtime.CreatorCompatibilityTier;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectOperation;
 import pro.sketchware.creator.runtime.CreatorRuntimeCompatibilityInspector;
+import pro.sketchware.creator.runtime.CreatorRuntimeExecutor;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 import pro.sketchware.creator.runtime.CreatorWidget;
 
@@ -49,6 +50,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private TextView revisionLabel;
     private MaterialButton entryControl;
     private CreatorShakeRecovery shakeRecovery;
+    private final CreatorRuntimeExecutor runtimeExecutor = new CreatorRuntimeExecutor();
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(this::render);
     private static final String[] ENTRY_PLACEMENTS = {
             "bottom_end", "bottom_start", "top_end", "top_start", "center"
@@ -286,7 +288,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("button".equals(widget.getType())) {
             MaterialButton button = new MaterialButton(this);
             button.setText(propertyString(widget, "text", "Button"));
-            button.setOnClickListener(v -> Toast.makeText(this, R.string.creator_preview_action, Toast.LENGTH_SHORT).show());
+            button.setOnClickListener(v -> dispatchRuntimeEvent(widget.getId(), "click"));
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             params.setMargins(dp(16), dp(8), dp(16), dp(8));
@@ -308,6 +310,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             MaterialCheckBox checkbox = new MaterialCheckBox(this);
             checkbox.setText(propertyString(widget, "text", "Checkbox"));
             checkbox.setChecked(propertyBoolean(widget, "checked", false));
+            checkbox.setOnCheckedChangeListener((button, checked) -> dispatchRuntimeEvent(widget.getId(), "change"));
             checkbox.setPadding(dp(12), dp(8), dp(12), dp(8));
             return checkbox;
         }
@@ -315,6 +318,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             SwitchCompat toggle = new SwitchCompat(this);
             toggle.setText(propertyString(widget, "text", "Switch"));
             toggle.setChecked(propertyBoolean(widget, "checked", false));
+            toggle.setOnCheckedChangeListener((button, checked) -> dispatchRuntimeEvent(widget.getId(), "change"));
             toggle.setPadding(dp(16), dp(8), dp(16), dp(8));
             return toggle;
         }
@@ -367,6 +371,17 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private boolean propertyBoolean(CreatorWidget widget, String key, boolean fallback) {
         Object value = widget.getProperties().get(key);
         return value instanceof Boolean ? (Boolean) value : fallback;
+    }
+
+    private void dispatchRuntimeEvent(String widgetId, String eventName) {
+        java.util.List<CreatorRuntimeExecutor.Effect> effects = runtimeExecutor.dispatch(session.getEngine(), widgetId, eventName);
+        for (CreatorRuntimeExecutor.Effect effect : effects) {
+            if ("message".equals(effect.getType())) Toast.makeText(this, effect.getValue(), Toast.LENGTH_SHORT).show();
+            else if ("navigate".equals(effect.getType())) {
+                Toast.makeText(this, getString(R.string.creator_navigation_effect, effect.getValue()), Toast.LENGTH_SHORT).show();
+            }
+        }
+        render();
     }
 
     private void applyEntryPlacement(String placement) {

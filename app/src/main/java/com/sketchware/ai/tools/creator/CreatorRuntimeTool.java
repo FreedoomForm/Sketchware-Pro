@@ -24,7 +24,7 @@ public final class CreatorRuntimeTool implements SketchwareTool {
 
     @Override public String description() {
         return "Apply one transparent Creator Runtime operation to the live, user-editable project. "
-                + "Actions: create_screen, add_widget, set_widget_property, update_entry_control, restore_revision. "
+                + "Actions: create_screen, add_widget, set_widget_property, update_entry_control, attach_event, restore_revision. "
                 + "Every accepted call creates a visible revision and audit record; never claim success unless the result says applied.";
     }
 
@@ -39,6 +39,7 @@ public final class CreatorRuntimeTool implements SketchwareTool {
         actions.add("add_widget");
         actions.add("set_widget_property");
         actions.add("update_entry_control");
+        actions.add("attach_event");
         actions.add("restore_revision");
         action.add("enum", actions);
         properties.add("action", action);
@@ -65,6 +66,13 @@ public final class CreatorRuntimeTool implements SketchwareTool {
         properties.add("visible", visible);
         addString(properties, "label", "Visible Creator entry-control label.");
         addString(properties, "placement", "Entry control placement: bottom_end, bottom_start, top_end, top_start, or center.");
+        addString(properties, "binding_id", "Stable ID for an event binding.");
+        addString(properties, "target_widget_id", "Widget that receives the event.");
+        addString(properties, "event_name", "Event name, for example click or change.");
+        JsonObject blocks = new JsonObject();
+        blocks.addProperty("type", "array");
+        blocks.addProperty("description", "Ordered visible blocks. Each has type set_widget_property, set_state, show_message, or navigate plus its payload.");
+        properties.add("blocks", blocks);
         JsonObject targetRevision = new JsonObject();
         targetRevision.addProperty("type", "integer");
         properties.add("target_revision", targetRevision);

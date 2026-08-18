@@ -13,6 +13,8 @@ public final class CreatorOperationReducer {
         long nextRevision = document.getRevision() + 1;
         Map<String, CreatorScreen> screens = new LinkedHashMap<>(document.getScreens());
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>(document.getWidgets());
+        Map<String, Object> state = new LinkedHashMap<>(document.getState());
+        Map<String, CreatorEventBinding> events = new LinkedHashMap<>(document.getEvents());
         CreatorEntryControl entryControl = document.getEntryControl();
         String entryScreenId = document.getEntryScreenId();
         Map<String, Object> payload = operation.getPayload();
@@ -54,11 +56,21 @@ public final class CreatorOperationReducer {
                 entryControl = entryControl.withValues(visible, label, placement);
                 break;
             }
+            case STATE_SET:
+                state.put((String) payload.get("stateId"), payload.get("value"));
+                break;
+            case EVENT_ATTACH:
+                events.put((String) payload.get("bindingId"), new CreatorEventBinding(
+                        (String) payload.get("bindingId"), (String) payload.get("targetWidgetId"),
+                        (String) payload.get("eventName"),
+                        (java.util.List<CreatorRuntimeBlock>) payload.get("blocks")));
+                break;
             case REVISION_RESTORE:
                 throw new IllegalArgumentException("revision restore is handled by CreatorRuntimeEngine");
             default:
                 throw new IllegalArgumentException("unsupported operation type");
         }
-        return document.withState(nextRevision, entryScreenId, screens, widgets, entryControl);
+        return new CreatorProjectDocument(document.getSchemaVersion(), document.getProjectId(), nextRevision,
+                document.getName(), entryScreenId, screens, widgets, entryControl, state, events);
     }
 }

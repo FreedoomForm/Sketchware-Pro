@@ -41,6 +41,7 @@
     <string name="creator_position_center">Center</string>
     <string name="creator_apply">Apply</string>
     <string name="creator_preview_action">Runtime actions will appear here as event blocks are added.</string>
+    <string name="creator_navigation_effect">Runtime navigation requested: %1$s</string>
     <string name="creator_recovery_title">Creator recovery</string>
     <string name="creator_recovery_message">This host-owned safety route opens even when an editable project control is hidden or moved.</string>
     <string name="creator_recovery_reset">Reset control</string>

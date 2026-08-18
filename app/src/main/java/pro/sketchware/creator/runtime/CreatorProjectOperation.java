@@ -12,6 +12,8 @@ public final class CreatorProjectOperation {
         WIDGET_ADD,
         WIDGET_SET_PROPERTY,
         ENTRY_CONTROL_UPDATE,
+        STATE_SET,
+        EVENT_ATTACH,
         REVISION_RESTORE
     }
 
