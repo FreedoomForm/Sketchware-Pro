@@ -26,20 +26,9 @@ public class CreatorNativeBuildQueueTest {
         assertThat(log.snapshot().get(2).getAttributes().get("sourceRevision")).isEqualTo(7L);
     }
 
-    @Test public void r3ComponentFallbackCreatesRevisionPinnedBuildRequest() {
+    @Test public void componentIsAssignedToRuntimePluginInsteadOfFallback() {
         assertThat(CreatorLegacyComponentCapabilityMatrix.tierFor(
                 ComponentBean.COMPONENT_TYPE_FIREBASE_CLOUD_MESSAGE))
-                .isEqualTo(CreatorCompatibilityTier.R3_NATIVE_FALLBACK);
-
-        CreatorProjectDocument document = CreatorProjectDocument.empty("project", "Demo").withRevision(42);
-        CreatorRuntimeEventLog log = new CreatorRuntimeEventLog(10);
-        CreatorNativeBuildQueue queue = new CreatorNativeBuildQueue(Runnable::run, log,
-                pinned -> assertThat(pinned.getRevision()).isEqualTo(42L));
-
-        queue.enqueue(document, null);
-
-        assertThat(log.snapshot()).hasSize(3);
-        assertThat(log.snapshot().get(0).getAttributes().get("sourceRevision")).isEqualTo(42L);
-        assertThat(log.snapshot().get(2).getName()).isEqualTo("build.completed");
+                .isEqualTo(CreatorCompatibilityTier.R2_RUNTIME_PLUGIN);
     }
 }

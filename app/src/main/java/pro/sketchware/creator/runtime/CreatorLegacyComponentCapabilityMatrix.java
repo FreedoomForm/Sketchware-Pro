@@ -25,7 +25,7 @@ public final class CreatorLegacyComponentCapabilityMatrix {
                 ComponentBean.COMPONENT_TYPE_TIME_PICKER_DIALOG, ComponentBean.COMPONENT_TYPE_NOTIFICATION,
                 ComponentBean.COMPONENT_TYPE_FRAGMENT_ADAPTER, ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH_PHONE,
                 ComponentBean.COMPONENT_TYPE_FIREBASE_CLOUD_MESSAGE, ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH_GOOGLE_LOGIN};
-        for (int type : types) tiers.put(type, CreatorCompatibilityTier.R3_NATIVE_FALLBACK);
+        for (int type : types) tiers.put(type, CreatorCompatibilityTier.R2_RUNTIME_PLUGIN);
         TIERS = Collections.unmodifiableMap(tiers);
     }
     private CreatorLegacyComponentCapabilityMatrix() { }
