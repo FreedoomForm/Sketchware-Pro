@@ -64,3 +64,5 @@
 - [ ] Replace each current R3 component classification with a concrete runtime implementation, including capability-specific success, denial, error, and recovery evidence where applicable.
 - [ ] Replace legacy build/export dependence with runtime project execution, live resource handling, and portable project revision persistence without APK reinstallation.
 - [ ] Require the final audit to report zero R3 fallback entries, zero R0 omissions, and zero unclassified capabilities before user notification.
+- [ ] Eliminate the R2 host-plugin layer as an accepted architecture; consolidate all device and integration capabilities into the Creator Runtime-native service and execution model.
+- [ ] Require the final evidence audit to report zero R2, zero R3, zero R0, and zero unclassified capability entries before notification.
