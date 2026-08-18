@@ -27,7 +27,12 @@ public final class CreatorRuntimeExecutor {
         CreatorEventBinding binding = findBinding(engine.getCurrent(), targetWidgetId, eventName);
         if (binding == null) return Collections.emptyList();
         List<Effect> effects = new ArrayList<>();
-        for (CreatorRuntimeBlock block : binding.getBlocks()) {
+        executeBlocks(engine, binding.getBlocks(), effects);
+        return Collections.unmodifiableList(effects);
+    }
+
+    private void executeBlocks(CreatorRuntimeEngine engine, List<CreatorRuntimeBlock> blocks, List<Effect> effects) {
+        for (CreatorRuntimeBlock block : blocks) {
             Map<String, Object> payload = block.getPayload();
             if (block.getType() == CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY) {
                 apply(engine, CreatorProjectOperation.Type.WIDGET_SET_PROPERTY, map(
@@ -48,9 +53,14 @@ public final class CreatorRuntimeExecutor {
                     CreatorRuntimeService.Result result = runtimeServices.dispatch(serviceId, arguments);
                     effects.add(new Effect("runtime_service", serviceId + ":" + result.getStatus().name()));
                 }
+            } else if (block.getType() == CreatorRuntimeBlock.Type.IF_STATE_EQUALS) {
+                String stateId = String.valueOf(payload.get("stateId"));
+                Object actual = engine.getCurrent().getState().get(stateId);
+                Object expected = payload.get("equals");
+                boolean matches = expected == null ? actual == null : expected.equals(actual);
+                executeBlocks(engine, matches ? block.getThenBlocks() : block.getElseBlocks(), effects);
             }
         }
-        return Collections.unmodifiableList(effects);
     }
 
     private CreatorEventBinding findBinding(CreatorProjectDocument document, String targetWidgetId, String eventName) {

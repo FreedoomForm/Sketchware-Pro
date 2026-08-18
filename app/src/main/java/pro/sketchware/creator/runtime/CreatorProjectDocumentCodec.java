@@ -63,14 +63,7 @@ public final class CreatorProjectDocumentCodec {
             event.addProperty("id", binding.getId());
             event.addProperty("targetWidgetId", binding.getTargetWidgetId());
             event.addProperty("eventName", binding.getEventName());
-            JsonArray blocks = new JsonArray();
-            for (CreatorRuntimeBlock block : binding.getBlocks()) {
-                JsonObject encoded = new JsonObject();
-                encoded.addProperty("type", block.getType().name());
-                encoded.add("payload", toJsonObject(block.getPayload()));
-                blocks.add(encoded);
-            }
-            event.add("blocks", blocks);
+            event.add("blocks", encodeBlocks(binding.getBlocks()));
             events.add(event);
         }
         root.add("events", events);
@@ -119,14 +112,7 @@ public final class CreatorProjectDocumentCodec {
         Map<String, CreatorEventBinding> events = new LinkedHashMap<>();
         for (JsonElement item : arrayOrEmpty(root, "events")) {
             JsonObject event = item.getAsJsonObject();
-            List<CreatorRuntimeBlock> blocks = new ArrayList<>();
-            for (JsonElement blockItem : arrayOrEmpty(event, "blocks")) {
-                JsonObject block = blockItem.getAsJsonObject();
-                CreatorRuntimeBlock.Type type = CreatorRuntimeBlock.Type.valueOf(required(block, "type").getAsString());
-                Map<String, Object> payload = block.has("payload") && block.get("payload").isJsonObject()
-                        ? fromJsonObject(block.getAsJsonObject("payload")) : new LinkedHashMap<String, Object>();
-                blocks.add(new CreatorRuntimeBlock(type, payload));
-            }
+            List<CreatorRuntimeBlock> blocks = decodeBlocks(arrayOrEmpty(event, "blocks"));
             CreatorEventBinding binding = new CreatorEventBinding(required(event, "id").getAsString(),
                     required(event, "targetWidgetId").getAsString(), required(event, "eventName").getAsString(), blocks);
             events.put(binding.getId(), binding);
@@ -144,6 +130,32 @@ public final class CreatorProjectDocumentCodec {
 
     private static JsonArray arrayOrEmpty(JsonObject object, String key) {
         return object.has(key) && object.get(key).isJsonArray() ? object.getAsJsonArray(key) : new JsonArray();
+    }
+
+    private static JsonArray encodeBlocks(List<CreatorRuntimeBlock> blocks) {
+        JsonArray encoded = new JsonArray();
+        for (CreatorRuntimeBlock block : blocks) {
+            JsonObject value = new JsonObject();
+            value.addProperty("type", block.getType().name());
+            value.add("payload", toJsonObject(block.getPayload()));
+            value.add("thenBlocks", encodeBlocks(block.getThenBlocks()));
+            value.add("elseBlocks", encodeBlocks(block.getElseBlocks()));
+            encoded.add(value);
+        }
+        return encoded;
+    }
+
+    private static List<CreatorRuntimeBlock> decodeBlocks(JsonArray encoded) {
+        List<CreatorRuntimeBlock> blocks = new ArrayList<>();
+        for (JsonElement item : encoded) {
+            JsonObject block = item.getAsJsonObject();
+            CreatorRuntimeBlock.Type type = CreatorRuntimeBlock.Type.valueOf(required(block, "type").getAsString());
+            Map<String, Object> payload = block.has("payload") && block.get("payload").isJsonObject()
+                    ? fromJsonObject(block.getAsJsonObject("payload")) : new LinkedHashMap<String, Object>();
+            blocks.add(new CreatorRuntimeBlock(type, payload,
+                    decodeBlocks(arrayOrEmpty(block, "thenBlocks")), decodeBlocks(arrayOrEmpty(block, "elseBlocks"))));
+        }
+        return blocks;
     }
 
     private static JsonObject toJsonObject(Map<String, Object> source) {
