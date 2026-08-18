@@ -278,13 +278,10 @@ public final class CreatorLegacyArtifactImporter {
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.BREAK, Collections.<String, Object>emptyMap());
         }
         if (block.subStack1 >= 0 || block.subStack2 >= 0) { unsupported.add(block.opCode + " (control flow)"); return null; }
-        if ("settext".equals(op) || "set_text".equals(op)) {
+        String widgetProperty = widgetProperty(op);
+        if (widgetProperty != null) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
-            payload.put("widgetId", values.get(0)); payload.put("property", "text"); payload.put("value", values.get(1));
-            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload);
-        } else if ("setchecked".equals(op) || "set_checked".equals(op)) {
-            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
-            payload.put("widgetId", values.get(0)); payload.put("property", "checked"); payload.put("value", values.get(1));
+            payload.put("widgetId", values.get(0)); payload.put("property", widgetProperty); payload.put("value", values.get(1));
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload);
         } else if ("setvar".equals(op) || "set_var".equals(op)
                 || "setvarboolean".equals(op) || "setvarint".equals(op) || "setvarstring".equals(op)) {
@@ -314,6 +311,33 @@ public final class CreatorLegacyArtifactImporter {
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL, payload);
         }
         unsupported.add(block.opCode);
+        return null;
+    }
+
+    private static String widgetProperty(String op) {
+        if ("settext".equals(op) || "set_text".equals(op)) return "text";
+        if ("setchecked".equals(op) || "set_checked".equals(op)) return "checked";
+        if ("setenable".equals(op) || "set_enable".equals(op)) return "enabled";
+        if ("setvisible".equals(op) || "set_visible".equals(op)) return "visibility";
+        if ("setclickable".equals(op) || "set_clickable".equals(op)) return "clickable";
+        if ("setalpha".equals(op)) return "alpha";
+        if ("setrotate".equals(op)) return "rotation";
+        if ("settranslationx".equals(op)) return "translationX";
+        if ("settranslationy".equals(op)) return "translationY";
+        if ("setscalex".equals(op)) return "scaleX";
+        if ("setscaley".equals(op)) return "scaleY";
+        if ("setbgcolor".equals(op)) return "backgroundColor";
+        if ("setbgresource".equals(op)) return "backgroundResource";
+        if ("settextcolor".equals(op)) return "textColor";
+        if ("sethint".equals(op)) return "hint";
+        if ("sethinttextcolor".equals(op)) return "hintTextColor";
+        if ("setimage".equals(op)) return "imageResource";
+        if ("setimagefilepath".equals(op)) return "imageFilePath";
+        if ("setimageurl".equals(op)) return "imageUrl";
+        if ("setthumbresource".equals(op)) return "thumbResource";
+        if ("settrackresource".equals(op)) return "trackResource";
+        if ("setcolorfilter".equals(op)) return "colorFilter";
+        if ("requestfocus".equals(op)) return "requestFocus";
         return null;
     }
 

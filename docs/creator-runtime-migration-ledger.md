@@ -71,3 +71,5 @@ The current importer recognizes 20 opcode aliases, while the legacy generator ex
 | Media, dialogs, ads and notifications | `mediaplayer*`, `soundpool*`, `dialog*`, ad loading/showing, notification operations | Requires lifecycle-aware service state and callback-safe effects |
 
 This gap map confirms that component coverage in the matrix is not equivalent to behavioral parity. The next implementation group should therefore expand the typed block/value contract rather than adding more nominal service registrations.
+
+The current checkpoint additionally imports typed state expressions, `increaseInt`/`decreaseInt`, and common widget setters including enabled, visibility, clickable, alpha, rotation, translation, scale, colors, hints, image resources/URLs, thumb/track resources, color filters, and focus requests. These setters use the existing validated `WIDGET_SET_PROPERTY` operation, so the runtime keeps the behavior inspectable and serializable.

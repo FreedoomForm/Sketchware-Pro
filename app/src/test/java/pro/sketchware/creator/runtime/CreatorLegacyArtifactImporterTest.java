@@ -147,6 +147,28 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(1);
     }
 
+    @Test public void importsCommonWidgetSettersAsTypedProperties() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean visible = new BlockBean("1", "", "", "setVisible");
+        visible.parameters.add("button");
+        visible.parameters.add("VISIBLE");
+        visible.nextBlock = 2;
+        BlockBean alpha = new BlockBean("2", "", "", "setAlpha");
+        alpha.parameters.add("button");
+        alpha.parameters.add("0.5");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(alpha, visible));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(2);
+        assertThat(imported.get(0).getPayload().get("property")).isEqualTo("visibility");
+        assertThat(imported.get(1).getPayload().get("property")).isEqualTo("alpha");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsLegacyIfElseAsTypedCondition() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "ifElse");
