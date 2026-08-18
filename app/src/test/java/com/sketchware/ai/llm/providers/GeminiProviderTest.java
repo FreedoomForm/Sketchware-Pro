@@ -67,7 +67,7 @@ public class GeminiProviderTest {
         assertThat(args.get("widget_type").getAsString()).isEqualTo("Button");
     }
 
-    @Test public void sendsApiKeyInUrl() throws Exception {
+    @Test public void sendsApiKeyInSecretSafeHeader() throws Exception {
         server.enqueue(new MockResponse()
                 .setHeader("Content-Type", "text/event-stream")
                 .setBody(geminiStreamFixture("hi")));
@@ -76,9 +76,10 @@ public class GeminiProviderTest {
         for (ApiStreamChunk ignored : provider.stream(req)) {}
 
         okhttp3.mockwebserver.RecordedRequest recorded = server.takeRequest();
-        assertThat(recorded.getPath()).contains("key=test-key");
         assertThat(recorded.getPath()).contains("alt=sse");
         assertThat(recorded.getPath()).contains("gemini-2.0-flash");
+        assertThat(recorded.getPath()).doesNotContain("key=test-key");
+        assertThat(recorded.getHeader("x-goog-api-key")).isEqualTo("test-key");
     }
 
     @Test public void sendsCorrectBodyShape() throws Exception {
