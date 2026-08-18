@@ -14,6 +14,8 @@
     <string name="creator_checkpoint_created">Checkpoint %1$s created</string>
     <string name="creator_add_text">Add text</string>
     <string name="creator_add_button">Add button</string>
+    <string name="creator_add_input">Add input</string>
+    <string name="creator_add_toggle">Add toggle</string>
     <string name="creator_entry_control_title">Edit entry control</string>
     <string name="creator_entry_control_message">The visible label is editable. Shake recovery always remains available.</string>
     <string name="creator_entry_control_label_hint">Button label</string>

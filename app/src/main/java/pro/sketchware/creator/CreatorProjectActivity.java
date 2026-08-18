@@ -5,6 +5,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -14,7 +15,9 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.appcompat.widget.SwitchCompat;
 
+import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
@@ -57,6 +60,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         findViewById(R.id.creator_back).setOnClickListener(v -> finish());
         findViewById(R.id.creator_add_text).setOnClickListener(v -> addWidget("text", "New text"));
         findViewById(R.id.creator_add_button).setOnClickListener(v -> addWidget("button", "Button"));
+        findViewById(R.id.creator_add_input).setOnClickListener(v -> addWidget("input", ""));
+        findViewById(R.id.creator_add_toggle).setOnClickListener(v -> addWidget("switch", "Toggle"));
         findViewById(R.id.creator_checkpoint).setOnClickListener(v -> createCheckpoint());
         entryControl.setOnClickListener(v -> editEntryControl());
         shakeRecovery = new CreatorShakeRecovery(this, this::showRecoverySheet);
@@ -200,14 +205,14 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if (widget == null) return null;
         if ("text".equals(widget.getType())) {
             TextView text = new TextView(this);
-            text.setText(String.valueOf(widget.getProperties().get("text")));
-            text.setTextSize(18);
+            text.setText(propertyString(widget, "text", "Text"));
+            text.setTextSize(propertyInt(widget, "textSize", 18));
             text.setPadding(dp(16), dp(12), dp(16), dp(12));
             return text;
         }
         if ("button".equals(widget.getType())) {
             MaterialButton button = new MaterialButton(this);
-            button.setText(String.valueOf(widget.getProperties().get("text")));
+            button.setText(propertyString(widget, "text", "Button"));
             button.setOnClickListener(v -> Toast.makeText(this, R.string.creator_preview_action, Toast.LENGTH_SHORT).show());
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -215,9 +220,56 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             button.setLayoutParams(params);
             return button;
         }
+        if ("input".equals(widget.getType())) {
+            EditText input = new EditText(this);
+            input.setText(propertyString(widget, "text", ""));
+            input.setHint(propertyString(widget, "hint", "Type here"));
+            input.setSingleLine(propertyBoolean(widget, "singleLine", false));
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            params.setMargins(dp(16), dp(8), dp(16), dp(8));
+            input.setLayoutParams(params);
+            return input;
+        }
+        if ("checkbox".equals(widget.getType())) {
+            MaterialCheckBox checkbox = new MaterialCheckBox(this);
+            checkbox.setText(propertyString(widget, "text", "Checkbox"));
+            checkbox.setChecked(propertyBoolean(widget, "checked", false));
+            checkbox.setPadding(dp(12), dp(8), dp(12), dp(8));
+            return checkbox;
+        }
+        if ("switch".equals(widget.getType())) {
+            SwitchCompat toggle = new SwitchCompat(this);
+            toggle.setText(propertyString(widget, "text", "Switch"));
+            toggle.setChecked(propertyBoolean(widget, "checked", false));
+            toggle.setPadding(dp(16), dp(8), dp(16), dp(8));
+            return toggle;
+        }
+        if ("image".equals(widget.getType())) {
+            ImageView image = new ImageView(this);
+            image.setImageResource(R.drawable.ic_mtrl_image);
+            image.setContentDescription(propertyString(widget, "contentDescription", "Image"));
+            image.setPadding(dp(28), dp(28), dp(28), dp(28));
+            return image;
+        }
+        if ("scroll".equals(widget.getType())) {
+            android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+            LinearLayout childColumn = new LinearLayout(this);
+            childColumn.setOrientation(LinearLayout.VERTICAL);
+            for (String childId : widget.getChildren()) {
+                View child = renderWidget(document, document.getWidgets().get(childId));
+                if (child != null) childColumn.addView(child);
+            }
+            scroll.addView(childColumn);
+            return scroll;
+        }
         LinearLayout container = new LinearLayout(this);
-        container.setOrientation(LinearLayout.VERTICAL);
+        container.setOrientation("row".equals(widget.getType())
+                || "horizontal".equals(propertyString(widget, "orientation", "vertical"))
+                ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
         container.setGravity(Gravity.CENTER_HORIZONTAL);
+        container.setPadding(propertyInt(widget, "padding", 0), propertyInt(widget, "padding", 0),
+                propertyInt(widget, "padding", 0), propertyInt(widget, "padding", 0));
         for (String childId : widget.getChildren()) {
             View child = renderWidget(document, document.getWidgets().get(childId));
             if (child != null) container.addView(child);
@@ -227,6 +279,21 @@ public final class CreatorProjectActivity extends AppCompatActivity {
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private String propertyString(CreatorWidget widget, String key, String fallback) {
+        Object value = widget.getProperties().get(key);
+        return value == null ? fallback : String.valueOf(value);
+    }
+
+    private int propertyInt(CreatorWidget widget, String key, int fallback) {
+        Object value = widget.getProperties().get(key);
+        return value instanceof Number ? ((Number) value).intValue() : fallback;
+    }
+
+    private boolean propertyBoolean(CreatorWidget widget, String key, boolean fallback) {
+        Object value = widget.getProperties().get(key);
+        return value instanceof Boolean ? (Boolean) value : fallback;
     }
 
     private void applyEntryPlacement(String placement) {

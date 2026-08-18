@@ -76,6 +76,22 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:text="@string/creator_add_button" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/creator_add_input"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/creator_add_input" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/creator_add_toggle"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@string/creator_add_toggle" />
         </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView

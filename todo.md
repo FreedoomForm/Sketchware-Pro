@@ -27,3 +27,7 @@
 - [ ] Implement production plugin bridges and connect the native-build queue to the existing Sketchware compiler.
 - [x] Validate deterministic user/AI operation flows, document persistence, recovery protection, compatibility tiers, and build-queue provenance with JVM regression tests.
 - [ ] Complete device or emulator interaction tests, migration import tests, and a full debug APK package; the sandbox stalls during external dex merging.
+- [x] Audit the core Sketchware view and event storage needed for an initial Runtime importer.
+- [x] Expand the live renderer and Project IR for core input, image, and layout widgets.
+- [x] Add a compatibility report and initial legacy-project mapping for supported legacy ViewBean layout data.
+- [x] Validate the second runtime milestone and publish its compatibility status.
