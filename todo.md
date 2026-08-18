@@ -31,3 +31,7 @@
 - [x] Expand the live renderer and Project IR for core input, image, and layout widgets.
 - [x] Add a compatibility report and initial legacy-project mapping for supported legacy ViewBean layout data.
 - [x] Validate the second runtime milestone and publish its compatibility status.
+- [x] Define the user-facing revision history, checkpoint, restore, and compatibility-report interaction model.
+- [x] Implement a readable in-project history inspector with safe revision restoration.
+- [x] Surface imported-layout compatibility results in a user-visible report view.
+- [x] Validate and publish the transparency-interface milestone.

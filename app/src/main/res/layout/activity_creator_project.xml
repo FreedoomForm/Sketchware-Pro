@@ -53,6 +53,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/creator_checkpoint" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/creator_history"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/creator_history" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/creator_compatibility"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/creator_compatibility" />
         </LinearLayout>
 
         <LinearLayout

@@ -1,7 +1,9 @@
 package pro.sketchware.creator.runtime;
 
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Bounded, immutable revision history with named checkpoints and idempotent operation results. */
@@ -28,6 +30,13 @@ public final class CreatorRevisionStore {
 
     public synchronized CreatorProjectDocument getRevision(long revision) {
         return revisions.get(revision);
+    }
+
+    /** Returns currently restorable revisions, newest first, without exposing mutable documents. */
+    public synchronized List<Long> getAvailableRevisions() {
+        List<Long> ordered = new ArrayList<>(revisions.keySet());
+        Collections.reverse(ordered);
+        return Collections.unmodifiableList(ordered);
     }
 
     public synchronized void commit(CreatorProjectOperation operation, CreatorProjectDocument next,

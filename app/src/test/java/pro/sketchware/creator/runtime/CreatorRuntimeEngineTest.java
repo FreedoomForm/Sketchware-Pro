@@ -95,6 +95,17 @@ public class CreatorRuntimeEngineTest {
         assertThat(engine.getCurrent().getWidgets()).isEmpty();
     }
 
+    @Test public void historyListsRestorableRevisionsNewestFirst() {
+        CreatorRuntimeEngine engine = newEngine();
+        engine.apply(operation("op-screen", 0, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(operation("op-entry", 1, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE, map("label", "Open")));
+
+        assertThat(engine.getRevisionStore().getAvailableRevisions()).containsExactly(2L, 1L, 0L).inOrder();
+    }
+
     @Test public void diagnosticLogRedactsSensitiveContentBeforeItIsStored() {
         CreatorRuntimeEventLog log = new CreatorRuntimeEventLog(2);
         log.append(new CreatorRuntimeEvent(1, "project", 0, "ai", "ai.operation_requested",

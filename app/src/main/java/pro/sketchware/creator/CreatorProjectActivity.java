@@ -22,13 +22,17 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import pro.sketchware.R;
 import pro.sketchware.creator.runtime.CreatorApplyResult;
+import pro.sketchware.creator.runtime.CreatorCompatibilityReport;
+import pro.sketchware.creator.runtime.CreatorCompatibilityTier;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectOperation;
+import pro.sketchware.creator.runtime.CreatorRuntimeCompatibilityInspector;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 import pro.sketchware.creator.runtime.CreatorWidget;
 
@@ -63,6 +67,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         findViewById(R.id.creator_add_input).setOnClickListener(v -> addWidget("input", ""));
         findViewById(R.id.creator_add_toggle).setOnClickListener(v -> addWidget("switch", "Toggle"));
         findViewById(R.id.creator_checkpoint).setOnClickListener(v -> createCheckpoint());
+        findViewById(R.id.creator_history).setOnClickListener(v -> showHistoryInspector());
+        findViewById(R.id.creator_compatibility).setOnClickListener(v -> showCompatibilityInspector());
         entryControl.setOnClickListener(v -> editEntryControl());
         shakeRecovery = new CreatorShakeRecovery(this, this::showRecoverySheet);
         ensureStarterScreen();
@@ -154,6 +160,73 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         String name = "revision-" + session.getDocument().getRevision();
         session.getEngine().checkpoint(name);
         Toast.makeText(this, getString(R.string.creator_checkpoint_created, name), Toast.LENGTH_SHORT).show();
+    }
+
+    private void showHistoryInspector() {
+        List<Long> revisions = session.getEngine().getRevisionStore().getAvailableRevisions();
+        String[] labels = new String[revisions.size()];
+        long currentRevision = session.getDocument().getRevision();
+        for (int i = 0; i < revisions.size(); i++) {
+            long revision = revisions.get(i);
+            labels[i] = getString(revision == currentRevision
+                    ? R.string.creator_history_current_item : R.string.creator_history_item, revision);
+        }
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.creator_history_title)
+                .setMessage(getString(R.string.creator_history_message,
+                        session.getEngine().getRevisionStore().getCheckpoints().size()))
+                .setNegativeButton(android.R.string.cancel, null)
+                .setItems(labels, (dialog, which) -> {
+                    long targetRevision = revisions.get(which);
+                    if (targetRevision == currentRevision) return;
+                    confirmRestoreRevision(targetRevision);
+                })
+                .show();
+    }
+
+    private void confirmRestoreRevision(long targetRevision) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.creator_restore_title)
+                .setMessage(getString(R.string.creator_restore_message, targetRevision))
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.creator_restore_apply, (dialog, which) -> {
+                    Map<String, Object> payload = new LinkedHashMap<>();
+                    payload.put("targetRevision", targetRevision);
+                    apply(CreatorProjectOperation.Type.REVISION_RESTORE, payload);
+                })
+                .show();
+    }
+
+    private void showCompatibilityInspector() {
+        CreatorCompatibilityReport report = CreatorRuntimeCompatibilityInspector.inspect(session.getDocument());
+        StringBuilder message = new StringBuilder();
+        appendCompatibilitySection(message, report, CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
+                getString(R.string.creator_compatibility_r1));
+        appendCompatibilitySection(message, report, CreatorCompatibilityTier.R2_RUNTIME_PLUGIN,
+                getString(R.string.creator_compatibility_r2));
+        appendCompatibilitySection(message, report, CreatorCompatibilityTier.R3_NATIVE_FALLBACK,
+                getString(R.string.creator_compatibility_r3));
+        appendCompatibilitySection(message, report, CreatorCompatibilityTier.R0_UNSUPPORTED,
+                getString(R.string.creator_compatibility_r0));
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.creator_compatibility_title)
+                .setMessage(message.toString().trim())
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
+    private void appendCompatibilitySection(StringBuilder target, CreatorCompatibilityReport report,
+                                            CreatorCompatibilityTier tier, String title) {
+        int count = report.count(tier);
+        if (count == 0) return;
+        target.append(title).append(" · ").append(count).append('\n');
+        for (CreatorCompatibilityReport.Item item : report.getItems()) {
+            if (item.getTier() == tier) {
+                target.append("• ").append(item.getSourceId()).append(": ")
+                        .append(item.getMessage()).append('\n');
+            }
+        }
+        target.append('\n');
     }
 
     private void showRecoverySheet() {
