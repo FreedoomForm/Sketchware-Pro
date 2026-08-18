@@ -13,4 +13,4 @@
 - [x] Repair umbrella schemas and missing-name inference so action-specific arguments reach the intended tool.
 - [x] Remove stale hidden layout-tool names from live tool descriptions injected into the system prompt.
 - [x] Add regression tests for the corrected tool execution and prompt contract.
-- [ ] Validate and publish the corrected AI-agent behavior.
+- [x] Validate and publish the corrected AI-agent behavior.
