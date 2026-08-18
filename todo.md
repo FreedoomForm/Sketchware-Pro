@@ -60,3 +60,7 @@
 - [ ] Connect CreatorNativeBuildQueue to a real legacy ProjectBuilder invocation with revision provenance and compiler diagnostics.
 - [ ] Add an end-to-end fallback fixture proving an R3 capability creates a pinned build request and surfaces its result to the user.
 - [ ] Continue implementation and evidence collection without declaring completion until every audit record is closed and 100% coverage is independently verified.
+- [ ] Remove R3 native-build fallback as an acceptable capability tier; every inventoried Sketchware capability must have a verified R1 live-runtime or R2 host-runtime implementation.
+- [ ] Replace each current R3 component classification with a concrete runtime implementation, including capability-specific success, denial, error, and recovery evidence where applicable.
+- [ ] Replace legacy build/export dependence with runtime project execution, live resource handling, and portable project revision persistence without APK reinstallation.
+- [ ] Require the final audit to report zero R3 fallback entries, zero R0 omissions, and zero unclassified capabilities before user notification.
