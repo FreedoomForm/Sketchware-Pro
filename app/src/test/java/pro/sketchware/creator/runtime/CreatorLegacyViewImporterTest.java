@@ -49,4 +49,22 @@ public class CreatorLegacyViewImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(1);
         assertThat(result.getReport().canPreviewImmediately()).isTrue();
     }
+
+    @Test public void importsEveryInventoriedLegacyViewTypeAsTypedRuntimeWidget() {
+        java.util.List<ViewBean> views = new java.util.ArrayList<>();
+        for (int type = 0; type < 49; type++) {
+            ViewBean view = new ViewBean("legacy_" + type, type);
+            view.parent = "root";
+            view.index = type;
+            views.add(view);
+        }
+
+        CreatorLegacyViewImporter.Result result = new CreatorLegacyViewImporter().importLayout(
+                "project", "Imported", "main", "/", views);
+
+        assertThat(result.getDocument().getWidgets()).hasSize(50);
+        assertThat(result.getDocument().getWidgets().get("root_main").getChildren()).hasSize(49);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(49);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
 }
