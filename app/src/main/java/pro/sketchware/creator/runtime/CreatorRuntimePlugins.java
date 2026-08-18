@@ -11,6 +11,7 @@ public final class CreatorRuntimePlugins {
         return new CreatorRuntimePluginDispatcher()
                 .register(new CreatorStoragePlugin(context, projectId))
                 .register(new CreatorVibratorPlugin(context))
+                .register(new CreatorCalendarService())
                 .register(new CreatorTimerPlugin(timerListener));
     }
 }
