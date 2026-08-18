@@ -51,3 +51,9 @@
 - [ ] Add machine-checkable component matrix coverage and import fixtures for the classified component families.
 - [x] Build a host-side permission request/result adapter that uses explicit capability IDs and never grants permissions implicitly.
 - [x] Test permission request, grant, denial, unsupported-capability, and no-context outcomes before exposing the bridge to Creator Runtime plugins.
+- [ ] Require an automated evidence record for every inventoried capability before declaring 100% coverage.
+- [ ] Require a clean full migration audit with no unclassified capability, untested exception, or unpinned fallback before notifying the user of completion.
+- [ ] Create a stable component capability matrix for every `ComponentBean` type with no implicit default classification.
+- [ ] Add test fixtures proving each component capability is either runtime-native, permission-aware host-plugin, or revision-pinned native fallback.
+- [x] Create a stable component capability matrix for every `ComponentBean` type with no implicit default classification.
+- [x] Validate the complete ComponentBean classification matrix with Creator Runtime regression tests.
