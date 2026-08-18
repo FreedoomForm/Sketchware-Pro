@@ -182,75 +182,89 @@ public final class CreatorLegacyArtifactImporter {
 
     private BlockConversion convertBlocks(List<BlockBean> blocks) {
         BlockConversion result = new BlockConversion();
-        for (BlockBean block : orderedBlocks(blocks)) {
-            if (block == null || blank(block.opCode)) {
-                result.unsupported.add("empty");
-                continue;
+        Map<Integer, BlockBean> byId = new LinkedHashMap<>();
+        java.util.Set<Integer> referenced = new java.util.LinkedHashSet<>();
+        for (BlockBean block : blocks == null ? Collections.<BlockBean>emptyList() : blocks) {
+            if (block == null) continue;
+            try { byId.put(Integer.parseInt(block.id), block); } catch (NumberFormatException ignored) {
+                result.unsupported.add("invalid block id");
             }
-            if (block.subStack1 >= 0 || block.subStack2 >= 0) {
-                result.unsupported.add(block.opCode + " (control flow)");
-                continue;
-            }
-            String op = block.opCode.trim().toLowerCase(Locale.ROOT);
-            List<String> values = block.parameters == null ? Collections.<String>emptyList() : block.parameters;
-            Map<String, Object> payload = new LinkedHashMap<>();
-            if ("settext".equals(op) || "set_text".equals(op)) {
-                if (values.size() < 2) { result.unsupported.add(block.opCode); continue; }
-                payload.put("widgetId", values.get(0)); payload.put("property", "text"); payload.put("value", values.get(1));
-                result.converted.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload));
-            } else if ("setchecked".equals(op) || "set_checked".equals(op)) {
-                if (values.size() < 2) { result.unsupported.add(block.opCode); continue; }
-                payload.put("widgetId", values.get(0)); payload.put("property", "checked"); payload.put("value", values.get(1));
-                result.converted.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload));
-            } else if ("setvar".equals(op) || "set_var".equals(op)) {
-                if (values.size() < 2) { result.unsupported.add(block.opCode); continue; }
-                payload.put("stateId", values.get(0)); payload.put("value", values.get(1));
-                result.converted.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, payload));
-            } else if ("showmessage".equals(op) || "show_message".equals(op) || "toast".equals(op)) {
-                if (values.isEmpty()) { result.unsupported.add(block.opCode); continue; }
-                payload.put("message", values.get(0));
-                result.converted.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE, payload));
-            } else if ("navigate".equals(op) || "open_screen".equals(op)) {
-                if (values.isEmpty()) { result.unsupported.add(block.opCode); continue; }
-                payload.put("screenId", values.get(0));
-                result.converted.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.NAVIGATE, payload));
-            } else if ("runtime_service".equals(op) || "service_call".equals(op)) {
-                if (values.isEmpty() || !CreatorRuntimeServiceCatalog.defaults().supports(values.get(0))) {
-                    result.unsupported.add(block.opCode); continue;
-                }
-                payload.put("serviceId", values.get(0));
-                payload.put("arguments", Collections.<String, Object>emptyMap());
-                result.converted.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL, payload));
-            } else {
-                result.unsupported.add(block.opCode);
-            }
+            if (block.nextBlock >= 0) referenced.add(block.nextBlock);
+            if (block.subStack1 >= 0) referenced.add(block.subStack1);
+            if (block.subStack2 >= 0) referenced.add(block.subStack2);
+        }
+        java.util.Set<Integer> visited = new java.util.LinkedHashSet<>();
+        for (Map.Entry<Integer, BlockBean> entry : byId.entrySet()) {
+            if (!referenced.contains(entry.getKey())) convertChain(entry.getValue(), byId, visited, result.converted, result.unsupported);
+        }
+        for (Map.Entry<Integer, BlockBean> entry : byId.entrySet()) {
+            if (!visited.contains(entry.getKey())) result.unsupported.add("orphan block " + entry.getKey());
         }
         return result;
     }
 
-    private List<BlockBean> orderedBlocks(List<BlockBean> blocks) {
-        if (blocks == null || blocks.isEmpty()) return Collections.emptyList();
-        Map<Integer, BlockBean> byId = new LinkedHashMap<>();
-        java.util.Set<Integer> inbound = new java.util.LinkedHashSet<>();
-        for (BlockBean block : blocks) {
-            if (block == null) continue;
-            try { byId.put(Integer.parseInt(block.id), block); } catch (NumberFormatException ignored) { }
-            if (block.nextBlock >= 0) inbound.add(block.nextBlock);
-        }
-        BlockBean start = null;
-        for (Map.Entry<Integer, BlockBean> entry : byId.entrySet()) {
-            if (!inbound.contains(entry.getKey())) { start = entry.getValue(); break; }
-        }
-        if (start == null) return new ArrayList<>(blocks);
-        List<BlockBean> ordered = new ArrayList<>();
-        java.util.Set<BlockBean> visited = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<BlockBean, Boolean>());
+    private void convertChain(BlockBean start, Map<Integer, BlockBean> byId, java.util.Set<Integer> visited,
+                              List<CreatorRuntimeBlock> target, List<String> unsupported) {
         BlockBean current = start;
-        while (current != null && visited.add(current)) {
-            ordered.add(current);
+        while (current != null) {
+            int id;
+            try { id = Integer.parseInt(current.id); } catch (NumberFormatException ignored) {
+                unsupported.add("invalid block id"); return;
+            }
+            if (!visited.add(id)) { unsupported.add("cyclic block graph at " + id); return; }
+            CreatorRuntimeBlock converted = convertBlock(current, byId, visited, unsupported);
+            if (converted != null) target.add(converted);
             current = byId.get(current.nextBlock);
         }
-        for (BlockBean block : blocks) if (block != null && visited.add(block)) ordered.add(block);
-        return ordered;
+    }
+
+    private CreatorRuntimeBlock convertBlock(BlockBean block, Map<Integer, BlockBean> byId,
+                                             java.util.Set<Integer> visited, List<String> unsupported) {
+        if (blank(block.opCode)) { unsupported.add("empty"); return null; }
+        String op = block.opCode.trim().toLowerCase(Locale.ROOT);
+        List<String> values = block.parameters == null ? Collections.<String>emptyList() : block.parameters;
+        Map<String, Object> payload = new LinkedHashMap<>();
+        if ("if_state_equals".equals(op) || "ifstateequals".equals(op)) {
+            if (values.size() < 2 || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+            List<CreatorRuntimeBlock> thenBlocks = new ArrayList<>();
+            List<CreatorRuntimeBlock> elseBlocks = new ArrayList<>();
+            convertChain(byId.get(block.subStack1), byId, visited, thenBlocks, unsupported);
+            if (block.subStack2 >= 0) convertChain(byId.get(block.subStack2), byId, visited, elseBlocks, unsupported);
+            payload.put("stateId", values.get(0));
+            payload.put("equals", values.get(1));
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_STATE_EQUALS, payload, thenBlocks, elseBlocks);
+        }
+        if (block.subStack1 >= 0 || block.subStack2 >= 0) { unsupported.add(block.opCode + " (control flow)"); return null; }
+        if ("settext".equals(op) || "set_text".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            payload.put("widgetId", values.get(0)); payload.put("property", "text"); payload.put("value", values.get(1));
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload);
+        } else if ("setchecked".equals(op) || "set_checked".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            payload.put("widgetId", values.get(0)); payload.put("property", "checked"); payload.put("value", values.get(1));
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload);
+        } else if ("setvar".equals(op) || "set_var".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            payload.put("stateId", values.get(0)); payload.put("value", values.get(1));
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, payload);
+        } else if ("showmessage".equals(op) || "show_message".equals(op) || "toast".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            payload.put("message", values.get(0));
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE, payload);
+        } else if ("navigate".equals(op) || "open_screen".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            payload.put("screenId", values.get(0));
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.NAVIGATE, payload);
+        } else if ("runtime_service".equals(op) || "service_call".equals(op)) {
+            if (values.isEmpty() || !CreatorRuntimeServiceCatalog.defaults().supports(values.get(0))) {
+                unsupported.add(block.opCode); return null;
+            }
+            payload.put("serviceId", values.get(0));
+            payload.put("arguments", Collections.<String, Object>emptyMap());
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL, payload);
+        }
+        unsupported.add(block.opCode);
+        return null;
     }
 
     private static String normalizeEventName(String eventName) {

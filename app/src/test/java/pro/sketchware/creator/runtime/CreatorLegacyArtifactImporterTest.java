@@ -76,6 +76,30 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(controlFlow.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(1);
     }
 
+    @Test public void importsSupportedStateEqualityConditionalSubstackGraph() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean branch = new BlockBean("1", "", "", "if_state_equals");
+        branch.parameters.add("status");
+        branch.parameters.add("approved");
+        branch.subStack1 = 2;
+        branch.subStack2 = 3;
+        BlockBean approved = new BlockBean("2", "", "", "showMessage");
+        approved.parameters.add("Approved");
+        BlockBean pending = new BlockBean("3", "", "", "showMessage");
+        pending.parameters.add("Pending");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(branch, approved, pending));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.IF_STATE_EQUALS);
+        assertThat(imported.getThenBlocks().get(0).getPayload().get("message")).isEqualTo("Approved");
+        assertThat(imported.getElseBlocks().get(0).getPayload().get("message")).isEqualTo("Pending");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsProjectMetadataAndBlocksArbitraryNativeLibraries() {
         ProjectFileBean activity = new ProjectFileBean(ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY, "main");
         ProjectLibraryBean firebase = new ProjectLibraryBean(ProjectLibraryBean.PROJECT_LIB_TYPE_FIREBASE);
