@@ -17,6 +17,11 @@ public final class CreatorRuntimeExecutor {
         public String getValue() { return value; }
     }
 
+    private final CreatorRuntimePluginDispatcher runtimeServices;
+
+    public CreatorRuntimeExecutor() { this(null); }
+    public CreatorRuntimeExecutor(CreatorRuntimePluginDispatcher runtimeServices) { this.runtimeServices = runtimeServices; }
+
     public List<Effect> dispatch(CreatorRuntimeEngine engine, String targetWidgetId, String eventName) {
         if (engine == null) return Collections.emptyList();
         CreatorEventBinding binding = findBinding(engine.getCurrent(), targetWidgetId, eventName);
@@ -33,6 +38,16 @@ public final class CreatorRuntimeExecutor {
                 effects.add(new Effect("message", String.valueOf(payload.get("message"))));
             } else if (block.getType() == CreatorRuntimeBlock.Type.NAVIGATE) {
                 effects.add(new Effect("navigate", String.valueOf(payload.get("screenId"))));
+            } else if (block.getType() == CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL) {
+                if (runtimeServices == null) effects.add(new Effect("runtime_service", "unavailable"));
+                else {
+                    String serviceId = String.valueOf(payload.get("serviceId"));
+                    Object rawArguments = payload.get("arguments");
+                    @SuppressWarnings("unchecked") Map<String, Object> arguments = rawArguments instanceof Map
+                            ? (Map<String, Object>) rawArguments : Collections.<String, Object>emptyMap();
+                    CreatorRuntimePlugin.Result result = runtimeServices.dispatch(serviceId, arguments);
+                    effects.add(new Effect("runtime_service", serviceId + ":" + result.getStatus().name()));
+                }
             }
         }
         return Collections.unmodifiableList(effects);

@@ -6,7 +6,7 @@ import java.util.Map;
 
 /** One visible, serializable behavior block in a Creator Runtime event binding. */
 public final class CreatorRuntimeBlock {
-    public enum Type { SET_WIDGET_PROPERTY, SET_STATE, SHOW_MESSAGE, NAVIGATE }
+    public enum Type { SET_WIDGET_PROPERTY, SET_STATE, SHOW_MESSAGE, NAVIGATE, RUNTIME_SERVICE_CALL }
     private final Type type;
     private final Map<String, Object> payload;
 
