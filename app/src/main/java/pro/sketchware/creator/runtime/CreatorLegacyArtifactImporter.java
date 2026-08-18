@@ -240,6 +240,43 @@ public final class CreatorLegacyArtifactImporter {
             payload.put("equals", values.get(1));
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_STATE_EQUALS, payload, thenBlocks, elseBlocks);
         }
+        if ("if".equals(op) || "ifelse".equals(op)) {
+            if (values.size() < 1 || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+            List<CreatorRuntimeBlock> thenBlocks = new ArrayList<>();
+            List<CreatorRuntimeBlock> elseBlocks = new ArrayList<>();
+            BlockBean thenStart = byId.get(block.subStack1);
+            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+            convertChain(thenStart, byId, visited, thenBlocks, unsupported);
+            if ("ifelse".equals(op)) {
+                if (block.subStack2 < 0 || byId.get(block.subStack2) == null) {
+                    unsupported.add(block.opCode + " (missing else substack)"); return null;
+                }
+                convertChain(byId.get(block.subStack2), byId, visited, elseBlocks, unsupported);
+            }
+            Map<String, Object> condition = parseCondition(values.get(0));
+            if (condition == null) { unsupported.add(block.opCode + " (untyped condition)"); return null; }
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_CONDITION, condition, thenBlocks, elseBlocks);
+        }
+        if ("repeat".equals(op)) {
+            if (values.size() < 1 || block.subStack1 < 0 || byId.get(block.subStack1) == null) {
+                unsupported.add(block.opCode); return null;
+            }
+            List<CreatorRuntimeBlock> body = new ArrayList<>();
+            convertChain(byId.get(block.subStack1), byId, visited, body, unsupported);
+            payload.put("count", values.get(0));
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.REPEAT, payload, body, Collections.<CreatorRuntimeBlock>emptyList());
+        }
+        if ("forever".equals(op)) {
+            if (block.subStack1 < 0 || byId.get(block.subStack1) == null) {
+                unsupported.add(block.opCode); return null;
+            }
+            List<CreatorRuntimeBlock> body = new ArrayList<>();
+            convertChain(byId.get(block.subStack1), byId, visited, body, unsupported);
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.FOREVER, Collections.<String, Object>emptyMap(), body, Collections.<CreatorRuntimeBlock>emptyList());
+        }
+        if ("break".equals(op)) {
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.BREAK, Collections.<String, Object>emptyMap());
+        }
         if (block.subStack1 >= 0 || block.subStack2 >= 0) { unsupported.add(block.opCode + " (control flow)"); return null; }
         if ("settext".equals(op) || "set_text".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
@@ -249,10 +286,17 @@ public final class CreatorLegacyArtifactImporter {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             payload.put("widgetId", values.get(0)); payload.put("property", "checked"); payload.put("value", values.get(1));
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload);
-        } else if ("setvar".equals(op) || "set_var".equals(op)) {
+        } else if ("setvar".equals(op) || "set_var".equals(op)
+                || "setvarboolean".equals(op) || "setvarint".equals(op) || "setvarstring".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
-            payload.put("stateId", values.get(0)); payload.put("value", values.get(1));
+            payload.put("stateId", values.get(0)); payload.put("expression", values.get(1));
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, payload);
+        } else if ("increaseint".equals(op) || "increase_int".equals(op)
+                || "decreaseint".equals(op) || "decrease_int".equals(op)) {
+            if (values.size() < 1) { unsupported.add(block.opCode); return null; }
+            payload.put("stateId", values.get(0));
+            payload.put("delta", op.startsWith("decrease") ? -1 : 1);
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.STATE_INCREMENT, payload);
         } else if ("showmessage".equals(op) || "show_message".equals(op) || "toast".equals(op)) {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             payload.put("message", values.get(0));
@@ -271,6 +315,47 @@ public final class CreatorLegacyArtifactImporter {
         }
         unsupported.add(block.opCode);
         return null;
+    }
+
+    private static Map<String, Object> parseCondition(String expression) {
+        if (expression == null) return null;
+        String value = expression.trim();
+        Map<String, Object> condition = new LinkedHashMap<>();
+        if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+            condition.put("operator", value.toLowerCase(Locale.ROOT));
+            return condition;
+        }
+        String[] operators = {"!=", ">=", "<=", "==", ">", "<"};
+        for (String token : operators) {
+            int index = value.indexOf(token);
+            if (index > 0 && index + token.length() < value.length()) {
+                String left = value.substring(0, index).trim();
+                String right = value.substring(index + token.length()).trim();
+                condition.put("operator", "==".equals(token) ? "equals"
+                        : "!=".equals(token) ? "not_equals"
+                        : ">".equals(token) ? "greater"
+                        : ">=".equals(token) ? "greater_or_equal"
+                        : "<".equals(token) ? "less" : "less_or_equal");
+                condition.put("left", left);
+                condition.put("right", unquote(right));
+                return condition;
+            }
+        }
+        if (value.startsWith("!")) {
+            Map<String, Object> nested = parseCondition(value.substring(1));
+            if (nested == null) return null;
+            condition.put("operator", "not");
+            condition.put("operand", nested);
+            return condition;
+        }
+        return null;
+    }
+
+    private static String unquote(String value) {
+        if (value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
+            return value.substring(1, value.length() - 1);
+        }
+        return value;
     }
 
     private static String normalizeEventName(String eventName) {

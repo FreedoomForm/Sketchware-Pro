@@ -35,6 +35,78 @@ public class CreatorRuntimeExecutorTest {
         assertThat(effects.get(0).getValue()).isEqualTo("Saved");
     }
 
+    @Test public void repeatExecutesBodyWithinTypedExecutionBudget() {
+        CreatorRuntimeEngine engine = engineWithButton();
+        CreatorRuntimeBlock repeat = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.REPEAT,
+                map("count", "3"),
+                java.util.Collections.singletonList(new CreatorRuntimeBlock(
+                        CreatorRuntimeBlock.Type.SHOW_MESSAGE, map("message", "tick"))),
+                java.util.Collections.<CreatorRuntimeBlock>emptyList());
+        attach(engine, java.util.Collections.singletonList(repeat), 2);
+
+        List<CreatorRuntimeExecutor.Effect> effects = new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(effects).hasSize(3);
+        assertThat(effects.get(2).getValue()).isEqualTo("tick");
+    }
+
+    @Test public void foreverStopsAtBreakInsteadOfRunningIndefinitely() {
+        CreatorRuntimeEngine engine = engineWithButton();
+        CreatorRuntimeBlock forever = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.FOREVER,
+                java.util.Collections.<String, Object>emptyMap(),
+                Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE, map("message", "once")),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.BREAK, java.util.Collections.<String, Object>emptyMap())),
+                java.util.Collections.<CreatorRuntimeBlock>emptyList());
+        attach(engine, java.util.Collections.singletonList(forever), 2);
+
+        List<CreatorRuntimeExecutor.Effect> effects = new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(effects).hasSize(1);
+        assertThat(effects.get(0).getValue()).isEqualTo("once");
+    }
+
+    @Test public void typedExpressionsAndIncrementUpdateRuntimeState() {
+        CreatorRuntimeEngine engine = engineWithButton();
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.STATE_INCREMENT, map("stateId", "counter", "delta", 1)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "counter", "expression", "counter + 2")));
+        attach(engine, blocks, 2);
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("counter")).isEqualTo(3L);
+    }
+
+    @Test public void typedConditionChoosesThenBranchUsingRuntimeState() {
+        CreatorRuntimeEngine engine = engineWithButton();
+        engine.apply(op("state", 2, CreatorProjectOperation.Type.STATE_SET, map("stateId", "status", "value", "approved")));
+        Map<String, Object> condition = map("operator", "equals", "left", "state:status", "right", "approved");
+        CreatorRuntimeBlock branch = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_CONDITION, condition,
+                java.util.Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE, map("message", "yes"))),
+                java.util.Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE, map("message", "no"))));
+        attach(engine, java.util.Collections.singletonList(branch), 3);
+
+        List<CreatorRuntimeExecutor.Effect> effects = new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(effects).hasSize(1);
+        assertThat(effects.get(0).getValue()).isEqualTo("yes");
+    }
+
+    private static CreatorRuntimeEngine engineWithButton() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(30));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        return engine;
+    }
+
+    private static void attach(CreatorRuntimeEngine engine, List<CreatorRuntimeBlock> blocks, long revision) {
+        engine.apply(op("event-" + revision, revision, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click_" + revision, "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

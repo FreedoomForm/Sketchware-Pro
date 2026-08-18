@@ -147,6 +147,50 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(1);
     }
 
+    @Test public void importsLegacyIfElseAsTypedCondition() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean branch = new BlockBean("1", "", "", "ifElse");
+        branch.parameters.add("status == \"approved\"");
+        branch.subStack1 = 2;
+        branch.subStack2 = 3;
+        BlockBean yes = new BlockBean("2", "", "", "showMessage");
+        yes.parameters.add("Approved");
+        BlockBean no = new BlockBean("3", "", "", "showMessage");
+        no.parameters.add("Pending");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(branch, yes, no));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.IF_CONDITION);
+        assertThat(imported.getPayload().get("operator")).isEqualTo("equals");
+        assertThat(imported.getThenBlocks()).hasSize(1);
+        assertThat(imported.getElseBlocks()).hasSize(1);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
+    @Test public void importsLegacyRepeatWithTypedBody() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean repeat = new BlockBean("1", "", "", "repeat");
+        repeat.parameters.add("3");
+        repeat.subStack1 = 2;
+        BlockBean body = new BlockBean("2", "", "", "showMessage");
+        body.parameters.add("Tick");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(repeat, body));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.REPEAT);
+        assertThat(imported.getPayload().get("count")).isEqualTo("3");
+        assertThat(imported.getThenBlocks()).hasSize(1);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     private static CreatorProjectDocument documentWithButton() {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         widgets.put("root", new CreatorWidget("root", "column", null, Arrays.asList("button"), null));
