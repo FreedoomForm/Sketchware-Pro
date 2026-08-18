@@ -7,11 +7,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /** Runtime-native scheduler for the legacy TimerTask component. */
-public final class CreatorTimerPlugin implements CreatorRuntimeService {
+public final class CreatorTimerService implements CreatorRuntimeService {
     public interface Listener { void onTick(String timerId); }
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final Listener listener;
-    public CreatorTimerPlugin(Listener listener) { this.listener = listener; }
+    public CreatorTimerService(Listener listener) { this.listener = listener; }
     @Override public String getId() { return "timer"; }
     @Override public Result execute(Map<String, Object> arguments) {
         String id = arguments.get("timerId") == null ? null : String.valueOf(arguments.get("timerId"));

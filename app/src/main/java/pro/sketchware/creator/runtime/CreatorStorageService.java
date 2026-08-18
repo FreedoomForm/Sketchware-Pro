@@ -8,10 +8,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /** Runtime-native implementation of the legacy SharedPreferences component. */
-public final class CreatorStoragePlugin implements CreatorRuntimeService {
+public final class CreatorStorageService implements CreatorRuntimeService {
     private final SharedPreferences preferences;
 
-    public CreatorStoragePlugin(Context context, String projectId) {
+    public CreatorStorageService(Context context, String projectId) {
         if (context == null || projectId == null || projectId.trim().isEmpty()) throw new IllegalArgumentException("context/projectId");
         preferences = context.getApplicationContext().getSharedPreferences("creator_runtime_" + projectId, Context.MODE_PRIVATE);
     }

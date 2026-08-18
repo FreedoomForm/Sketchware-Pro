@@ -8,12 +8,12 @@ public final class CreatorRuntimeServices {
 
     public static CreatorRuntimeServiceDispatcher defaults(Context context, String projectId,
                                                            CreatorRuntimeEnvironment environment,
-                                                           CreatorTimerPlugin.Listener timerListener) {
+                                                           CreatorTimerService.Listener timerListener) {
         return new CreatorRuntimeServiceDispatcher()
-                .register(new CreatorStoragePlugin(context, projectId))
-                .register(new CreatorVibratorPlugin(context))
+                .register(new CreatorStorageService(context, projectId))
+                .register(new CreatorVibratorService(context))
                 .register(new CreatorCalendarService())
-                .register(new CreatorTimerPlugin(timerListener))
+                .register(new CreatorTimerService(timerListener))
                 .register(new CreatorIntentService(environment))
                 .register(new CreatorDialogService(environment))
                 .register(new CreatorNetworkService(environment))

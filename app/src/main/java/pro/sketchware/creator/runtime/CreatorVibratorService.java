@@ -8,10 +8,10 @@ import java.util.Collections;
 import java.util.Map;
 
 /** Runtime-native implementation of the legacy Vibrator component. */
-public final class CreatorVibratorPlugin implements CreatorRuntimeService {
+public final class CreatorVibratorService implements CreatorRuntimeService {
     private final Vibrator vibrator;
 
-    public CreatorVibratorPlugin(Context context) {
+    public CreatorVibratorService(Context context) {
         if (context == null) throw new IllegalArgumentException("context");
         vibrator = (Vibrator) context.getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
     }
