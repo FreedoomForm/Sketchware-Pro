@@ -956,6 +956,42 @@ public class CreatorRuntimeExecutorTest {
         assertThat((java.util.List<?>) captured.get("items")).containsExactly("one", "two").inOrder();
     }
 
+    @Test public void evaluatesCanonicalBluetoothReportersThroughRuntimeNativeBluetoothService() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeService bluetooth = new CreatorRuntimeService() {
+            @Override public String getId() { return "bluetooth"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                if ("random_uuid".equals(arguments.get("action"))) {
+                    return CreatorRuntimeServiceArguments.succeeded("uuid", "da819d42-3388-4b5e-a6da-cd7f9ad5c1b1");
+                }
+                if ("status".equals(arguments.get("action"))) {
+                    return CreatorRuntimeServiceArguments.succeeded("activated", true, "enabled", false);
+                }
+                return CreatorRuntimeServiceArguments.invalid("unsupported");
+            }
+        };
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "uuid", "expression", reporter("bluetoothconnectgetrandomuuid", literal("bt1")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "activated", "expression", reporter("bluetoothconnectisbluetoothactivated", literal("bt1")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "enabled", "expression", reporter("bluetoothconnectisbluetoothenabled", literal("bt1")))));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(bluetooth)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState()).containsEntry("uuid", "da819d42-3388-4b5e-a6da-cd7f9ad5c1b1");
+        assertThat(engine.getCurrent().getState()).containsEntry("activated", true);
+        assertThat(engine.getCurrent().getState()).containsEntry("enabled", false);
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

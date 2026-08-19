@@ -324,6 +324,9 @@ public final class CreatorRuntimeExecutor {
         if ("firebasegetpushkey".equals(op)) return firebaseValue(engine, first, "push_key", "key");
         if ("firebaseauthisloggedin".equals(op)) return firebaseAuthValue("signedIn");
         if ("firebaseauthgetuid".equals(op)) return firebaseAuthValue("uid");
+        if ("bluetoothconnectgetrandomuuid".equals(op)) return bluetoothValue(first, "random_uuid", "uuid");
+        if ("bluetoothconnectisbluetoothactivated".equals(op)) return bluetoothValue(first, "status", "activated");
+        if ("bluetoothconnectisbluetoothenabled".equals(op)) return bluetoothValue(first, "status", "enabled");
         if ("objectanimatorisrunning".equals(op)) return animatorValue(first, "is_running", "value");
         if ("texttospeechisspeaking".equals(op)) return textToSpeechValue(first, "is_speaking", "value");
         if ("filegetdata".equals(op)) return storageValue(first, second, "get", "value");
@@ -452,6 +455,13 @@ public final class CreatorRuntimeExecutor {
         if (runtimeServices == null) return null;
         CreatorRuntimeService.Result result = runtimeServices.dispatch("firebase_auth",
                 CreatorRuntimeServiceArguments.output("action", "status"));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
+    }
+
+    private Object bluetoothValue(Object componentId, String action, String outputKey) {
+        if (runtimeServices == null || componentId == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("bluetooth",
+                CreatorRuntimeServiceArguments.output("componentId", String.valueOf(componentId), "action", action));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
     }
 

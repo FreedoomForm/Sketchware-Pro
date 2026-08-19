@@ -30,6 +30,10 @@ public final class CreatorBluetoothService implements CreatorRuntimeService {
 
     @Override public Result execute(Map<String, Object> arguments) {
         String action = CreatorRuntimeServiceArguments.string(arguments, "action");
+        if ("random_uuid".equals(action)) return CreatorRuntimeServiceArguments.succeeded("uuid", UUID.randomUUID().toString());
+        if ("status".equals(action) && adapter == null) {
+            return CreatorRuntimeServiceArguments.succeeded("activated", false, "enabled", false, "name", "");
+        }
         if (adapter == null) return CreatorRuntimeServiceArguments.failed("This device does not provide Bluetooth.");
         if (Build.VERSION.SDK_INT >= 31 && !environment.hasPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
             environment.requestPermission(getId(), Manifest.permission.BLUETOOTH_CONNECT);
@@ -37,7 +41,7 @@ public final class CreatorBluetoothService implements CreatorRuntimeService {
                     "Bluetooth connection permission was requested.");
         }
         if ("status".equals(action)) {
-            return CreatorRuntimeServiceArguments.succeeded("enabled", adapter.isEnabled(), "name", adapter.getName());
+            return CreatorRuntimeServiceArguments.succeeded("activated", true, "enabled", adapter.isEnabled(), "name", adapter.getName());
         }
         if ("request_enable".equals(action)) {
             if (adapter.isEnabled()) return CreatorRuntimeServiceArguments.succeeded("enabled", true);
@@ -54,7 +58,6 @@ public final class CreatorBluetoothService implements CreatorRuntimeService {
             }
             return CreatorRuntimeServiceArguments.succeeded("devices", devices);
         }
-        if ("random_uuid".equals(action)) return CreatorRuntimeServiceArguments.succeeded("uuid", UUID.randomUUID().toString());
         String tag = CreatorRuntimeServiceArguments.string(arguments, "tag");
         if ("ready_connection".equals(action)) {
             if (tag == null) return CreatorRuntimeServiceArguments.invalid("ready_connection requires tag.");
