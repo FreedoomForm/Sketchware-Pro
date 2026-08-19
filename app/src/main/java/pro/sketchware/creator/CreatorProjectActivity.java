@@ -903,6 +903,25 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("timer".equals(serviceId) && payload.get("timerId") != null) {
             renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(payload.get("timerId")), eventName));
         }
+        if ("firebase".equals(serviceId) && "children".equals(eventName)) {
+            Object resultStateId = payload.get("resultStateId");
+            Object rows = payload.get("rows");
+            if (resultStateId != null && rows instanceof List) {
+                Map<String, Object> statePayload = new LinkedHashMap<>();
+                statePayload.put("stateId", String.valueOf(resultStateId));
+                statePayload.put("value", rows);
+                CreatorProjectDocument document = session.getDocument();
+                CreatorProjectOperation operation = new CreatorProjectOperation("runtime-firebase-children-"
+                        + UUID.randomUUID(), document.getProjectId(), document.getRevision(),
+                        CreatorProjectOperation.ActorKind.SYSTEM, CreatorProjectOperation.Type.STATE_SET,
+                        statePayload, System.currentTimeMillis());
+                session.apply(operation);
+            }
+            Object callbackTargetId = payload.get("callbackTargetId");
+            if (callbackTargetId != null && !String.valueOf(callbackTargetId).trim().isEmpty()) {
+                renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(callbackTargetId), "children"));
+            }
+        }
         Object rawComponents = session.getDocument().getState().get("legacy.components");
         if (rawComponents instanceof Map) {
             for (Map.Entry<?, ?> entry : ((Map<?, ?>) rawComponents).entrySet()) {

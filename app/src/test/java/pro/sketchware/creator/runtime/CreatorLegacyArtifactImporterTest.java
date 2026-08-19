@@ -709,6 +709,35 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyFirebaseGetChildrenWithTypedStateAndCallbackBinding() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean getChildren = new BlockBean("1", "", "", "firebaseGetChildren");
+        getChildren.parameters.add("firebase1");
+        getChildren.parameters.add("profilesRows");
+        getChildren.subStack1 = 2;
+        BlockBean callback = new BlockBean("2", "", "", "showMessage");
+        callback.parameters.add("Profiles loaded");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(getChildren, callback));
+        ComponentBean firebase = new ComponentBean(ComponentBean.COMPONENT_TYPE_FIREBASE, "firebase1", "profiles");
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.singletonList(firebase), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock call = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertServiceCall(call, "firebase", "get_children");
+        @SuppressWarnings("unchecked") Map<String, Object> arguments = (Map<String, Object>) call.getPayload().get("arguments");
+        assertThat(arguments).containsEntry("path", "profiles");
+        assertThat(arguments).containsEntry("resultStateId", "profilesRows");
+        assertThat(arguments).containsEntry("callbackTargetId", "legacy_firebase_children_callback_1");
+        CreatorEventBinding callbackBinding = result.getDocument().getEvents()
+                .get("legacy_firebase_children_callback_1");
+        assertThat(callbackBinding.getTargetWidgetId()).isEqualTo("legacy_firebase_children_callback_1");
+        assertThat(callbackBinding.getEventName()).isEqualTo("children");
+        assertThat(callbackBinding.getBlocks().get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.SHOW_MESSAGE);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsLegacyPickerDialogShowBlocksAsRuntimeNativeServiceCalls() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean date = new BlockBean("1", "", "", "datePickerDialogShow");

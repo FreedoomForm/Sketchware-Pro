@@ -86,6 +86,16 @@ public final class CreatorLegacyArtifactImporter {
                 continue;
             }
             for (Map.Entry<String, List<CreatorRuntimeBlock>> callback : blocks.timerCallbacks.entrySet()) {
+                if (callback.getKey().startsWith("firebase_children:")) {
+                    String callbackId = callback.getKey().substring("firebase_children:".length());
+                    String bindingId = "legacy_firebase_children_callback_" + callbackId;
+                    bindings.put(bindingId, new CreatorEventBinding(bindingId, bindingId, "children",
+                            callback.getValue()));
+                    report.add("firebaseGetChildren:" + callbackId, "BlockBean",
+                            CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
+                            "Imported Firebase children callback substack as a direct runtime children binding.");
+                    continue;
+                }
                 String bindingId = "legacy_timer_callback_" + callback.getKey();
                 bindings.put(bindingId, new CreatorEventBinding(bindingId, callback.getKey(), "tick",
                         callback.getValue()));
@@ -549,10 +559,12 @@ public final class CreatorLegacyArtifactImporter {
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.REPEAT, payload, body, Collections.<CreatorRuntimeBlock>emptyList());
         }
         boolean timerWithCallback = "timerafter".equals(op) || "timerevery".equals(op);
-        if ((block.subStack1 >= 0 || block.subStack2 >= 0) && !timerWithCallback) {
+        boolean firebaseChildrenWithCallback = "firebasegetchildren".equals(op);
+        if ((block.subStack1 >= 0 || block.subStack2 >= 0) && !timerWithCallback && !firebaseChildrenWithCallback) {
             unsupported.add(block.opCode + " (control flow)"); return null;
         }
         if (timerWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+        if (firebaseChildrenWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
         if ("timerafter".equals(op) || "timerevery".equals(op)) {
             int required = "timerafter".equals(op) ? 2 : 3;
             if (values.size() < required) { unsupported.add(block.opCode); return null; }
@@ -785,6 +797,23 @@ public final class CreatorLegacyArtifactImporter {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("firebase_storage", CreatorRuntimeServiceArguments.output(
                     "componentId", values.get(0), "action", "delete_url", "url", values.get(1)));
+        } else if ("firebasegetchildren".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            Map<String, Object> arguments = new LinkedHashMap<>();
+            arguments.put("componentId", values.get(0));
+            arguments.put("action", "get_children");
+            arguments.put("path", firebasePath(componentDescriptors, values.get(0), null));
+            arguments.put("resultStateId", values.get(1));
+            if (block.subStack1 >= 0) {
+                BlockBean callbackStart = byId.get(block.subStack1);
+                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+                String callbackId = String.valueOf(block.id);
+                List<CreatorRuntimeBlock> callback = new ArrayList<>();
+                convertChain(callbackStart, byId, visited, callback, unsupported, timerCallbacks, componentDescriptors);
+                timerCallbacks.put("firebase_children:" + callbackId, callback);
+                arguments.put("callbackTargetId", "legacy_firebase_children_callback_" + callbackId);
+            }
+            return serviceCall("firebase", arguments);
         } else if ("firebasedelete".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return firebaseCall(values.get(0), "remove", firebasePath(componentDescriptors, values.get(0), values.get(1)));
