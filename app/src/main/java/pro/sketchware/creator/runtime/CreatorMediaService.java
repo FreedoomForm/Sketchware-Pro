@@ -48,7 +48,8 @@ public final class CreatorMediaService implements CreatorRuntimeService {
                 return CreatorRuntimeServiceArguments.succeeded("id", id, "loaded", true);
             }
             if ("play".equals(action) || "pause".equals(action) || "stop".equals(action) || "release".equals(action)
-                    || "seek".equals(action) || "set_looping".equals(action)) {
+                    || "seek".equals(action) || "set_looping".equals(action) || "current_position".equals(action)
+                    || "duration".equals(action) || "is_playing".equals(action) || "is_looping".equals(action)) {
                 MediaPlayer player = players.get(id);
                 if (player == null) return CreatorRuntimeServiceArguments.invalid("No media source is loaded for " + id + ".");
                 if ("play".equals(action)) player.start();
@@ -58,6 +59,10 @@ public final class CreatorMediaService implements CreatorRuntimeService {
                 else if ("set_looping".equals(action)) player.setLooping(Boolean.parseBoolean(
                         String.valueOf(arguments.get("looping"))));
                 else releasePlayer(id);
+                if ("current_position".equals(action)) return CreatorRuntimeServiceArguments.succeeded("id", id, "value", player.getCurrentPosition());
+                if ("duration".equals(action)) return CreatorRuntimeServiceArguments.succeeded("id", id, "value", player.getDuration());
+                if ("is_playing".equals(action)) return CreatorRuntimeServiceArguments.succeeded("id", id, "value", player.isPlaying());
+                if ("is_looping".equals(action)) return CreatorRuntimeServiceArguments.succeeded("id", id, "value", player.isLooping());
                 return CreatorRuntimeServiceArguments.succeeded("id", id, "action", action);
             }
             if ("sound_load_resource".equals(action)) {

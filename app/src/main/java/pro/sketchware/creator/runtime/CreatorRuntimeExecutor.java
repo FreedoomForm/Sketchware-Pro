@@ -151,7 +151,7 @@ public final class CreatorRuntimeExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    private static Object evaluate(Object rawExpression, CreatorRuntimeEngine engine) {
+    private Object evaluate(Object rawExpression, CreatorRuntimeEngine engine) {
         if (!(rawExpression instanceof Map)) return rawExpression;
         Map<String, Object> expression = (Map<String, Object>) rawExpression;
         if ("literal".equals(expression.get("kind"))) {
@@ -223,7 +223,18 @@ public final class CreatorRuntimeExecutor {
         if ("mathlog10".equals(op)) return Math.log10(decimal(first));
         if ("mathtoradian".equals(op)) return Math.toRadians(decimal(first));
         if ("mathtodegree".equals(op)) return Math.toDegrees(decimal(first));
+        if ("mediaplayergetcurrent".equals(op)) return mediaValue(first, "current_position");
+        if ("mediaplayergetduration".equals(op)) return mediaValue(first, "duration");
+        if ("mediaplayerisplaying".equals(op)) return mediaValue(first, "is_playing");
+        if ("mediaplayerislooping".equals(op)) return mediaValue(first, "is_looping");
         return null;
+    }
+
+    private Object mediaValue(Object id, String action) {
+        if (runtimeServices == null || id == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("media",
+                CreatorRuntimeServiceArguments.output("id", String.valueOf(id), "action", action));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("value") : null;
     }
 
     private static int boundedIndex(double value, int length) {

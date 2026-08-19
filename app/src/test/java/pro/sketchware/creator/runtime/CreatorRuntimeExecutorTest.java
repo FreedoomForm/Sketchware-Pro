@@ -271,6 +271,36 @@ public class CreatorRuntimeExecutorTest {
         assertThat((java.util.List<?>) engine.getCurrent().getState().get("paired")).containsExactly("one", "two").inOrder();
     }
 
+    @Test public void evaluatesMediaPlayerGetterReportersThroughRuntimeNativeMediaService() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeService media = new CreatorRuntimeService() {
+            @Override public String getId() { return "media"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                if ("duration".equals(arguments.get("action"))) return CreatorRuntimeServiceArguments.succeeded("value", 4200L);
+                if ("is_playing".equals(arguments.get("action"))) return CreatorRuntimeServiceArguments.succeeded("value", true);
+                return CreatorRuntimeServiceArguments.invalid("unsupported");
+            }
+        };
+        Map<String, Object> duration = map("kind", "reporter", "opCode", "mediaplayergetduration", "arguments",
+                Collections.singletonList(map("kind", "literal", "value", "music")));
+        Map<String, Object> playing = map("kind", "reporter", "opCode", "mediaplayerisplaying", "arguments",
+                Collections.singletonList(map("kind", "literal", "value", "music")));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", Arrays.asList(
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "duration", "expression", duration)),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "playing", "expression", playing))))));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(media)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState()).containsEntry("duration", 4200L);
+        assertThat(engine.getCurrent().getState()).containsEntry("playing", true);
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }
