@@ -312,14 +312,16 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if (widget == null) return null;
         if ("text".equals(widget.getType())) {
             TextView text = new TextView(this);
-            text.setText(propertyString(widget, "text", "Text"));
+            text.setText(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
+                    propertyString(widget, "text", "Text")));
             text.setTextSize(propertyInt(widget, "textSize", 18));
             text.setPadding(dp(16), dp(12), dp(16), dp(12));
             return registerRuntimeWidget(widget, text);
         }
         if ("button".equals(widget.getType())) {
             MaterialButton button = new MaterialButton(this);
-            button.setText(propertyString(widget, "text", "Button"));
+            button.setText(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
+                    propertyString(widget, "text", "Button")));
             button.setOnClickListener(v -> dispatchRuntimeEvent(widget.getId(), "click"));
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -329,8 +331,10 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if ("input".equals(widget.getType())) {
             EditText input = new EditText(this);
-            input.setText(propertyString(widget, "text", ""));
-            input.setHint(propertyString(widget, "hint", "Type here"));
+            input.setText(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
+                    propertyString(widget, "text", "")));
+            input.setHint(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
+                    propertyString(widget, "hint", "Type here")));
             input.setSingleLine(propertyBoolean(widget, "singleLine", false));
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -340,7 +344,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if ("checkbox".equals(widget.getType())) {
             MaterialCheckBox checkbox = new MaterialCheckBox(this);
-            checkbox.setText(propertyString(widget, "text", "Checkbox"));
+            checkbox.setText(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
+                    propertyString(widget, "text", "Checkbox")));
             checkbox.setChecked(propertyBoolean(widget, "checked", false));
             checkbox.setOnCheckedChangeListener((button, checked) -> dispatchRuntimeEvent(widget.getId(), "change"));
             checkbox.setPadding(dp(12), dp(8), dp(12), dp(8));
@@ -348,7 +353,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if ("switch".equals(widget.getType())) {
             SwitchCompat toggle = new SwitchCompat(this);
-            toggle.setText(propertyString(widget, "text", "Switch"));
+            toggle.setText(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
+                    propertyString(widget, "text", "Switch")));
             toggle.setChecked(propertyBoolean(widget, "checked", false));
             toggle.setOnCheckedChangeListener((button, checked) -> dispatchRuntimeEvent(widget.getId(), "change"));
             toggle.setPadding(dp(16), dp(8), dp(16), dp(8));
@@ -710,6 +716,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     }
 
     private void applyCommonViewProperties(CreatorWidget widget, View view) {
+        CreatorProjectDocument document = session == null ? null : session.getDocument();
         view.setEnabled(propertyBoolean(widget, "enabled", true));
         view.setClickable(propertyBoolean(widget, "clickable", view.isClickable()));
         view.setVisibility(propertyBoolean(widget, "visible", true) ? View.VISIBLE : View.GONE);
@@ -719,7 +726,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         view.setTranslationY(propertyFloat(widget, "translationY", 0f));
         view.setScaleX(propertyFloat(widget, "scaleX", 1f));
         view.setScaleY(propertyFloat(widget, "scaleY", 1f));
-        String backgroundColor = propertyString(widget, "backgroundColor", "");
+        String backgroundColor = pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveColor(document,
+                propertyString(widget, "backgroundColor", ""));
         if (!backgroundColor.isEmpty()) {
             try { view.setBackgroundColor(android.graphics.Color.parseColor(backgroundColor)); }
             catch (IllegalArgumentException ignored) { }
@@ -731,7 +739,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if (view instanceof TextView) {
             TextView text = (TextView) view;
-            String textColor = propertyString(widget, "textColor", "");
+            String textColor = pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveColor(document,
+                    propertyString(widget, "textColor", ""));
             if (!textColor.isEmpty()) {
                 try { text.setTextColor(android.graphics.Color.parseColor(textColor)); }
                 catch (IllegalArgumentException ignored) { }
@@ -739,7 +748,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             text.setTextSize(propertyFloat(widget, "textSize", text.getTextSize() / getResources().getDisplayMetrics().scaledDensity));
         }
         if (view instanceof EditText) {
-            String hintColor = propertyString(widget, "hintTextColor", "");
+            String hintColor = pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveColor(document,
+                    propertyString(widget, "hintTextColor", ""));
             if (!hintColor.isEmpty()) {
                 try { ((EditText) view).setHintTextColor(android.graphics.Color.parseColor(hintColor)); }
                 catch (IllegalArgumentException ignored) { }
