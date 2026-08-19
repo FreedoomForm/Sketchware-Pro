@@ -310,8 +310,53 @@ public final class CreatorLegacyArtifactImporter {
             payload.put("arguments", Collections.<String, Object>emptyMap());
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL, payload);
         }
+        Map<String, Object> serviceCall = serviceCall(op, values);
+        if (serviceCall != null) {
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL, serviceCall,
+                    Collections.<CreatorRuntimeBlock>emptyList(), Collections.<CreatorRuntimeBlock>emptyList());
+        }
         unsupported.add(block.opCode);
         return null;
+    }
+
+    private static Map<String, Object> serviceCall(String op, List<String> values) {
+        Map<String, Object> call = new LinkedHashMap<>();
+        Map<String, Object> arguments = new LinkedHashMap<>();
+        if ("vibratoraction".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "vibrator"); arguments.put("durationMs", values.get(1));
+        } else if ("texttospeechsetpitch".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "text_to_speech"); arguments.put("action", "set_pitch"); arguments.put("pitch", values.get(1));
+        } else if ("texttospeechsetspeechrate".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "text_to_speech"); arguments.put("action", "set_speech_rate"); arguments.put("rate", values.get(1));
+        } else if ("texttospeechspeak".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "text_to_speech"); arguments.put("action", "speak"); arguments.put("text", values.get(1));
+        } else if ("texttospeechisspeaking".equals(op) && !values.isEmpty()) {
+            call.put("serviceId", "text_to_speech"); arguments.put("action", "is_speaking");
+        } else if ("texttospeechstop".equals(op)) {
+            call.put("serviceId", "text_to_speech"); arguments.put("action", "stop");
+        } else if ("texttospeechshutdown".equals(op)) {
+            call.put("serviceId", "text_to_speech"); arguments.put("action", "shutdown");
+        } else if ("speechtostartlistening".equals(op)) {
+            call.put("serviceId", "speech_to_text"); arguments.put("action", "listen");
+        } else if ("camerastarttakepicture".equals(op)) {
+            call.put("serviceId", "camera"); arguments.put("action", "capture");
+        } else if ("filepickerstartpickfiles".equals(op)) {
+            call.put("serviceId", "file_picker"); arguments.put("action", "pick");
+            if (values.size() >= 2) arguments.put("mimeType", values.get(1));
+        } else if ("gyroscopystartlisten".equals(op)) {
+            call.put("serviceId", "gyroscope"); arguments.put("action", "start");
+        } else if ("gyroscopystoplisten".equals(op)) {
+            call.put("serviceId", "gyroscope"); arguments.put("action", "stop");
+        } else if ("requestnetworkstartrequestnetwork".equals(op) && values.size() >= 4) {
+            call.put("serviceId", "http"); arguments.put("method", values.get(1));
+            arguments.put("url", values.get(2)); arguments.put("body", values.get(3));
+        } else if ("dialogshow".equals(op)) {
+            call.put("serviceId", "dialog"); arguments.put("action", "show");
+        } else {
+            return null;
+        }
+        call.put("arguments", arguments);
+        return call;
     }
 
     private static String widgetProperty(String op) {

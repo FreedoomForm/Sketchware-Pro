@@ -19,6 +19,21 @@ public final class CreatorTextToSpeechService implements CreatorRuntimeService, 
 
     @Override public Result execute(Map<String, Object> arguments) {
         String action = CreatorRuntimeServiceArguments.string(arguments, "action");
+        if ("set_pitch".equals(action)) {
+            float pitch = CreatorRuntimeServiceArguments.floatValue(arguments, "pitch", -1f);
+            if (pitch <= 0f) return CreatorRuntimeServiceArguments.invalid("pitch must be positive.");
+            textToSpeech.setPitch(pitch);
+            return CreatorRuntimeServiceArguments.succeeded("pitch", pitch);
+        }
+        if ("set_speech_rate".equals(action)) {
+            float rate = CreatorRuntimeServiceArguments.floatValue(arguments, "rate", -1f);
+            if (rate <= 0f) return CreatorRuntimeServiceArguments.invalid("rate must be positive.");
+            textToSpeech.setSpeechRate(rate);
+            return CreatorRuntimeServiceArguments.succeeded("rate", rate);
+        }
+        if ("is_speaking".equals(action)) {
+            return CreatorRuntimeServiceArguments.succeeded("speaking", textToSpeech.isSpeaking());
+        }
         if ("speak".equals(action)) {
             String text = CreatorRuntimeServiceArguments.string(arguments, "text");
             if (text == null) return CreatorRuntimeServiceArguments.invalid("speak requires text.");

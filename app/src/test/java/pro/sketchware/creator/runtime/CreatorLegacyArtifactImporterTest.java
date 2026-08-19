@@ -147,6 +147,33 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(1);
     }
 
+    @Test public void importsLegacyServiceOpcodesWithStructuredArguments() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean request = new BlockBean("1", "", "", "requestnetworkStartRequestNetwork");
+        request.parameters.add("network");
+        request.parameters.add("GET");
+        request.parameters.add("https://example.test/api");
+        request.parameters.add("");
+        request.nextBlock = 2;
+        BlockBean speak = new BlockBean("2", "", "", "textToSpeechSpeak");
+        speak.parameters.add("tts");
+        speak.parameters.add("Hello");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(speak, request));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(2);
+        assertThat(imported.get(0).getPayload().get("serviceId")).isEqualTo("http");
+        @SuppressWarnings("unchecked") Map<String, Object> httpArgs =
+                (Map<String, Object>) imported.get(0).getPayload().get("arguments");
+        assertThat(httpArgs.get("url")).isEqualTo("https://example.test/api");
+        assertThat(imported.get(1).getPayload().get("serviceId")).isEqualTo("text_to_speech");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsCommonWidgetSettersAsTypedProperties() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean visible = new BlockBean("1", "", "", "setVisible");
