@@ -592,6 +592,37 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyFileComponentMutationsWithNamedStorageMetadata() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean setFile = new BlockBean("1", "", "", "fileSetFileName");
+        setFile.parameters.add("settings1");
+        setFile.parameters.add("alternate_settings");
+        BlockBean setData = new BlockBean("2", "", "", "fileSetData");
+        setData.parameters.add("settings1");
+        setData.parameters.add("theme");
+        setData.parameters.add("dark");
+        BlockBean remove = new BlockBean("3", "", "", "fileRemoveData");
+        remove.parameters.add("settings1");
+        remove.parameters.add("theme");
+        setFile.nextBlock = 2;
+        setData.nextBlock = 3;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(setFile, setData, remove));
+        ComponentBean storage = new ComponentBean(ComponentBean.COMPONENT_TYPE_SHAREDPREF, "settings1", "default_settings");
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.singletonList(storage), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "local_storage", "configure");
+        assertServiceCall(imported.get(1), "local_storage", "set");
+        assertServiceCall(imported.get(2), "local_storage", "remove");
+        @SuppressWarnings("unchecked") Map<String, Object> setArguments = (Map<String, Object>) imported.get(1).getPayload().get("arguments");
+        assertThat(setArguments).containsEntry("storeName", "default_settings");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

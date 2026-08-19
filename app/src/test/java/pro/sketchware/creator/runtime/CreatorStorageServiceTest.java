@@ -22,6 +22,22 @@ public class CreatorStorageServiceTest {
         assertThat(service.execute(arguments("get", "greeting", null)).getOutput()).containsEntry("value", null);
     }
 
+    @Test public void acceptsNamedLegacyFileComponentConfiguration() {
+        CreatorStorageService service = new CreatorStorageService(new InMemoryPreferences());
+        Map<String, Object> configure = new LinkedHashMap<>();
+        configure.put("action", "configure");
+        configure.put("componentId", "settings1");
+        configure.put("storeName", "settings");
+        assertThat(service.execute(configure).getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+
+        Map<String, Object> set = arguments("set", "theme", "dark");
+        set.put("componentId", "settings1");
+        Map<String, Object> get = arguments("get", "theme", null);
+        get.put("componentId", "settings1");
+        assertThat(service.execute(set).getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+        assertThat(service.execute(get).getOutput()).containsEntry("value", "dark");
+    }
+
     private static Map<String, Object> arguments(String action, String key, String value) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("action", action);

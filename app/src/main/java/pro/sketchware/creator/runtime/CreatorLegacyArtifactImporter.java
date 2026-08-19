@@ -508,6 +508,15 @@ public final class CreatorLegacyArtifactImporter {
         } else if ("calendarsettime".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return calendarCall(values.get(0), "set_time", "timestamp", values.get(1));
+        } else if ("filesetfilename".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return storageCall(values.get(0), "configure", null, values.get(1), null, componentDescriptors);
+        } else if ("filesetdata".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return storageCall(values.get(0), "set", values.get(1), values.get(2), null, componentDescriptors);
+        } else if ("fileremovedata".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return storageCall(values.get(0), "remove", values.get(1), null, null, componentDescriptors);
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported);
@@ -679,6 +688,24 @@ public final class CreatorLegacyArtifactImporter {
             arguments.put("value", value);
         }
         return serviceCall("calendar", arguments);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static CreatorRuntimeBlock storageCall(String componentId, String action, String key, String value,
+                                                   String explicitStoreName, Map<String, Object> componentDescriptors) {
+        Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("componentId", componentId);
+        arguments.put("action", action);
+        Object raw = componentDescriptors == null ? null : componentDescriptors.get(componentId);
+        Map<String, Object> descriptor = raw instanceof Map ? (Map<String, Object>) raw : Collections.<String, Object>emptyMap();
+        String storeName = explicitStoreName == null ? String.valueOf(descriptor.get("param1") == null ? "" : descriptor.get("param1")) : explicitStoreName;
+        if ("configure".equals(action)) arguments.put("storeName", value);
+        else {
+            arguments.put("key", key);
+            if (value != null) arguments.put("value", value);
+            if (!blank(storeName)) arguments.put("storeName", storeName);
+        }
+        return serviceCall("local_storage", arguments);
     }
 
     @SuppressWarnings("unchecked")
