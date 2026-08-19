@@ -592,6 +592,37 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyCustomAdapterDataBlocksAsTypedListMapStateReferences() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        String[] opcodes = {"listSetCustomViewData", "recyclerSetCustomViewData", "spnSetCustomViewData",
+                "pagerSetCustomViewData", "gridSetCustomViewData"};
+        String[] widgets = {"list", "recycler", "spinner", "pager", "grid"};
+        java.util.List<BlockBean> chain = new java.util.ArrayList<>();
+        for (int index = 0; index < opcodes.length; index++) {
+            BlockBean block = new BlockBean(String.valueOf(index + 1), "", "", opcodes[index]);
+            block.parameters.add(widgets[index]);
+            block.parameters.add("rows");
+            if (index + 1 < opcodes.length) block.nextBlock = index + 2;
+            chain.add(block);
+        }
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), chain);
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(opcodes.length);
+        for (int index = 0; index < imported.size(); index++) {
+            assertThat(imported.get(index).getType()).isEqualTo(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY);
+            assertThat(imported.get(index).getPayload()).containsEntry("widgetId", widgets[index]);
+            assertThat(imported.get(index).getPayload()).containsEntry("property", "customDataStateId");
+            assertThat(imported.get(index).getPayload()).containsEntry("value", "rows");
+        }
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsLegacyMapListInsertAndGetWithCanonicalArgumentOrder() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean insert = new BlockBean("1", "", "", "insertMapToList");

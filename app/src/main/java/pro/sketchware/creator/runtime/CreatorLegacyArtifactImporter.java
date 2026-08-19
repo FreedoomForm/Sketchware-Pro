@@ -827,6 +827,10 @@ public final class CreatorLegacyArtifactImporter {
             return widgetResourceProperty(block, values, "thumbResource", unsupported);
         } else if ("settrackresource".equals(op)) {
             return widgetResourceProperty(block, values, "trackResource", unsupported);
+        } else if ("listsetcustomviewdata".equals(op) || "recyclersetcustomviewdata".equals(op)
+                || "spnsetcustomviewdata".equals(op) || "pagersetcustomviewdata".equals(op)
+                || "gridsetcustomviewdata".equals(op)) {
+            return widgetCustomDataProperty(block, values, unsupported);
         } else if ("objectanimatorsettarget".equals(op)) {
             return animatorCall(block, values, "set_target", 2, unsupported);
         } else if ("objectanimatorsetproperty".equals(op)) {
@@ -1332,6 +1336,14 @@ public final class CreatorLegacyArtifactImporter {
         String resourceName = values.get(1) == null ? "" : values.get(1).replace(".9", "").toLowerCase(Locale.ROOT);
         return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY,
                 CreatorRuntimeServiceArguments.output("widgetId", values.get(0), "property", property, "value", resourceName));
+    }
+
+    private static CreatorRuntimeBlock widgetCustomDataProperty(BlockBean block, List<String> values,
+                                                                List<String> unsupported) {
+        if (values.size() < 2 || blank(values.get(0))) { unsupported.add(block.opCode); return null; }
+        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY,
+                CreatorRuntimeServiceArguments.output("widgetId", values.get(0), "property", "customDataStateId",
+                        "value", values.get(1)));
     }
 
     private static CreatorRuntimeBlock animatorCall(BlockBean block, List<String> values, String action, int required,

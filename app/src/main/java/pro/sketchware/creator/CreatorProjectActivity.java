@@ -371,12 +371,21 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("pager".equals(widget.getType())) {
             ViewPager pager = new ViewPager(this);
             pager.setId(View.generateViewId());
+            java.util.List<?> customItems = runtimeItems(document, widget);
             pager.setAdapter(new PagerAdapter() {
-                @Override public int getCount() { return widget.getChildren().size(); }
+                @Override public int getCount() { return customItems.isEmpty() ? widget.getChildren().size() : customItems.size(); }
                 @Override public boolean isViewFromObject(View view, Object object) { return view == object; }
                 @Override public Object instantiateItem(ViewGroup parent, int position) {
-                    String childId = widget.getChildren().get(position);
-                    View child = renderWidget(document, document.getWidgets().get(childId));
+                    View child;
+                    if (!customItems.isEmpty()) {
+                        TextView row = new TextView(CreatorProjectActivity.this);
+                        row.setText(runtimeItemText(customItems.get(position)));
+                        row.setPadding(dp(16), dp(12), dp(16), dp(12));
+                        child = row;
+                    } else {
+                        String childId = widget.getChildren().get(position);
+                        child = renderWidget(document, document.getWidgets().get(childId));
+                    }
                     if (child == null) child = new View(CreatorProjectActivity.this);
                     parent.addView(child);
                     return child;
@@ -424,10 +433,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("spinner".equals(widget.getType())) {
             android.widget.Spinner spinner = new android.widget.Spinner(this);
             java.util.List<String> entries = new java.util.ArrayList<>();
-            Object rawItems = widget.getProperties().get("items");
-            if (rawItems instanceof java.util.List) {
-                for (Object item : (java.util.List<?>) rawItems) entries.add(String.valueOf(item));
-            }
+            for (Object item : runtimeItems(document, widget)) entries.add(runtimeItemText(item));
             if (entries.isEmpty()) entries.add(propertyString(widget, "text", "Item"));
             spinner.setAdapter(new android.widget.ArrayAdapter<>(this,
                     android.R.layout.simple_spinner_dropdown_item, entries));
@@ -500,10 +506,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("list".equals(widget.getType())) {
             android.widget.ListView list = new android.widget.ListView(this);
             java.util.List<String> entries = new java.util.ArrayList<>();
-            Object rawItems = widget.getProperties().get("items");
-            if (rawItems instanceof java.util.List) {
-                for (Object item : (java.util.List<?>) rawItems) entries.add(String.valueOf(item));
-            }
+            for (Object item : runtimeItems(document, widget)) entries.add(runtimeItemText(item));
             if (entries.isEmpty()) entries.add(propertyString(widget, "text", "Item"));
             int choiceMode = propertyInt(widget, "choiceMode", android.widget.ListView.CHOICE_MODE_NONE);
             list.setChoiceMode(choiceMode);
@@ -518,12 +521,11 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("grid".equals(widget.getType())) {
             LinearLayout list = new LinearLayout(this);
             list.setOrientation("grid".equals(widget.getType()) ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
-            Object rawItems = widget.getProperties().get("items");
-            java.util.List<?> items = rawItems instanceof java.util.List ? (java.util.List<?>) rawItems
-                    : java.util.Collections.singletonList(propertyString(widget, "text", "Item"));
+            java.util.List<?> items = runtimeItems(document, widget);
+            if (items.isEmpty()) items = java.util.Collections.singletonList(propertyString(widget, "text", "Item"));
             for (Object item : items) {
                 TextView row = new TextView(this);
-                row.setText(String.valueOf(item));
+                row.setText(runtimeItemText(item));
                 row.setPadding(dp(12), dp(10), dp(12), dp(10));
                 row.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "item_click"));
                 list.addView(row);
@@ -889,6 +891,28 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         android.graphics.drawable.Drawable track = resolveProjectDrawable(document,
                 propertyString(widget, "trackResource", ""));
         if (track != null) seekBar.setProgressDrawable(track);
+    }
+
+    private java.util.List<?> runtimeItems(CreatorProjectDocument document, CreatorWidget widget) {
+        Object stateId = widget.getProperties().get("customDataStateId");
+        Object rawItems = stateId == null ? widget.getProperties().get("items")
+                : document.getState().get(String.valueOf(stateId));
+        return rawItems instanceof java.util.List ? (java.util.List<?>) rawItems : java.util.Collections.emptyList();
+    }
+
+    private String runtimeItemText(Object item) {
+        if (!(item instanceof Map)) return String.valueOf(item);
+        Map<?, ?> row = (Map<?, ?>) item;
+        for (String preferred : new String[]{"text", "title", "name"}) {
+            Object value = row.get(preferred);
+            if (value != null) return String.valueOf(value);
+        }
+        StringBuilder text = new StringBuilder();
+        for (Object value : row.values()) {
+            if (text.length() > 0) text.append(" · ");
+            text.append(String.valueOf(value));
+        }
+        return text.toString();
     }
 
     private android.graphics.drawable.Drawable resolveProjectDrawable(CreatorProjectDocument document, String resourceName) {

@@ -73,6 +73,8 @@ Canonical `viewOnClick` now installs a typed dynamic `click` binding instead of 
 
 Canonical `setThumbResource` and `setTrackResource` now import as typed SeekBar widget properties. The live renderer resolves imported project drawables or available app drawables at runtime, normalizing legacy `.9` resource names without requiring compiled project resources; the importer regression verifies both mappings. The complete JVM suite now has **150 passing tests and zero failures**. Actual drawable rendering remains device-level evidence under the open view/resource gates.
 
+Canonical custom-adapter data blocks for ListView/Recycler, Spinner, ViewPager, and Grid now persist a typed list-map state reference on their runtime widgets. The live renderer resolves that state after each render and presents map rows through the native widget families, without generated adapter classes; importer regression verifies all five canonical opcodes. The complete JVM suite now has **151 passing tests and zero failures**. Detailed custom row-layout and device interaction parity remain evidence under the open block/event and view gates.
+
 `mapGetAllKeys` is now imported as a typed `replace_map_keys` list mutation. The executor clears the destination list, copies the source map’s ordered key set, and persists it back into runtime state. Importer and executor regressions verify the exact legacy map/list parameter order and resulting key order.
 
 The canonical `mapToStr` and `listMapToStr` reporters now serialize typed map/list data directly through the runtime serialization library. Regression verifies the exact JSON values held in state; this replaces generated Java-expression emission while preserving data-only execution.
