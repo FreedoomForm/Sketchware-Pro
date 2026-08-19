@@ -872,8 +872,9 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     }
 
     private void applyLegacyLayoutProperties(CreatorWidget widget, View view) {
-        view.setPadding(dp(propertyInt(widget, "paddingLeft", 0)), dp(propertyInt(widget, "paddingTop", 0)),
-                dp(propertyInt(widget, "paddingRight", 0)), dp(propertyInt(widget, "paddingBottom", 0)));
+        int uniformPadding = propertyInt(widget, "padding", 0);
+        view.setPadding(dp(propertyInt(widget, "paddingLeft", uniformPadding)), dp(propertyInt(widget, "paddingTop", uniformPadding)),
+                dp(propertyInt(widget, "paddingRight", uniformPadding)), dp(propertyInt(widget, "paddingBottom", uniformPadding)));
         int width = runtimeLayoutDimension(propertyInt(widget, "legacyWidth", ViewGroup.LayoutParams.WRAP_CONTENT));
         int height = runtimeLayoutDimension(propertyInt(widget, "legacyHeight", ViewGroup.LayoutParams.WRAP_CONTENT));
         LinearLayout.LayoutParams parameters = new LinearLayout.LayoutParams(width, height,
