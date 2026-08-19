@@ -848,6 +848,46 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState()).containsEntry("length", 7L);
     }
 
+    @Test public void evaluatesCanonicalStoragePathReportersThroughRuntimeNativeFileService() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeService file = new CreatorRuntimeService() {
+            @Override public String getId() { return "file"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                if ("get_external_storage_dir".equals(arguments.get("action"))) {
+                    return CreatorRuntimeServiceArguments.succeeded("path", "/storage/emulated/0");
+                }
+                if ("get_package_data_dir".equals(arguments.get("action"))) {
+                    return CreatorRuntimeServiceArguments.succeeded("path", "/data/user/0/pro.creator");
+                }
+                if ("get_public_dir".equals(arguments.get("action"))
+                        && "DIRECTORY_DOWNLOADS".equals(arguments.get("directory"))) {
+                    return CreatorRuntimeServiceArguments.succeeded("path", "/storage/emulated/0/Download");
+                }
+                return CreatorRuntimeServiceArguments.invalid("unsupported");
+            }
+        };
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "external", "expression", reporter("getexternalstoragedir"))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "package", "expression", reporter("getpackagedatadir"))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "downloads", "expression", reporter("getpublicdir", literal("DIRECTORY_DOWNLOADS")))));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(file)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState()).containsEntry("external", "/storage/emulated/0");
+        assertThat(engine.getCurrent().getState()).containsEntry("package", "/data/user/0/pro.creator");
+        assertThat(engine.getCurrent().getState()).containsEntry("downloads", "/storage/emulated/0/Download");
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

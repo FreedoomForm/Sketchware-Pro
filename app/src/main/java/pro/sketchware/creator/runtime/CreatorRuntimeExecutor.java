@@ -292,6 +292,9 @@ public final class CreatorRuntimeExecutor {
         if ("fileutilisdir".equals(op)) return fileValue(first, "is_dir", "value");
         if ("fileutilisfile".equals(op)) return fileValue(first, "is_file", "value");
         if ("fileutillength".equals(op)) return fileValue(first, "length", "value");
+        if ("getexternalstoragedir".equals(op)) return filePathValue("get_external_storage_dir", null);
+        if ("getpackagedatadir".equals(op)) return filePathValue("get_package_data_dir", null);
+        if ("getpublicdir".equals(op)) return filePathValue("get_public_dir", first);
         if ("calendargettime".equals(op)) return calendarTimestamp(first);
         if ("calendarformat".equals(op)) {
             Object timestamp = calendarTimestamp(first);
@@ -379,6 +382,14 @@ public final class CreatorRuntimeExecutor {
         CreatorRuntimeService.Result result = runtimeServices.dispatch("file",
                 CreatorRuntimeServiceArguments.output("path", String.valueOf(path), "action", action));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
+    }
+
+    private Object filePathValue(String action, Object directory) {
+        if (runtimeServices == null) return null;
+        Map<String, Object> arguments = CreatorRuntimeServiceArguments.output("action", action);
+        if (directory != null) arguments.put("directory", String.valueOf(directory));
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("file", arguments);
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("path") : null;
     }
 
     private Object calendarTimestamp(Object componentId) {

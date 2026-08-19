@@ -40,6 +40,19 @@ public final class CreatorFileService implements CreatorRuntimeService {
     @Override public Result execute(Map<String, Object> arguments) {
         String action = CreatorRuntimeServiceArguments.string(arguments, "action");
         if (action == null) return CreatorRuntimeServiceArguments.invalid("file requires an action.");
+        if ("get_external_storage_dir".equals(action)) {
+            return CreatorRuntimeServiceArguments.succeeded("path", files.externalRootPath());
+        }
+        if ("get_package_data_dir".equals(action)) {
+            String dataDir = environment.getContext().getApplicationInfo().dataDir;
+            return CreatorRuntimeServiceArguments.succeeded("path", dataDir == null ? "" : dataDir);
+        }
+        if ("get_public_dir".equals(action)) {
+            String directory = publicDirectory(CreatorRuntimeServiceArguments.string(arguments, "directory"));
+            if (directory == null) return CreatorRuntimeServiceArguments.invalid("Unsupported public directory.");
+            File publicDirectory = Environment.getExternalStoragePublicDirectory(directory);
+            return CreatorRuntimeServiceArguments.succeeded("path", publicDirectory == null ? "" : publicDirectory.getPath());
+        }
         String path = CreatorRuntimeServiceArguments.string(arguments, "path");
         if (path == null || path.trim().isEmpty()) return CreatorRuntimeServiceArguments.invalid("file requires a path.");
         boolean mutates = "write".equals(action) || "copy".equals(action) || "copy_dir".equals(action)
@@ -92,6 +105,25 @@ public final class CreatorFileService implements CreatorRuntimeService {
         }
     }
 
+    private static String publicDirectory(String rawDirectory) {
+        if (rawDirectory == null) return null;
+        String directory = rawDirectory.trim();
+        if (directory.length() > 1 && directory.startsWith("\"") && directory.endsWith("\"")) {
+            directory = directory.substring(1, directory.length() - 1);
+        }
+        if (Environment.DIRECTORY_ALARMS.equals(directory) || "DIRECTORY_ALARMS".equals(directory)) return Environment.DIRECTORY_ALARMS;
+        if (Environment.DIRECTORY_DCIM.equals(directory) || "DIRECTORY_DCIM".equals(directory)) return Environment.DIRECTORY_DCIM;
+        if (Environment.DIRECTORY_DOCUMENTS.equals(directory) || "DIRECTORY_DOCUMENTS".equals(directory)) return Environment.DIRECTORY_DOCUMENTS;
+        if (Environment.DIRECTORY_DOWNLOADS.equals(directory) || "DIRECTORY_DOWNLOADS".equals(directory)) return Environment.DIRECTORY_DOWNLOADS;
+        if (Environment.DIRECTORY_MOVIES.equals(directory) || "DIRECTORY_MOVIES".equals(directory)) return Environment.DIRECTORY_MOVIES;
+        if (Environment.DIRECTORY_MUSIC.equals(directory) || "DIRECTORY_MUSIC".equals(directory)) return Environment.DIRECTORY_MUSIC;
+        if (Environment.DIRECTORY_NOTIFICATIONS.equals(directory) || "DIRECTORY_NOTIFICATIONS".equals(directory)) return Environment.DIRECTORY_NOTIFICATIONS;
+        if (Environment.DIRECTORY_PICTURES.equals(directory) || "DIRECTORY_PICTURES".equals(directory)) return Environment.DIRECTORY_PICTURES;
+        if (Environment.DIRECTORY_PODCASTS.equals(directory) || "DIRECTORY_PODCASTS".equals(directory)) return Environment.DIRECTORY_PODCASTS;
+        if (Environment.DIRECTORY_RINGTONES.equals(directory) || "DIRECTORY_RINGTONES".equals(directory)) return Environment.DIRECTORY_RINGTONES;
+        return null;
+    }
+
     static final class FileOperations {
         private final List<File> permittedRoots;
         private final File externalRoot;
@@ -118,6 +150,8 @@ public final class CreatorFileService implements CreatorRuntimeService {
             try { return within(resolveCanonical(externalRoot), resolveCanonical(rawPath)); }
             catch (IOException | SecurityException ignored) { return false; }
         }
+
+        String externalRootPath() { return externalRoot == null ? "" : externalRoot.getPath(); }
 
         String read(String path) throws IOException { return new String(readBytes(resolve(path)), StandardCharsets.UTF_8); }
 
