@@ -850,6 +850,18 @@ public final class CreatorLegacyArtifactImporter {
         } else if ("firebasedelete".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return firebaseCall(values.get(0), "remove", firebasePath(componentDescriptors, values.get(0), values.get(1)));
+        } else if ("firebaseadd".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return serviceCall("firebase", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "update",
+                    "path", firebasePath(componentDescriptors, values.get(0), values.get(1)),
+                    "valueStateId", values.get(2)));
+        } else if ("firebasepush".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("firebase", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "push_update",
+                    "path", firebasePath(componentDescriptors, values.get(0), null),
+                    "valueStateId", values.get(1)));
         } else if ("firebasestartlisten".equals(op) || "firebasestoplisten".equals(op)) {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             return firebaseCall(values.get(0), "firebasestartlisten".equals(op) ? "listen" : "stop_listen",

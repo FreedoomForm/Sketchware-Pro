@@ -192,6 +192,7 @@ public final class CreatorRuntimeExecutor {
         Map<String, Object> resolved = new LinkedHashMap<>(arguments);
         resolveStateMap(engine, resolved, "paramsStateId", "params");
         resolveStateMap(engine, resolved, "headersStateId", "headers");
+        resolveStateMap(engine, resolved, "valueStateId", "value");
         resolveStateList(engine, resolved, "itemsStateId", "items");
         return resolved;
     }

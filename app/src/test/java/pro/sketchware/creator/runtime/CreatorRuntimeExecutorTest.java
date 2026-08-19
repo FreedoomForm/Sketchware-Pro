@@ -1098,6 +1098,38 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState()).containsEntry("height", 2400);
     }
 
+    @Test public void resolvesTypedRuntimeMapStateForFirebaseUpdateServiceCalls() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("profile", 2, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "profile", "value", map("name", "Ada", "score", 9))));
+        final Map<String, Object> captured = new LinkedHashMap<>();
+        CreatorRuntimeService firebase = new CreatorRuntimeService() {
+            @Override public String getId() { return "firebase"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                captured.putAll(arguments);
+                return CreatorRuntimeServiceArguments.succeeded("started", true);
+            }
+        };
+        engine.apply(op("event", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks",
+                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "firebase", "arguments", map("componentId", "firebase1",
+                                        "action", "update", "path", "profiles/ada", "valueStateId", "profile")))))));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(firebase)).dispatch(engine, "button", "click");
+
+        assertThat(captured).containsEntry("path", "profiles/ada");
+        assertThat(captured).containsEntry("action", "update");
+        @SuppressWarnings("unchecked") Map<String, Object> value = (Map<String, Object>) captured.get("value");
+        assertThat(value).containsEntry("name", "Ada");
+        assertThat(value).containsEntry("score", 9);
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

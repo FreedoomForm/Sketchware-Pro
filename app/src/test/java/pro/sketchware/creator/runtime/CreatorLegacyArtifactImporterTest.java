@@ -859,6 +859,36 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyFirebaseAddAndPushWithTypedMapStateAndBasePaths() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean add = new BlockBean("1", "", "", "firebaseAdd");
+        add.parameters.add("firebase1");
+        add.parameters.add("users/ada");
+        add.parameters.add("profile");
+        BlockBean push = new BlockBean("2", "", "", "firebasePush");
+        push.parameters.add("firebase1");
+        push.parameters.add("profile");
+        add.nextBlock = 2;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(add, push));
+        ComponentBean firebase = new ComponentBean(ComponentBean.COMPONENT_TYPE_FIREBASE, "firebase1", "profiles");
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.singletonList(firebase), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "firebase", "update");
+        assertServiceCall(imported.get(1), "firebase", "push_update");
+        @SuppressWarnings("unchecked") Map<String, Object> addArguments = (Map<String, Object>) imported.get(0).getPayload().get("arguments");
+        @SuppressWarnings("unchecked") Map<String, Object> pushArguments = (Map<String, Object>) imported.get(1).getPayload().get("arguments");
+        assertThat(addArguments).containsEntry("path", "profiles/users/ada");
+        assertThat(addArguments).containsEntry("valueStateId", "profile");
+        assertThat(pushArguments).containsEntry("path", "profiles");
+        assertThat(pushArguments).containsEntry("valueStateId", "profile");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsLegacyFirebaseGetChildrenWithTypedStateAndCallbackBinding() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean getChildren = new BlockBean("1", "", "", "firebaseGetChildren");

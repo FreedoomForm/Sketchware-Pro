@@ -33,10 +33,13 @@ public final class CreatorFirebaseDatabaseService implements CreatorRuntimeServi
         if ("push_key".equals(action)) {
             return CreatorRuntimeServiceArguments.succeeded("key", reference.push().getKey(), "path", path);
         }
-        if ("set".equals(action) || "update".equals(action)) {
+        if ("set".equals(action) || "update".equals(action) || "push_update".equals(action)) {
             Object value = arguments.get("value");
-            com.google.android.gms.tasks.Task<Void> task = "set".equals(action)
-                    ? reference.setValue(value) : reference.updateChildren(CreatorRuntimeServiceArguments.map(arguments, "value"));
+            com.google.android.gms.tasks.Task<Void> task;
+            if ("set".equals(action)) task = reference.setValue(value);
+            else if ("push_update".equals(action)) {
+                task = reference.push().updateChildren(CreatorRuntimeServiceArguments.map(arguments, "value"));
+            } else task = reference.updateChildren(CreatorRuntimeServiceArguments.map(arguments, "value"));
             task.addOnSuccessListener(ignored -> environment.publish(getId(), "success",
                     CreatorRuntimeServiceArguments.output("action", action, "path", path)))
                     .addOnFailureListener(error -> publishError(action, path, error));
