@@ -289,6 +289,19 @@ public final class CreatorRuntimeExecutor {
             return left == null || right == null ? null : (double) (number(left) - number(right));
         }
         if ("firebasegetpushkey".equals(op)) return firebaseValue(engine, first, "push_key", "key");
+        if ("getvar".equals(op)) return engine.getCurrent().getState().get(literalName(rawArguments, first));
+        if ("gettext".equals(op)) return String.valueOf(widgetValue(engine, first, "text", ""));
+        if ("getenable".equals(op)) return booleanValue(widgetValue(engine, first, "enabled", true));
+        if ("getchecked".equals(op)) return booleanValue(widgetValue(engine, first, "checked", false));
+        if ("getalpha".equals(op)) return decimal(widgetValue(engine, first, "alpha", 1d));
+        if ("getrotate".equals(op)) return decimal(widgetValue(engine, first, "rotation", 0d));
+        if ("gettranslationx".equals(op)) return decimal(widgetValue(engine, first, "translationX", 0d));
+        if ("gettranslationy".equals(op)) return decimal(widgetValue(engine, first, "translationY", 0d));
+        if ("getscalex".equals(op)) return decimal(widgetValue(engine, first, "scaleX", 1d));
+        if ("getscaley".equals(op)) return decimal(widgetValue(engine, first, "scaleY", 1d));
+        if ("seekbargetmax".equals(op)) return decimal(widgetValue(engine, first, "max", 100d));
+        if ("seekbargetprogress".equals(op)) return decimal(widgetValue(engine, first, "progress", 0d));
+        if ("spngetselection".equals(op)) return decimal(widgetValue(engine, first, "selectedIndex", 0d));
         if ("lengthlist".equals(op)) return (double) listValue(first).size();
         if ("getatlistint".equals(op) || "getatliststr".equals(op)) {
             return at(listValue(second), (int) decimal(first));
@@ -360,6 +373,28 @@ public final class CreatorRuntimeExecutor {
         CreatorRuntimeService.Result result = runtimeServices.dispatch("firebase",
                 CreatorRuntimeServiceArguments.output("componentId", id, "action", action, "path", path));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
+    }
+
+    private static Object widgetValue(CreatorRuntimeEngine engine, Object widgetId, String property, Object fallback) {
+        if (engine == null || widgetId == null) return fallback;
+        CreatorWidget widget = engine.getCurrent().getWidgets().get(String.valueOf(widgetId));
+        if (widget == null) return fallback;
+        Object value = widget.getProperties().get(property);
+        return value == null ? fallback : value;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static String literalName(Object rawArguments, Object evaluatedFallback) {
+        if (rawArguments instanceof List && !((List<?>) rawArguments).isEmpty()) {
+            Object rawFirst = ((List<?>) rawArguments).get(0);
+            if (rawFirst instanceof Map) {
+                Map<String, Object> literal = (Map<String, Object>) rawFirst;
+                if ("literal".equals(literal.get("kind")) && literal.get("value") != null) {
+                    return String.valueOf(literal.get("value"));
+                }
+            }
+        }
+        return String.valueOf(evaluatedFallback);
     }
 
     private static int boundedIndex(double value, int length) {

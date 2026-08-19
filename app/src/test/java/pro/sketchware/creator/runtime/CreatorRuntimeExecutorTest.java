@@ -280,6 +280,47 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("diff")).isEqualTo(15_000d);
     }
 
+    @Test public void evaluatesCanonicalWidgetAndStateGetterReportersFromTypedRuntimeProperties() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 40,
+                new CreatorRuntimeEventLog(30));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("widget", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "widget", "widgetType", "text", "parentId", "root")));
+        String[] properties = {"text", "enabled", "checked", "alpha", "rotation", "translationX", "translationY", "scaleX", "scaleY", "max", "progress", "selectedIndex"};
+        Object[] values = {"Creator", false, true, 0.5d, 45d, 3d, 4d, 1.5d, 2d, 80d, 12d, 2d};
+        for (int index = 0; index < properties.length; index++) {
+            engine.apply(op("property" + index, index + 2, CreatorProjectOperation.Type.WIDGET_SET_PROPERTY,
+                    map("widgetId", "widget", "property", properties[index], "value", values[index])));
+        }
+        engine.apply(op("answer", 14, CreatorProjectOperation.Type.STATE_SET, map("stateId", "answer", "value", "42")));
+        String[] opCodes = {"gettext", "getenable", "getchecked", "getalpha", "getrotate", "gettranslationx", "gettranslationy", "getscalex", "getscaley", "seekbargetmax", "seekbargetprogress", "spngetselection", "getvar"};
+        List<CreatorRuntimeBlock> blocks = new java.util.ArrayList<>();
+        for (String opCode : opCodes) {
+            String argument = "getvar".equals(opCode) ? "answer" : "widget";
+            blocks.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                    map("stateId", opCode, "expression", reporter(opCode, literal(argument)))));
+        }
+        engine.apply(op("event", 15, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "widget_click", "targetWidgetId", "widget", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "widget", "click");
+
+        assertThat(engine.getCurrent().getState().get("gettext")).isEqualTo("Creator");
+        assertThat(engine.getCurrent().getState().get("getenable")).isEqualTo(false);
+        assertThat(engine.getCurrent().getState().get("getchecked")).isEqualTo(true);
+        assertThat(engine.getCurrent().getState().get("getalpha")).isEqualTo(0.5d);
+        assertThat(engine.getCurrent().getState().get("getrotate")).isEqualTo(45d);
+        assertThat(engine.getCurrent().getState().get("gettranslationx")).isEqualTo(3d);
+        assertThat(engine.getCurrent().getState().get("gettranslationy")).isEqualTo(4d);
+        assertThat(engine.getCurrent().getState().get("getscalex")).isEqualTo(1.5d);
+        assertThat(engine.getCurrent().getState().get("getscaley")).isEqualTo(2d);
+        assertThat(engine.getCurrent().getState().get("seekbargetmax")).isEqualTo(80d);
+        assertThat(engine.getCurrent().getState().get("seekbargetprogress")).isEqualTo(12d);
+        assertThat(engine.getCurrent().getState().get("spngetselection")).isEqualTo(2d);
+        assertThat(engine.getCurrent().getState().get("getvar")).isEqualTo("42");
+    }
+
     @Test public void evaluatesExtendedCollectionAccessorsAndSetAtMutationWithoutGeneratedJava() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 30,
                 new CreatorRuntimeEventLog(30));
