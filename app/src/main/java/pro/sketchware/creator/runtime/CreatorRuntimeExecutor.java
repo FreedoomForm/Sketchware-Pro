@@ -52,12 +52,12 @@ public final class CreatorRuntimeExecutor {
                 String stateId = String.valueOf(payload.get("stateId"));
                 java.util.List<Object> list = list(engine.getCurrent().getState().get(stateId));
                 String action = String.valueOf(payload.get("action"));
-                if ("add".equals(action)) list.add(payload.get("value"));
+                Object value = payload.containsKey("valueExpression") ? evaluate(payload.get("valueExpression"), engine) : payload.get("value");
+                int index = (int) number(payload.containsKey("indexExpression") ? evaluate(payload.get("indexExpression"), engine) : payload.get("index"));
+                if ("add".equals(action)) list.add(value);
                 else if ("insert".equals(action)) {
-                    int index = (int) number(payload.get("index"));
                     if (index >= 0 && index <= list.size()) list.add(index, payload.get("value"));
                 } else if ("remove_at".equals(action)) {
-                    int index = (int) number(payload.get("index"));
                     if (index >= 0 && index < list.size()) list.remove(index);
                 } else if ("clear".equals(action)) list.clear();
                 else if ("add_all".equals(action)) list.addAll(list(engine.getCurrent().getState().get(
@@ -67,8 +67,10 @@ public final class CreatorRuntimeExecutor {
                 String stateId = String.valueOf(payload.get("stateId"));
                 Map<String, Object> values = map(engine.getCurrent().getState().get(stateId));
                 String action = String.valueOf(payload.get("action"));
-                if ("put".equals(action)) values.put(String.valueOf(payload.get("key")), payload.get("value"));
-                else if ("remove".equals(action)) values.remove(String.valueOf(payload.get("key")));
+                Object key = payload.containsKey("keyExpression") ? evaluate(payload.get("keyExpression"), engine) : payload.get("key");
+                Object value = payload.containsKey("valueExpression") ? evaluate(payload.get("valueExpression"), engine) : payload.get("value");
+                if ("put".equals(action)) values.put(String.valueOf(key), value);
+                else if ("remove".equals(action)) values.remove(String.valueOf(key));
                 else if ("clear".equals(action) || "create".equals(action)) values.clear();
                 apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", stateId, "value", values));
             } else if (block.getType() == CreatorRuntimeBlock.Type.SHOW_MESSAGE) {

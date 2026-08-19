@@ -194,6 +194,32 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getWidgets().get("label").getProperties().get("text")).isEqualTo("Hello Ada");
     }
 
+    @Test public void appliesNestedReporterResultsToListAndMapMutations() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        Map<String, Object> sum = map("kind", "reporter", "opCode", "+", "arguments", Arrays.asList(
+                map("kind", "literal", "value", "2"), map("kind", "literal", "value", "3")));
+        Map<String, Object> length = map("kind", "reporter", "opCode", "stringlength", "arguments",
+                Collections.singletonList(map("kind", "literal", "value", "Ada")));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+                        map("stateId", "items", "action", "add", "valueExpression", sum)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE,
+                        map("stateId", "profile", "action", "put", "key", "score", "valueExpression", length)));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat((java.util.List<?>) engine.getCurrent().getState().get("items")).containsExactly(5d);
+        @SuppressWarnings("unchecked") Map<String, Object> profile = (Map<String, Object>) engine.getCurrent().getState().get("profile");
+        assertThat(profile).containsExactly("score", 3d);
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

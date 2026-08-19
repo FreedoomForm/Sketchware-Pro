@@ -819,6 +819,30 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsNestedReporterExpressionsForListAndMapMutationValues() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean listAdd = new BlockBean("1", "", "", "addListInt");
+        listAdd.parameters.add("items");
+        listAdd.parameters.add("@2");
+        BlockBean sum = new BlockBean("2", "", "", "+");
+        sum.parameters.add("2"); sum.parameters.add("3");
+        BlockBean mapPut = new BlockBean("3", "", "", "mapPut");
+        mapPut.parameters.add("profile"); mapPut.parameters.add("score"); mapPut.parameters.add("@4");
+        BlockBean length = new BlockBean("4", "", "", "stringLength");
+        length.parameters.add("Ada");
+        listAdd.nextBlock = 3;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(listAdd, sum, mapPut, length));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported.get(0).getPayload()).containsKey("valueExpression");
+        assertThat(imported.get(1).getPayload()).containsKey("valueExpression");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

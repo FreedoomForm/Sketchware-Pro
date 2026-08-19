@@ -360,13 +360,13 @@ public final class CreatorLegacyArtifactImporter {
             payload.put("delta", "increaseint".equals(op) ? 1L : -1L);
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE, payload);
         } else if ("addlistint".equals(op) || "addliststr".equals(op) || "addlistmap".equals(op)) {
-            return listMutation(block, values, "add", unsupported);
+            return listMutation(block, values, "add", unsupported, byId);
         } else if ("insertlistint".equals(op) || "insertliststr".equals(op) || "insertlistmap".equals(op)) {
-            return listMutation(block, values, "insert", unsupported);
+            return listMutation(block, values, "insert", unsupported, byId);
         } else if ("deletelist".equals(op)) {
-            return listMutation(block, values, "remove_at", unsupported);
+            return listMutation(block, values, "remove_at", unsupported, byId);
         } else if ("clearlist".equals(op)) {
-            return listMutation(block, values, "clear", unsupported);
+            return listMutation(block, values, "clear", unsupported, byId);
         } else if ("listaddall".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             payload.put("stateId", values.get(0));
@@ -374,13 +374,13 @@ public final class CreatorLegacyArtifactImporter {
             payload.put("sourceStateId", values.get(1));
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
         } else if ("mapcreatenew".equals(op)) {
-            return mapMutation(block, values, "create", unsupported);
+            return mapMutation(block, values, "create", unsupported, byId);
         } else if ("mapput".equals(op)) {
-            return mapMutation(block, values, "put", unsupported);
+            return mapMutation(block, values, "put", unsupported, byId);
         } else if ("mapremovekey".equals(op)) {
-            return mapMutation(block, values, "remove", unsupported);
+            return mapMutation(block, values, "remove", unsupported, byId);
         } else if ("mapclear".equals(op)) {
-            return mapMutation(block, values, "clear", unsupported);
+            return mapMutation(block, values, "clear", unsupported, byId);
         } else if ("intentsetaction".equals(op)) {
             return intentCall(block, values, "configure_action", unsupported);
         } else if ("intentsetdata".equals(op)) {
@@ -700,31 +700,44 @@ public final class CreatorLegacyArtifactImporter {
     }
 
     private static CreatorRuntimeBlock listMutation(BlockBean block, List<String> values, String action,
-                                                    List<String> unsupported) {
+                                                    List<String> unsupported, Map<Integer, BlockBean> byId) {
         int required = "add".equals(action) ? 2 : "clear".equals(action) ? 1 : 2;
         if (values.size() < required) { unsupported.add(block.opCode); return null; }
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("stateId", values.get(0));
         payload.put("action", action);
-        if ("add".equals(action)) payload.put("value", values.get(1));
+        if ("add".equals(action)) putExpressionOrValue(payload, "value", "valueExpression", values.get(1), byId, unsupported, block.opCode);
         else if ("insert".equals(action)) {
             if (values.size() < 3) { unsupported.add(block.opCode); return null; }
-            payload.put("index", values.get(1));
-            payload.put("value", values.get(2));
-        } else if ("remove_at".equals(action)) payload.put("index", values.get(1));
+            putExpressionOrValue(payload, "index", "indexExpression", values.get(1), byId, unsupported, block.opCode);
+            putExpressionOrValue(payload, "value", "valueExpression", values.get(2), byId, unsupported, block.opCode);
+        } else if ("remove_at".equals(action)) putExpressionOrValue(payload, "index", "indexExpression", values.get(1), byId, unsupported, block.opCode);
+        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
         return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
     }
 
     private static CreatorRuntimeBlock mapMutation(BlockBean block, List<String> values, String action,
-                                                   List<String> unsupported) {
+                                                   List<String> unsupported, Map<Integer, BlockBean> byId) {
         int required = "put".equals(action) ? 3 : "remove".equals(action) ? 2 : 1;
         if (values.size() < required) { unsupported.add(block.opCode); return null; }
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("stateId", values.get(0));
         payload.put("action", action);
-        if ("put".equals(action) || "remove".equals(action)) payload.put("key", values.get(1));
-        if ("put".equals(action)) payload.put("value", values.get(2));
+        if ("put".equals(action) || "remove".equals(action))
+            putExpressionOrValue(payload, "key", "keyExpression", values.get(1), byId, unsupported, block.opCode);
+        if ("put".equals(action)) putExpressionOrValue(payload, "value", "valueExpression", values.get(2), byId, unsupported, block.opCode);
+        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
         return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE, payload);
+    }
+
+    private static void putExpressionOrValue(Map<String, Object> payload, String valueKey, String expressionKey,
+                                             String rawValue, Map<Integer, BlockBean> byId, List<String> unsupported,
+                                             String opcode) {
+        if (rawValue != null && rawValue.trim().startsWith("@")) {
+            Map<String, Object> expression = expression(rawValue, byId, new java.util.LinkedHashSet<Integer>());
+            if (expression == null) unsupported.add(opcode + " (invalid reporter expression)");
+            else payload.put(expressionKey, expression);
+        } else payload.put(valueKey, rawValue);
     }
 
     private static CreatorRuntimeBlock intentCall(BlockBean block, List<String> values, String action,
