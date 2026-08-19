@@ -172,6 +172,7 @@ public final class CreatorLegacyArtifactImporter {
         Map<String, Object> state = new LinkedHashMap<>(base.getState());
         List<Object> imported = new ArrayList<>();
         Map<String, Object> sounds = new LinkedHashMap<>();
+        Map<String, Object> fonts = new LinkedHashMap<>();
         for (ProjectResourceBean resource : resources == null ? Collections.<ProjectResourceBean>emptyList() : resources) {
             if (resource == null || blank(resource.resName) || blank(resource.resFullName)) {
                 report.add("unknown", "ProjectResourceBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
@@ -193,12 +194,17 @@ public final class CreatorLegacyArtifactImporter {
                 descriptor.put("kind", "sound");
                 sounds.put(resource.resName, new LinkedHashMap<>(descriptor));
             }
+            if (isFont(resource.resFullName)) {
+                descriptor.put("kind", "font");
+                fonts.put(resource.resName, new LinkedHashMap<>(descriptor));
+            }
             imported.add(descriptor);
             report.add(resource.resName, "ProjectResourceBean", CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
                     "Preserved as runtime resource metadata for live widget and media services.");
         }
         state.put("legacy.resources", imported);
         state.put("legacy.soundResources", sounds);
+        state.put("legacy.fontResources", fonts);
         return new Result(base.withRuntimeState(base.getRevision(), state, base.getEvents()), report);
     }
 
@@ -381,6 +387,91 @@ public final class CreatorLegacyArtifactImporter {
         } else if ("copytoclipboard".equals(op)) {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             return serviceCall("ui", CreatorRuntimeServiceArguments.output("action", "copy_text", "text", values.get(0)));
+        } else if ("gyroscopestartlisten".equals(op) || "gyroscopestoplisten".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("gyroscope", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "gyroscopestartlisten".equals(op) ? "start" : "stop"));
+        } else if ("locationmanagerrequestlocationupdates".equals(op)) {
+            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+            return serviceCall("location", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "start", "provider", normalizeLocationProvider(values.get(1)),
+                    "intervalMs", values.get(2), "distanceMeters", values.get(3)));
+        } else if ("locationmanagerremoveupdates".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("location", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "stop"));
+        } else if ("camerastarttakepicture".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("camera", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "capture"));
+        } else if ("filepickerstartpickfiles".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("file_picker", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "pick"));
+        } else if ("texttospeechsetpitch".equals(op) || "texttospeechsetspeechrate".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("text_to_speech", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "texttospeechsetpitch".equals(op) ? "set_pitch" : "set_rate",
+                    "value", values.get(1)));
+        } else if ("texttospeechspeak".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("text_to_speech", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "speak", "text", values.get(1)));
+        } else if ("texttospeechstop".equals(op) || "texttospeechshutdown".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("text_to_speech", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "texttospeechstop".equals(op) ? "stop" : "shutdown"));
+        } else if ("speechtotextstartlistening".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("speech_to_text", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "listen"));
+        } else if ("fileutilwrite".equals(op)) {
+            return fileCall(block, values, "write", 2, unsupported);
+        } else if ("fileutilcopy".equals(op)) {
+            return fileCall(block, values, "copy", 2, unsupported);
+        } else if ("fileutilcopydir".equals(op)) {
+            return fileCall(block, values, "copy_dir", 2, unsupported);
+        } else if ("fileutilmove".equals(op)) {
+            return fileCall(block, values, "move", 2, unsupported);
+        } else if ("fileutildelete".equals(op)) {
+            return fileCall(block, values, "delete", 1, unsupported);
+        } else if ("fileutilmakedir".equals(op)) {
+            return fileCall(block, values, "make_dir", 1, unsupported);
+        } else if ("objectanimatorsettarget".equals(op)) {
+            return animatorCall(block, values, "set_target", 2, unsupported);
+        } else if ("objectanimatorsetproperty".equals(op)) {
+            return animatorCall(block, values, "set_property", 2, unsupported);
+        } else if ("objectanimatorsetvalue".equals(op)) {
+            return animatorCall(block, values, "set_value", 2, unsupported);
+        } else if ("objectanimatorsetfromto".equals(op)) {
+            return animatorCall(block, values, "set_from_to", 3, unsupported);
+        } else if ("objectanimatorsetduration".equals(op)) {
+            return animatorCall(block, values, "set_duration", 2, unsupported);
+        } else if ("objectanimatorsetrepeatmode".equals(op)) {
+            return animatorCall(block, values, "set_repeat_mode", 2, unsupported);
+        } else if ("objectanimatorsetrepeatcount".equals(op)) {
+            return animatorCall(block, values, "set_repeat_count", 2, unsupported);
+        } else if ("objectanimatorsetinterpolator".equals(op)) {
+            return animatorCall(block, values, "set_interpolator", 2, unsupported);
+        } else if ("objectanimatorstart".equals(op) || "objectanimatorcancel".equals(op)) {
+            return animatorCall(block, values, "objectanimatorstart".equals(op) ? "start" : "cancel", 1, unsupported);
+        } else if ("firebaseauthcreateuser".equals(op) || "firebaseauthsigninuser".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return serviceCall("firebase_auth", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "firebaseauthcreateuser".equals(op) ? "register" : "sign_in",
+                    "email", values.get(1), "password", values.get(2)));
+        } else if ("firebaseauthsigninanonymously".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("firebase_auth", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "anonymous"));
+        } else if ("firebaseauthresetpassword".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("firebase_auth", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "reset_password", "email", values.get(1)));
+        } else if ("firebaseauthsignoutuser".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("firebase_auth", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "sign_out"));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported);
@@ -507,6 +598,36 @@ public final class CreatorLegacyArtifactImporter {
                 "action", action, "value", values.get(1)));
     }
 
+    private static CreatorRuntimeBlock fileCall(BlockBean block, List<String> values, String action, int required,
+                                                List<String> unsupported) {
+        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+        Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("action", action);
+        arguments.put("path", values.get(0));
+        if ("write".equals(action)) arguments.put("content", values.get(1));
+        else if (required > 1) arguments.put("destination", values.get(1));
+        return serviceCall("file", arguments);
+    }
+
+    private static CreatorRuntimeBlock animatorCall(BlockBean block, List<String> values, String action, int required,
+                                                    List<String> unsupported) {
+        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+        Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("componentId", values.get(0));
+        arguments.put("action", action);
+        if ("set_target".equals(action)) arguments.put("widgetId", values.get(1));
+        else if ("set_property".equals(action)) arguments.put("property", values.get(1));
+        else if ("set_value".equals(action)) arguments.put("value", values.get(1));
+        else if ("set_from_to".equals(action)) {
+            arguments.put("from", values.get(1));
+            arguments.put("to", values.get(2));
+        } else if ("set_duration".equals(action)) arguments.put("durationMs", values.get(1));
+        else if ("set_repeat_mode".equals(action)) arguments.put("repeatMode", values.get(1));
+        else if ("set_repeat_count".equals(action)) arguments.put("repeatCount", values.get(1));
+        else if ("set_interpolator".equals(action)) arguments.put("interpolator", values.get(1));
+        return serviceCall("animator", arguments);
+    }
+
     private static CreatorRuntimeBlock widgetProperty(BlockBean block, List<String> values, String property,
                                                       List<String> unsupported) {
         if (values.size() < 2) { unsupported.add(block.opCode); return null; }
@@ -553,5 +674,19 @@ public final class CreatorLegacyArtifactImporter {
         String value = source == null ? "" : source.toLowerCase(Locale.ROOT);
         return value.endsWith(".mp3") || value.endsWith(".wav") || value.endsWith(".ogg")
                 || value.endsWith(".m4a") || value.endsWith(".aac") || value.endsWith(".flac");
+    }
+
+    private static boolean isFont(String source) {
+        String value = source == null ? "" : source.toLowerCase(Locale.ROOT);
+        return value.endsWith(".ttf") || value.endsWith(".otf") || value.endsWith(".ttc") || value.endsWith(".woff")
+                || value.endsWith(".woff2");
+    }
+
+    private static String normalizeLocationProvider(String legacyProvider) {
+        if (legacyProvider == null) return "gps";
+        String provider = legacyProvider.trim().toLowerCase(Locale.ROOT);
+        if (provider.contains("network")) return "network";
+        if (provider.contains("passive")) return "passive";
+        return "gps";
     }
 }

@@ -346,6 +346,145 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsDeviceAndSpeechBlocksAsExistingRuntimeNativeServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean gyro = new BlockBean("1", "", "", "gyroscopeStartListen");
+        gyro.parameters.add("gyro1");
+        BlockBean location = new BlockBean("2", "", "", "locationManagerRequestLocationUpdates");
+        location.parameters.add("location1");
+        location.parameters.add("LocationManager.NETWORK_PROVIDER");
+        location.parameters.add("2500");
+        location.parameters.add("5");
+        BlockBean camera = new BlockBean("3", "", "", "camerastarttakepicture");
+        camera.parameters.add("camera1");
+        BlockBean picker = new BlockBean("4", "", "", "filepickerstartpickfiles");
+        picker.parameters.add("picker1");
+        BlockBean pitch = new BlockBean("5", "", "", "textToSpeechSetPitch");
+        pitch.parameters.add("tts1");
+        pitch.parameters.add("1.2");
+        BlockBean speak = new BlockBean("6", "", "", "textToSpeechSpeak");
+        speak.parameters.add("tts1");
+        speak.parameters.add("Ready");
+        BlockBean listen = new BlockBean("7", "", "", "speechToTextStartListening");
+        listen.parameters.add("stt1");
+        gyro.nextBlock = 2;
+        location.nextBlock = 3;
+        camera.nextBlock = 4;
+        picker.nextBlock = 5;
+        pitch.nextBlock = 6;
+        speak.nextBlock = 7;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(gyro, location, camera, picker, pitch, speak, listen));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(7);
+        assertServiceCall(imported.get(0), "gyroscope", "start");
+        assertServiceCall(imported.get(1), "location", "start");
+        @SuppressWarnings("unchecked") Map<String, Object> locationArguments =
+                (Map<String, Object>) imported.get(1).getPayload().get("arguments");
+        assertThat(locationArguments).containsEntry("provider", "network");
+        assertServiceCall(imported.get(2), "camera", "capture");
+        assertServiceCall(imported.get(3), "file_picker", "pick");
+        assertServiceCall(imported.get(4), "text_to_speech", "set_pitch");
+        assertServiceCall(imported.get(5), "text_to_speech", "speak");
+        assertServiceCall(imported.get(6), "speech_to_text", "listen");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
+    @Test public void importsMutatingLegacyFileUtilityBlocksAsDirectRuntimeServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean write = new BlockBean("1", "", "", "fileutilwrite");
+        write.parameters.add("/storage/emulated/0/creator/note.txt");
+        write.parameters.add("runtime native");
+        BlockBean copy = new BlockBean("2", "", "", "fileutilcopy");
+        copy.parameters.add("/storage/emulated/0/creator/note.txt");
+        copy.parameters.add("/storage/emulated/0/creator/copy.txt");
+        BlockBean directory = new BlockBean("3", "", "", "fileutilmakedir");
+        directory.parameters.add("/storage/emulated/0/creator/archive");
+        write.nextBlock = 2;
+        copy.nextBlock = 3;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(write, copy, directory));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "file", "write");
+        assertServiceCall(imported.get(1), "file", "copy");
+        assertServiceCall(imported.get(2), "file", "make_dir");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
+    @Test public void importsLegacyObjectAnimatorConfigurationAsRuntimeNativeServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean target = new BlockBean("1", "", "", "objectanimatorSetTarget");
+        target.parameters.add("animator1");
+        target.parameters.add("button");
+        BlockBean property = new BlockBean("2", "", "", "objectanimatorSetProperty");
+        property.parameters.add("animator1");
+        property.parameters.add("alpha");
+        BlockBean range = new BlockBean("3", "", "", "objectanimatorSetFromTo");
+        range.parameters.add("animator1");
+        range.parameters.add("0");
+        range.parameters.add("1");
+        BlockBean duration = new BlockBean("4", "", "", "objectanimatorSetDuration");
+        duration.parameters.add("animator1");
+        duration.parameters.add("450");
+        BlockBean start = new BlockBean("5", "", "", "objectanimatorStart");
+        start.parameters.add("animator1");
+        target.nextBlock = 2;
+        property.nextBlock = 3;
+        range.nextBlock = 4;
+        duration.nextBlock = 5;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(target, property, range, duration, start));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "animator", "set_target");
+        assertServiceCall(imported.get(1), "animator", "set_property");
+        assertServiceCall(imported.get(2), "animator", "set_from_to");
+        assertServiceCall(imported.get(3), "animator", "set_duration");
+        assertServiceCall(imported.get(4), "animator", "start");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
+    @Test public void importsSupportedLegacyFirebaseAuthOperationsAsRuntimeNativeServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean register = new BlockBean("1", "", "", "firebaseauthCreateUser");
+        register.parameters.add("auth1");
+        register.parameters.add("ada@example.com");
+        register.parameters.add("safe-pass");
+        BlockBean reset = new BlockBean("2", "", "", "firebaseauthResetPassword");
+        reset.parameters.add("auth1");
+        reset.parameters.add("ada@example.com");
+        BlockBean signOut = new BlockBean("3", "", "", "firebaseauthSignOutUser");
+        signOut.parameters.add("auth1");
+        register.nextBlock = 2;
+        reset.nextBlock = 3;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(register, reset, signOut));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "firebase_auth", "register");
+        assertServiceCall(imported.get(1), "firebase_auth", "reset_password");
+        assertServiceCall(imported.get(2), "firebase_auth", "sign_out");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");
@@ -409,6 +548,27 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(descriptor).containsEntry("source", "sounds/intro.mp3");
         assertThat(descriptor).containsEntry("currentSoundPosition", 120);
         assertThat(descriptor).containsEntry("totalSoundDuration", 2400);
+    }
+
+    @Test public void preservesFontResourcesForLiveRuntimeConsumption() {
+        ProjectResourceBean font = new ProjectResourceBean(ProjectResourceBean.PROJECT_RES_TYPE_FILE,
+                "headline", "fonts/headline.otf");
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importResources(
+                documentWithButton(), Collections.singletonList(font));
+
+        @SuppressWarnings("unchecked") Map<String, Object> fonts =
+                (Map<String, Object>) result.getDocument().getState().get("legacy.fontResources");
+        @SuppressWarnings("unchecked") Map<String, Object> descriptor = (Map<String, Object>) fonts.get("headline");
+        assertThat(descriptor).containsEntry("kind", "font");
+        assertThat(descriptor).containsEntry("source", "fonts/headline.otf");
+    }
+
+    private static void assertServiceCall(CreatorRuntimeBlock block, String serviceId, String action) {
+        assertThat(block.getType()).isEqualTo(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL);
+        assertThat(block.getPayload().get("serviceId")).isEqualTo(serviceId);
+        @SuppressWarnings("unchecked") Map<String, Object> arguments = (Map<String, Object>) block.getPayload().get("arguments");
+        assertThat(arguments).containsEntry("action", action);
     }
 
     private static CreatorProjectDocument documentWithButton() {
