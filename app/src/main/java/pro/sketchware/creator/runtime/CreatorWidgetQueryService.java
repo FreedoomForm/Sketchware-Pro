@@ -1,12 +1,16 @@
 package pro.sketchware.creator.runtime;
 
 import android.view.View;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.CalendarView;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -135,6 +139,16 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         if ("request_focus".equals(action)) {
             return CreatorRuntimeServiceArguments.succeeded("focused", widget.requestFocus());
         }
+        if ("progress_set_indeterminate".equals(action) && widget instanceof ProgressBar) {
+            ((ProgressBar) widget).setIndeterminate(booleanValue(arguments.get("indeterminate")));
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("image_set_color_filter".equals(action) && widget instanceof ImageView) {
+            Integer color = colorValue(arguments.get("color"));
+            if (color == null) return CreatorRuntimeServiceArguments.invalid("Image color filter requires an Android color value.");
+            ((ImageView) widget).setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
         if ("web_go_back".equals(action) && widget instanceof WebView) {
             WebView web = (WebView) widget;
             if (web.canGoBack()) web.goBack();
@@ -222,5 +236,17 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         if ("LOAD_DEFAULT".equals(mode)) return android.webkit.WebSettings.LOAD_DEFAULT;
         if ("LOAD_NO_CACHE".equals(mode)) return android.webkit.WebSettings.LOAD_NO_CACHE;
         return null;
+    }
+
+    private static Integer colorValue(Object rawColor) {
+        if (rawColor instanceof Number) return ((Number) rawColor).intValue();
+        if (rawColor == null) return null;
+        String color = String.valueOf(rawColor).trim();
+        try {
+            if (color.startsWith("#")) return Color.parseColor(color);
+            return Long.decode(color).intValue();
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 }

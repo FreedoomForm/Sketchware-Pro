@@ -494,6 +494,30 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyProgressAndImageStyleActionsAsTypedRuntimeCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean indeterminate = new BlockBean("1", "", "", "progressbarSetIndeterminate");
+        indeterminate.parameters.add("progress1");
+        indeterminate.parameters.add("true");
+        BlockBean filter = new BlockBean("2", "", "", "setColorFilter");
+        filter.parameters.add("image1");
+        filter.parameters.add("#ff102030");
+        indeterminate.nextBlock = 2;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(indeterminate, filter));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertWidgetAction(imported.get(0), "progress_set_indeterminate");
+        assertWidgetAction(imported.get(1), "image_set_color_filter");
+        @SuppressWarnings("unchecked") Map<String, Object> filterArguments = (Map<String, Object>) imported.get(1).getPayload().get("arguments");
+        assertThat(filterArguments).containsEntry("color", "#ff102030");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsCanonicalMapMutationOpcodesAsTypedRuntimeBlocks() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean put = new BlockBean("1", "", "", "mapPut");

@@ -950,6 +950,14 @@ public final class CreatorLegacyArtifactImporter {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             return serviceCall("widget", CreatorRuntimeServiceArguments.output(
                     "widgetId", values.get(0), "action", "request_focus"));
+        } else if ("progressbarsetindeterminate".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "progress_set_indeterminate", "indeterminate", values.get(1)));
+        } else if ("setcolorfilter".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "image_set_color_filter", "color", values.get(1)));
         } else if ("webviewgoback".equals(op) || "webviewgoforward".equals(op)) {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             return serviceCall("widget", CreatorRuntimeServiceArguments.output(
