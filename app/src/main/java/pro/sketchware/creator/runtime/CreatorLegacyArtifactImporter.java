@@ -386,6 +386,25 @@ public final class CreatorLegacyArtifactImporter {
             call.put("serviceId", "http"); arguments.put("action", "request");
             arguments.put("requestId", values.get(0)); arguments.put("method", values.get(1));
             arguments.put("url", values.get(2)); arguments.put("body", stateReference(values.get(3)));
+        } else if ("calendargetnow".equals(op) && values.size() >= 1) {
+            call.put("serviceId", "calendar"); arguments.put("action", "now"); arguments.put("id", values.get(0));
+        } else if ("calendaradd".equals(op) && values.size() >= 3) {
+            call.put("serviceId", "calendar"); arguments.put("action", "add"); arguments.put("id", values.get(0));
+            arguments.put("field", values.get(1)); arguments.put("value", values.get(2));
+        } else if ("calendarset".equals(op) && values.size() >= 3) {
+            call.put("serviceId", "calendar"); arguments.put("action", "set"); arguments.put("id", values.get(0));
+            arguments.put("field", values.get(1)); arguments.put("value", values.get(2));
+        } else if ("calendarformat".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "calendar"); arguments.put("action", "format"); arguments.put("id", values.get(0));
+            arguments.put("pattern", values.get(1));
+        } else if ("calendardiff".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "calendar"); arguments.put("action", "diff"); arguments.put("id", values.get(0));
+            arguments.put("otherId", values.get(1));
+        } else if ("calendargettime".equals(op) && values.size() >= 1) {
+            call.put("serviceId", "calendar"); arguments.put("action", "get_time"); arguments.put("id", values.get(0));
+        } else if ("calendarsettime".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "calendar"); arguments.put("action", "set_time"); arguments.put("id", values.get(0));
+            arguments.put("timestamp", values.get(1));
         } else if ("mediaplayercreate".equals(op) && values.size() >= 2) {
             call.put("serviceId", "media"); arguments.put("action", "load");
             arguments.put("id", values.get(0)); arguments.put("source", values.get(1));

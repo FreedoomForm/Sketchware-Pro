@@ -85,3 +85,5 @@ After installing the required Android SDK platform/build tools and JDK 21, the f
 The data-operation slice now covers typed map creation/put/remove/clear/key extraction and list add/insert/delete. Operations copy collections before mutation and report invalid collection/index usage as visible runtime errors. The complete unit-test suite now passes with 193 tests after adding these behaviors.
 
 The media slice now maps MediaPlayer create/play/pause/seek/current/duration/reset/release/is-playing/looping and SoundPool load/play operations into the stateful `media` service. The complete unit-test suite remains green after this change.
+
+The calendar service is now stateful and covers legacy now, add, set, format, diff, get-time, and set-time operations with validated calendar fields. The importer maps these operations to structured service arguments, and the full unit-test suite remains green.

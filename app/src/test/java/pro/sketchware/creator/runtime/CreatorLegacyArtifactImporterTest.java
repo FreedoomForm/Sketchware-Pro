@@ -147,6 +147,24 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(1);
     }
 
+    @Test public void importsCalendarOperationWithStructuredArguments() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean calendar = new BlockBean("1", "", "", "calendarAdd");
+        calendar.parameters.add("calendar1");
+        calendar.parameters.add("DAY");
+        calendar.parameters.add("2");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Collections.singletonList(calendar));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertThat(imported.getPayload().get("serviceId")).isEqualTo("calendar");
+        assertThat(imported.getPayload().get("arguments").toString()).contains("DAY");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsComponentEventAsRuntimeBindingWithoutWidgetReference() {
         ComponentBean camera = new ComponentBean(ComponentBean.COMPONENT_TYPE_CAMERA, "camera1");
         EventBean captured = new EventBean(EventBean.EVENT_TYPE_COMPONENT, ComponentBean.COMPONENT_TYPE_CAMERA,
