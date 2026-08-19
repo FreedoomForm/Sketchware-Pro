@@ -37,6 +37,23 @@ public final class CreatorMediaService implements CreatorRuntimeService {
                 players.put(id, player);
                 return CreatorRuntimeServiceArguments.succeeded("id", id, "loaded", true);
             }
+            if ("seek".equals(action) || "get_current".equals(action) || "get_duration".equals(action)
+                    || "is_playing".equals(action) || "set_looping".equals(action) || "is_looping".equals(action)) {
+                MediaPlayer player = players.get(id);
+                if (player == null) return CreatorRuntimeServiceArguments.invalid("No media source is loaded for " + id + ".");
+                if ("seek".equals(action)) {
+                    player.seekTo((int) CreatorRuntimeServiceArguments.longValue(arguments, "positionMs", 0L));
+                    return CreatorRuntimeServiceArguments.succeeded("id", id, "positionMs", player.getCurrentPosition());
+                }
+                if ("get_current".equals(action)) return CreatorRuntimeServiceArguments.succeeded("id", id, "positionMs", player.getCurrentPosition());
+                if ("get_duration".equals(action)) return CreatorRuntimeServiceArguments.succeeded("id", id, "durationMs", player.getDuration());
+                if ("is_playing".equals(action)) return CreatorRuntimeServiceArguments.succeeded("id", id, "playing", player.isPlaying());
+                if ("set_looping".equals(action)) {
+                    player.setLooping(Boolean.parseBoolean(String.valueOf(arguments.get("looping"))));
+                    return CreatorRuntimeServiceArguments.succeeded("id", id, "looping", player.isLooping());
+                }
+                return CreatorRuntimeServiceArguments.succeeded("id", id, "looping", player.isLooping());
+            }
             if ("play".equals(action) || "pause".equals(action) || "stop".equals(action) || "release".equals(action)) {
                 MediaPlayer player = players.get(id);
                 if (player == null) return CreatorRuntimeServiceArguments.invalid("No media source is loaded for " + id + ".");

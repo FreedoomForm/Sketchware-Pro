@@ -386,6 +386,32 @@ public final class CreatorLegacyArtifactImporter {
             call.put("serviceId", "http"); arguments.put("action", "request");
             arguments.put("requestId", values.get(0)); arguments.put("method", values.get(1));
             arguments.put("url", values.get(2)); arguments.put("body", stateReference(values.get(3)));
+        } else if ("mediaplayercreate".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "media"); arguments.put("action", "load");
+            arguments.put("id", values.get(0)); arguments.put("source", values.get(1));
+        } else if ("mediaplayerstart".equals(op) || "mediaplayerpause".equals(op)
+                || "mediaplayerrelease".equals(op) || "mediaplayerreset".equals(op)) {
+            call.put("serviceId", "media"); arguments.put("id", values.isEmpty() ? "" : values.get(0));
+            arguments.put("action", "mediaplayerstart".equals(op) ? "play"
+                    : "mediaplayerpause".equals(op) ? "pause" : "release");
+        } else if ("mediaplayerseek".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "media"); arguments.put("action", "seek"); arguments.put("id", values.get(0));
+            arguments.put("positionMs", values.get(1));
+        } else if ("mediaplayergetcurrent".equals(op) || "mediaplayergetduration".equals(op)
+                || "mediaplayerisplaying".equals(op) || "mediaplayerislooping".equals(op)) {
+            call.put("serviceId", "media"); arguments.put("id", values.isEmpty() ? "" : values.get(0));
+            arguments.put("action", "mediaplayergetcurrent".equals(op) ? "get_current"
+                    : "mediaplayergetduration".equals(op) ? "get_duration"
+                    : "mediaplayerisplaying".equals(op) ? "is_playing" : "is_looping");
+        } else if ("mediaplayersetlooping".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "media"); arguments.put("action", "set_looping"); arguments.put("id", values.get(0));
+            arguments.put("looping", values.get(1));
+        } else if ("soundpoolload".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "media"); arguments.put("action", "sound_load_resource"); arguments.put("id", values.get(0));
+            arguments.put("resourceId", values.get(1));
+        } else if ("soundpoolstreamplay".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "media"); arguments.put("action", "sound_play"); arguments.put("id", values.get(0));
+            if (values.size() >= 3) arguments.put("volume", values.get(2));
         } else if ("dialogshow".equals(op)) {
             call.put("serviceId", "dialog"); arguments.put("action", "show");
         } else {

@@ -83,3 +83,5 @@ Valid component, activity, and drawer events are now represented as actual runti
 After installing the required Android SDK platform/build tools and JDK 21, the full `:app:testDebugUnitTest` task passes: 192 tests completed successfully. One parser defect found by that suite—whitespace around expression operands prevented state lookup—was fixed by normalizing operands before evaluation. An unrelated pre-existing resource warning remains for `link_github_commits_url` using multiple non-positional substitutions.
 
 The data-operation slice now covers typed map creation/put/remove/clear/key extraction and list add/insert/delete. Operations copy collections before mutation and report invalid collection/index usage as visible runtime errors. The complete unit-test suite now passes with 193 tests after adding these behaviors.
+
+The media slice now maps MediaPlayer create/play/pause/seek/current/duration/reset/release/is-playing/looping and SoundPool load/play operations into the stateful `media` service. The complete unit-test suite remains green after this change.
