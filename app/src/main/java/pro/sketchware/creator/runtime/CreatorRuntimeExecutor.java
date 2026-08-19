@@ -65,6 +65,9 @@ public final class CreatorRuntimeExecutor {
                 } else if ("remove_at".equals(action)) {
                     if (index >= 0 && index < list.size()) list.remove(index);
                 } else if ("clear".equals(action)) list.clear();
+                else if ("set_at".equals(action)) {
+                    if (index >= 0 && index < list.size()) list.set(index, value);
+                }
                 else if ("add_all".equals(action)) list.addAll(list(engine.getCurrent().getState().get(
                         String.valueOf(payload.get("sourceStateId")))));
                 else if ("map_put_at".equals(action) && index >= 0 && index < list.size()) {
@@ -295,6 +298,9 @@ public final class CreatorRuntimeExecutor {
             Object value = mapValue(row).get(String.valueOf(second));
             return value == null ? null : String.valueOf(value);
         }
+        if ("getmapatposlistmap".equals(op)) {
+            return mapValue(at(listValue(second), (int) decimal(first)));
+        }
         if ("containlistint".equals(op) || "containliststr".equals(op)) return listValue(first).contains(second);
         if ("indexlistint".equals(op) || "indexliststr".equals(op)) return (double) listValue(second).indexOf(first);
         if ("containlistmap".equals(op)) {
@@ -303,8 +309,15 @@ public final class CreatorRuntimeExecutor {
         }
         if ("mapget".equals(op)) return mapValue(first).get(String.valueOf(second));
         if ("mapcontainkey".equals(op)) return mapValue(first).containsKey(String.valueOf(second));
+        if ("mapcontainvalue".equals(op)) return mapValue(first).containsValue(second);
         if ("mapsize".equals(op)) return (double) mapValue(first).size();
         if ("mapisempty".equals(op)) return mapValue(first).isEmpty();
+        if ("hashmapgetnumber".equals(op)) return decimal(mapValue(first).get(String.valueOf(second)));
+        if ("hashmapgetboolean".equals(op)) return booleanValue(mapValue(first).get(String.valueOf(second)));
+        if ("hashmapgetmap".equals(op)) return mapValue(mapValue(first).get(String.valueOf(second)));
+        if ("hashmapliststr".equals(op) || "hashmapgetlistmap".equals(op)) {
+            return new ArrayList<Object>(listValue(mapValue(first).get(String.valueOf(second))));
+        }
         return null;
     }
 

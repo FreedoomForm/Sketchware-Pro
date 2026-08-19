@@ -280,6 +280,51 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("diff")).isEqualTo(15_000d);
     }
 
+    @Test public void evaluatesExtendedCollectionAccessorsAndSetAtMutationWithoutGeneratedJava() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 30,
+                new CreatorRuntimeEventLog(30));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("names", 2, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "names", "value", Arrays.asList("Ada", "Lin"))));
+        engine.apply(op("rows", 3, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "rows", "value", Collections.singletonList(map("name", "Ada")))));
+        engine.apply(op("profile", 4, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "profile", "value", map("score", 4d, "active", true, "city", "Tashkent",
+                        "meta", map("rank", "gold"), "labels", Arrays.asList("one", "two")))));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "row", "expression", reporter("getmapatposlistmap", literal("0"), literal("rows")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "score", "expression", reporter("hashmapgetnumber", literal("profile"), literal("score")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "active", "expression", reporter("hashmapgetboolean", literal("profile"), literal("active")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "meta", "expression", reporter("hashmapgetmap", literal("profile"), literal("meta")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "labels", "expression", reporter("hashmapliststr", literal("profile"), literal("labels")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "hasCity", "expression", reporter("mapcontainvalue", literal("profile"), literal("Tashkent")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+                        map("stateId", "names", "action", "set_at", "value", "Grace", "index", 1)));
+        engine.apply(op("event", 5, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        @SuppressWarnings("unchecked") Map<String, Object> row = (Map<String, Object>) engine.getCurrent().getState().get("row");
+        assertThat(row).containsExactly("name", "Ada");
+        assertThat(engine.getCurrent().getState().get("score")).isEqualTo(4d);
+        assertThat(engine.getCurrent().getState().get("active")).isEqualTo(true);
+        @SuppressWarnings("unchecked") Map<String, Object> meta = (Map<String, Object>) engine.getCurrent().getState().get("meta");
+        assertThat(meta).containsExactly("rank", "gold");
+        assertThat((List<?>) engine.getCurrent().getState().get("labels")).containsExactly("one", "two").inOrder();
+        assertThat(engine.getCurrent().getState().get("hasCity")).isEqualTo(true);
+        assertThat((List<?>) engine.getCurrent().getState().get("names")).containsExactly("Ada", "Grace").inOrder();
+    }
+
     @Test public void evaluatesFirebasePushKeyReporterThroughItsImportedComponentBasePath() {
         final Map<String, Object> captured = new LinkedHashMap<>();
         CreatorRuntimeService firebase = new CreatorRuntimeService() {

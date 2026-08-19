@@ -573,6 +573,8 @@ public final class CreatorLegacyArtifactImporter {
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE, payload);
         } else if ("setlistmap".equals(op)) {
             return listMapPutAt(block, values, unsupported, byId);
+        } else if ("setatposliststr".equals(op) || "setatposlistnum".equals(op) || "setmapatposlistmap".equals(op)) {
+            return listSetAt(block, values, unsupported, byId);
         } else if ("addlistint".equals(op) || "addliststr".equals(op) || "addlistmap".equals(op)) {
             return listMutation(block, values, "add", unsupported, byId);
         } else if ("insertlistint".equals(op) || "insertliststr".equals(op) || "insertlistmap".equals(op)) {
@@ -974,6 +976,19 @@ public final class CreatorLegacyArtifactImporter {
         putExpressionOrValue(payload, "key", "keyExpression", values.get(0), byId, unsupported, block.opCode);
         putExpressionOrValue(payload, "value", "valueExpression", values.get(1), byId, unsupported, block.opCode);
         putExpressionOrValue(payload, "index", "indexExpression", values.get(2), byId, unsupported, block.opCode);
+        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
+    }
+
+    /** Legacy set-at family order is value, index, list for all supported list types. */
+    private static CreatorRuntimeBlock listSetAt(BlockBean block, List<String> values,
+                                                 List<String> unsupported, Map<Integer, BlockBean> byId) {
+        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("stateId", values.get(2));
+        payload.put("action", "set_at");
+        putExpressionOrValue(payload, "value", "valueExpression", values.get(0), byId, unsupported, block.opCode);
+        putExpressionOrValue(payload, "index", "indexExpression", values.get(1), byId, unsupported, block.opCode);
         if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
         return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
     }

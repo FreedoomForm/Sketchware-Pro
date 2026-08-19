@@ -155,6 +155,27 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsCanonicalSetAtListFamilyWithValueIndexListArgumentOrder() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean setAt = new BlockBean("1", "", "", "setAtPosListstr");
+        setAt.parameters.add("Creator");
+        setAt.parameters.add("1");
+        setAt.parameters.add("names");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Collections.singletonList(setAt));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+        assertThat(imported.getPayload()).containsEntry("stateId", "names");
+        assertThat(imported.getPayload()).containsEntry("action", "set_at");
+        assertThat(imported.getPayload()).containsEntry("value", "Creator");
+        assertThat(imported.getPayload()).containsEntry("index", "1");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsSupportedStateEqualityConditionalSubstackGraph() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");
