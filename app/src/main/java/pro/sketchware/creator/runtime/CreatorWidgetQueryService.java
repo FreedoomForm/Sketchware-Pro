@@ -82,6 +82,14 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         if ("list_checked_count".equals(action) && widget instanceof ListView) {
             return CreatorRuntimeServiceArguments.succeeded("value", ((ListView) widget).getCheckedItemCount());
         }
+        if ("list_checked_positions".equals(action) && widget instanceof ListView) {
+            android.util.SparseBooleanArray checked = ((ListView) widget).getCheckedItemPositions();
+            List<Object> positions = new ArrayList<>();
+            for (int index = 0; index < checked.size(); index++) {
+                if (checked.valueAt(index)) positions.add(checked.keyAt(index));
+            }
+            return CreatorRuntimeServiceArguments.succeeded("positions", positions);
+        }
         if ("list_set_data".equals(action) && widget instanceof ListView) {
             List<String> items = stringItems(arguments.get("items"));
             ListView list = (ListView) widget;

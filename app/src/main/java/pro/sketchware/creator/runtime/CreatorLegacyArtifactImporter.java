@@ -929,6 +929,11 @@ public final class CreatorLegacyArtifactImporter {
             return serviceCall("widget", CreatorRuntimeServiceArguments.output(
                     "widgetId", values.get(0), "action", "list_set_item_checked",
                     "position", values.get(1), "checked", values.get(2)));
+        } else if ("listgetcheckedpositions".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "list_checked_positions",
+                    "resultStateId", values.get(1), "resultKey", "positions"));
         } else if ("listsmoothscrollto".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("widget", CreatorRuntimeServiceArguments.output(

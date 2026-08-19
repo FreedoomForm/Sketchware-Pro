@@ -1063,6 +1063,41 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState()).containsEntry("date", 1700000000000d);
     }
 
+    @Test public void evaluatesCanonicalDisplayMetricReportersThroughRuntimeNativeMetricsService() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeService metrics = new CreatorRuntimeService() {
+            @Override public String getId() { return "device_metrics"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                if ("dip".equals(arguments.get("action")) && Double.valueOf(8d).equals(arguments.get("input"))) {
+                    return CreatorRuntimeServiceArguments.succeeded("value", 24f);
+                }
+                if ("display_width".equals(arguments.get("action"))) return CreatorRuntimeServiceArguments.succeeded("value", 1080);
+                if ("display_height".equals(arguments.get("action"))) return CreatorRuntimeServiceArguments.succeeded("value", 2400);
+                return CreatorRuntimeServiceArguments.invalid("unsupported");
+            }
+        };
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "dip", "expression", reporter("mathgetdip", literal("8")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "width", "expression", reporter("mathgetdisplaywidth"))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "height", "expression", reporter("mathgetdisplayheight"))));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(metrics)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState()).containsEntry("dip", 24f);
+        assertThat(engine.getCurrent().getState()).containsEntry("width", 1080);
+        assertThat(engine.getCurrent().getState()).containsEntry("height", 2400);
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

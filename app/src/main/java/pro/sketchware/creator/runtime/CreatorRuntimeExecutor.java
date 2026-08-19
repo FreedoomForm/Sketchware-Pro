@@ -291,6 +291,9 @@ public final class CreatorRuntimeExecutor {
         if ("mathlog10".equals(op)) return Math.log10(decimal(first));
         if ("mathtoradian".equals(op)) return Math.toRadians(decimal(first));
         if ("mathtodegree".equals(op)) return Math.toDegrees(decimal(first));
+        if ("mathgetdip".equals(op)) return deviceMetricValue("dip", first);
+        if ("mathgetdisplaywidth".equals(op)) return deviceMetricValue("display_width", null);
+        if ("mathgetdisplayheight".equals(op)) return deviceMetricValue("display_height", null);
         if ("mediaplayergetcurrent".equals(op)) return mediaValue(first, "current_position");
         if ("mediaplayergetduration".equals(op)) return mediaValue(first, "duration");
         if ("mediaplayerisplaying".equals(op)) return mediaValue(first, "is_playing");
@@ -391,6 +394,14 @@ public final class CreatorRuntimeExecutor {
         if (runtimeServices == null || id == null) return null;
         CreatorRuntimeService.Result result = runtimeServices.dispatch("media",
                 CreatorRuntimeServiceArguments.output("id", String.valueOf(id), "action", action));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("value") : null;
+    }
+
+    private Object deviceMetricValue(String action, Object input) {
+        if (runtimeServices == null) return null;
+        Map<String, Object> arguments = CreatorRuntimeServiceArguments.output("action", action);
+        if (input != null) arguments.put("input", input);
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("device_metrics", arguments);
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("value") : null;
     }
 
