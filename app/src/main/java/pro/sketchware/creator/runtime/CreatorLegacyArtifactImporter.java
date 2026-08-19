@@ -608,6 +608,10 @@ public final class CreatorLegacyArtifactImporter {
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE, payload);
         } else if ("setlistmap".equals(op)) {
             return listMapPutAt(block, values, unsupported, byId);
+        } else if ("insertmaptolist".equals(op)) {
+            return listMapInsert(block, values, unsupported, byId);
+        } else if ("getmapinlist".equals(op)) {
+            return listMapGet(block, values, unsupported, byId);
         } else if ("setatposliststr".equals(op) || "setatposlistnum".equals(op) || "setmapatposlistmap".equals(op)) {
             return listSetAt(block, values, unsupported, byId);
         } else if ("addlistint".equals(op) || "addliststr".equals(op) || "addlistmap".equals(op)) {
@@ -1154,6 +1158,48 @@ public final class CreatorLegacyArtifactImporter {
         putExpressionOrValue(payload, "index", "indexExpression", values.get(2), byId, unsupported, block.opCode);
         if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
         return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
+    }
+
+    /** Legacy insertMapToList order is map, index, list. */
+    private static CreatorRuntimeBlock listMapInsert(BlockBean block, List<String> values,
+                                                     List<String> unsupported, Map<Integer, BlockBean> byId) {
+        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("stateId", values.get(2));
+        payload.put("action", "insert");
+        putExpressionOrValue(payload, "value", "valueExpression", values.get(0), byId, unsupported, block.opCode);
+        putExpressionOrValue(payload, "index", "indexExpression", values.get(1), byId, unsupported, block.opCode);
+        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
+    }
+
+    /** Legacy getMapInList order is index, list, destination map. */
+    private static CreatorRuntimeBlock listMapGet(BlockBean block, List<String> values,
+                                                  List<String> unsupported, Map<Integer, BlockBean> byId) {
+        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+        Map<String, Object> expression = new LinkedHashMap<>();
+        expression.put("kind", "reporter");
+        expression.put("opCode", "getmapatposlistmap");
+        List<Object> arguments = new ArrayList<>();
+        arguments.add(literalExpression(values.get(0), byId, unsupported, block.opCode));
+        arguments.add(literalExpression(values.get(1), byId, unsupported, block.opCode));
+        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+        expression.put("arguments", arguments);
+        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                CreatorRuntimeServiceArguments.output("stateId", values.get(2), "expression", expression));
+    }
+
+    private static Map<String, Object> literalExpression(String rawValue, Map<Integer, BlockBean> byId,
+                                                          List<String> unsupported, String opcode) {
+        if (rawValue != null && rawValue.trim().startsWith("@")) {
+            Map<String, Object> expression = expression(rawValue, byId, new java.util.LinkedHashSet<Integer>());
+            if (expression == null) {
+                unsupported.add(opcode + " (invalid reporter expression)");
+                return Collections.emptyMap();
+            }
+            return expression;
+        }
+        return CreatorRuntimeServiceArguments.output("kind", "literal", "value", rawValue);
     }
 
     /** Legacy set-at family order is value, index, list for all supported list types. */

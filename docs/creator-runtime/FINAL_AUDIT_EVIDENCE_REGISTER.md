@@ -65,6 +65,8 @@ Canonical `firebaseAdd` and `firebasePush` now import as typed Firebase `update`
 
 Canonical `firebaseAuthGetCurrentUser` now evaluates the signed-in user’s email through the existing typed Firebase Auth status service, alongside `firebaseAuthIsLoggedIn` and `firebaseAuthGetUid`. The regression proves all three values derive from the reviewed auth status contract rather than generated Firebase calls; the complete JVM suite remains at **143 passing tests and zero failures**. Auth configuration and real-account behavior remain device-level evidence under the open component gate.
 
+Canonical `insertMapToList` and `getMapInList` now preserve legacy argument order in typed IR: map/index/list for insertion and index/list/destination-map for retrieval. The executor evaluates map-state values during insertion and retrieves the selected map through the canonical typed list-map reporter; importer and execution regressions pass. The complete JVM suite now has **145 passing tests and zero failures**. Broader legacy collection behavior remains covered by the still-open block/event gate.
+
 `mapGetAllKeys` is now imported as a typed `replace_map_keys` list mutation. The executor clears the destination list, copies the source map’s ordered key set, and persists it back into runtime state. Importer and executor regressions verify the exact legacy map/list parameter order and resulting key order.
 
 The canonical `mapToStr` and `listMapToStr` reporters now serialize typed map/list data directly through the runtime serialization library. Regression verifies the exact JSON values held in state; this replaces generated Java-expression emission while preserving data-only execution.

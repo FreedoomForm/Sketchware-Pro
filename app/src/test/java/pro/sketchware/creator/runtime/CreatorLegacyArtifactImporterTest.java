@@ -544,6 +544,33 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyMapListInsertAndGetWithCanonicalArgumentOrder() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean insert = new BlockBean("1", "", "", "insertMapToList");
+        insert.parameters.add("row");
+        insert.parameters.add("1");
+        insert.parameters.add("rows");
+        BlockBean get = new BlockBean("2", "", "", "getMapInList");
+        get.parameters.add("1");
+        get.parameters.add("rows");
+        get.parameters.add("selectedRow");
+        insert.nextBlock = 2;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(insert, get));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+        assertThat(imported.get(0).getPayload()).containsEntry("stateId", "rows");
+        assertThat(imported.get(0).getPayload()).containsEntry("action", "insert");
+        assertThat(imported.get(1).getType()).isEqualTo(CreatorRuntimeBlock.Type.SET_STATE);
+        assertThat(imported.get(1).getPayload()).containsEntry("stateId", "selectedRow");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsCanonicalMapMutationOpcodesAsTypedRuntimeBlocks() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean put = new BlockBean("1", "", "", "mapPut");

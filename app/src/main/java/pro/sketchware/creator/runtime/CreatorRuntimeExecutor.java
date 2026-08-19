@@ -62,7 +62,7 @@ public final class CreatorRuntimeExecutor {
                 Object key = payload.containsKey("keyExpression") ? evaluate(payload.get("keyExpression"), engine) : payload.get("key");
                 if ("add".equals(action)) list.add(value);
                 else if ("insert".equals(action)) {
-                    if (index >= 0 && index <= list.size()) list.add(index, payload.get("value"));
+                    if (index >= 0 && index <= list.size()) list.add(index, value);
                 } else if ("remove_at".equals(action)) {
                     if (index >= 0 && index < list.size()) list.remove(index);
                 } else if ("clear".equals(action)) list.clear();

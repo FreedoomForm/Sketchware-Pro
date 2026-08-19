@@ -1133,6 +1133,35 @@ public class CreatorRuntimeExecutorTest {
         assertThat(value).containsEntry("score", 9);
     }
 
+    @Test public void executesTypedMapListInsertionAndLookupWithEvaluatedStateMaps() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("rows", 2, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "rows", "value", Arrays.asList(map("name", "Grace")))));
+        engine.apply(op("row", 3, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "row", "value", map("name", "Ada"))));
+        Map<String, Object> mapAtOne = reporter("getmapatposlistmap", literal("1"), literal("rows"));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+                        map("stateId", "rows", "action", "insert", "index", 1,
+                                "valueExpression", literal("row"))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "selectedRow", "expression", mapAtOne)));
+        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        @SuppressWarnings("unchecked") java.util.List<Map<String, Object>> rows =
+                (java.util.List<Map<String, Object>>) engine.getCurrent().getState().get("rows");
+        assertThat(rows).containsExactly(map("name", "Grace"), map("name", "Ada")).inOrder();
+        assertThat(engine.getCurrent().getState().get("selectedRow")).isEqualTo(map("name", "Ada"));
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }
