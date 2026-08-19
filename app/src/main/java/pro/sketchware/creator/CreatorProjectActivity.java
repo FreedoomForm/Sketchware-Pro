@@ -761,6 +761,14 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private void applyRuntimeTypeface(CreatorProjectDocument document, TextView text, CreatorWidget widget) {
         int style = propertyInt(widget, "textType", android.graphics.Typeface.NORMAL);
         String fontName = propertyString(widget, "textFont", "default_font");
+        Object rawTypeface = widget.getProperties().get("typeface");
+        if (rawTypeface instanceof Map) {
+            Map<?, ?> typeface = (Map<?, ?>) rawTypeface;
+            Object font = typeface.get("font");
+            if (font != null) fontName = String.valueOf(font);
+            Object namedStyle = typeface.get("style");
+            if (namedStyle != null) style = typefaceStyle(String.valueOf(namedStyle), style);
+        }
         if ("default_font".equals(fontName) || fontName.trim().isEmpty()) {
             text.setTypeface(android.graphics.Typeface.DEFAULT, style);
             return;
@@ -775,6 +783,15 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         } catch (RuntimeException ignored) {
             text.setTypeface(android.graphics.Typeface.DEFAULT, style);
         }
+    }
+
+    private static int typefaceStyle(String value, int fallback) {
+        String style = value == null ? "" : value.trim().toUpperCase(java.util.Locale.ROOT);
+        if (style.contains("BOLD") && style.contains("ITALIC")) return android.graphics.Typeface.BOLD_ITALIC;
+        if (style.contains("BOLD")) return android.graphics.Typeface.BOLD;
+        if (style.contains("ITALIC")) return android.graphics.Typeface.ITALIC;
+        if (style.contains("NORMAL")) return android.graphics.Typeface.NORMAL;
+        return fallback;
     }
 
     private int dp(int value) {

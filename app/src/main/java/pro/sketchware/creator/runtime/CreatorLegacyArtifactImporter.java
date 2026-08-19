@@ -890,6 +890,12 @@ public final class CreatorLegacyArtifactImporter {
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported, byId);
+        } else if ("settypeface".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            payload.put("widgetId", values.get(0));
+            payload.put("property", "typeface");
+            payload.put("value", CreatorRuntimeServiceArguments.output("font", values.get(1), "style", values.get(2)));
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload);
         } else if ("setchecked".equals(op) || "set_checked".equals(op)) {
             return widgetProperty(block, values, "checked", unsupported, byId);
         } else if ("setenable".equals(op)) {
