@@ -1065,6 +1065,25 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(descriptor.get("name")).isEqualTo("hero");
         assertThat(descriptor.get("source")).isEqualTo("images/hero.svg");
         assertThat(descriptor.get("svg")).isEqualTo(true);
+        assertThat(descriptor.get("kind")).isEqualTo("image");
+        @SuppressWarnings("unchecked") Map<String, Object> images =
+                (Map<String, Object>) result.getDocument().getState().get("legacy.imageResources");
+        assertThat(images).containsKey("hero");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(1);
+    }
+
+    @Test public void preservesVideoResourceMetadataForRuntimeNativePlaybackConsumption() {
+        ProjectResourceBean video = new ProjectResourceBean(ProjectResourceBean.PROJECT_RES_TYPE_FILE,
+                "intro", "videos/intro.webm");
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importResources(
+                documentWithButton(), Collections.singletonList(video));
+
+        @SuppressWarnings("unchecked") Map<String, Object> videos =
+                (Map<String, Object>) result.getDocument().getState().get("legacy.videoResources");
+        @SuppressWarnings("unchecked") Map<String, Object> descriptor = (Map<String, Object>) videos.get("intro");
+        assertThat(descriptor).containsEntry("kind", "video");
+        assertThat(descriptor).containsEntry("source", "videos/intro.webm");
         assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(1);
     }
 

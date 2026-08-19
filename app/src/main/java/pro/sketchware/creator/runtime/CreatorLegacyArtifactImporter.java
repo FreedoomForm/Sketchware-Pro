@@ -216,6 +216,8 @@ public final class CreatorLegacyArtifactImporter {
         CreatorCompatibilityReport report = new CreatorCompatibilityReport();
         Map<String, Object> state = new LinkedHashMap<>(base.getState());
         List<Object> imported = new ArrayList<>();
+        Map<String, Object> images = new LinkedHashMap<>();
+        Map<String, Object> videos = new LinkedHashMap<>();
         Map<String, Object> sounds = new LinkedHashMap<>();
         Map<String, Object> fonts = new LinkedHashMap<>();
         for (ProjectResourceBean resource : resources == null ? Collections.<ProjectResourceBean>emptyList() : resources) {
@@ -235,11 +237,16 @@ public final class CreatorLegacyArtifactImporter {
             descriptor.put("svg", resource.isSvg());
             descriptor.put("currentSoundPosition", resource.curSoundPosition);
             descriptor.put("totalSoundDuration", resource.totalSoundDuration);
-            if (isSound(resource.resFullName)) {
+            if (isImage(resource.resFullName)) {
+                descriptor.put("kind", "image");
+                images.put(resource.resName, new LinkedHashMap<>(descriptor));
+            } else if (isVideo(resource.resFullName)) {
+                descriptor.put("kind", "video");
+                videos.put(resource.resName, new LinkedHashMap<>(descriptor));
+            } else if (isSound(resource.resFullName)) {
                 descriptor.put("kind", "sound");
                 sounds.put(resource.resName, new LinkedHashMap<>(descriptor));
-            }
-            if (isFont(resource.resFullName)) {
+            } else if (isFont(resource.resFullName)) {
                 descriptor.put("kind", "font");
                 fonts.put(resource.resName, new LinkedHashMap<>(descriptor));
             }
@@ -248,6 +255,8 @@ public final class CreatorLegacyArtifactImporter {
                     "Preserved as runtime resource metadata for live widget and media services.");
         }
         state.put("legacy.resources", imported);
+        state.put("legacy.imageResources", images);
+        state.put("legacy.videoResources", videos);
         state.put("legacy.soundResources", sounds);
         state.put("legacy.fontResources", fonts);
         return new Result(base.withRuntimeState(base.getRevision(), state, base.getEvents()), report);
@@ -1209,6 +1218,18 @@ public final class CreatorLegacyArtifactImporter {
         String value = source == null ? "" : source.toLowerCase(Locale.ROOT);
         return value.endsWith(".mp3") || value.endsWith(".wav") || value.endsWith(".ogg")
                 || value.endsWith(".m4a") || value.endsWith(".aac") || value.endsWith(".flac");
+    }
+
+    private static boolean isImage(String source) {
+        String value = source == null ? "" : source.toLowerCase(Locale.ROOT);
+        return value.endsWith(".png") || value.endsWith(".jpg") || value.endsWith(".jpeg") || value.endsWith(".gif")
+                || value.endsWith(".webp") || value.endsWith(".bmp") || value.endsWith(".svg");
+    }
+
+    private static boolean isVideo(String source) {
+        String value = source == null ? "" : source.toLowerCase(Locale.ROOT);
+        return value.endsWith(".mp4") || value.endsWith(".avi") || value.endsWith(".mkv") || value.endsWith(".webm")
+                || value.endsWith(".3gp") || value.endsWith(".mov");
     }
 
     private static boolean isFont(String source) {
