@@ -491,6 +491,10 @@ public final class CreatorLegacyArtifactImporter {
             return fileCall(block, values, "delete", 1, unsupported);
         } else if ("fileutilmakedir".equals(op)) {
             return fileCall(block, values, "make_dir", 1, unsupported);
+        } else if ("fileutillistdir".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("file", CreatorRuntimeServiceArguments.output(
+                    "action", "list_dir", "path", values.get(0), "resultStateId", values.get(1), "resultKey", "entries"));
         } else if ("objectanimatorsettarget".equals(op)) {
             return animatorCall(block, values, "set_target", 2, unsupported);
         } else if ("objectanimatorsetproperty".equals(op)) {

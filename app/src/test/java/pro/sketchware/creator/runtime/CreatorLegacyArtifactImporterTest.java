@@ -888,6 +888,25 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyFileUtilListDirAsTypedRuntimeStateOutput() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean listDir = new BlockBean("1", "", "", "fileutilListDir");
+        listDir.parameters.add("/storage/emulated/0/Download");
+        listDir.parameters.add("entries");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Collections.singletonList(listDir));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertServiceCall(imported, "file", "list_dir");
+        @SuppressWarnings("unchecked") Map<String, Object> arguments = (Map<String, Object>) imported.getPayload().get("arguments");
+        assertThat(arguments).containsEntry("resultStateId", "entries");
+        assertThat(arguments).containsEntry("resultKey", "entries");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

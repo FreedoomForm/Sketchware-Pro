@@ -191,6 +191,13 @@ public final class CreatorRuntimeExecutor {
             return end < start ? "" : text.substring(start, end);
         }
         if ("stringcontains".equals(op)) return first != null && String.valueOf(first).contains(String.valueOf(second));
+        if ("fileutilstartswith".equals(op)) return first != null && String.valueOf(first).startsWith(String.valueOf(second));
+        if ("fileutilendswith".equals(op)) return first != null && String.valueOf(first).endsWith(String.valueOf(second));
+        if ("fileutilgetlastsegmentpath".equals(op)) {
+            String path = first == null ? "" : String.valueOf(first);
+            int slash = path.lastIndexOf('/');
+            return slash < 0 ? path : slash == path.length() - 1 ? "" : path.substring(slash + 1);
+        }
         if ("stringreplace".equals(op)) return String.valueOf(first).replace(String.valueOf(second), String.valueOf(values.size() < 3 ? "" : values.get(2)));
         if ("stringreplacefirst".equals(op)) return String.valueOf(first).replaceFirst(String.valueOf(second), String.valueOf(values.size() < 3 ? "" : values.get(2)));
         if ("stringreplaceall".equals(op)) return String.valueOf(first).replaceAll(String.valueOf(second), String.valueOf(values.size() < 3 ? "" : values.get(2)));
@@ -227,6 +234,11 @@ public final class CreatorRuntimeExecutor {
         if ("mediaplayergetduration".equals(op)) return mediaValue(first, "duration");
         if ("mediaplayerisplaying".equals(op)) return mediaValue(first, "is_playing");
         if ("mediaplayerislooping".equals(op)) return mediaValue(first, "is_looping");
+        if ("fileutilread".equals(op)) return fileValue(first, "read", "content");
+        if ("fileutilisexist".equals(op)) return fileValue(first, "exists", "value");
+        if ("fileutilisdir".equals(op)) return fileValue(first, "is_dir", "value");
+        if ("fileutilisfile".equals(op)) return fileValue(first, "is_file", "value");
+        if ("fileutillength".equals(op)) return fileValue(first, "length", "value");
         return null;
     }
 
@@ -235,6 +247,13 @@ public final class CreatorRuntimeExecutor {
         CreatorRuntimeService.Result result = runtimeServices.dispatch("media",
                 CreatorRuntimeServiceArguments.output("id", String.valueOf(id), "action", action));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("value") : null;
+    }
+
+    private Object fileValue(Object path, String action, String outputKey) {
+        if (runtimeServices == null || path == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("file",
+                CreatorRuntimeServiceArguments.output("path", String.valueOf(path), "action", action));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
     }
 
     private static int boundedIndex(double value, int length) {

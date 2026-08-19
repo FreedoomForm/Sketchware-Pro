@@ -301,6 +301,42 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState()).containsEntry("playing", true);
     }
 
+    @Test public void evaluatesFileUtilReporterQueriesThroughRuntimeNativeFileService() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeService file = new CreatorRuntimeService() {
+            @Override public String getId() { return "file"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                String action = String.valueOf(arguments.get("action"));
+                if ("read".equals(action)) return CreatorRuntimeServiceArguments.succeeded("content", "runtime");
+                if ("exists".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", true);
+                if ("length".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", 7L);
+                return CreatorRuntimeServiceArguments.invalid("unsupported");
+            }
+        };
+        Map<String, Object> content = map("kind", "reporter", "opCode", "fileutilread", "arguments",
+                Collections.singletonList(map("kind", "literal", "value", "/tmp/runtime.txt")));
+        Map<String, Object> exists = map("kind", "reporter", "opCode", "fileutilisexist", "arguments",
+                Collections.singletonList(map("kind", "literal", "value", "/tmp/runtime.txt")));
+        Map<String, Object> length = map("kind", "reporter", "opCode", "fileutillength", "arguments",
+                Collections.singletonList(map("kind", "literal", "value", "/tmp/runtime.txt")));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", Arrays.asList(
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "content", "expression", content)),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "exists", "expression", exists)),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "length", "expression", length))))));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(file)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState()).containsEntry("content", "runtime");
+        assertThat(engine.getCurrent().getState()).containsEntry("exists", true);
+        assertThat(engine.getCurrent().getState()).containsEntry("length", 7L);
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

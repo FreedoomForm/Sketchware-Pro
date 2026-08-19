@@ -84,6 +84,7 @@ public final class CreatorFileService implements CreatorRuntimeService {
             if ("exists".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", files.exists(path));
             if ("is_dir".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", files.isDirectory(path));
             if ("is_file".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", files.isFile(path));
+            if ("length".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", files.length(path));
             if ("list_dir".equals(action)) return CreatorRuntimeServiceArguments.succeeded("entries", files.list(path));
             return CreatorRuntimeServiceArguments.invalid("Unsupported file action: " + action);
         } catch (IOException | SecurityException error) {
@@ -169,6 +170,7 @@ public final class CreatorFileService implements CreatorRuntimeService {
         boolean exists(String path) throws IOException { return resolve(path).exists(); }
         boolean isDirectory(String path) throws IOException { return resolve(path).isDirectory(); }
         boolean isFile(String path) throws IOException { return resolve(path).isFile(); }
+        long length(String path) throws IOException { return resolve(path).length(); }
 
         List<String> list(String path) throws IOException {
             File target = resolve(path);
