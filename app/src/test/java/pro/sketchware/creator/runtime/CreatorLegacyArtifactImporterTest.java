@@ -769,6 +769,41 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyBitmapOperationsAsTypedRuntimeNativeServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        String[] opcodes = {"resizeBitmapFileRetainRatio", "resizeBitmapFileToSquare", "resizeBitmapFileToCircle",
+                "resizeBitmapFileWithRoundedBorder", "cropBitmapFileFromCenter", "rotateBitmapFile",
+                "scaleBitmapFile", "skewBitmapFile", "setBitmapFileColorFilter", "setBitmapFileBrightness",
+                "setBitmapFileContrast"};
+        String[] actions = {"resize_retain_ratio", "resize_square", "resize_circle", "rounded_border",
+                "crop_center", "rotate", "scale", "skew", "color_filter", "brightness", "contrast"};
+        java.util.List<BlockBean> chain = new java.util.ArrayList<>();
+        for (int index = 0; index < opcodes.length; index++) {
+            BlockBean block = new BlockBean(String.valueOf(index + 1), "", "", opcodes[index]);
+            block.parameters.add("/storage/emulated/0/source.png");
+            block.parameters.add("/storage/emulated/0/output.png");
+            if (!"resizeBitmapFileToCircle".equals(opcodes[index])) block.parameters.add("12");
+            if ("cropBitmapFileFromCenter".equals(opcodes[index]) || "scaleBitmapFile".equals(opcodes[index])
+                    || "skewBitmapFile".equals(opcodes[index])) block.parameters.add("24");
+            if (index + 1 < opcodes.length) block.nextBlock = index + 2;
+            chain.add(block);
+        }
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), chain);
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(actions.length);
+        for (int index = 0; index < actions.length; index++) assertServiceCall(imported.get(index), "bitmap", actions[index]);
+        @SuppressWarnings("unchecked") Map<String, Object> cropArguments = (Map<String, Object>) imported.get(4).getPayload().get("arguments");
+        assertThat(cropArguments).containsEntry("height", "12");
+        assertThat(cropArguments).containsEntry("width", "24");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsLegacyObjectAnimatorConfigurationAsRuntimeNativeServiceCalls() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean target = new BlockBean("1", "", "", "objectanimatorSetTarget");

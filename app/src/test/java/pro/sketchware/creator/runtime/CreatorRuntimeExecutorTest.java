@@ -1162,6 +1162,32 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("selectedRow")).isEqualTo(map("name", "Ada"));
     }
 
+    @Test public void evaluatesCanonicalJpegRotationReporterThroughRuntimeNativeBitmapService() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeService bitmap = new CreatorRuntimeService() {
+            @Override public String getId() { return "bitmap"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                assertThat(arguments).containsEntry("action", "jpeg_rotate");
+                assertThat(arguments).containsEntry("path", "/storage/emulated/0/photo.jpg");
+                return CreatorRuntimeServiceArguments.succeeded("value", 90);
+            }
+        };
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks",
+                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                                map("stateId", "rotation", "expression", reporter("getjpegrotate",
+                                        literal("/storage/emulated/0/photo.jpg"))))))));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(bitmap)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState()).containsEntry("rotation", 90);
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

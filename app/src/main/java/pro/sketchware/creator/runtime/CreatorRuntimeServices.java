@@ -12,6 +12,7 @@ public final class CreatorRuntimeServices {
         return new CreatorRuntimeServiceDispatcher()
                 .register(new CreatorStorageService(context, projectId))
                 .register(new CreatorFileService(environment))
+                .register(new CreatorBitmapService(environment))
                 .register(new CreatorVibratorService(context))
                 .register(new CreatorCalendarService())
                 .register(new CreatorTimerService(timerListener))

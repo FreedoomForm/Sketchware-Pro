@@ -205,6 +205,7 @@ public final class CreatorFileService implements CreatorRuntimeService {
         boolean isDirectory(String path) throws IOException { return resolve(path).isDirectory(); }
         boolean isFile(String path) throws IOException { return resolve(path).isFile(); }
         long length(String path) throws IOException { return resolve(path).length(); }
+        File resolveForRuntime(String path) throws IOException { return resolve(path); }
 
         List<String> list(String path) throws IOException {
             File target = resolve(path);

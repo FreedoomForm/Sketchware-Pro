@@ -304,6 +304,7 @@ public final class CreatorRuntimeExecutor {
         if ("fileutilisdir".equals(op)) return fileValue(first, "is_dir", "value");
         if ("fileutilisfile".equals(op)) return fileValue(first, "is_file", "value");
         if ("fileutillength".equals(op)) return fileValue(first, "length", "value");
+        if ("getjpegrotate".equals(op)) return bitmapValue(first, "jpeg_rotate");
         if ("getexternalstoragedir".equals(op)) return filePathValue("get_external_storage_dir", null);
         if ("getpackagedatadir".equals(op)) return filePathValue("get_package_data_dir", null);
         if ("getpublicdir".equals(op)) return filePathValue("get_public_dir", first);
@@ -412,6 +413,13 @@ public final class CreatorRuntimeExecutor {
         CreatorRuntimeService.Result result = runtimeServices.dispatch("file",
                 CreatorRuntimeServiceArguments.output("path", String.valueOf(path), "action", action));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
+    }
+
+    private Object bitmapValue(Object path, String action) {
+        if (runtimeServices == null || path == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("bitmap",
+                CreatorRuntimeServiceArguments.output("path", String.valueOf(path), "action", action));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("value") : null;
     }
 
     private Object filePathValue(String action, Object directory) {

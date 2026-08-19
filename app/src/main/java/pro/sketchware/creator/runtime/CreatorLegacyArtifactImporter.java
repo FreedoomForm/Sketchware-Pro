@@ -787,6 +787,28 @@ public final class CreatorLegacyArtifactImporter {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("file", CreatorRuntimeServiceArguments.output(
                     "action", "list_dir", "path", values.get(0), "resultStateId", values.get(1), "resultKey", "entries"));
+        } else if ("resizebitmapfileretainratio".equals(op)) {
+            return bitmapCall(block, values, "resize_retain_ratio", 3, unsupported);
+        } else if ("resizebitmapfiletosquare".equals(op)) {
+            return bitmapCall(block, values, "resize_square", 3, unsupported);
+        } else if ("resizebitmapfiletocircle".equals(op)) {
+            return bitmapCall(block, values, "resize_circle", 2, unsupported);
+        } else if ("resizebitmapfilewithroundedborder".equals(op)) {
+            return bitmapCall(block, values, "rounded_border", 3, unsupported);
+        } else if ("cropbitmapfilefromcenter".equals(op)) {
+            return bitmapCall(block, values, "crop_center", 4, unsupported);
+        } else if ("rotatebitmapfile".equals(op)) {
+            return bitmapCall(block, values, "rotate", 3, unsupported);
+        } else if ("scalebitmapfile".equals(op)) {
+            return bitmapCall(block, values, "scale", 4, unsupported);
+        } else if ("skewbitmapfile".equals(op)) {
+            return bitmapCall(block, values, "skew", 4, unsupported);
+        } else if ("setbitmapfilecolorfilter".equals(op)) {
+            return bitmapCall(block, values, "color_filter", 3, unsupported);
+        } else if ("setbitmapfilebrightness".equals(op)) {
+            return bitmapCall(block, values, "brightness", 3, unsupported);
+        } else if ("setbitmapfilecontrast".equals(op)) {
+            return bitmapCall(block, values, "contrast", 3, unsupported);
         } else if ("objectanimatorsettarget".equals(op)) {
             return animatorCall(block, values, "set_target", 2, unsupported);
         } else if ("objectanimatorsetproperty".equals(op)) {
@@ -1262,6 +1284,28 @@ public final class CreatorLegacyArtifactImporter {
         if ("write".equals(action)) arguments.put("content", values.get(1));
         else if (required > 1) arguments.put("destination", values.get(1));
         return serviceCall("file", arguments);
+    }
+
+    private static CreatorRuntimeBlock bitmapCall(BlockBean block, List<String> values, String action, int required,
+                                                  List<String> unsupported) {
+        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+        Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("action", action);
+        arguments.put("path", values.get(0));
+        arguments.put("destination", values.get(1));
+        if ("resize_retain_ratio".equals(action) || "resize_square".equals(action)) arguments.put("max", values.get(2));
+        else if ("rounded_border".equals(action)) arguments.put("pixels", values.get(2));
+        else if ("crop_center".equals(action)) {
+            // Legacy blocks retain height at index 2 and width at index 3; Fx reverses them for FileUtil.
+            arguments.put("width", values.get(3));
+            arguments.put("height", values.get(2));
+        } else if ("rotate".equals(action)) arguments.put("angle", values.get(2));
+        else if ("scale".equals(action) || "skew".equals(action)) {
+            arguments.put("x", values.get(2));
+            arguments.put("y", values.get(3));
+        } else if ("color_filter".equals(action)) arguments.put("color", values.get(2));
+        else if ("brightness".equals(action) || "contrast".equals(action)) arguments.put("value", values.get(2));
+        return serviceCall("bitmap", arguments);
     }
 
     private static CreatorRuntimeBlock animatorCall(BlockBean block, List<String> values, String action, int required,
