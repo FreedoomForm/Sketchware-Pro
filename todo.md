@@ -79,3 +79,4 @@
 - [x] Import all 35 compatible skills using the required Manus skill structure and validate each imported package.
 - [x] Add a typed runtime-native Google Maps renderer and allow-listed MapView action service with full legacy action import coverage.
 - [x] Implement native DrawerLayout rendering plus open, close, and open-state legacy action parity without a fallback path.
+- [x] Import and execute legacy More Block definitions, calls, and scoped getArg reporters through a typed Creator Runtime contract; keep arbitrary addSourceDirectly visible and blocked rather than executing Java.

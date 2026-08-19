@@ -5,6 +5,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.besome.sketch.beans.BlockBean;
 import com.besome.sketch.beans.ComponentBean;
 import com.besome.sketch.beans.EventBean;
+import com.besome.sketch.beans.MoreBlockCollectionBean;
 import com.besome.sketch.beans.ProjectFileBean;
 import com.besome.sketch.beans.ProjectLibraryBean;
 import com.besome.sketch.beans.ProjectResourceBean;
@@ -90,6 +91,50 @@ public class CreatorLegacyArtifactImporterTest {
                 (Map<String, Object>) importedCondition.getPayload().get("expression");
         assertThat(expression).containsEntry("opCode", "isdraweropen");
         assertThat(reporterResult.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
+    @Test public void importsAndExecutesMoreBlockCallWithScopedGetArgWithoutJavaExecution() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean call = new BlockBean("1", "echo %s.name", " ", "definedFunc");
+        call.parameters.add("Ada");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Collections.singletonList(call));
+
+        BlockBean assign = new BlockBean("1", "", "", "setVar");
+        assign.parameters.add("received");
+        assign.parameters.add("@2");
+        BlockBean argument = new BlockBean("2", "name", "s", "getArg");
+        MoreBlockCollectionBean definition = new MoreBlockCollectionBean("echo", "echo %s.name",
+                new java.util.ArrayList<>(Arrays.asList(assign, argument)));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks,
+                Collections.singletonList(definition));
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+        @SuppressWarnings("unchecked") Map<String, Object> definitions =
+                (Map<String, Object>) result.getDocument().getState().get("legacy.moreBlocks");
+        assertThat(definitions).containsKey("echo");
+        assertThat(result.getDocument().getEvents()).containsKey("legacy_moreblock_echo");
+        assertThat(result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0).getType())
+                .isEqualTo(CreatorRuntimeBlock.Type.CUSTOM_FUNCTION_CALL);
+
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(result.getDocument(), 20, new CreatorRuntimeEventLog(20));
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+        assertThat(engine.getCurrent().getState().get("received")).isEqualTo("Ada");
+    }
+
+    @Test public void keepsArbitraryAddSourceDirectlyVisibleAndBlockedWithoutFallbackExecution() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean source = new BlockBean("1", "", "", "addSourceDirectly");
+        source.parameters.add("throw new IllegalStateException(\"must not execute\");");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Collections.singletonList(source));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        assertThat(result.getDocument().getEvents()).isEmpty();
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(1);
     }
 
     @Test public void importsLegacyValueResourceFamiliesAsTypedVariantMetadata() {

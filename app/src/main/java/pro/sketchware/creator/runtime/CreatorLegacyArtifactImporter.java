@@ -3,6 +3,7 @@ package pro.sketchware.creator.runtime;
 import com.besome.sketch.beans.BlockBean;
 import com.besome.sketch.beans.ComponentBean;
 import com.besome.sketch.beans.EventBean;
+import com.besome.sketch.beans.MoreBlockCollectionBean;
 import com.besome.sketch.beans.ProjectFileBean;
 import com.besome.sketch.beans.ProjectLibraryBean;
 import com.besome.sketch.beans.ProjectResourceBean;
@@ -40,6 +41,13 @@ public final class CreatorLegacyArtifactImporter {
 
     public Result importArtifacts(CreatorProjectDocument base, List<ComponentBean> components,
                                   List<EventBean> events, Map<String, List<BlockBean>> blocksByEvent) {
+        return importArtifacts(base, components, events, blocksByEvent,
+                Collections.<MoreBlockCollectionBean>emptyList());
+    }
+
+    public Result importArtifacts(CreatorProjectDocument base, List<ComponentBean> components,
+                                  List<EventBean> events, Map<String, List<BlockBean>> blocksByEvent,
+                                  List<MoreBlockCollectionBean> moreBlocks) {
         if (base == null) throw new IllegalArgumentException("base");
         CreatorCompatibilityReport report = new CreatorCompatibilityReport();
         Map<String, Object> state = new LinkedHashMap<>(base.getState());
@@ -140,6 +148,33 @@ public final class CreatorLegacyArtifactImporter {
             report.add(eventKey, "EventBean", CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
                     "Imported as a typed Creator Runtime event binding.");
         }
+        Map<String, Object> moreBlockIndex = new LinkedHashMap<>();
+        for (MoreBlockCollectionBean definition : moreBlocks == null
+                ? Collections.<MoreBlockCollectionBean>emptyList() : moreBlocks) {
+            if (definition == null || blank(definition.name)) {
+                report.add("unknown", "MoreBlockCollectionBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+                        "More Block has no stable name and cannot be imported safely.");
+                continue;
+            }
+            String functionId = moreBlockId(definition.name);
+            BlockConversion body = convertBlocks(definition.blocks, componentState);
+            if (!body.unsupported.isEmpty()) {
+                report.add("moreblock:" + functionId, "MoreBlockCollectionBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+                        "Unsupported legacy More Block opcodes: " + String.join(", ", body.unsupported) + ".");
+                continue;
+            }
+            Map<String, Object> descriptor = new LinkedHashMap<>();
+            descriptor.put("name", functionId);
+            descriptor.put("spec", definition.spec == null ? "" : definition.spec);
+            descriptor.put("arguments", moreBlockArguments(definition.spec));
+            descriptor.put("returnType", moreBlockReturnType(definition.name));
+            moreBlockIndex.put(functionId, descriptor);
+            String bindingId = "legacy_moreblock_" + functionId;
+            bindings.put(bindingId, new CreatorEventBinding(bindingId, bindingId, "invoke", body.converted));
+            report.add("moreblock:" + functionId, "MoreBlockCollectionBean", CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
+                    "Imported as a typed runtime More Block definition with scoped arguments.");
+        }
+        state.put("legacy.moreBlocks", moreBlockIndex);
         state.put("legacy.deferredEvents", deferredEvents);
         return new Result(base.withRuntimeState(base.getRevision(), state, bindings), report);
     }
@@ -503,6 +538,18 @@ public final class CreatorLegacyArtifactImporter {
         String op = block.opCode.trim().toLowerCase(Locale.ROOT);
         List<String> values = block.parameters == null ? Collections.<String>emptyList() : block.parameters;
         Map<String, Object> payload = new LinkedHashMap<>();
+        if ("definedfunc".equals(op)) {
+            String functionId = moreBlockId(block.spec);
+            if (blank(functionId)) { unsupported.add(block.opCode); return null; }
+            List<Object> arguments = new ArrayList<>();
+            for (String value : values) {
+                Map<String, Object> argument = expression(value, byId, new java.util.LinkedHashSet<Integer>());
+                if (argument == null) { unsupported.add(block.opCode + " (invalid argument expression)"); return null; }
+                arguments.add(argument);
+            }
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.CUSTOM_FUNCTION_CALL,
+                    CreatorRuntimeServiceArguments.output("functionId", functionId, "arguments", arguments));
+        }
         if ("if_state_equals".equals(op) || "ifstateequals".equals(op)) {
             if (values.size() < 2 || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
             List<CreatorRuntimeBlock> thenBlocks = new ArrayList<>();
@@ -1479,6 +1526,8 @@ public final class CreatorLegacyArtifactImporter {
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("kind", "reporter");
             result.put("opCode", block.opCode.trim().toLowerCase(Locale.ROOT));
+            result.put("spec", block.spec == null ? "" : block.spec);
+            result.put("type", block.type == null ? "" : block.type);
             List<Object> arguments = new ArrayList<>();
             for (String argument : block.parameters == null ? Collections.<String>emptyList() : block.parameters) {
                 Map<String, Object> nested = expression(argument, byId, path);
@@ -1581,6 +1630,36 @@ public final class CreatorLegacyArtifactImporter {
     }
 
     private static boolean blank(String value) { return value == null || value.trim().isEmpty(); }
+
+    private static String moreBlockId(String value) {
+        if (value == null) return "";
+        String result = value.trim();
+        int space = result.indexOf(' ');
+        if (space >= 0) result = result.substring(0, space);
+        int bracket = result.indexOf('[');
+        if (bracket >= 0) result = result.substring(0, bracket);
+        return result.trim();
+    }
+
+    private static String moreBlockReturnType(String name) {
+        if (name == null) return "void";
+        int start = name.indexOf('[');
+        int end = name.lastIndexOf(']');
+        return start >= 0 && end > start ? name.substring(start + 1, end) : "void";
+    }
+
+    private static List<String> moreBlockArguments(String spec) {
+        List<String> arguments = new ArrayList<>();
+        if (spec == null) return arguments;
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("%[a-zA-Z][^\\s]*").matcher(spec);
+        while (matcher.find()) {
+            String token = matcher.group();
+            int dot = token.lastIndexOf('.');
+            String name = dot >= 0 && dot + 1 < token.length() ? token.substring(dot + 1) : token.substring(2);
+            if (!blank(name)) arguments.add(name);
+        }
+        return arguments;
+    }
 
     private static boolean isSound(String source) {
         String value = source == null ? "" : source.toLowerCase(Locale.ROOT);

@@ -1,7 +1,9 @@
 package pro.sketchware.creator.runtime;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +12,7 @@ import java.util.UUID;
 /** Executes an attached event binding using only typed operations and visible effects. */
 public final class CreatorRuntimeExecutor {
     private static final int MAX_REPEAT_ITERATIONS = 10_000;
+    private static final int MAX_CUSTOM_FUNCTION_DEPTH = 64;
     public static final class Effect {
         private final String type;
         private final String value;
@@ -19,6 +22,8 @@ public final class CreatorRuntimeExecutor {
     }
 
     private final CreatorRuntimeServiceDispatcher runtimeServices;
+    private final Deque<Map<String, Object>> customFunctionFrames = new ArrayDeque<>();
+    private int customFunctionDepth;
 
     public CreatorRuntimeExecutor() { this(null); }
     public CreatorRuntimeExecutor(CreatorRuntimeServiceDispatcher runtimeServices) { this.runtimeServices = runtimeServices; }
@@ -133,6 +138,9 @@ public final class CreatorRuntimeExecutor {
                     }
                     effects.add(new Effect("runtime_service", serviceId + ":" + result.getStatus().name()));
                 }
+            } else if (block.getType() == CreatorRuntimeBlock.Type.CUSTOM_FUNCTION_CALL) {
+                invokeMoreBlock(engine, String.valueOf(payload.get("functionId")),
+                        expressionValues(payload.get("arguments"), engine), effects);
             } else if (block.getType() == CreatorRuntimeBlock.Type.IF_STATE_EQUALS) {
                 String stateId = String.valueOf(payload.get("stateId"));
                 Object actual = engine.getCurrent().getState().get(stateId);
@@ -236,6 +244,9 @@ public final class CreatorRuntimeExecutor {
         Object second = values.size() < 2 ? null : values.get(1);
         if ("true".equals(op)) return true;
         if ("false".equals(op)) return false;
+        if ("getarg".equals(op)) return currentCustomArgument(String.valueOf(expression.get("spec")));
+        if ("definedfunc".equals(op)) return invokeMoreBlock(engine, String.valueOf(expression.get("spec")), values,
+                new ArrayList<Effect>());
         if ("random".equals(op)) return randomInclusive(first, second);
         if ("not".equals(op)) return !booleanValue(first);
         if ("&&".equals(op)) return booleanValue(first) && booleanValue(second);
@@ -449,6 +460,68 @@ public final class CreatorRuntimeExecutor {
         CreatorRuntimeService.Result result = runtimeServices.dispatch("drawer",
                 CreatorRuntimeServiceArguments.output("action", "is_open"));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("value") : null;
+    }
+
+    private Object invokeMoreBlock(CreatorRuntimeEngine engine, String rawFunctionId, List<Object> values,
+                                   List<Effect> effects) {
+        String functionId = moreBlockId(rawFunctionId);
+        if (engine == null || functionId.isEmpty()) return null;
+        if (customFunctionDepth >= MAX_CUSTOM_FUNCTION_DEPTH) {
+            effects.add(new Effect("more_block", "depth_capped:" + functionId));
+            return null;
+        }
+        Object rawDefinitions = engine.getCurrent().getState().get("legacy.moreBlocks");
+        if (!(rawDefinitions instanceof Map)) return null;
+        Object rawDefinition = ((Map<?, ?>) rawDefinitions).get(functionId);
+        if (!(rawDefinition instanceof Map)) return null;
+        CreatorEventBinding binding = engine.getCurrent().getEvents().get("legacy_moreblock_" + functionId);
+        if (binding == null) return null;
+        @SuppressWarnings("unchecked") Map<String, Object> definition = (Map<String, Object>) rawDefinition;
+        Map<String, Object> frame = new LinkedHashMap<>();
+        Object rawArguments = definition.get("arguments");
+        if (rawArguments instanceof List) {
+            List<?> names = (List<?>) rawArguments;
+            for (int i = 0; i < names.size(); i++) frame.put(String.valueOf(names.get(i)),
+                    i < values.size() ? values.get(i) : defaultArgumentValue(definition.get("returnType")));
+        }
+        customFunctionDepth++;
+        customFunctionFrames.push(frame);
+        try {
+            executeBlocks(engine, binding.getBlocks(), effects);
+        } finally {
+            customFunctionFrames.pop();
+            customFunctionDepth--;
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object> expressionValues(Object raw, CreatorRuntimeEngine engine) {
+        if (!(raw instanceof List)) return Collections.emptyList();
+        List<Object> values = new ArrayList<>();
+        for (Object expression : (List<Object>) raw) values.add(evaluate(expression, engine));
+        return values;
+    }
+
+    private Object currentCustomArgument(String name) {
+        if (customFunctionFrames.isEmpty()) return null;
+        return customFunctionFrames.peek().get(name == null ? "" : name.trim());
+    }
+
+    private static Object defaultArgumentValue(Object returnType) {
+        String type = String.valueOf(returnType);
+        if ("boolean".equalsIgnoreCase(type) || "b".equalsIgnoreCase(type)) return false;
+        if ("double".equalsIgnoreCase(type) || "d".equalsIgnoreCase(type)) return 0d;
+        return "";
+    }
+
+    private static String moreBlockId(String value) {
+        if (value == null) return "";
+        String result = value.trim();
+        int space = result.indexOf(' ');
+        if (space >= 0) result = result.substring(0, space);
+        int bracket = result.indexOf('[');
+        return (bracket >= 0 ? result.substring(0, bracket) : result).trim();
     }
 
     private Object liveWidgetValue(CreatorRuntimeEngine engine, Object widgetId, String action,
