@@ -220,6 +220,35 @@ public class CreatorRuntimeExecutorTest {
         assertThat(profile).containsExactly("score", 3d);
     }
 
+    @Test public void evaluatesCanonicalStringAndMathReporterFamiliesWithoutGeneratedJava() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        Map<String, Object> substring = map("kind", "reporter", "opCode", "stringsub", "arguments", Arrays.asList(
+                map("kind", "literal", "value", "Creator"), map("kind", "literal", "value", "1"),
+                map("kind", "literal", "value", "4")));
+        Map<String, Object> power = map("kind", "reporter", "opCode", "mathpow", "arguments", Arrays.asList(
+                map("kind", "literal", "value", "2"), map("kind", "literal", "value", "3")));
+        Map<String, Object> replacement = map("kind", "reporter", "opCode", "stringreplace", "arguments", Arrays.asList(
+                map("kind", "literal", "value", "book"), map("kind", "literal", "value", "o"),
+                map("kind", "literal", "value", "a")));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "fragment", "expression", substring)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "power", "expression", power)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "replacement", "expression", replacement)));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState()).containsEntry("fragment", "rea");
+        assertThat(engine.getCurrent().getState()).containsEntry("power", 8d);
+        assertThat(engine.getCurrent().getState()).containsEntry("replacement", "baak");
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

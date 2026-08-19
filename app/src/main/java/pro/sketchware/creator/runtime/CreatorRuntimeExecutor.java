@@ -176,12 +176,53 @@ public final class CreatorRuntimeExecutor {
         if ("%".equals(op)) return decimal(second) == 0d ? 0d : decimal(first) % decimal(second);
         if ("stringlength".equals(op)) return first == null ? 0d : (double) String.valueOf(first).length();
         if ("stringjoin".equals(op)) return String.valueOf(first) + String.valueOf(second);
+        if ("stringindex".equals(op)) return second == null ? -1d : (double) String.valueOf(second).indexOf(String.valueOf(first));
+        if ("stringlastindex".equals(op)) return second == null ? -1d : (double) String.valueOf(second).lastIndexOf(String.valueOf(first));
+        if ("stringsub".equals(op)) {
+            String text = first == null ? "" : String.valueOf(first);
+            int start = boundedIndex(decimal(second), text.length());
+            int end = boundedIndex(decimal(values.size() < 3 ? null : values.get(2)), text.length());
+            return end < start ? "" : text.substring(start, end);
+        }
         if ("stringcontains".equals(op)) return first != null && String.valueOf(first).contains(String.valueOf(second));
+        if ("stringreplace".equals(op)) return String.valueOf(first).replace(String.valueOf(second), String.valueOf(values.size() < 3 ? "" : values.get(2)));
+        if ("stringreplacefirst".equals(op)) return String.valueOf(first).replaceFirst(String.valueOf(second), String.valueOf(values.size() < 3 ? "" : values.get(2)));
+        if ("stringreplaceall".equals(op)) return String.valueOf(first).replaceAll(String.valueOf(second), String.valueOf(values.size() < 3 ? "" : values.get(2)));
         if ("trim".equals(op)) return first == null ? "" : String.valueOf(first).trim();
         if ("touppercase".equals(op)) return first == null ? "" : String.valueOf(first).toUpperCase(java.util.Locale.ROOT);
         if ("tolowercase".equals(op)) return first == null ? "" : String.valueOf(first).toLowerCase(java.util.Locale.ROOT);
         if ("tonumber".equals(op)) return decimal(first);
+        if ("tostring".equals(op)) return String.valueOf((long) decimal(first));
+        if ("tostringwithdecimal".equals(op)) return String.valueOf(decimal(first));
+        if ("tostringformat".equals(op)) return new java.text.DecimalFormat(String.valueOf(second)).format(decimal(first));
+        if ("currenttime".equals(op)) return (double) System.currentTimeMillis();
+        if ("mathpi".equals(op)) return Math.PI;
+        if ("mathe".equals(op)) return Math.E;
+        if ("mathpow".equals(op)) return Math.pow(decimal(first), decimal(second));
+        if ("mathmin".equals(op)) return Math.min(decimal(first), decimal(second));
+        if ("mathmax".equals(op)) return Math.max(decimal(first), decimal(second));
+        if ("mathsqrt".equals(op)) return Math.sqrt(decimal(first));
+        if ("mathabs".equals(op)) return Math.abs(decimal(first));
+        if ("mathround".equals(op)) return (double) Math.round(decimal(first));
+        if ("mathceil".equals(op)) return Math.ceil(decimal(first));
+        if ("mathfloor".equals(op)) return Math.floor(decimal(first));
+        if ("mathsin".equals(op)) return Math.sin(decimal(first));
+        if ("mathcos".equals(op)) return Math.cos(decimal(first));
+        if ("mathtan".equals(op)) return Math.tan(decimal(first));
+        if ("mathasin".equals(op)) return Math.asin(decimal(first));
+        if ("mathacos".equals(op)) return Math.acos(decimal(first));
+        if ("mathatan".equals(op)) return Math.atan(decimal(first));
+        if ("mathexp".equals(op)) return Math.exp(decimal(first));
+        if ("mathlog".equals(op)) return Math.log(decimal(first));
+        if ("mathlog10".equals(op)) return Math.log10(decimal(first));
+        if ("mathtoradian".equals(op)) return Math.toRadians(decimal(first));
+        if ("mathtodegree".equals(op)) return Math.toDegrees(decimal(first));
         return null;
+    }
+
+    private static int boundedIndex(double value, int length) {
+        if (Double.isNaN(value)) return 0;
+        return Math.max(0, Math.min(length, (int) value));
     }
 
     private static boolean booleanValue(Object value) {
