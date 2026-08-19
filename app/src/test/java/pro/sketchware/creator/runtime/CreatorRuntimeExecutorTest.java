@@ -891,6 +891,38 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState()).containsEntry("downloads", "/storage/emulated/0/Download");
     }
 
+    @Test public void evaluatesIsDrawerOpenThroughRuntimeNativeDrawerService() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        final Map<String, Object> captured = new LinkedHashMap<>();
+        CreatorRuntimeService drawer = new CreatorRuntimeService() {
+            @Override public String getId() { return "drawer"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                captured.putAll(arguments);
+                return CreatorRuntimeServiceArguments.succeeded("value", true);
+            }
+        };
+        Map<String, Object> drawerOpen = map("kind", "reporter", "opCode", "isdraweropen",
+                "arguments", Collections.emptyList());
+        CreatorRuntimeBlock branch = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_BOOLEAN,
+                map("expression", drawerOpen), Collections.singletonList(new CreatorRuntimeBlock(
+                        CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "drawerState", "value", "open"))),
+                Collections.singletonList(new CreatorRuntimeBlock(
+                        CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "drawerState", "value", "closed"))));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click",
+                        "blocks", Collections.singletonList(branch))));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(drawer)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("drawerState")).isEqualTo("open");
+        assertThat(captured).containsEntry("action", "is_open");
+    }
+
     @Test public void evaluatesCanonicalLiveWidgetReportersThroughRuntimeNativeWidgetService() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
                 new CreatorRuntimeEventLog(20));

@@ -1,6 +1,7 @@
 [versions]
 activity = "1.11.0"
 appcompat = "1.7.1"
+drawerlayout = "1.2.0"
 desugar_jdk_libs_nio = "2.1.5"
 firebaseBom = "34.3.0"
 sora-editor = "0.23.5"
@@ -45,6 +46,7 @@ zipalignJava = "1.2.2"
 androidx-activity = { module = "androidx.activity:activity", version.ref = "activity" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "cardview" }
+androidx-drawerlayout = { module = "androidx.drawerlayout:drawerlayout", version.ref = "drawerlayout" }
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
 androidx-preference = { module = "androidx.preference:preference", version.ref = "preference" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }

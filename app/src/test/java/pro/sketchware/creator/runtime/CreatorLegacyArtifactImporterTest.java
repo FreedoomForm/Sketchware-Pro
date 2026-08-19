@@ -52,6 +52,46 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().canPreviewImmediately()).isFalse();
     }
 
+    @Test public void importsNativeDrawerOpenCloseActionsAndOpenStateReporterWithoutFallback() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean open = new BlockBean("1", "2", "", "openDrawer");
+        BlockBean close = new BlockBean("2", "", "", "closeDrawer");
+        Map<String, java.util.List<BlockBean>> actions = new LinkedHashMap<>();
+        actions.put(click.getEventKey(), Arrays.asList(open, close));
+
+        CreatorLegacyArtifactImporter.Result actionResult = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), actions);
+        java.util.List<CreatorRuntimeBlock> imported = actionResult.getDocument().getEvents()
+                .get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(2);
+        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL);
+        assertThat(imported.get(0).getPayload()).containsEntry("serviceId", "drawer");
+        @SuppressWarnings("unchecked") Map<String, Object> openArguments =
+                (Map<String, Object>) imported.get(0).getPayload().get("arguments");
+        @SuppressWarnings("unchecked") Map<String, Object> closeArguments =
+                (Map<String, Object>) imported.get(1).getPayload().get("arguments");
+        assertThat(openArguments).containsEntry("action", "open");
+        assertThat(closeArguments).containsEntry("action", "close");
+
+        BlockBean condition = new BlockBean("3", "", "", "if");
+        condition.parameters.add("@4");
+        condition.subStack1 = 5;
+        BlockBean reporter = new BlockBean("4", "", "", "isDrawerOpen");
+        BlockBean message = new BlockBean("5", "", "", "showMessage");
+        message.parameters.add("Open");
+        Map<String, java.util.List<BlockBean>> reporterBlocks = new LinkedHashMap<>();
+        reporterBlocks.put(click.getEventKey(), Arrays.asList(condition, reporter, message));
+        CreatorLegacyArtifactImporter.Result reporterResult = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), reporterBlocks);
+        CreatorRuntimeBlock importedCondition = reporterResult.getDocument().getEvents()
+                .get("legacy_button_onClick").getBlocks().get(0);
+        assertThat(importedCondition.getType()).isEqualTo(CreatorRuntimeBlock.Type.IF_BOOLEAN);
+        @SuppressWarnings("unchecked") Map<String, Object> expression =
+                (Map<String, Object>) importedCondition.getPayload().get("expression");
+        assertThat(expression).containsEntry("opCode", "isdraweropen");
+        assertThat(reporterResult.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsLegacyValueResourceFamiliesAsTypedVariantMetadata() {
         Map<String, String> values = new LinkedHashMap<>();
         values.put("values/strings.xml", "<resources><string name=\"title\">Creator</string></resources>");

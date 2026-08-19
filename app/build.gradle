@@ -102,6 +102,7 @@ dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar", "*.aar"])
 
     implementation libs.bundles.ui
+    implementation libs.androidx.drawerlayout
 
     implementation libs.bundles.image
 

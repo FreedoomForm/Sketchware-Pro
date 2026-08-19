@@ -18,6 +18,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
@@ -35,6 +37,7 @@ import pro.sketchware.R;
 import pro.sketchware.creator.runtime.CreatorApplyResult;
 import pro.sketchware.creator.runtime.CreatorCompatibilityReport;
 import pro.sketchware.creator.runtime.CreatorCompatibilityTier;
+import pro.sketchware.creator.runtime.CreatorDrawerService;
 import pro.sketchware.creator.runtime.CreatorEventBinding;
 import pro.sketchware.creator.runtime.CreatorLegacyArtifactImporter;
 import pro.sketchware.creator.runtime.CreatorMapService;
@@ -68,6 +71,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private CreatorRuntimeServiceDispatcher runtimeServices;
     private String activeScreenId;
     private final Map<String, MapView> liveMapViews = new LinkedHashMap<>();
+    private DrawerLayout liveDrawerLayout;
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(this::render);
     private static final String[] ENTRY_PLACEMENTS = {
             "bottom_end", "bottom_start", "top_end", "top_start", "center"
@@ -308,6 +312,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         CreatorProjectDocument document = session.getDocument();
         runtimeEnvironment.clearWidgets();
         disposeMapViews();
+        disposeDrawerLayout();
         revisionLabel.setText(getString(R.string.creator_revision_label, document.getRevision()));
         entryControl.setText(document.getEntryControl().getLabel());
         entryControl.setVisibility(document.getEntryControl().isVisible() ? View.VISIBLE : View.INVISIBLE);
@@ -318,7 +323,46 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 ? activeScreenId : document.getEntryScreenId();
         String rootId = document.getScreens().get(screenId).getRootWidgetId();
         View root = renderWidget(document, document.getWidgets().get(rootId));
-        if (root != null) previewCanvas.addView(root);
+        if (root != null) previewCanvas.addView(renderScreenShell(document, screenId, root));
+    }
+
+    private View renderScreenShell(CreatorProjectDocument document, String screenId, View mainContent) {
+        if (!hasDrawer(document, screenId)) return mainContent;
+        DrawerLayout drawer = new DrawerLayout(this);
+        drawer.addView(mainContent, new DrawerLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout drawerPane = new LinearLayout(this);
+        drawerPane.setOrientation(LinearLayout.VERTICAL);
+        drawerPane.setBackgroundColor(0xFFFFFFFF);
+        String drawerScreenId = "_drawer_" + screenId;
+        if (document.getScreens().containsKey(drawerScreenId)) {
+            View drawerContent = renderWidget(document,
+                    document.getWidgets().get(document.getScreens().get(drawerScreenId).getRootWidgetId()));
+            if (drawerContent != null) drawerPane.addView(drawerContent);
+        }
+        DrawerLayout.LayoutParams drawerParams = new DrawerLayout.LayoutParams(dp(304),
+                ViewGroup.LayoutParams.MATCH_PARENT, GravityCompat.START);
+        drawer.addView(drawerPane, drawerParams);
+        liveDrawerLayout = drawer;
+        CreatorRuntimeService service = runtimeServices == null ? null : runtimeServices.registered().get("drawer");
+        if (service instanceof CreatorDrawerService) ((CreatorDrawerService) service).register(drawer);
+        return drawer;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean hasDrawer(CreatorProjectDocument document, String screenId) {
+        Object rawIndex = document.getState().get("legacy.projectFileIndex");
+        if (!(rawIndex instanceof Map)) return false;
+        Object rawDescriptor = ((Map<?, ?>) rawIndex).get(screenId);
+        if (!(rawDescriptor instanceof Map)) return false;
+        Object enabled = ((Map<String, Object>) rawDescriptor).get("hasDrawer");
+        return enabled instanceof Boolean && (Boolean) enabled;
+    }
+
+    private void disposeDrawerLayout() {
+        liveDrawerLayout = null;
+        CreatorRuntimeService service = runtimeServices == null ? null : runtimeServices.registered().get("drawer");
+        if (service instanceof CreatorDrawerService) ((CreatorDrawerService) service).clear();
     }
 
     private void disposeMapViews() {

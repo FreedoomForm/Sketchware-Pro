@@ -841,6 +841,10 @@ public final class CreatorLegacyArtifactImporter {
             String action = "interstitialadcreate".equals(op) ? "create"
                     : "interstitialadloadad".equals(op) ? "load" : "show";
             return interstitialCall(values.get(0), action, componentDescriptors);
+        } else if ("opendrawer".equals(op) || "closedrawer".equals(op)) {
+            if (!values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("drawer", CreatorRuntimeServiceArguments.output(
+                    "action", "opendrawer".equals(op) ? "open" : "close"));
         } else if ("mapviewsetmaptype".equals(op)) {
             return mapCall(values, "set_map_type", 2, unsupported);
         } else if ("mapviewmovecamera".equals(op)) {

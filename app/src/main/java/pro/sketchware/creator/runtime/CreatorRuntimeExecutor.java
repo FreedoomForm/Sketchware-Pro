@@ -366,6 +366,7 @@ public final class CreatorRuntimeExecutor {
         if ("webviewcangoforward".equals(op)) return widgetQueryValue(first, "web_can_go_forward");
         if ("listgetcheckedposition".equals(op)) return widgetQueryValue(first, "list_checked_position");
         if ("listgetcheckedcount".equals(op)) return widgetQueryValue(first, "list_checked_count");
+        if ("isdraweropen".equals(op)) return booleanValue(drawerValue());
         if ("calendarviewgetdate".equals(op)) return decimal(liveWidgetValue(engine, first, "calendar_date", "date", 0d));
         if ("lengthlist".equals(op)) return (double) listValue(first).size();
         if ("getatlistint".equals(op) || "getatliststr".equals(op)) {
@@ -440,6 +441,13 @@ public final class CreatorRuntimeExecutor {
         if (runtimeServices == null || widgetId == null) return null;
         CreatorRuntimeService.Result result = runtimeServices.dispatch("widget",
                 CreatorRuntimeServiceArguments.output("widgetId", String.valueOf(widgetId), "action", action));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("value") : null;
+    }
+
+    private Object drawerValue() {
+        if (runtimeServices == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("drawer",
+                CreatorRuntimeServiceArguments.output("action", "is_open"));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("value") : null;
     }
 
