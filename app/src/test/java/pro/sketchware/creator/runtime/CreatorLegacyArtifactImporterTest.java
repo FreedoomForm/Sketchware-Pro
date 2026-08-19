@@ -716,6 +716,38 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsCanonicalSoundPoolBlocksAsRuntimeNativeMediaCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean create = new BlockBean("1", "", "", "soundpoolCreate");
+        create.parameters.add("soundPool1");
+        create.parameters.add("4");
+        BlockBean load = new BlockBean("2", "", "", "soundpoolLoad");
+        load.parameters.add("soundPool1");
+        load.parameters.add("click_sound");
+        BlockBean play = new BlockBean("3", "", "", "soundpoolStreamPlay");
+        play.parameters.add("soundPool1");
+        play.parameters.add("7");
+        play.parameters.add("0");
+        BlockBean stop = new BlockBean("4", "", "", "soundpoolStreamStop");
+        stop.parameters.add("soundPool1");
+        stop.parameters.add("11");
+        create.nextBlock = 2;
+        load.nextBlock = 3;
+        play.nextBlock = 4;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(create, load, play, stop));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "media", "sound_create");
+        assertServiceCall(imported.get(1), "media", "sound_load_name");
+        assertServiceCall(imported.get(2), "media", "sound_play_stream");
+        assertServiceCall(imported.get(3), "media", "sound_stop_stream");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

@@ -574,6 +574,22 @@ public final class CreatorLegacyArtifactImporter {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             return serviceCall("dialog", CreatorRuntimeServiceArguments.output(
                     "dialogId", values.get(0), "action", "progressdialogshow".equals(op) ? "show_progress" : "dismiss_progress"));
+        } else if ("soundpoolcreate".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("media", CreatorRuntimeServiceArguments.output(
+                    "id", values.get(0), "action", "sound_create", "maxStreams", values.get(1)));
+        } else if ("soundpoolload".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("media", CreatorRuntimeServiceArguments.output(
+                    "id", values.get(0), "action", "sound_load_name", "resourceName", values.get(1)));
+        } else if ("soundpoolstreamplay".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return serviceCall("media", CreatorRuntimeServiceArguments.output(
+                    "id", values.get(0), "action", "sound_play_stream", "soundId", values.get(1), "loop", values.get(2)));
+        } else if ("soundpoolstreamstop".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("media", CreatorRuntimeServiceArguments.output(
+                    "id", values.get(0), "action", "sound_stop_stream", "streamId", values.get(1)));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported);
