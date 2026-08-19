@@ -724,6 +724,11 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             try { view.setBackgroundColor(android.graphics.Color.parseColor(backgroundColor)); }
             catch (IllegalArgumentException ignored) { }
         }
+        String backgroundResource = propertyString(widget, "backgroundResource", "");
+        if (!backgroundResource.isEmpty()) {
+            int resourceId = getResources().getIdentifier(backgroundResource, "drawable", getPackageName());
+            if (resourceId != 0) view.setBackgroundResource(resourceId);
+        }
         if (view instanceof TextView) {
             TextView text = (TextView) view;
             String textColor = propertyString(widget, "textColor", "");
@@ -732,6 +737,13 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 catch (IllegalArgumentException ignored) { }
             }
             text.setTextSize(propertyFloat(widget, "textSize", text.getTextSize() / getResources().getDisplayMetrics().scaledDensity));
+        }
+        if (view instanceof EditText) {
+            String hintColor = propertyString(widget, "hintTextColor", "");
+            if (!hintColor.isEmpty()) {
+                try { ((EditText) view).setHintTextColor(android.graphics.Color.parseColor(hintColor)); }
+                catch (IllegalArgumentException ignored) { }
+            }
         }
     }
 
