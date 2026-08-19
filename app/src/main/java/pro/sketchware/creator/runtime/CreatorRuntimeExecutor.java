@@ -285,6 +285,7 @@ public final class CreatorRuntimeExecutor {
             Object right = calendarTimestamp(second);
             return left == null || right == null ? null : (double) (number(left) - number(right));
         }
+        if ("firebasegetpushkey".equals(op)) return firebaseValue(engine, first, "push_key", "key");
         if ("lengthlist".equals(op)) return (double) listValue(first).size();
         if ("getatlistint".equals(op) || "getatliststr".equals(op)) {
             return at(listValue(second), (int) decimal(first));
@@ -326,6 +327,26 @@ public final class CreatorRuntimeExecutor {
         CreatorRuntimeService.Result result = runtimeServices.dispatch("calendar",
                 CreatorRuntimeServiceArguments.output("componentId", String.valueOf(componentId), "action", "get_time"));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("timestamp") : null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object firebaseValue(CreatorRuntimeEngine engine, Object componentId, String action, String outputKey) {
+        if (runtimeServices == null || componentId == null) return null;
+        String id = String.valueOf(componentId);
+        String path = "";
+        Object rawComponents = engine.getCurrent().getState().get("legacy.components");
+        if (rawComponents instanceof Map) {
+            Object rawDescriptor = ((Map<?, ?>) rawComponents).get(id);
+            if (rawDescriptor instanceof Map) {
+                Object rawBase = ((Map<?, ?>) rawDescriptor).get("param1");
+                path = rawBase == null ? "" : String.valueOf(rawBase).trim();
+            }
+        }
+        while (path.startsWith("/")) path = path.substring(1);
+        while (path.endsWith("/")) path = path.substring(0, path.length() - 1);
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("firebase",
+                CreatorRuntimeServiceArguments.output("componentId", id, "action", action, "path", path));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
     }
 
     private static int boundedIndex(double value, int length) {

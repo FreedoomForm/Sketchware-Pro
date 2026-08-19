@@ -28,6 +28,9 @@ public final class CreatorFirebaseDatabaseService implements CreatorRuntimeServi
             return CreatorRuntimeServiceArguments.invalid("firebase requires action and a relative path.");
         }
         DatabaseReference reference = database.getReference(path);
+        if ("push_key".equals(action)) {
+            return CreatorRuntimeServiceArguments.succeeded("key", reference.push().getKey(), "path", path);
+        }
         if ("set".equals(action) || "update".equals(action)) {
             Object value = arguments.get("value");
             com.google.android.gms.tasks.Task<Void> task = "set".equals(action)

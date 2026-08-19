@@ -280,6 +280,37 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("diff")).isEqualTo(15_000d);
     }
 
+    @Test public void evaluatesFirebasePushKeyReporterThroughItsImportedComponentBasePath() {
+        final Map<String, Object> captured = new LinkedHashMap<>();
+        CreatorRuntimeService firebase = new CreatorRuntimeService() {
+            @Override public String getId() { return "firebase"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                captured.putAll(arguments);
+                return new Result(Status.SUCCEEDED, map("key", "generated-key"), null);
+            }
+        };
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 30,
+                new CreatorRuntimeEventLog(30));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("components", 2, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "legacy.components", "value", map("firebase1", map("param1", "/users/")))));
+        CreatorRuntimeBlock setKey = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                map("stateId", "pushKey", "expression", reporter("firebasegetpushkey", literal("firebase1"))));
+        engine.apply(op("event", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click",
+                        "blocks", Collections.singletonList(setKey))));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(firebase)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("pushKey")).isEqualTo("generated-key");
+        assertThat(captured).containsEntry("action", "push_key");
+        assertThat(captured).containsEntry("componentId", "firebase1");
+        assertThat(captured).containsEntry("path", "users");
+    }
+
     @Test public void assignsTypedNestedReporterResultToRuntimeState() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
                 new CreatorRuntimeEventLog(20));
