@@ -486,6 +486,31 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("speaking")).isEqualTo(true);
     }
 
+    @Test public void evaluatesWebViewUrlAndCalendarViewDateFromTypedWidgetProperties() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("widget", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "widget", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("url", 2, CreatorProjectOperation.Type.WIDGET_SET_PROPERTY,
+                map("widgetId", "widget", "property", "url", "value", "https://example.test/path")));
+        engine.apply(op("date", 3, CreatorProjectOperation.Type.WIDGET_SET_PROPERTY,
+                map("widgetId", "widget", "property", "date", "value", 123456789L)));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "url", "expression", reporter("webviewgeturl", literal("widget")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "date", "expression", reporter("calendarviewgetdate", literal("widget")))));
+        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "widget_click", "targetWidgetId", "widget", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "widget", "click");
+
+        assertThat(engine.getCurrent().getState().get("url")).isEqualTo("https://example.test/path");
+        assertThat(engine.getCurrent().getState().get("date")).isEqualTo(123456789d);
+    }
+
     @Test public void assignsTypedNestedReporterResultToRuntimeState() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
                 new CreatorRuntimeEventLog(20));

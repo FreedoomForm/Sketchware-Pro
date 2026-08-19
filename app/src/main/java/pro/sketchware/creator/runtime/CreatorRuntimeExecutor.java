@@ -307,6 +307,8 @@ public final class CreatorRuntimeExecutor {
         if ("seekbargetmax".equals(op)) return decimal(widgetValue(engine, first, "max", 100d));
         if ("seekbargetprogress".equals(op)) return decimal(widgetValue(engine, first, "progress", 0d));
         if ("spngetselection".equals(op)) return decimal(widgetValue(engine, first, "selectedIndex", 0d));
+        if ("webviewgeturl".equals(op)) return String.valueOf(widgetValue(engine, first, "url", ""));
+        if ("calendarviewgetdate".equals(op)) return decimal(widgetValue(engine, first, "date", 0d));
         if ("lengthlist".equals(op)) return (double) listValue(first).size();
         if ("getatlistint".equals(op) || "getatliststr".equals(op)) {
             return at(listValue(second), (int) decimal(first));
