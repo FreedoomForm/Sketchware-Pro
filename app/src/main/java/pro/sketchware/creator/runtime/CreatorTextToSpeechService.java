@@ -19,6 +19,9 @@ public final class CreatorTextToSpeechService implements CreatorRuntimeService, 
 
     @Override public Result execute(Map<String, Object> arguments) {
         String action = CreatorRuntimeServiceArguments.string(arguments, "action");
+        if ("is_speaking".equals(action)) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ready && textToSpeech.isSpeaking());
+        }
         if ("set_pitch".equals(action) || "set_rate".equals(action)) {
             if (!ready) return CreatorRuntimeServiceArguments.failed("Text-to-speech is still initializing.");
             try {

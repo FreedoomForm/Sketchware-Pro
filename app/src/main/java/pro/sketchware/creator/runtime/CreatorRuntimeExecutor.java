@@ -291,6 +291,7 @@ public final class CreatorRuntimeExecutor {
         }
         if ("firebasegetpushkey".equals(op)) return firebaseValue(engine, first, "push_key", "key");
         if ("objectanimatorisrunning".equals(op)) return animatorValue(first, "is_running", "value");
+        if ("texttospeechisspeaking".equals(op)) return textToSpeechValue(first, "is_speaking", "value");
         if ("getresstr".equals(op)) return CreatorRuntimeResourceValues.resolveString(engine.getCurrent(),
                 "@string/" + literalName(rawArguments, first));
         if ("getvar".equals(op)) return engine.getCurrent().getState().get(literalName(rawArguments, first));
@@ -362,6 +363,13 @@ public final class CreatorRuntimeExecutor {
     private Object animatorValue(Object componentId, String action, String outputKey) {
         if (runtimeServices == null || componentId == null) return null;
         CreatorRuntimeService.Result result = runtimeServices.dispatch("animator",
+                CreatorRuntimeServiceArguments.output("componentId", String.valueOf(componentId), "action", action));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
+    }
+
+    private Object textToSpeechValue(Object componentId, String action, String outputKey) {
+        if (runtimeServices == null || componentId == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("text_to_speech",
                 CreatorRuntimeServiceArguments.output("componentId", String.valueOf(componentId), "action", action));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
     }
