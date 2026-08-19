@@ -147,6 +147,24 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(1);
     }
 
+    @Test public void importsComponentEventAsRuntimeBindingWithoutWidgetReference() {
+        ComponentBean camera = new ComponentBean(ComponentBean.COMPONENT_TYPE_CAMERA, "camera1");
+        EventBean captured = new EventBean(EventBean.EVENT_TYPE_COMPONENT, ComponentBean.COMPONENT_TYPE_CAMERA,
+                "camera1", "onPictureTaken");
+        BlockBean message = new BlockBean("1", "", "", "showMessage");
+        message.parameters.add("Captured");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(captured.getEventKey(), Collections.singletonList(message));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.singletonList(camera), Collections.singletonList(captured), blocks);
+
+        assertThat(result.getDocument().getEvents()).containsKey("legacy_camera1_onPictureTaken");
+        assertThat(result.getDocument().getEvents().get("legacy_camera1_onPictureTaken").getTargetWidgetId())
+                .isEqualTo("camera1");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsLegacyServiceOpcodesWithStructuredArguments() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean request = new BlockBean("1", "", "", "requestnetworkStartRequestNetwork");

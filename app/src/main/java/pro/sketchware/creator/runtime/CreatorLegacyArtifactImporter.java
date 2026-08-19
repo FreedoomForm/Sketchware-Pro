@@ -77,22 +77,18 @@ public final class CreatorLegacyArtifactImporter {
                         "Unsupported legacy block opcodes: " + String.join(", ", blocks.unsupported) + ".");
                 continue;
             }
-            if (!base.getWidgets().containsKey(event.targetId)) {
-                Map<String, Object> descriptor = new LinkedHashMap<>();
-                descriptor.put("eventType", event.eventType);
-                descriptor.put("targetId", event.targetId);
-                descriptor.put("eventName", normalizeEventName(event.eventName));
-                descriptor.put("blockCount", blocks.converted.size());
-                deferredEvents.put(eventKey, descriptor);
-                report.add(eventKey, "EventBean", CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
-                        "Imported as a runtime service or activity event descriptor.");
-                continue;
-            }
             String bindingId = "legacy_" + eventKey;
             bindings.put(bindingId, new CreatorEventBinding(bindingId, event.targetId,
                     normalizeEventName(event.eventName), blocks.converted));
+            Map<String, Object> descriptor = new LinkedHashMap<>();
+            descriptor.put("eventType", event.eventType);
+            descriptor.put("targetType", event.targetType);
+            descriptor.put("targetId", event.targetId);
+            descriptor.put("eventName", normalizeEventName(event.eventName));
+            descriptor.put("blockCount", blocks.converted.size());
+            deferredEvents.put(eventKey, descriptor);
             report.add(eventKey, "EventBean", CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
-                    "Imported as a typed Creator Runtime event binding.");
+                    "Imported as a typed Creator Runtime event binding for view, component, activity, or drawer target.");
         }
         state.put("legacy.deferredEvents", deferredEvents);
         return new Result(base.withRuntimeState(base.getRevision(), state, bindings), report);
