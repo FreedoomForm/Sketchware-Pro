@@ -90,8 +90,8 @@ public final class CreatorLegacyViewImporter {
             case ViewBean.VIEW_TYPE_WIDGET_CALENDARVIEW: return "calendar_view";
             case ViewBean.VIEW_TYPE_WIDGET_FAB: return "fab";
             case ViewBean.VIEW_TYPE_WIDGET_WEBVIEW:
-            case ViewBean.VIEW_TYPE_WIDGET_MAPVIEW:
             case ViewBeans.VIEW_TYPE_WIDGET_YOUTUBEPLAYERVIEW: return "web";
+            case ViewBean.VIEW_TYPE_WIDGET_MAPVIEW: return "map";
             case ViewBeans.VIEW_TYPE_WIDGET_VIDEOVIEW: return "video";
             case ViewBeans.VIEW_TYPE_WIDGET_LOTTIEANIMATIONVIEW: return "lottie";
             case ViewBean.VIEW_TYPE_WIDGET_ADVIEW: return "ad_banner";

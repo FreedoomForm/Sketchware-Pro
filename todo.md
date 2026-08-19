@@ -75,5 +75,6 @@
 - [ ] After every verified runtime batch, create a focused local commit and periodically push accumulated commits to the configured GitHub remote; record push failures without stopping local preservation.
 - [x] Configure the `origin` remote for `ozodbekasilbekov2-gif/Sketchware-Pro` and validate the initial push of the `creator-runtime` branch.
 - [x] Commit and push the currently verified runtime-native Ads batch before importing external skills.
-- [ ] Read the Manus skill-creation workflow and assess the requested external skills repository for compatible, safe skill packages.
-- [ ] Import only compatible skills using the required Manus skill structure and validate each imported package.
+- [x] Read the Manus skill-creation workflow and assess the requested external skills repository for compatible, safe skill packages.
+- [x] Import all 35 compatible skills using the required Manus skill structure and validate each imported package.
+- [x] Add a typed runtime-native Google Maps renderer and allow-listed MapView action service with full legacy action import coverage.

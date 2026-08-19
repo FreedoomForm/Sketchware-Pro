@@ -655,6 +655,49 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyMapViewActionsAsTypedRuntimeNativeCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        String[] opcodes = {"mapViewSetMapType", "mapViewMoveCamera", "mapViewZoomTo", "mapViewZoomIn",
+                "mapViewZoomOut", "mapViewAddMarker", "mapViewSetMarkerInfo", "mapViewSetMarkerPosition",
+                "mapViewSetMarkerColor", "mapViewSetMarkerIcon", "mapViewSetMarkerVisible"};
+        String[] actions = {"set_map_type", "move_camera", "zoom_to", "zoom_in", "zoom_out", "add_marker",
+                "set_marker_info", "set_marker_position", "set_marker_color", "set_marker_icon", "set_marker_visible"};
+        java.util.List<BlockBean> chain = new java.util.ArrayList<>();
+        for (int index = 0; index < opcodes.length; index++) {
+            BlockBean block = new BlockBean(String.valueOf(index + 1), "", "", opcodes[index]);
+            block.parameters.add("map");
+            if (index == 0) block.parameters.add("MAP_TYPE_SATELLITE");
+            else if (index == 1) { block.parameters.add("41.2"); block.parameters.add("69.3"); }
+            else if (index == 2) block.parameters.add("11");
+            else if (index >= 5 && index <= 10) {
+                block.parameters.add("marker");
+                if (index == 5 || index == 7) { block.parameters.add("41.2"); block.parameters.add("69.3"); }
+                else if (index == 6) { block.parameters.add("Title"); block.parameters.add("Snippet"); }
+                else if (index == 8) { block.parameters.add("HUE_RED"); block.parameters.add("0.7"); }
+                else if (index == 9) block.parameters.add("Pin.9");
+                else block.parameters.add("true");
+            }
+            if (index + 1 < opcodes.length) block.nextBlock = index + 2;
+            chain.add(block);
+        }
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), chain);
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents()
+                .get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(actions.length);
+        for (int index = 0; index < actions.length; index++) assertServiceCall(imported.get(index), "map", actions[index]);
+        @SuppressWarnings("unchecked") Map<String, Object> move = (Map<String, Object>) imported.get(1).getPayload().get("arguments");
+        @SuppressWarnings("unchecked") Map<String, Object> icon = (Map<String, Object>) imported.get(9).getPayload().get("arguments");
+        assertThat(move).containsEntry("latitude", "41.2");
+        assertThat(move).containsEntry("longitude", "69.3");
+        assertThat(icon).containsEntry("resourceName", "pin");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsLegacyMapListInsertAndGetWithCanonicalArgumentOrder() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean insert = new BlockBean("1", "", "", "insertMapToList");

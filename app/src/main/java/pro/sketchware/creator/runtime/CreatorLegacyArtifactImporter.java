@@ -841,6 +841,28 @@ public final class CreatorLegacyArtifactImporter {
             String action = "interstitialadcreate".equals(op) ? "create"
                     : "interstitialadloadad".equals(op) ? "load" : "show";
             return interstitialCall(values.get(0), action, componentDescriptors);
+        } else if ("mapviewsetmaptype".equals(op)) {
+            return mapCall(values, "set_map_type", 2, unsupported);
+        } else if ("mapviewmovecamera".equals(op)) {
+            return mapCall(values, "move_camera", 3, unsupported);
+        } else if ("mapviewzoomto".equals(op)) {
+            return mapCall(values, "zoom_to", 2, unsupported);
+        } else if ("mapviewzoomin".equals(op)) {
+            return mapCall(values, "zoom_in", 1, unsupported);
+        } else if ("mapviewzoomout".equals(op)) {
+            return mapCall(values, "zoom_out", 1, unsupported);
+        } else if ("mapviewaddmarker".equals(op)) {
+            return mapCall(values, "add_marker", 4, unsupported);
+        } else if ("mapviewsetmarkerinfo".equals(op)) {
+            return mapCall(values, "set_marker_info", 4, unsupported);
+        } else if ("mapviewsetmarkerposition".equals(op)) {
+            return mapCall(values, "set_marker_position", 4, unsupported);
+        } else if ("mapviewsetmarkercolor".equals(op)) {
+            return mapCall(values, "set_marker_color", 4, unsupported);
+        } else if ("mapviewsetmarkericon".equals(op)) {
+            return mapCall(values, "set_marker_icon", 3, unsupported);
+        } else if ("mapviewsetmarkervisible".equals(op)) {
+            return mapCall(values, "set_marker_visible", 3, unsupported);
         } else if ("objectanimatorsettarget".equals(op)) {
             return animatorCall(block, values, "set_target", 2, unsupported);
         } else if ("objectanimatorsetproperty".equals(op)) {
@@ -1392,6 +1414,29 @@ public final class CreatorLegacyArtifactImporter {
             if (unitId != null && !String.valueOf(unitId).trim().isEmpty()) arguments.put("adUnitId", String.valueOf(unitId));
         }
         return serviceCall("ads_interstitial", arguments);
+    }
+
+    private static CreatorRuntimeBlock mapCall(List<String> values, String action, int required,
+                                               List<String> unsupported) {
+        if (values.size() < required || blank(values.get(0))) { unsupported.add("map " + action); return null; }
+        Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("widgetId", values.get(0));
+        arguments.put("action", action);
+        if ("set_map_type".equals(action)) arguments.put("mapType", values.get(1));
+        else if ("move_camera".equals(action)) { arguments.put("latitude", values.get(1)); arguments.put("longitude", values.get(2)); }
+        else if ("zoom_to".equals(action)) arguments.put("zoom", values.get(1));
+        else if ("add_marker".equals(action) || "set_marker_position".equals(action)) {
+            arguments.put("markerId", values.get(1)); arguments.put("latitude", values.get(2)); arguments.put("longitude", values.get(3));
+        } else if ("set_marker_info".equals(action)) {
+            arguments.put("markerId", values.get(1)); arguments.put("title", values.get(2)); arguments.put("snippet", values.get(3));
+        } else if ("set_marker_color".equals(action)) {
+            arguments.put("markerId", values.get(1)); arguments.put("color", values.get(2)); arguments.put("alpha", values.get(3));
+        } else if ("set_marker_icon".equals(action)) {
+            arguments.put("markerId", values.get(1)); arguments.put("resourceName", values.get(2).replace(".9", "").toLowerCase(Locale.ROOT));
+        } else if ("set_marker_visible".equals(action)) {
+            arguments.put("markerId", values.get(1)); arguments.put("visible", values.get(2));
+        }
+        return serviceCall("map", arguments);
     }
 
     private static CreatorRuntimeBlock calendarCall(String componentId, String action, String key, String value) {

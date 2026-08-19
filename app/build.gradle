@@ -1,0 +1,220 @@
+def secrets = System.getenv("GOOGLE_SERVICES_JSON")
+
+apply plugin: "com.android.application"
+apply plugin: "kotlin-android"
+apply plugin: "com.google.gms.google-services"
+apply plugin: "com.google.firebase.crashlytics"
+
+android {
+    compileSdk = 36
+
+    def gitCommitHash = "git rev-parse HEAD".execute().text.trim()
+    def shortCommitHash = "git rev-parse --short HEAD".execute().text.trim()
+
+    defaultConfig {
+        applicationId = "pro.sketchware"
+        namespace = "pro.sketchware"
+        //noinspection ExpiredTargetSdkVersion since we don't target getting Sketchware Pro on Google Play.
+        targetSdk = 28
+        minSdk = 26
+        versionCode = 178
+        versionName = "v7.0.5+c7d27af"
+
+        buildConfigField("String", "GIT_HASH", "\"${gitCommitHash}\"")
+
+        buildConfigField("String", "SKETCHUB_API_KEY", "\"${System.getenv("SKETCHUB_API_KEY")}\"")
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.debug
+        }
+    }
+
+    packagingOptions {
+        resources.excludes += "license/*"
+        resources.excludes += "META-INF/DEPENDENCIES"
+        resources.pickFirsts += "api_database/*"
+    }
+
+    compileOptions {
+        coreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    androidResources {
+        additionalParameters.addAll("--stable-ids", "${rootDir}/public-stable-ids.txt")
+    }
+
+    signingConfigs {
+        debug {
+            storeFile = file("../testkey.keystore")
+            storePassword = "testkey"
+            keyAlias = "testkey"
+            keyPassword = "testkey"
+        }
+    }
+
+    buildFeatures {
+        viewBinding = true
+        buildConfig = true
+    }
+
+    testOptions {
+        unitTests {
+            // includeAndroidResources = true pulls in the full Android resource
+            // pipeline for unit tests (slow on CI: ~5-10 min). None of our JVM
+            // unit tests actually use Robolectric or read Android resources,
+            // so we disable it for speed. MockWebServer-based provider tests
+            // also work without it.
+            includeAndroidResources = false
+            returnDefaultValues = true
+        }
+    }
+
+    configurations.implementation {
+        exclude group: 'javax.inject', module: 'javax.inject'
+        exclude group: "org.jetbrains.kotlin", module: "kotlin-scripting-compiler-embeddable"
+        exclude group: "org.jetbrains.kotlin", module: "kotlin-scripting-common"
+        exclude group: "org.jetbrains.kotlin", module: "kotlin-scripting-jvm"
+        exclude group: "org.jetbrains.kotlin", module: "kotlin-script-runtime"
+    }
+}
+
+// Pin okhttp to 4.12.0: Cosmic-Ide:DependencyResolver pulls in okhttp 5.0.0-alpha.16
+// via okhttp-android, which is API-incompatible with our HttpClient + MockWebServer 4.12.0
+// (okhttp3.internal.Util moved in 5.x). Force 4.12.0 across all configurations.
+configurations.all {
+    resolutionStrategy {
+        force "com.squareup.okhttp3:okhttp:4.12.0"
+        force "com.squareup.okhttp3:okhttp-android:4.12.0"
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar", "*.aar"])
+
+    implementation libs.bundles.ui
+
+    implementation libs.bundles.image
+
+    implementation platform(libs.sora.editor)
+    implementation libs.bundles.editor.and.lang
+
+    implementation libs.bundles.coil
+
+    implementation libs.bundles.bundletool
+    implementation(libs.sdklib) {
+        exclude group: "com.intellij", module: "annotations"
+    }
+
+    implementation libs.bundles.shrinker
+    implementation libs.zipalign.java
+
+    implementation libs.gson
+    implementation libs.scpkix.jdk15on
+
+    implementation libs.markwon
+
+    implementation libs.bundles.networking
+
+    implementation libs.ecj
+    implementation libs.stax.api
+
+    implementation libs.bundles.kotlin.compiler
+    compileOnly libs.kotlin.compiler
+
+    implementation libs.dependencyresolver
+    implementation libs.filepicker
+
+    implementation libs.libsu
+    implementation libs.insetter
+
+    implementation(libs.javaparser.symbol.solver) {
+        exclude group: "com.google.guava", module: "guava"
+    }
+
+    implementation platform(libs.firebase.bom)
+    implementation libs.bundles.firebase
+    implementation libs.google.play.services.maps
+
+    coreLibraryDesugaring libs.desugar.jdk.libs.nio
+
+    // ---- Test dependencies (added for AI integration tests) ----
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'com.google.truth:truth:1.4.4'
+    testImplementation 'androidx.test:core:1.6.1'
+    testImplementation 'androidx.test.ext:junit:1.2.1'
+    testImplementation 'org.json:json:20240303'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1'
+
+    androidTestImplementation 'androidx.test:core:1.6.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.6.1'
+    androidTestImplementation 'androidx.fragment:fragment-testing:1.8.5'
+    androidTestImplementation 'com.google.truth:truth:1.4.4'
+    androidTestImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+}
+
+tasks.register('createMockGoogleServices') {
+    doLast {
+        if (secrets != null) {
+            new File("$projectDir/google-services.json").text = secrets
+            return
+        }
+        // Generate mock google-services.json for BOTH debug and release flavors.
+        // The Google Services plugin searches src/<flavor>/google-services.json
+        // (e.g. src/release/google-services.json) per variant, so a single
+        // src/debug/ file is insufficient when assembleRelease is invoked.
+        def mockContent = """{
+  "project_info": {
+    "project_number": "123456789000",
+    "firebase_url": "https://mock-project-default-rtdb.firebaseio.com",
+    "project_id": "mock-project",
+    "storage_bucket": "mock-project.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123456789000:android:mockappid123456",
+        "android_client_info": {
+          "package_name": "${android.defaultConfig.applicationId}"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "mock_AIzaSyBQJCUXVKUjD38-u5pWkqMtesIfFvxAcvs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}"""
+        ['debug', 'release'].each { flavor ->
+            def mockFile = file("src/${flavor}/google-services.json")
+            if (!mockFile.exists()) {
+                mockFile.parentFile.mkdirs()
+                mockFile.text = mockContent
+            }
+        }
+    }
+}
+
+preBuild.dependsOn createMockGoogleServices

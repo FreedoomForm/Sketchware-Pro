@@ -21,6 +21,7 @@ public final class CreatorRuntimeServices {
                 .register(new CreatorDialogService(environment))
                 .register(new CreatorNetworkService(environment))
                 .register(new CreatorWidgetQueryService(environment))
+                .register(new CreatorMapService(environment))
                 .register(new CreatorDeviceMetricsService(environment))
                 .register(new CreatorAnimatorService(environment))
                 .register(new CreatorDatePickerService(environment))

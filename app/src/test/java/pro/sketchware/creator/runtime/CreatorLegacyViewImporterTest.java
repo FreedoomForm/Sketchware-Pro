@@ -50,6 +50,17 @@ public class CreatorLegacyViewImporterTest {
         assertThat(result.getReport().canPreviewImmediately()).isTrue();
     }
 
+    @Test public void importsLegacyMapViewIntoNativeRuntimeMapRenderer() {
+        ViewBean map = new ViewBean("map", ViewBean.VIEW_TYPE_WIDGET_MAPVIEW);
+
+        CreatorLegacyViewImporter.Result result = new CreatorLegacyViewImporter().importLayout(
+                "project", "Imported", "main", "/", Arrays.asList(map));
+
+        assertThat(result.getDocument().getWidgets().get("map").getType()).isEqualTo("map");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(1);
+        assertThat(result.getReport().canPreviewImmediately()).isTrue();
+    }
+
     @Test public void preservesLegacyTextFontStyleAndResourceColorProperties() {
         ViewBean title = new ViewBean("title", ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW);
         title.text.text = "Creator";

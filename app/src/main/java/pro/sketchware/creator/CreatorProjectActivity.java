@@ -12,6 +12,8 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.MapView;
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
@@ -35,11 +37,14 @@ import pro.sketchware.creator.runtime.CreatorCompatibilityReport;
 import pro.sketchware.creator.runtime.CreatorCompatibilityTier;
 import pro.sketchware.creator.runtime.CreatorEventBinding;
 import pro.sketchware.creator.runtime.CreatorLegacyArtifactImporter;
+import pro.sketchware.creator.runtime.CreatorMapService;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectOperation;
 import pro.sketchware.creator.runtime.CreatorRuntimeCompatibilityInspector;
 import pro.sketchware.creator.runtime.CreatorRuntimeEnvironment;
 import pro.sketchware.creator.runtime.CreatorRuntimeExecutor;
+import pro.sketchware.creator.runtime.CreatorRuntimeService;
+import pro.sketchware.creator.runtime.CreatorRuntimeServiceDispatcher;
 import pro.sketchware.creator.runtime.CreatorRuntimeResourceResolver;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 import pro.sketchware.creator.runtime.CreatorRuntimeServices;
@@ -60,7 +65,9 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private CreatorShakeRecovery shakeRecovery;
     private CreatorRuntimeEnvironment runtimeEnvironment;
     private CreatorRuntimeExecutor runtimeExecutor;
+    private CreatorRuntimeServiceDispatcher runtimeServices;
     private String activeScreenId;
+    private final Map<String, MapView> liveMapViews = new LinkedHashMap<>();
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(this::render);
     private static final String[] ENTRY_PLACEMENTS = {
             "bottom_end", "bottom_start", "top_end", "top_start", "center"
@@ -72,10 +79,11 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         session = CreatorRuntimeSession.get(this);
         runtimeEnvironment = new CreatorRuntimeEnvironment(this, (serviceId, eventName, payload) ->
                 runOnUiThread(() -> handleRuntimeServiceEvent(serviceId, eventName, payload)));
-        runtimeExecutor = new CreatorRuntimeExecutor(CreatorRuntimeServices.defaults(this,
+        runtimeServices = CreatorRuntimeServices.defaults(this,
                 session.getDocument().getProjectId(), runtimeEnvironment,
                 timerId -> runtimeEnvironment.publish("timer", "tick",
-                        java.util.Collections.<String, Object>singletonMap("timerId", timerId))));
+                        java.util.Collections.<String, Object>singletonMap("timerId", timerId)));
+        runtimeExecutor = new CreatorRuntimeExecutor(runtimeServices);
         previewCanvas = findViewById(R.id.creator_preview_canvas);
         revisionLabel = findViewById(R.id.creator_revision_label);
         entryControl = findViewById(R.id.creator_project_entry_control);
@@ -98,6 +106,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     @Override protected void onResume() {
         super.onResume();
         session.addListener(documentListener);
+        for (MapView map : liveMapViews.values()) map.onResume();
         if (shakeRecovery != null) shakeRecovery.start();
         render();
         dispatchLifecycleEvent("resume");
@@ -105,6 +114,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
 
     @Override protected void onPause() {
         dispatchLifecycleEvent("pause");
+        for (MapView map : liveMapViews.values()) map.onPause();
         session.removeListener(documentListener);
         if (shakeRecovery != null) shakeRecovery.stop();
         super.onPause();
@@ -112,6 +122,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
 
     @Override protected void onDestroy() {
         dispatchLifecycleEvent("destroy");
+        disposeMapViews();
         super.onDestroy();
     }
 
@@ -296,6 +307,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private void render() {
         CreatorProjectDocument document = session.getDocument();
         runtimeEnvironment.clearWidgets();
+        disposeMapViews();
         revisionLabel.setText(getString(R.string.creator_revision_label, document.getRevision()));
         entryControl.setText(document.getEntryControl().getLabel());
         entryControl.setVisibility(document.getEntryControl().isVisible() ? View.VISIBLE : View.INVISIBLE);
@@ -307,6 +319,14 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         String rootId = document.getScreens().get(screenId).getRootWidgetId();
         View root = renderWidget(document, document.getWidgets().get(rootId));
         if (root != null) previewCanvas.addView(root);
+    }
+
+    private void disposeMapViews() {
+        for (MapView map : liveMapViews.values()) {
+            map.onPause();
+            map.onDestroy();
+        }
+        liveMapViews.clear();
     }
 
     private View renderWidget(CreatorProjectDocument document, CreatorWidget widget) {
@@ -556,6 +576,15 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             if (!url.startsWith("http://") && !url.startsWith("https://")) url = "about:blank";
             web.loadUrl(url);
             return registerRuntimeWidget(widget, web);
+        }
+        if ("map".equals(widget.getType())) {
+            MapView map = new MapView(this);
+            map.onCreate(null);
+            map.onResume();
+            liveMapViews.put(widget.getId(), map);
+            CreatorRuntimeService service = runtimeServices == null ? null : runtimeServices.registered().get("map");
+            if (service instanceof CreatorMapService) ((CreatorMapService) service).register(widget.getId(), map);
+            return registerRuntimeWidget(widget, map);
         }
         if ("video".equals(widget.getType())) {
             android.widget.VideoView video = new android.widget.VideoView(this);
