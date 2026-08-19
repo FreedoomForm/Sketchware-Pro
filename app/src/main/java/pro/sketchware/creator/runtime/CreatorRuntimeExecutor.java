@@ -63,6 +63,8 @@ public final class CreatorRuntimeExecutor {
                 double next = number(current) + number(payload.get("delta"));
                 Object normalized = next == Math.rint(next) ? (long) next : next;
                 apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", stateId, "value", normalized));
+            } else if (block.getType() == CreatorRuntimeBlock.Type.DATA_OPERATION) {
+                executeDataOperation(engine, payload, effects);
             } else if (block.getType() == CreatorRuntimeBlock.Type.SHOW_MESSAGE) {
                 effects.add(new Effect("message", String.valueOf(payload.get("message"))));
             } else if (block.getType() == CreatorRuntimeBlock.Type.NAVIGATE) {
@@ -100,6 +102,70 @@ public final class CreatorRuntimeExecutor {
             if (context.steps > MAX_EXECUTION_STEPS) return false;
         }
         return false;
+    }
+
+    private void executeDataOperation(CreatorRuntimeEngine engine, Map<String, Object> payload, List<Effect> effects) {
+        String operation = String.valueOf(payload.get("operation"));
+        Map<String, Object> state = engine.getCurrent().getState();
+        String target = reference(String.valueOf(payload.get("target")));
+        Object current = state.get(target);
+        if ("map_create".equals(operation)) {
+            apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", target, "value", new LinkedHashMap<String, Object>()));
+            return;
+        }
+        if ("map_put".equals(operation) || "map_remove".equals(operation)) {
+            if (!(current instanceof Map)) { effects.add(new Effect("runtime_error", operation + " requires a map")); return; }
+            Map<String, Object> next = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) current).entrySet()) next.put(String.valueOf(entry.getKey()), entry.getValue());
+            String key = String.valueOf(resolveDataValue(payload.get("key"), state));
+            if ("map_put".equals(operation)) next.put(key, resolveDataValue(payload.get("value"), state));
+            else next.remove(key);
+            apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", target, "value", next));
+            return;
+        }
+        if ("clear".equals(operation)) {
+            if (current instanceof Map) current = new LinkedHashMap<>((Map<?, ?>) current);
+            else if (current instanceof List) current = new ArrayList<>((List<?>) current);
+            else { effects.add(new Effect("runtime_error", "clear requires a map or list")); return; }
+            ((java.util.Collection<?>) current).clear();
+            apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", target, "value", current));
+            return;
+        }
+        if ("list_add".equals(operation) || "list_insert".equals(operation) || "list_delete".equals(operation)) {
+            if (!(current instanceof List)) { effects.add(new Effect("runtime_error", operation + " requires a list")); return; }
+            List<Object> next = new ArrayList<>((List<?>) current);
+            if ("list_add".equals(operation)) next.add(resolveDataValue(payload.get("value"), state));
+            else {
+                int index = (int) number(resolveDataValue(payload.get("index"), state));
+                if (index < 0 || index > next.size() || ("list_delete".equals(operation) && index >= next.size())) {
+                    effects.add(new Effect("runtime_error", "list index out of bounds")); return;
+                }
+                if ("list_insert".equals(operation)) next.add(index, resolveDataValue(payload.get("value"), state));
+                else next.remove(index);
+            }
+            apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", target, "value", next));
+            return;
+        }
+        if ("map_keys".equals(operation)) {
+            current = state.get(reference(String.valueOf(payload.get("source"))));
+            if (!(current instanceof Map)) { effects.add(new Effect("runtime_error", "map_keys requires a map")); return; }
+            String output = reference(String.valueOf(payload.get("target")));
+            List<Object> keys = new ArrayList<>();
+            for (Object key : ((Map<?, ?>) current).keySet()) keys.add(String.valueOf(key));
+            apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", output, "value", keys));
+            return;
+        }
+        effects.add(new Effect("runtime_error", "unknown data operation: " + operation));
+    }
+
+    private static Object resolveDataValue(Object raw, Map<String, Object> state) {
+        return raw instanceof String ? CreatorRuntimeExpression.evaluate((String) raw, state) : raw;
+    }
+
+    private static String reference(String raw) {
+        if (raw.startsWith("state:")) return raw.substring("state:".length());
+        if (raw.startsWith("@")) return raw.substring(1);
+        return raw;
     }
 
     private void executeService(CreatorRuntimeEngine engine, Map<String, Object> payload, List<Effect> effects) {

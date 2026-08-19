@@ -9,7 +9,7 @@ import java.util.Map;
 /** One visible, serializable behavior block in a Creator Runtime event binding. */
 public final class CreatorRuntimeBlock {
     public enum Type {
-        SET_WIDGET_PROPERTY, SET_STATE, STATE_INCREMENT, SHOW_MESSAGE, NAVIGATE, RUNTIME_SERVICE_CALL,
+        SET_WIDGET_PROPERTY, SET_STATE, STATE_INCREMENT, DATA_OPERATION, SHOW_MESSAGE, NAVIGATE, RUNTIME_SERVICE_CALL,
         IF_STATE_EQUALS, IF_CONDITION, REPEAT, FOREVER, BREAK
     }
     private final Type type;

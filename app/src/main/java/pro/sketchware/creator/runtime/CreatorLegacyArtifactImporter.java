@@ -306,6 +306,11 @@ public final class CreatorLegacyArtifactImporter {
             payload.put("arguments", Collections.<String, Object>emptyMap());
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL, payload);
         }
+        Map<String, Object> dataOperation = dataOperation(op, values);
+        if (dataOperation != null) {
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.DATA_OPERATION, dataOperation,
+                    Collections.<CreatorRuntimeBlock>emptyList(), Collections.<CreatorRuntimeBlock>emptyList());
+        }
         Map<String, Object> serviceCall = serviceCall(op, values);
         if (serviceCall != null) {
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL, serviceCall,
@@ -313,6 +318,34 @@ public final class CreatorLegacyArtifactImporter {
         }
         unsupported.add(block.opCode);
         return null;
+    }
+
+    private static Map<String, Object> dataOperation(String op, List<String> values) {
+        Map<String, Object> operation = new LinkedHashMap<>();
+        if ("mapcreatenew".equals(op) && values.size() >= 1) {
+            operation.put("operation", "map_create"); operation.put("target", values.get(0));
+        } else if ("mapput".equals(op) && values.size() >= 3) {
+            operation.put("operation", "map_put"); operation.put("target", values.get(0));
+            operation.put("key", values.get(1)); operation.put("value", values.get(2));
+        } else if (("mapremoveKey".toLowerCase(Locale.ROOT).equals(op) || "mapremovekey".equals(op)) && values.size() >= 2) {
+            operation.put("operation", "map_remove"); operation.put("target", values.get(0)); operation.put("key", values.get(1));
+        } else if (("mapclear".equals(op) || "clearlist".equals(op)) && values.size() >= 1) {
+            operation.put("operation", "clear"); operation.put("target", values.get(0));
+        } else if ("addlistint".equals(op) || "addliststr".equals(op) || "addmaptolist".equals(op)) {
+            if (values.size() < 2) return null;
+            operation.put("operation", "list_add"); operation.put("target", values.get(1)); operation.put("value", values.get(0));
+        } else if ("insertlistint".equals(op) || "insertliststr".equals(op)) {
+            if (values.size() < 3) return null;
+            operation.put("operation", "list_insert"); operation.put("target", values.get(2));
+            operation.put("index", values.get(1)); operation.put("value", values.get(0));
+        } else if ("deletelist".equals(op) && values.size() >= 2) {
+            operation.put("operation", "list_delete"); operation.put("target", values.get(1)); operation.put("index", values.get(0));
+        } else if ("mapgetallkeys".equals(op) && values.size() >= 2) {
+            operation.put("operation", "map_keys"); operation.put("target", values.get(1)); operation.put("source", values.get(0));
+        } else {
+            return null;
+        }
+        return operation;
     }
 
     private static Map<String, Object> serviceCall(String op, List<String> values) {

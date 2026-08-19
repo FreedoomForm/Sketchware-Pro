@@ -5,6 +5,7 @@ import static com.google.common.truth.Truth.assertThat;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +64,29 @@ public class CreatorRuntimeExecutorTest {
 
         assertThat(effects).hasSize(1);
         assertThat(effects.get(0).getValue()).isEqualTo("once");
+    }
+
+    @Test public void typedDataOperationsMutateMapsAndListsWithoutSourceExecution() {
+        CreatorRuntimeEngine engine = engineWithButton();
+        engine.apply(op("map", 2, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "scores", "value", new LinkedHashMap<String, Object>())));
+        engine.apply(op("list", 3, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "keys", "value", new java.util.ArrayList<Object>())));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.DATA_OPERATION,
+                        map("operation", "map_put", "target", "scores", "key", "\"alice\"", "value", "7")),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.DATA_OPERATION,
+                        map("operation", "map_keys", "source", "scores", "target", "keys")),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.DATA_OPERATION,
+                        map("operation", "list_add", "target", "keys", "value", "\"tail\"")));
+        attach(engine, blocks, 4);
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("scores")).isEqualTo(
+                Collections.<String, Object>singletonMap("alice", 7.0d));
+        @SuppressWarnings("unchecked") List<Object> keys = (List<Object>) engine.getCurrent().getState().get("keys");
+        assertThat(keys).containsExactly("alice", "tail").inOrder();
     }
 
     @Test public void serviceArgumentsResolveStateReferencesBeforeDispatch() {
