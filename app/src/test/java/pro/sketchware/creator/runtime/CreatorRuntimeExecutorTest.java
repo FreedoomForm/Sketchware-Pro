@@ -125,6 +125,53 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("counter")).isEqualTo(4L);
     }
 
+    @Test public void executesForeverUntilBreakThenContinuesTheOuterBlockChain() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 30,
+                new CreatorRuntimeEventLog(30));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        List<CreatorRuntimeBlock> foreverBody = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE, map("stateId", "count", "delta", 1L)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.BREAK, Collections.<String, Object>emptyMap()));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.FOREVER, Collections.<String, Object>emptyMap(),
+                        foreverBody, Collections.<CreatorRuntimeBlock>emptyList()),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE, map("stateId", "count", "delta", 1L)));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        List<CreatorRuntimeExecutor.Effect> effects = new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("count")).isEqualTo(2L);
+        assertThat(effects).isEmpty();
+    }
+
+    @Test public void boundsForeverWithoutBreakAtTenThousandIterations() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 10_020,
+                new CreatorRuntimeEventLog(30));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeBlock increment = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+                map("stateId", "count", "delta", 1L));
+        CreatorRuntimeBlock forever = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.FOREVER,
+                Collections.<String, Object>emptyMap(), Collections.singletonList(increment),
+                Collections.<CreatorRuntimeBlock>emptyList());
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click",
+                        "blocks", Collections.singletonList(forever))));
+
+        List<CreatorRuntimeExecutor.Effect> effects = new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("count")).isEqualTo(10_000L);
+        assertThat(effects).hasSize(1);
+        assertThat(effects.get(0).getType()).isEqualTo("forever");
+        assertThat(effects.get(0).getValue()).isEqualTo("capped:10000");
+    }
+
     @Test public void evaluatesNestedLegacyReporterExpressionsForIfAndRepeat() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 30,
                 new CreatorRuntimeEventLog(30));

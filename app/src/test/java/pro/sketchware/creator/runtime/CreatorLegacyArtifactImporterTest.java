@@ -111,6 +111,27 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(controlFlow.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(1);
     }
 
+    @Test public void importsCanonicalForeverAndBreakAsTypedBoundedControlFlow() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean forever = new BlockBean("1", "", "", "forever");
+        forever.subStack1 = 2;
+        BlockBean increment = new BlockBean("2", "", "", "increaseInt");
+        increment.parameters.add("count");
+        increment.nextBlock = 3;
+        BlockBean breakBlock = new BlockBean("3", "", "", "break");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(forever, increment, breakBlock));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.FOREVER);
+        assertThat(imported.getThenBlocks()).hasSize(2);
+        assertThat(imported.getThenBlocks().get(1).getType()).isEqualTo(CreatorRuntimeBlock.Type.BREAK);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsSupportedStateEqualityConditionalSubstackGraph() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

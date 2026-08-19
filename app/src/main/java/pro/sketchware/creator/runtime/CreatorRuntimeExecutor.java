@@ -28,11 +28,15 @@ public final class CreatorRuntimeExecutor {
         CreatorEventBinding binding = findBinding(engine.getCurrent(), targetWidgetId, eventName);
         if (binding == null) return Collections.emptyList();
         List<Effect> effects = new ArrayList<>();
-        executeBlocks(engine, binding.getBlocks(), effects);
+        if (executeBlocks(engine, binding.getBlocks(), effects) == Flow.BREAK) {
+            effects.add(new Effect("break", "ignored_outside_loop"));
+        }
         return Collections.unmodifiableList(effects);
     }
 
-    private void executeBlocks(CreatorRuntimeEngine engine, List<CreatorRuntimeBlock> blocks, List<Effect> effects) {
+    private enum Flow { CONTINUE, BREAK }
+
+    private Flow executeBlocks(CreatorRuntimeEngine engine, List<CreatorRuntimeBlock> blocks, List<Effect> effects) {
         for (CreatorRuntimeBlock block : blocks) {
             Map<String, Object> payload = block.getPayload();
             if (block.getType() == CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY) {
@@ -98,13 +102,17 @@ public final class CreatorRuntimeExecutor {
                 Object actual = engine.getCurrent().getState().get(stateId);
                 Object expected = payload.get("equals");
                 boolean matches = expected == null ? actual == null : expected.equals(actual);
-                executeBlocks(engine, matches ? block.getThenBlocks() : block.getElseBlocks(), effects);
+                if (executeBlocks(engine, matches ? block.getThenBlocks() : block.getElseBlocks(), effects) == Flow.BREAK) {
+                    return Flow.BREAK;
+                }
             } else if (block.getType() == CreatorRuntimeBlock.Type.IF_BOOLEAN) {
                 boolean matches;
                 if (payload.containsKey("expression")) matches = booleanValue(evaluate(payload.get("expression"), engine));
                 else if (payload.containsKey("constant")) matches = Boolean.TRUE.equals(payload.get("constant"));
                 else matches = Boolean.TRUE.equals(engine.getCurrent().getState().get(String.valueOf(payload.get("stateId"))));
-                executeBlocks(engine, matches ? block.getThenBlocks() : block.getElseBlocks(), effects);
+                if (executeBlocks(engine, matches ? block.getThenBlocks() : block.getElseBlocks(), effects) == Flow.BREAK) {
+                    return Flow.BREAK;
+                }
             } else if (block.getType() == CreatorRuntimeBlock.Type.REPEAT) {
                 long requested = payload.containsKey("countExpression") ? number(evaluate(payload.get("countExpression"), engine))
                         : payload.containsKey("countStateId")
@@ -112,9 +120,23 @@ public final class CreatorRuntimeExecutor {
                         : number(payload.get("count"));
                 int count = (int) Math.max(0L, Math.min(MAX_REPEAT_ITERATIONS, requested));
                 if (requested > MAX_REPEAT_ITERATIONS) effects.add(new Effect("repeat", "capped:" + MAX_REPEAT_ITERATIONS));
-                for (int iteration = 0; iteration < count; iteration++) executeBlocks(engine, block.getThenBlocks(), effects);
+                for (int iteration = 0; iteration < count; iteration++) {
+                    if (executeBlocks(engine, block.getThenBlocks(), effects) == Flow.BREAK) break;
+                }
+            } else if (block.getType() == CreatorRuntimeBlock.Type.FOREVER) {
+                boolean broken = false;
+                for (int iteration = 0; iteration < MAX_REPEAT_ITERATIONS; iteration++) {
+                    if (executeBlocks(engine, block.getThenBlocks(), effects) == Flow.BREAK) {
+                        broken = true;
+                        break;
+                    }
+                }
+                if (!broken) effects.add(new Effect("forever", "capped:" + MAX_REPEAT_ITERATIONS));
+            } else if (block.getType() == CreatorRuntimeBlock.Type.BREAK) {
+                return Flow.BREAK;
             }
         }
+        return Flow.CONTINUE;
     }
 
     private CreatorEventBinding findBinding(CreatorProjectDocument document, String targetWidgetId, String eventName) {

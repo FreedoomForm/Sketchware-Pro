@@ -511,6 +511,19 @@ public final class CreatorLegacyArtifactImporter {
             else payload.put("stateId", condition);
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_BOOLEAN, payload, thenBlocks, elseBlocks);
         }
+        if ("forever".equals(op)) {
+            if (block.subStack1 < 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+            BlockBean bodyStart = byId.get(block.subStack1);
+            if (bodyStart == null) { unsupported.add(block.opCode + " (missing forever substack)"); return null; }
+            List<CreatorRuntimeBlock> body = new ArrayList<>();
+            convertChain(bodyStart, byId, visited, body, unsupported, timerCallbacks, componentDescriptors);
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.FOREVER, payload, body,
+                    Collections.<CreatorRuntimeBlock>emptyList());
+        }
+        if ("break".equals(op)) {
+            if (!values.isEmpty() || block.subStack1 >= 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.BREAK, payload);
+        }
         if ("repeat".equals(op)) {
             if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
             BlockBean bodyStart = byId.get(block.subStack1);
