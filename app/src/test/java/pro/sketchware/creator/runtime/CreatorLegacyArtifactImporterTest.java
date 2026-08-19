@@ -443,6 +443,38 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyWidgetMaintenanceActionsAsTypedRuntimeCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        String[] opcodes = {"spnSetSelection", "webViewSetCacheMode", "webViewClearCache", "webViewClearHistory",
+                "webViewStopLoading", "webViewZoomIn", "webViewZoomOut", "calendarViewSetDate",
+                "calendarViewSetMinDate", "calnedarViewSetMaxDate"};
+        String[] actions = {"spinner_set_selection", "web_set_cache_mode", "web_clear_cache", "web_clear_history",
+                "web_stop_loading", "web_zoom_in", "web_zoom_out", "calendar_set_date",
+                "calendar_set_min_date", "calendar_set_max_date"};
+        java.util.List<BlockBean> chain = new java.util.ArrayList<>();
+        for (int index = 0; index < opcodes.length; index++) {
+            BlockBean block = new BlockBean(String.valueOf(index + 1), "", "", opcodes[index]);
+            boolean calendar = opcodes[index].startsWith("calendar") || opcodes[index].startsWith("calnedar");
+            block.parameters.add(calendar ? "calendar1" : opcodes[index].startsWith("spn") ? "spinner1" : "web1");
+            if (opcodes[index].equals("spnSetSelection")) block.parameters.add("2");
+            else if (opcodes[index].equals("webViewSetCacheMode")) block.parameters.add("LOAD_NO_CACHE");
+            else if (calendar) block.parameters.add("1700000000000");
+            if (index + 1 < opcodes.length) block.nextBlock = index + 2;
+            chain.add(block);
+        }
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), chain);
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(actions.length);
+        for (int index = 0; index < actions.length; index++) assertWidgetAction(imported.get(index), actions[index]);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsCanonicalMapMutationOpcodesAsTypedRuntimeBlocks() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean put = new BlockBean("1", "", "", "mapPut");

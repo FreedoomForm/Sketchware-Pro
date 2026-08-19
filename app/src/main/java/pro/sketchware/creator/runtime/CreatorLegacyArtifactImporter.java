@@ -949,6 +949,29 @@ public final class CreatorLegacyArtifactImporter {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             return serviceCall("widget", CreatorRuntimeServiceArguments.output(
                     "widgetId", values.get(0), "action", "webviewgoback".equals(op) ? "web_go_back" : "web_go_forward"));
+        } else if ("spnsetselection".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "spinner_set_selection", "position", values.get(1)));
+        } else if ("webviewsetcachemode".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "web_set_cache_mode", "cacheMode", values.get(1)));
+        } else if ("webviewclearcache".equals(op) || "webviewclearhistory".equals(op)
+                || "webviewstoploading".equals(op) || "webviewzoomin".equals(op) || "webviewzoomout".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            String action = "webviewclearcache".equals(op) ? "web_clear_cache"
+                    : "webviewclearhistory".equals(op) ? "web_clear_history"
+                    : "webviewstoploading".equals(op) ? "web_stop_loading"
+                    : "webviewzoomin".equals(op) ? "web_zoom_in" : "web_zoom_out";
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output("widgetId", values.get(0), "action", action));
+        } else if ("calendarviewsetdate".equals(op) || "calendarviewsetmindate".equals(op)
+                || "calnedarviewsetmaxdate".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            String action = "calendarviewsetdate".equals(op) ? "calendar_set_date"
+                    : "calendarviewsetmindate".equals(op) ? "calendar_set_min_date" : "calendar_set_max_date";
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", action, "timestamp", values.get(1)));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported, byId);

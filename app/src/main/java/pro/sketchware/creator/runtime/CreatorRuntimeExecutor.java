@@ -342,6 +342,8 @@ public final class CreatorRuntimeExecutor {
         if ("getrotate".equals(op)) return decimal(widgetValue(engine, first, "rotation", 0d));
         if ("gettranslationx".equals(op)) return decimal(widgetValue(engine, first, "translationX", 0d));
         if ("gettranslationy".equals(op)) return decimal(widgetValue(engine, first, "translationY", 0d));
+        if ("getlocationx".equals(op)) return widgetQueryValue(first, "location_x");
+        if ("getlocationy".equals(op)) return widgetQueryValue(first, "location_y");
         if ("getscalex".equals(op)) return decimal(widgetValue(engine, first, "scaleX", 1d));
         if ("getscaley".equals(op)) return decimal(widgetValue(engine, first, "scaleY", 1d));
         if ("seekbargetmax".equals(op)) return decimal(widgetValue(engine, first, "max", 100d));

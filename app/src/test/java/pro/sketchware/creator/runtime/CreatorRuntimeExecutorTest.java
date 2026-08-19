@@ -992,6 +992,35 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState()).containsEntry("enabled", false);
     }
 
+    @Test public void evaluatesCanonicalWindowLocationReportersThroughRuntimeNativeWidgetService() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeService widget = new CreatorRuntimeService() {
+            @Override public String getId() { return "widget"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                if ("location_x".equals(arguments.get("action"))) return CreatorRuntimeServiceArguments.succeeded("value", 48);
+                if ("location_y".equals(arguments.get("action"))) return CreatorRuntimeServiceArguments.succeeded("value", 96);
+                return CreatorRuntimeServiceArguments.invalid("unsupported");
+            }
+        };
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "x", "expression", reporter("getlocationx", literal("label1")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "y", "expression", reporter("getlocationy", literal("label1")))));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(widget)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState()).containsEntry("x", 48);
+        assertThat(engine.getCurrent().getState()).containsEntry("y", 96);
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

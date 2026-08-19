@@ -4,6 +4,7 @@ import android.view.View;
 import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.CalendarView;
 import android.widget.ListView;
 import android.widget.Spinner;
 import java.util.ArrayList;
@@ -32,6 +33,12 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
             return CreatorRuntimeServiceArguments.invalid("widget query requires widgetId and action.");
         }
         View widget = environment.findWidget(widgetId);
+        if (widget == null) return CreatorRuntimeServiceArguments.invalid("Runtime widget is not available: " + widgetId);
+        if ("location_x".equals(action) || "location_y".equals(action)) {
+            int[] location = new int[2];
+            widget.getLocationInWindow(location);
+            return CreatorRuntimeServiceArguments.succeeded("value", "location_x".equals(action) ? location[0] : location[1]);
+        }
         if ("web_can_go_back".equals(action) && widget instanceof WebView) {
             return CreatorRuntimeServiceArguments.succeeded("value", ((WebView) widget).canGoBack());
         }
@@ -80,6 +87,12 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
             }
             return CreatorRuntimeServiceArguments.succeeded("updated", true);
         }
+        if ("spinner_set_selection".equals(action) && widget instanceof Spinner) {
+            int position = intValue(arguments.get("position"), -1);
+            if (position < 0) return CreatorRuntimeServiceArguments.invalid("spinner selection must be non-negative.");
+            ((Spinner) widget).setSelection(position);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
         if ("request_focus".equals(action)) {
             return CreatorRuntimeServiceArguments.succeeded("focused", widget.requestFocus());
         }
@@ -91,6 +104,42 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         if ("web_go_forward".equals(action) && widget instanceof WebView) {
             WebView web = (WebView) widget;
             if (web.canGoForward()) web.goForward();
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("web_set_cache_mode".equals(action) && widget instanceof WebView) {
+            Integer cacheMode = cacheMode(CreatorRuntimeServiceArguments.string(arguments, "cacheMode"));
+            if (cacheMode == null) return CreatorRuntimeServiceArguments.invalid("Unsupported WebView cache mode.");
+            ((WebView) widget).getSettings().setCacheMode(cacheMode);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("web_clear_cache".equals(action) && widget instanceof WebView) {
+            ((WebView) widget).clearCache(true);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("web_clear_history".equals(action) && widget instanceof WebView) {
+            ((WebView) widget).clearHistory();
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("web_stop_loading".equals(action) && widget instanceof WebView) {
+            ((WebView) widget).stopLoading();
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("web_zoom_in".equals(action) && widget instanceof WebView) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((WebView) widget).zoomIn());
+        }
+        if ("web_zoom_out".equals(action) && widget instanceof WebView) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((WebView) widget).zoomOut());
+        }
+        if ("calendar_set_date".equals(action) && widget instanceof CalendarView) {
+            ((CalendarView) widget).setDate(longValue(arguments.get("timestamp"), 0L), true, true);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("calendar_set_min_date".equals(action) && widget instanceof CalendarView) {
+            ((CalendarView) widget).setMinDate(longValue(arguments.get("timestamp"), 0L));
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("calendar_set_max_date".equals(action) && widget instanceof CalendarView) {
+            ((CalendarView) widget).setMaxDate(longValue(arguments.get("timestamp"), 0L));
             return CreatorRuntimeServiceArguments.succeeded("updated", true);
         }
         return CreatorRuntimeServiceArguments.invalid("Widget does not support action: " + action);
@@ -117,5 +166,22 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
 
     private static boolean booleanValue(Object value) {
         return value instanceof Boolean ? (Boolean) value : Boolean.parseBoolean(String.valueOf(value));
+    }
+
+    private static long longValue(Object value, long fallback) {
+        if (value instanceof Number) return ((Number) value).longValue();
+        try { return value == null ? fallback : Long.parseLong(String.valueOf(value)); }
+        catch (NumberFormatException ignored) { return fallback; }
+    }
+
+    private static Integer cacheMode(String rawCacheMode) {
+        if (rawCacheMode == null) return null;
+        String mode = rawCacheMode.trim();
+        if (mode.length() > 1 && mode.startsWith("\"") && mode.endsWith("\"")) mode = mode.substring(1, mode.length() - 1);
+        if ("LOAD_CACHE_ELSE_NETWORK".equals(mode)) return android.webkit.WebSettings.LOAD_CACHE_ELSE_NETWORK;
+        if ("LOAD_CACHE_ONLY".equals(mode)) return android.webkit.WebSettings.LOAD_CACHE_ONLY;
+        if ("LOAD_DEFAULT".equals(mode)) return android.webkit.WebSettings.LOAD_DEFAULT;
+        if ("LOAD_NO_CACHE".equals(mode)) return android.webkit.WebSettings.LOAD_NO_CACHE;
+        return null;
     }
 }
