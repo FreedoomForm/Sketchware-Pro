@@ -52,6 +52,41 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().canPreviewImmediately()).isFalse();
     }
 
+    @Test public void importsLegacyValueResourceFamiliesAsTypedVariantMetadata() {
+        Map<String, String> values = new LinkedHashMap<>();
+        values.put("values/strings.xml", "<resources><string name=\"title\">Creator</string></resources>");
+        values.put("values-night/colors.xml", "<resources><color name=\"ink\">#efefef</color></resources>");
+        values.put("values/styles.xml", "<resources><style name=\"AppStyle\" parent=\"Base\"><item name=\"android:textColor\">#111111</item></style></resources>");
+        values.put("values/themes.xml", "<resources><style name=\"Theme.Creator\"><item name=\"android:windowLightStatusBar\">true</item></style></resources>");
+        values.put("values/arrays.xml", "<resources><string-array name=\"labels\"><item>one</item><item>two</item></string-array></resources>");
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importValueResources(documentWithButton(), values);
+
+        @SuppressWarnings("unchecked") Map<String, Object> strings =
+                (Map<String, Object>) result.getDocument().getState().get("legacy.stringResources");
+        @SuppressWarnings("unchecked") Map<String, Object> defaultStrings = (Map<String, Object>) strings.get("");
+        assertThat(defaultStrings).containsEntry("title", "Creator");
+        @SuppressWarnings("unchecked") Map<String, Object> colors =
+                (Map<String, Object>) result.getDocument().getState().get("legacy.colorResources");
+        @SuppressWarnings("unchecked") Map<String, Object> nightColors = (Map<String, Object>) colors.get("-night");
+        assertThat(nightColors).containsEntry("ink", "#efefef");
+        @SuppressWarnings("unchecked") Map<String, Object> styles =
+                (Map<String, Object>) result.getDocument().getState().get("legacy.styleResources");
+        @SuppressWarnings("unchecked") Map<String, Object> defaultStyles = (Map<String, Object>) styles.get("");
+        @SuppressWarnings("unchecked") Map<String, Object> appStyle = (Map<String, Object>) defaultStyles.get("AppStyle");
+        assertThat(appStyle).containsEntry("parent", "Base");
+        @SuppressWarnings("unchecked") Map<String, Object> styleItems = (Map<String, Object>) appStyle.get("items");
+        assertThat(styleItems).containsEntry("android:textColor", "#111111");
+        @SuppressWarnings("unchecked") Map<String, Object> arrays =
+                (Map<String, Object>) result.getDocument().getState().get("legacy.arrayResources");
+        @SuppressWarnings("unchecked") Map<String, Object> defaultArrays = (Map<String, Object>) arrays.get("");
+        @SuppressWarnings("unchecked") Map<String, Object> labels = (Map<String, Object>) defaultArrays.get("labels");
+        assertThat(labels).containsEntry("type", "string-array");
+        assertThat((java.util.List<?>) labels.get("items")).containsExactly("one", "two").inOrder();
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(5);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void followsLegacyNextBlockChainAndRejectsUntypedControlFlow() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean second = new BlockBean("2", "", "", "showMessage");

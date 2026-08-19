@@ -6,12 +6,19 @@ import com.besome.sketch.beans.EventBean;
 import com.besome.sketch.beans.ProjectFileBean;
 import com.besome.sketch.beans.ProjectLibraryBean;
 import com.besome.sketch.beans.ProjectResourceBean;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 /**
  * Imports legacy components, events, and block chains into the versioned Creator
@@ -206,6 +213,160 @@ public final class CreatorLegacyArtifactImporter {
         state.put("legacy.soundResources", sounds);
         state.put("legacy.fontResources", fonts);
         return new Result(base.withRuntimeState(base.getRevision(), state, base.getEvents()), report);
+    }
+
+    /**
+     * Preserves the editable value-resource families stored by legacy Sketchware in
+     * {@code files/resource/values{variant}/}. Values remain structured runtime data;
+     * they are neither compiled into an APK nor converted into generated Java.
+     *
+     * <p>Keys may be bare file names such as {@code strings.xml}, or paths such as
+     * {@code values-night/colors.xml}. The portion after {@code values} is retained as
+     * the Android resource variant key.</p>
+     */
+    public Result importValueResources(CreatorProjectDocument base, Map<String, String> xmlByPath) {
+        if (base == null) throw new IllegalArgumentException("base");
+        CreatorCompatibilityReport report = new CreatorCompatibilityReport();
+        Map<String, Object> state = new LinkedHashMap<>(base.getState());
+        Map<String, Object> strings = valueResourceFamily(state, "legacy.stringResources");
+        Map<String, Object> colors = valueResourceFamily(state, "legacy.colorResources");
+        Map<String, Object> styles = valueResourceFamily(state, "legacy.styleResources");
+        Map<String, Object> themes = valueResourceFamily(state, "legacy.themeResources");
+        Map<String, Object> arrays = valueResourceFamily(state, "legacy.arrayResources");
+        Map<String, Object> sources = valueResourceFamily(state, "legacy.valueResourceSources");
+
+        for (Map.Entry<String, String> entry : xmlByPath == null
+                ? Collections.<String, String>emptyMap().entrySet() : xmlByPath.entrySet()) {
+            String sourcePath = entry.getKey() == null ? "" : entry.getKey();
+            String fileName = fileName(sourcePath);
+            String family = valueResourceFamilyName(fileName);
+            if (family == null) {
+                report.add(sourcePath.isEmpty() ? "unknown" : sourcePath, "ValueResourceXml",
+                        CreatorCompatibilityTier.R0_UNSUPPORTED,
+                        "Unsupported value-resource file; only strings, colors, styles, themes, and arrays are allowed.");
+                continue;
+            }
+            String xml = entry.getValue() == null ? "" : entry.getValue();
+            try {
+                Map<String, Object> parsed = parseValueResourceFamily(family, xml);
+                String variant = resourceVariant(sourcePath);
+                Map<String, Object> target = "strings".equals(family) ? strings
+                        : "colors".equals(family) ? colors
+                        : "styles".equals(family) ? styles
+                        : "themes".equals(family) ? themes : arrays;
+                target.put(variant, parsed);
+                Map<String, Object> sourceDescriptor = new LinkedHashMap<>();
+                sourceDescriptor.put("path", sourcePath);
+                sourceDescriptor.put("fileName", fileName);
+                sourceDescriptor.put("variant", variant);
+                sourceDescriptor.put("family", family);
+                sourceDescriptor.put("xml", xml);
+                sources.put(family + "@" + variant, sourceDescriptor);
+                report.add(fileName + "@" + variant, "ValueResourceXml",
+                        CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
+                        "Imported " + parsed.size() + " " + family + " entries as typed live runtime metadata.");
+            } catch (Exception error) {
+                report.add(sourcePath.isEmpty() ? fileName : sourcePath, "ValueResourceXml",
+                        CreatorCompatibilityTier.R0_UNSUPPORTED,
+                        "Malformed value-resource XML: " + error.getMessage());
+            }
+        }
+        state.put("legacy.stringResources", strings);
+        state.put("legacy.colorResources", colors);
+        state.put("legacy.styleResources", styles);
+        state.put("legacy.themeResources", themes);
+        state.put("legacy.arrayResources", arrays);
+        state.put("legacy.valueResourceSources", sources);
+        return new Result(base.withRuntimeState(base.getRevision(), state, base.getEvents()), report);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> valueResourceFamily(Map<String, Object> state, String key) {
+        Object current = state.get(key);
+        return current instanceof Map ? new LinkedHashMap<>((Map<String, Object>) current) : new LinkedHashMap<>();
+    }
+
+    private static String fileName(String sourcePath) {
+        int separator = Math.max(sourcePath.lastIndexOf('/'), sourcePath.lastIndexOf('\\'));
+        return separator < 0 ? sourcePath : sourcePath.substring(separator + 1);
+    }
+
+    private static String resourceVariant(String sourcePath) {
+        String normalized = sourcePath.replace('\\', '/');
+        for (String segment : normalized.split("/")) {
+            if ("values".equals(segment)) return "";
+            if (segment.startsWith("values-")) return segment.substring("values".length());
+        }
+        return "";
+    }
+
+    private static String valueResourceFamilyName(String fileName) {
+        if ("strings.xml".equals(fileName)) return "strings";
+        if ("colors.xml".equals(fileName)) return "colors";
+        if ("styles.xml".equals(fileName)) return "styles";
+        if ("themes.xml".equals(fileName)) return "themes";
+        if ("arrays.xml".equals(fileName)) return "arrays";
+        return null;
+    }
+
+    private static Map<String, Object> parseValueResourceFamily(String family, String xml) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        factory.setXIncludeAware(false);
+        factory.setExpandEntityReferences(false);
+        Document document = factory.newDocumentBuilder().parse(new InputSource(new StringReader(xml)));
+        Element root = document.getDocumentElement();
+        if (root == null || !"resources".equals(root.getTagName())) {
+            throw new IllegalArgumentException("Root element must be <resources>.");
+        }
+        Map<String, Object> parsed = new LinkedHashMap<>();
+        NodeList nodes = root.getChildNodes();
+        for (int index = 0; index < nodes.getLength(); index++) {
+            Node node = nodes.item(index);
+            if (node.getNodeType() != Node.ELEMENT_NODE) continue;
+            Element element = (Element) node;
+            String name = element.getAttribute("name");
+            if (blank(name)) continue;
+            if ("strings".equals(family) && "string".equals(element.getTagName())) {
+                parsed.put(name, element.getTextContent());
+            } else if ("colors".equals(family) && "color".equals(element.getTagName())) {
+                parsed.put(name, element.getTextContent().trim());
+            } else if (("styles".equals(family) || "themes".equals(family)) && "style".equals(element.getTagName())) {
+                Map<String, Object> style = new LinkedHashMap<>();
+                style.put("parent", element.hasAttribute("parent") ? element.getAttribute("parent") : "");
+                Map<String, Object> items = new LinkedHashMap<>();
+                NodeList children = element.getChildNodes();
+                for (int childIndex = 0; childIndex < children.getLength(); childIndex++) {
+                    Node child = children.item(childIndex);
+                    if (child.getNodeType() != Node.ELEMENT_NODE || !"item".equals(child.getNodeName())) continue;
+                    Element item = (Element) child;
+                    String itemName = item.getAttribute("name");
+                    if (!blank(itemName)) items.put(itemName, item.getTextContent().trim());
+                }
+                style.put("items", items);
+                parsed.put(name, style);
+            } else if ("arrays".equals(family) && isArrayElement(element.getTagName())) {
+                Map<String, Object> array = new LinkedHashMap<>();
+                array.put("type", element.getTagName());
+                List<Object> values = new ArrayList<>();
+                NodeList children = element.getChildNodes();
+                for (int childIndex = 0; childIndex < children.getLength(); childIndex++) {
+                    Node child = children.item(childIndex);
+                    if (child.getNodeType() == Node.ELEMENT_NODE && "item".equals(child.getNodeName())) {
+                        values.add(child.getTextContent());
+                    }
+                }
+                array.put("items", values);
+                parsed.put(name, array);
+            }
+        }
+        return parsed;
+    }
+
+    private static boolean isArrayElement(String tagName) {
+        return "array".equals(tagName) || "string-array".equals(tagName) || "integer-array".equals(tagName);
     }
 
     private static final class BlockConversion {
