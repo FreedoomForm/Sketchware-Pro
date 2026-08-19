@@ -511,6 +511,28 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("date")).isEqualTo(123456789d);
     }
 
+    @Test public void replacesTypedListWithMapKeysInInsertionOrder() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("profile", 2, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "profile", "value", map("first", 1d, "second", 2d))));
+        engine.apply(op("keys", 3, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "keys", "value", Arrays.asList("stale"))));
+        CreatorRuntimeBlock getKeys = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+                map("stateId", "keys", "action", "replace_map_keys", "sourceMapStateId", "profile"));
+        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click",
+                        "blocks", Collections.singletonList(getKeys))));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat((List<?>) engine.getCurrent().getState().get("keys")).containsExactly("first", "second").inOrder();
+    }
+
     @Test public void assignsTypedNestedReporterResultToRuntimeState() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
                 new CreatorRuntimeEventLog(20));

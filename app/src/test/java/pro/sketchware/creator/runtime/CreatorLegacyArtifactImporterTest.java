@@ -176,6 +176,25 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsMapGetAllKeysAsTypedMapToListMutation() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean keys = new BlockBean("1", "", "", "mapGetAllKeys");
+        keys.parameters.add("profile");
+        keys.parameters.add("keys");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Collections.singletonList(keys));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+        assertThat(imported.getPayload()).containsEntry("stateId", "keys");
+        assertThat(imported.getPayload()).containsEntry("action", "replace_map_keys");
+        assertThat(imported.getPayload()).containsEntry("sourceMapStateId", "profile");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsSupportedStateEqualityConditionalSubstackGraph() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

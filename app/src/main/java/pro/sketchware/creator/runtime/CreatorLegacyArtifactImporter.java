@@ -598,6 +598,12 @@ public final class CreatorLegacyArtifactImporter {
             payload.put("action", "add_all");
             payload.put("sourceStateId", values.get(1));
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
+        } else if ("mapgetallkeys".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            payload.put("stateId", values.get(1));
+            payload.put("action", "replace_map_keys");
+            payload.put("sourceMapStateId", values.get(0));
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
         } else if ("mapcreatenew".equals(op)) {
             return mapMutation(block, values, "create", unsupported, byId);
         } else if ("mapput".equals(op)) {

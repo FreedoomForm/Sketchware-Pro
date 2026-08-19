@@ -70,6 +70,11 @@ public final class CreatorRuntimeExecutor {
                 }
                 else if ("add_all".equals(action)) list.addAll(list(engine.getCurrent().getState().get(
                         String.valueOf(payload.get("sourceStateId")))));
+                else if ("replace_map_keys".equals(action)) {
+                    list.clear();
+                    list.addAll(map(engine.getCurrent().getState().get(
+                            String.valueOf(payload.get("sourceMapStateId")))).keySet());
+                }
                 else if ("map_put_at".equals(action) && index >= 0 && index < list.size()) {
                     Map<String, Object> item = map(list.get(index));
                     item.put(String.valueOf(key), value);
