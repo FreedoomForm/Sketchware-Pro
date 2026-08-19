@@ -1,0 +1,129 @@
+name: Creator Runtime Android
+
+on:
+  push:
+    branches:
+      - creator-runtime
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: creator-runtime-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  JAVA_VERSION: '17'
+  ANDROID_API: '36'
+  ANDROID_BUILD_TOOLS: '35.0.0'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build-and-unit:
+    name: Build debug APK and JVM tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build packages
+        run: |
+          sdkmanager "platform-tools" "platforms;android-${ANDROID_API}" "build-tools;${ANDROID_BUILD_TOOLS}"
+          yes | sdkmanager --licenses >/dev/null || true
+
+      - name: Run JVM unit tests and assemble debug APK
+        env:
+          SKETCHUB_API_KEY: ${{ secrets.SKETCHUB_API_KEY }}
+        run: ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Upload debug APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: creator-runtime-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload JVM test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: creator-runtime-jvm-reports
+          path: |
+            app/build/test-results/testDebugUnitTest/**
+            app/build/reports/tests/testDebugUnitTest/**
+          if-no-files-found: warn
+          retention-days: 14
+
+  native-android:
+    name: Native Android tests (API ${{ matrix.api-level }})
+    needs: build-and-unit
+    if: needs.build-and-unit.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - api-level: 29
+            target: google_apis
+            arch: x86
+          - api-level: 35
+            target: google_apis
+            arch: x86_64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Run connected Android tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          profile: Pixel_2
+          force-avd-creation: true
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace
+
+      - name: Upload connected Android test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: creator-runtime-native-reports-api-${{ matrix.api-level }}
+          path: |
+            app/build/outputs/androidTest-results/connected/**
+            app/build/reports/androidTests/connected/**
+          if-no-files-found: warn
+          retention-days: 14
