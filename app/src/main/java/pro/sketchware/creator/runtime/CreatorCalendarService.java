@@ -1,8 +1,10 @@
 package pro.sketchware.creator.runtime;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /** Runtime-native calendar operations corresponding to the legacy Calendar component. */
@@ -31,6 +33,21 @@ public final class CreatorCalendarService implements CreatorRuntimeService {
                 if ("add".equals(action)) calendar.add(field, value); else calendar.set(field, value);
             } else if ("set_time".equals(action)) {
                 calendar.setTimeInMillis(CreatorRuntimeServiceArguments.longValue(arguments, "timestamp", 0L));
+            } else if ("format".equals(action)) {
+                String pattern = CreatorRuntimeServiceArguments.string(arguments, "pattern");
+                if (pattern == null) pattern = "yyyy/MM/dd HH:mm:ss";
+                return new Result(Status.SUCCEEDED,
+                        CreatorRuntimeServiceArguments.output("componentId", componentId,
+                                "formatted", new SimpleDateFormat(pattern, Locale.US).format(calendar.getTime())), null);
+            } else if ("diff".equals(action)) {
+                String otherId = CreatorRuntimeServiceArguments.string(arguments, "otherComponentId");
+                if (otherId == null) otherId = CreatorRuntimeServiceArguments.string(arguments, "otherId");
+                Calendar other = otherId == null ? null : calendars.get(otherId);
+                if (other == null) return new Result(Status.UNSUPPORTED_ARGUMENT, Collections.emptyMap(),
+                        "Unknown calendar component: " + otherId);
+                return new Result(Status.SUCCEEDED,
+                        CreatorRuntimeServiceArguments.output("componentId", componentId, "otherComponentId", otherId,
+                                "differenceMs", calendar.getTimeInMillis() - other.getTimeInMillis()), null);
             } else {
                 return new Result(Status.UNSUPPORTED_ARGUMENT, Collections.emptyMap(), "Unsupported calendar action: " + action);
             }
@@ -48,7 +65,7 @@ public final class CreatorCalendarService implements CreatorRuntimeService {
 
     private static int field(String value) {
         if (value == null) throw new IllegalArgumentException("calendar add/set requires field.");
-        String name = value.replace("Calendar.", "").trim().toUpperCase(java.util.Locale.ROOT);
+        String name = value.replace("Calendar.", "").trim().toUpperCase(Locale.ROOT);
         if ("YEAR".equals(name)) return Calendar.YEAR;
         if ("MONTH".equals(name)) return Calendar.MONTH;
         if ("DAY_OF_MONTH".equals(name) || "DATE".equals(name)) return Calendar.DAY_OF_MONTH;
