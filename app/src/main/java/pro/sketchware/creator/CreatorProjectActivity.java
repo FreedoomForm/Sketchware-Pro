@@ -940,6 +940,12 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(callbackTargetId), "children"));
             }
         }
+        if ("dialog".equals(serviceId) && "button".equals(eventName)) {
+            Object callbackTargetId = payload.get("callbackTargetId");
+            if (callbackTargetId != null && !String.valueOf(callbackTargetId).trim().isEmpty()) {
+                renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(callbackTargetId), "button"));
+            }
+        }
         Object rawComponents = session.getDocument().getState().get("legacy.components");
         if (rawComponents instanceof Map) {
             for (Map.Entry<?, ?> entry : ((Map<?, ?>) rawComponents).entrySet()) {

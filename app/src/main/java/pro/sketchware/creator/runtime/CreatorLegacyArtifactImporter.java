@@ -96,6 +96,16 @@ public final class CreatorLegacyArtifactImporter {
                             "Imported Firebase children callback substack as a direct runtime children binding.");
                     continue;
                 }
+                if (callback.getKey().startsWith("dialog_button:")) {
+                    String callbackId = callback.getKey().substring("dialog_button:".length());
+                    String bindingId = "legacy_dialog_button_callback_" + callbackId;
+                    bindings.put(bindingId, new CreatorEventBinding(bindingId, bindingId, "button",
+                            callback.getValue()));
+                    report.add("dialogButton:" + callbackId, "BlockBean",
+                            CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
+                            "Imported dialog button callback substack as a direct runtime button binding.");
+                    continue;
+                }
                 String bindingId = "legacy_timer_callback_" + callback.getKey();
                 bindings.put(bindingId, new CreatorEventBinding(bindingId, callback.getKey(), "tick",
                         callback.getValue()));
@@ -560,11 +570,15 @@ public final class CreatorLegacyArtifactImporter {
         }
         boolean timerWithCallback = "timerafter".equals(op) || "timerevery".equals(op);
         boolean firebaseChildrenWithCallback = "firebasegetchildren".equals(op);
-        if ((block.subStack1 >= 0 || block.subStack2 >= 0) && !timerWithCallback && !firebaseChildrenWithCallback) {
+        boolean dialogButtonWithCallback = "dialogokbutton".equals(op) || "dialogcancelbutton".equals(op)
+                || "dialogneutralbutton".equals(op);
+        if ((block.subStack1 >= 0 || block.subStack2 >= 0) && !timerWithCallback && !firebaseChildrenWithCallback
+                && !dialogButtonWithCallback) {
             unsupported.add(block.opCode + " (control flow)"); return null;
         }
         if (timerWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
         if (firebaseChildrenWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+        if (dialogButtonWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
         if ("timerafter".equals(op) || "timerevery".equals(op)) {
             int required = "timerafter".equals(op) ? 2 : 3;
             if (values.size() < required) { unsupported.add(block.opCode); return null; }
@@ -667,6 +681,25 @@ public final class CreatorLegacyArtifactImporter {
         } else if ("dialogdismiss".equals(op)) {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             return serviceCall("dialog", CreatorRuntimeServiceArguments.output("dialogId", values.get(0), "action", "dismiss"));
+        } else if ("dialogokbutton".equals(op) || "dialogcancelbutton".equals(op)
+                || "dialogneutralbutton".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            String button = "dialogokbutton".equals(op) ? "positive"
+                    : "dialogcancelbutton".equals(op) ? "negative" : "neutral";
+            Map<String, Object> arguments = new LinkedHashMap<>();
+            arguments.put("dialogId", values.get(0));
+            arguments.put("action", "set_" + button + "_button");
+            arguments.put("label", values.get(1));
+            if (block.subStack1 >= 0) {
+                BlockBean callbackStart = byId.get(block.subStack1);
+                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+                String callbackId = block.id + "_" + button;
+                List<CreatorRuntimeBlock> callback = new ArrayList<>();
+                convertChain(callbackStart, byId, visited, callback, unsupported, timerCallbacks, componentDescriptors);
+                timerCallbacks.put("dialog_button:" + callbackId, callback);
+                arguments.put("callbackTargetId", "legacy_dialog_button_callback_" + callbackId);
+            }
+            return serviceCall("dialog", arguments);
         } else if ("mediaplayercreate".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("media", CreatorRuntimeServiceArguments.output("id", values.get(0),

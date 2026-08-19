@@ -14,6 +14,9 @@ public final class CreatorDialogService implements CreatorRuntimeService {
     private final Map<String, String> titles = new LinkedHashMap<>();
     private final Map<String, String> messages = new LinkedHashMap<>();
     private final Map<String, AlertDialog> dialogs = new LinkedHashMap<>();
+    private final Map<String, DialogButton> positiveButtons = new LinkedHashMap<>();
+    private final Map<String, DialogButton> negativeButtons = new LinkedHashMap<>();
+    private final Map<String, DialogButton> neutralButtons = new LinkedHashMap<>();
 
     public CreatorDialogService(CreatorRuntimeEnvironment environment) { this.environment = environment; }
     @Override public String getId() { return "dialog"; }
@@ -27,6 +30,18 @@ public final class CreatorDialogService implements CreatorRuntimeService {
             if ("set_title".equals(action)) titles.put(id, value); else messages.put(id, value);
             return CreatorRuntimeServiceArguments.succeeded("action", action, "dialogId", id);
         }
+        if ("set_positive_button".equals(action) || "set_negative_button".equals(action)
+                || "set_neutral_button".equals(action)) {
+            String id = id(arguments);
+            String label = CreatorRuntimeServiceArguments.string(arguments, "label");
+            if (label == null) return CreatorRuntimeServiceArguments.invalid(action + " requires label.");
+            DialogButton button = new DialogButton(label,
+                    CreatorRuntimeServiceArguments.string(arguments, "callbackTargetId"));
+            if ("set_positive_button".equals(action)) positiveButtons.put(id, button);
+            else if ("set_negative_button".equals(action)) negativeButtons.put(id, button);
+            else neutralButtons.put(id, button);
+            return CreatorRuntimeServiceArguments.succeeded("action", action, "dialogId", id);
+        }
         if ("show".equals(action)) {
             String id = idOrDefault(arguments);
             String title = CreatorRuntimeServiceArguments.string(arguments, "title");
@@ -36,12 +51,21 @@ public final class CreatorDialogService implements CreatorRuntimeService {
             String label = CreatorRuntimeServiceArguments.string(arguments, "positiveLabel");
             String finalTitle = title;
             String finalMessage = message;
+            DialogButton positive = positiveButtons.get(id);
+            DialogButton negative = negativeButtons.get(id);
+            DialogButton neutral = neutralButtons.get(id);
             environment.getActivity().runOnUiThread(() -> {
                 AlertDialog existing = dialogs.remove(id);
                 if (existing != null) existing.dismiss();
-                AlertDialog dialog = new AlertDialog.Builder(environment.getActivity())
-                        .setTitle(finalTitle).setMessage(finalMessage)
-                        .setPositiveButton(label == null ? "OK" : label, null).create();
+                AlertDialog.Builder builder = new AlertDialog.Builder(environment.getActivity())
+                        .setTitle(finalTitle).setMessage(finalMessage);
+                builder.setPositiveButton(positive == null ? label == null ? "OK" : label : positive.label,
+                        positive == null ? null : (dialog, which) -> publishButton(id, "positive", positive));
+                if (negative != null) builder.setNegativeButton(negative.label,
+                        (dialog, which) -> publishButton(id, "negative", negative));
+                if (neutral != null) builder.setNeutralButton(neutral.label,
+                        (dialog, which) -> publishButton(id, "neutral", neutral));
+                AlertDialog dialog = builder.create();
                 dialogs.put(id, dialog);
                 dialog.show();
             });
@@ -151,6 +175,23 @@ public final class CreatorDialogService implements CreatorRuntimeService {
     private static int progressStyle(String style) {
         return "STYLE_HORIZONTAL".equalsIgnoreCase(style) || "HORIZONTAL".equalsIgnoreCase(style)
                 ? ProgressDialog.STYLE_HORIZONTAL : ProgressDialog.STYLE_SPINNER;
+    }
+
+    private void publishButton(String dialogId, String button, DialogButton configuration) {
+        Map<String, Object> payload = CreatorRuntimeServiceArguments.output("dialogId", dialogId, "button", button);
+        if (configuration.callbackTargetId != null && !configuration.callbackTargetId.trim().isEmpty()) {
+            payload.put("callbackTargetId", configuration.callbackTargetId);
+        }
+        environment.publish(getId(), "button", payload);
+    }
+
+    private static final class DialogButton {
+        final String label;
+        final String callbackTargetId;
+        DialogButton(String label, String callbackTargetId) {
+            this.label = label;
+            this.callbackTargetId = callbackTargetId;
+        }
     }
 
     private static final class ProgressConfiguration {

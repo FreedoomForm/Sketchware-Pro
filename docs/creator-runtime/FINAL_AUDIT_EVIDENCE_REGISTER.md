@@ -59,6 +59,8 @@ Canonical `mathGetDip`, `mathGetDisplayWidth`, and `mathGetDisplayHeight` now di
 
 Canonical `progressbarSetIndeterminate` and `setColorFilter` now import as typed `widget` service calls. The active runtime service updates only native `ProgressBar` and `ImageView` instances, using the legacy multiply blend mode for valid Android color values; it rejects unsupported values without generated Java. Importer regression and the complete JVM suite now have **140 passing tests and zero failures**. Device-level visual parity remains explicitly open.
 
+Canonical `dialogOkButton`, `dialogCancelButton`, and `dialogNeutralButton` now configure runtime-native dialog buttons. Their legacy substacks become direct typed `button` bindings; dialog service events carry only a validated callback target and dispatch through the existing runtime executor, never a generated Java listener. Importer regression verifies label, callback target, and block execution binding; the complete JVM suite now has **141 passing tests and zero failures**. Native dialog interaction remains device-level evidence under the open gates.
+
 `mapGetAllKeys` is now imported as a typed `replace_map_keys` list mutation. The executor clears the destination list, copies the source map’s ordered key set, and persists it back into runtime state. Importer and executor regressions verify the exact legacy map/list parameter order and resulting key order.
 
 The canonical `mapToStr` and `listMapToStr` reporters now serialize typed map/list data directly through the runtime serialization library. Regression verifies the exact JSON values held in state; this replaces generated Java-expression emission while preserving data-only execution.

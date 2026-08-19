@@ -372,6 +372,32 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyDialogButtonSubstackAsDirectRuntimeButtonBinding() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean positive = new BlockBean("1", "", "", "dialogOkButton");
+        positive.parameters.add("dialog1");
+        positive.parameters.add("Continue");
+        positive.subStack1 = 2;
+        BlockBean callback = new BlockBean("2", "", "", "showMessage");
+        callback.parameters.add("Accepted");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(positive, callback));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock call = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertServiceCall(call, "dialog", "set_positive_button");
+        @SuppressWarnings("unchecked") Map<String, Object> arguments = (Map<String, Object>) call.getPayload().get("arguments");
+        assertThat(arguments).containsEntry("label", "Continue");
+        assertThat(arguments).containsEntry("callbackTargetId", "legacy_dialog_button_callback_1_positive");
+        CreatorEventBinding binding = result.getDocument().getEvents().get("legacy_dialog_button_callback_1_positive");
+        assertThat(binding.getTargetWidgetId()).isEqualTo("legacy_dialog_button_callback_1_positive");
+        assertThat(binding.getEventName()).isEqualTo("button");
+        assertThat(binding.getBlocks().get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.SHOW_MESSAGE);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsCanonicalListMutationOpcodesAsTypedRuntimeBlocks() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean add = new BlockBean("1", "", "", "addListStr");
