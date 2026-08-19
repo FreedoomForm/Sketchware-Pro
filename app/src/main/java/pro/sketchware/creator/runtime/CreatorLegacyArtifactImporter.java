@@ -425,6 +425,10 @@ public final class CreatorLegacyArtifactImporter {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             return serviceCall("speech_to_text", CreatorRuntimeServiceArguments.output(
                     "componentId", values.get(0), "action", "listen"));
+        } else if ("speechtotextstoplistening".equals(op) || "speechtotextshutdown".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("speech_to_text", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "speechtotextstoplistening".equals(op) ? "stop" : "shutdown"));
         } else if ("fileutilwrite".equals(op)) {
             return fileCall(block, values, "write", 2, unsupported);
         } else if ("fileutilcopy".equals(op)) {
@@ -472,6 +476,14 @@ public final class CreatorLegacyArtifactImporter {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             return serviceCall("firebase_auth", CreatorRuntimeServiceArguments.output(
                     "componentId", values.get(0), "action", "sign_out"));
+        } else if ("firebasestorageuploadfile".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return serviceCall("firebase_storage", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "upload_file", "filePath", values.get(1), "path", values.get(2)));
+        } else if ("firebasestoragedelete".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("firebase_storage", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "delete_url", "url", values.get(1)));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported);

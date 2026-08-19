@@ -367,21 +367,27 @@ public class CreatorLegacyArtifactImporterTest {
         speak.parameters.add("Ready");
         BlockBean listen = new BlockBean("7", "", "", "speechToTextStartListening");
         listen.parameters.add("stt1");
+        BlockBean stop = new BlockBean("8", "", "", "speechToTextStopListening");
+        stop.parameters.add("stt1");
+        BlockBean shutdown = new BlockBean("9", "", "", "speechToTextShutdown");
+        shutdown.parameters.add("stt1");
         gyro.nextBlock = 2;
         location.nextBlock = 3;
         camera.nextBlock = 4;
         picker.nextBlock = 5;
         pitch.nextBlock = 6;
         speak.nextBlock = 7;
+        listen.nextBlock = 8;
+        stop.nextBlock = 9;
         Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
-        blocks.put(click.getEventKey(), Arrays.asList(gyro, location, camera, picker, pitch, speak, listen));
+        blocks.put(click.getEventKey(), Arrays.asList(gyro, location, camera, picker, pitch, speak, listen, stop, shutdown));
 
         CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
                 documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
 
         java.util.List<CreatorRuntimeBlock> imported =
                 result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
-        assertThat(imported).hasSize(7);
+        assertThat(imported).hasSize(9);
         assertServiceCall(imported.get(0), "gyroscope", "start");
         assertServiceCall(imported.get(1), "location", "start");
         @SuppressWarnings("unchecked") Map<String, Object> locationArguments =
@@ -392,6 +398,8 @@ public class CreatorLegacyArtifactImporterTest {
         assertServiceCall(imported.get(4), "text_to_speech", "set_pitch");
         assertServiceCall(imported.get(5), "text_to_speech", "speak");
         assertServiceCall(imported.get(6), "speech_to_text", "listen");
+        assertServiceCall(imported.get(7), "speech_to_text", "stop");
+        assertServiceCall(imported.get(8), "speech_to_text", "shutdown");
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
@@ -482,6 +490,29 @@ public class CreatorLegacyArtifactImporterTest {
         assertServiceCall(imported.get(0), "firebase_auth", "register");
         assertServiceCall(imported.get(1), "firebase_auth", "reset_password");
         assertServiceCall(imported.get(2), "firebase_auth", "sign_out");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
+    @Test public void importsSupportedLegacyFirebaseStorageOperationsAsRuntimeNativeServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean upload = new BlockBean("1", "", "", "firebasestorageUploadFile");
+        upload.parameters.add("storage1");
+        upload.parameters.add("/storage/emulated/0/creator/photo.jpg");
+        upload.parameters.add("uploads/photo.jpg");
+        BlockBean delete = new BlockBean("2", "", "", "firebasestorageDelete");
+        delete.parameters.add("storage1");
+        delete.parameters.add("gs://creator.appspot.com/uploads/photo.jpg");
+        upload.nextBlock = 2;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(upload, delete));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "firebase_storage", "upload_file");
+        assertServiceCall(imported.get(1), "firebase_storage", "delete_url");
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
