@@ -130,6 +130,7 @@ public final class CreatorLegacyArtifactImporter {
         CreatorCompatibilityReport report = new CreatorCompatibilityReport();
         Map<String, Object> state = new LinkedHashMap<>(base.getState());
         List<Object> projectFiles = new ArrayList<>();
+        Map<String, Object> projectFileIndex = new LinkedHashMap<>();
         for (ProjectFileBean file : files == null ? Collections.<ProjectFileBean>emptyList() : files) {
             if (file == null || blank(file.fileName)) {
                 report.add("unknown", "ProjectFileBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
@@ -143,11 +144,36 @@ public final class CreatorLegacyArtifactImporter {
             descriptor.put("keyboardSetting", file.keyboardSetting);
             descriptor.put("options", file.options);
             descriptor.put("presetName", file.presetName);
+            descriptor.put("runtimeKind", projectFileRuntimeKind(file.fileType));
+            descriptor.put("xmlName", file.getXmlName());
+            Map<String, Object> relationships = new LinkedHashMap<>();
+            relationships.put("screenId", file.fileName);
+            relationships.put("layoutResource", file.getXmlName());
+            if (file.fileType == ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY) {
+                descriptor.put("activityName", file.getActivityName());
+                descriptor.put("javaName", file.getJavaName());
+                descriptor.put("hasToolbar", file.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_TOOLBAR));
+                descriptor.put("isFullscreen", file.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_FULLSCREEN));
+                descriptor.put("hasFab", file.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_FAB));
+                descriptor.put("hasDrawer", file.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_DRAWER));
+                relationships.put("activityClass", file.getActivityName());
+                relationships.put("activitySource", file.getJavaName());
+                if (file.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_DRAWER)) {
+                    descriptor.put("drawerName", file.getDrawerName());
+                    descriptor.put("drawerXmlName", file.getDrawerXmlName());
+                    relationships.put("drawerId", file.getDrawerName());
+                    relationships.put("drawerLayoutResource", file.getDrawerXmlName());
+                }
+            }
+            descriptor.put("relationships", relationships);
             projectFiles.add(descriptor);
+            projectFileIndex.put(file.fileName, new LinkedHashMap<>(descriptor));
             report.add(file.fileName, "ProjectFileBean", CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
-                    "Imported as visible Creator Runtime screen metadata.");
+                    "Imported as typed Creator Runtime " + projectFileRuntimeKind(file.fileType)
+                            + " metadata with its stable layout and screen relationships.");
         }
         state.put("legacy.projectFiles", projectFiles);
+        state.put("legacy.projectFileIndex", projectFileIndex);
 
         List<Object> projectLibraries = new ArrayList<>();
         for (ProjectLibraryBean library : libraries == null ? Collections.<ProjectLibraryBean>emptyList() : libraries) {
@@ -171,6 +197,18 @@ public final class CreatorLegacyArtifactImporter {
         }
         state.put("legacy.libraries", projectLibraries);
         return new Result(base.withRuntimeState(base.getRevision(), state, base.getEvents()), report);
+    }
+
+    private static String projectFileRuntimeKind(int fileType) {
+        switch (fileType) {
+            case ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY: return "activity";
+            case ProjectFileBean.PROJECT_FILE_TYPE_CUSTOM_VIEW: return "custom_view";
+            case ProjectFileBean.PROJECT_FILE_TYPE_DRAWER: return "drawer";
+            case ProjectFileBean.PROJECT_FILE_TYPE_FRAGMENT: return "fragment";
+            case ProjectFileBean.PROJECT_FILE_TYPE_SHEET: return "sheet";
+            case ProjectFileBean.PROJECT_FILE_TYPE_DIALOG_FRAGMENT: return "dialog_fragment";
+            default: return "unknown";
+        }
     }
 
     public Result importResources(CreatorProjectDocument base, List<ProjectResourceBean> resources) {

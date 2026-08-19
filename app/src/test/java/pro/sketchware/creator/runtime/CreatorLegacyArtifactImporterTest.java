@@ -960,6 +960,7 @@ public class CreatorLegacyArtifactImporterTest {
 
     @Test public void importsProjectMetadataAndBlocksArbitraryNativeLibraries() {
         ProjectFileBean activity = new ProjectFileBean(ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY, "main");
+        activity.options |= ProjectFileBean.OPTION_ACTIVITY_DRAWER | ProjectFileBean.OPTION_ACTIVITY_FAB;
         ProjectLibraryBean firebase = new ProjectLibraryBean(ProjectLibraryBean.PROJECT_LIB_TYPE_FIREBASE);
         firebase.useYn = ProjectLibraryBean.LIB_USE_Y;
         ProjectLibraryBean nativeLibrary = new ProjectLibraryBean(ProjectLibraryBean.PROJECT_LIB_TYPE_NATIVE_LIB);
@@ -968,6 +969,19 @@ public class CreatorLegacyArtifactImporterTest {
                 documentWithButton(), Collections.singletonList(activity), Arrays.asList(firebase, nativeLibrary));
 
         assertThat(result.getDocument().getState()).containsKey("legacy.projectFiles");
+        @SuppressWarnings("unchecked") Map<String, Object> projectFileIndex =
+                (Map<String, Object>) result.getDocument().getState().get("legacy.projectFileIndex");
+        @SuppressWarnings("unchecked") Map<String, Object> main = (Map<String, Object>) projectFileIndex.get("main");
+        assertThat(main).containsEntry("runtimeKind", "activity");
+        assertThat(main).containsEntry("activityName", "MainActivity");
+        assertThat(main).containsEntry("javaName", "MainActivity.java");
+        assertThat(main).containsEntry("xmlName", "main.xml");
+        assertThat(main).containsEntry("hasFab", true);
+        assertThat(main).containsEntry("drawerName", "_drawer_main");
+        assertThat(main).containsEntry("drawerXmlName", "_drawer_main.xml");
+        @SuppressWarnings("unchecked") Map<String, Object> relationships = (Map<String, Object>) main.get("relationships");
+        assertThat(relationships).containsEntry("drawerId", "_drawer_main");
+        assertThat(relationships).containsEntry("drawerLayoutResource", "_drawer_main.xml");
         assertThat(result.getDocument().getState()).containsKey("legacy.libraries");
         assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(2);
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(1);
