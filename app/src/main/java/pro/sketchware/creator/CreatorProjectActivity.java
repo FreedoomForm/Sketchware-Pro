@@ -130,6 +130,14 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    @Override public void onBackPressed() {
+        if (liveDrawerLayout != null && liveDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+            liveDrawerLayout.closeDrawer(GravityCompat.START);
+            return;
+        }
+        super.onBackPressed();
+    }
+
     @Override protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
         if (runtimeEnvironment != null && runtimeEnvironment.handleActivityResult(requestCode, resultCode, data)) return;
         super.onActivityResult(requestCode, resultCode, data);
