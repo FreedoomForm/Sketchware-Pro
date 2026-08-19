@@ -641,7 +641,7 @@ public class CreatorRuntimeExecutorTest {
             @Override public String getId() { return "firebase_auth"; }
             @Override public Result execute(Map<String, Object> arguments) {
                 assertThat(arguments).containsEntry("action", "status");
-                return new Result(Status.SUCCEEDED, map("signedIn", true, "uid", "user-42"), null);
+                return new Result(Status.SUCCEEDED, map("signedIn", true, "uid", "user-42", "email", "ada@example.com"), null);
             }
         };
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
@@ -654,6 +654,8 @@ public class CreatorRuntimeExecutorTest {
                 new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
                         map("stateId", "signedIn", "expression", reporter("firebaseauthisloggedin"))),
                 new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "email", "expression", reporter("firebaseauthgetcurrentuser"))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
                         map("stateId", "uid", "expression", reporter("firebaseauthgetuid"))));
         engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
                 map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
@@ -661,6 +663,7 @@ public class CreatorRuntimeExecutorTest {
         new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(auth)).dispatch(engine, "button", "click");
 
         assertThat(engine.getCurrent().getState().get("signedIn")).isEqualTo(true);
+        assertThat(engine.getCurrent().getState().get("email")).isEqualTo("ada@example.com");
         assertThat(engine.getCurrent().getState().get("uid")).isEqualTo("user-42");
     }
 

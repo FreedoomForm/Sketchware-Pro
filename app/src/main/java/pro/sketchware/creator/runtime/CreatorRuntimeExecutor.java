@@ -327,6 +327,7 @@ public final class CreatorRuntimeExecutor {
         }
         if ("firebasegetpushkey".equals(op)) return firebaseValue(engine, first, "push_key", "key");
         if ("firebaseauthisloggedin".equals(op)) return firebaseAuthValue("signedIn");
+        if ("firebaseauthgetcurrentuser".equals(op)) return firebaseAuthValue("email");
         if ("firebaseauthgetuid".equals(op)) return firebaseAuthValue("uid");
         if ("bluetoothconnectgetrandomuuid".equals(op)) return bluetoothValue(first, "random_uuid", "uuid");
         if ("bluetoothconnectisbluetoothactivated".equals(op)) return bluetoothValue(first, "status", "activated");
