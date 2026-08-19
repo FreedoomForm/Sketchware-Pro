@@ -313,6 +313,7 @@ public final class CreatorRuntimeExecutor {
         if ("firebasegetpushkey".equals(op)) return firebaseValue(engine, first, "push_key", "key");
         if ("objectanimatorisrunning".equals(op)) return animatorValue(first, "is_running", "value");
         if ("texttospeechisspeaking".equals(op)) return textToSpeechValue(first, "is_speaking", "value");
+        if ("filegetdata".equals(op)) return storageValue(first, second, "get", "value");
         if ("getresstr".equals(op)) return CreatorRuntimeResourceValues.resolveString(engine.getCurrent(),
                 "@string/" + literalName(rawArguments, first));
         if ("maptostr".equals(op) || "listmaptostr".equals(op)) return new com.google.gson.Gson().toJson(first);
@@ -395,6 +396,14 @@ public final class CreatorRuntimeExecutor {
         if (runtimeServices == null || componentId == null) return null;
         CreatorRuntimeService.Result result = runtimeServices.dispatch("text_to_speech",
                 CreatorRuntimeServiceArguments.output("componentId", String.valueOf(componentId), "action", action));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
+    }
+
+    private Object storageValue(Object componentId, Object key, String action, String outputKey) {
+        if (runtimeServices == null || componentId == null || key == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("local_storage",
+                CreatorRuntimeServiceArguments.output("componentId", String.valueOf(componentId), "action", action,
+                        "key", String.valueOf(key)));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
     }
 
