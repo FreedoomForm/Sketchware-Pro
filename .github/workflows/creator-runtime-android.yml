@@ -83,11 +83,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - api-level: 29
-            target: google_apis
+          - api-level: 30
+            target: default
             arch: x86
-          - api-level: 35
-            target: google_apis
+          - api-level: 34
+            target: default
             arch: x86_64
     steps:
       - name: Checkout

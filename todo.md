@@ -83,5 +83,5 @@
 - [x] Preserve legacy DrawerLayout back behavior by closing an open runtime-native drawer before leaving the active Creator screen.
 - [x] Preserve legacy LayoutBean padding, margins, dimensions, gravity, weight, and background references in typed runtime widgets, then apply them in the live renderer without a compiled project resource path.
 - [x] Import and execute typed More Block return values through scoped frames; keep arbitrary direct-source execution visibly blocked as R0.
-- [x] Add GitHub Actions for every push to creator-runtime: debug APK assembly, JVM tests, and API 29/API 35 native emulator tests with artifacts.
+- [x] Add GitHub Actions for every push to creator-runtime: debug APK assembly, JVM tests, and API 30/API 34 native emulator tests with artifacts.
 - [ ] Confirm the first remote creator-runtime workflow run passes on GitHub-hosted Android emulators.
