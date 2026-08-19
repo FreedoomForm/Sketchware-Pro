@@ -290,6 +290,8 @@ public final class CreatorRuntimeExecutor {
         }
         if ("firebasegetpushkey".equals(op)) return firebaseValue(engine, first, "push_key", "key");
         if ("objectanimatorisrunning".equals(op)) return animatorValue(first, "is_running", "value");
+        if ("getresstr".equals(op)) return CreatorRuntimeResourceValues.resolveString(engine.getCurrent(),
+                "@string/" + literalName(rawArguments, first));
         if ("getvar".equals(op)) return engine.getCurrent().getState().get(literalName(rawArguments, first));
         if ("gettext".equals(op)) return String.valueOf(widgetValue(engine, first, "text", ""));
         if ("getenable".equals(op)) return booleanValue(widgetValue(engine, first, "enabled", true));
