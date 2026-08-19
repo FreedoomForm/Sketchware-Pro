@@ -323,6 +323,29 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsCanonicalUiBlocksAsDirectRuntimeServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean title = new BlockBean("1", "", "", "setTitle");
+        title.parameters.add("Creator Runtime");
+        BlockBean copy = new BlockBean("2", "", "", "copyToClipboard");
+        copy.parameters.add("copied");
+        title.nextBlock = 2;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(title, copy));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        @SuppressWarnings("unchecked") Map<String, Object> setTitle = (Map<String, Object>) imported.get(0).getPayload().get("arguments");
+        @SuppressWarnings("unchecked") Map<String, Object> copyText = (Map<String, Object>) imported.get(1).getPayload().get("arguments");
+        assertThat(imported.get(0).getPayload().get("serviceId")).isEqualTo("ui");
+        assertThat(setTitle).containsEntry("action", "set_title");
+        assertThat(copyText).containsEntry("action", "copy_text");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

@@ -367,6 +367,12 @@ public final class CreatorLegacyArtifactImporter {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("media", CreatorRuntimeServiceArguments.output("id", values.get(0),
                     "action", "set_looping", "looping", values.get(1)));
+        } else if ("settitle".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("ui", CreatorRuntimeServiceArguments.output("action", "set_title", "title", values.get(0)));
+        } else if ("copytoclipboard".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("ui", CreatorRuntimeServiceArguments.output("action", "copy_text", "text", values.get(0)));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported);
