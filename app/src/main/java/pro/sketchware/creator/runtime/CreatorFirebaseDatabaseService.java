@@ -6,6 +6,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 
@@ -51,6 +53,29 @@ public final class CreatorFirebaseDatabaseService implements CreatorRuntimeServi
                 @Override public void onDataChange(DataSnapshot snapshot) {
                     environment.publish(getId(), "value", CreatorRuntimeServiceArguments.output(
                             "path", path, "exists", snapshot.exists(), "value", snapshot.getValue()));
+                }
+                @Override public void onCancelled(DatabaseError error) { publishError(action, path, error.toException()); }
+            });
+            return CreatorRuntimeServiceArguments.succeeded("started", true, "action", action, "path", path);
+        }
+        if ("get_children".equals(action)) {
+            reference.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override public void onDataChange(DataSnapshot snapshot) {
+                    List<Map<String, Object>> rows = new ArrayList<>();
+                    for (DataSnapshot child : snapshot.getChildren()) {
+                        Object raw = child.getValue();
+                        if (raw instanceof Map) {
+                            Map<String, Object> row = new LinkedHashMap<>();
+                            for (Map.Entry<?, ?> entry : ((Map<?, ?>) raw).entrySet()) {
+                                if (entry.getKey() != null) row.put(String.valueOf(entry.getKey()), entry.getValue());
+                            }
+                            rows.add(row);
+                        }
+                    }
+                    environment.publish(getId(), "children", CreatorRuntimeServiceArguments.output(
+                            "path", path, "rows", rows,
+                            "resultStateId", CreatorRuntimeServiceArguments.string(arguments, "resultStateId"),
+                            "callbackTargetId", CreatorRuntimeServiceArguments.string(arguments, "callbackTargetId")));
                 }
                 @Override public void onCancelled(DatabaseError error) { publishError(action, path, error.toException()); }
             });
