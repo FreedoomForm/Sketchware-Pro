@@ -65,6 +65,29 @@ public class CreatorRuntimeExecutorTest {
         assertThat(effects.get(0).getValue()).isEqualTo("once");
     }
 
+    @Test public void serviceArgumentsResolveStateReferencesBeforeDispatch() {
+        final Map<String, Object> received = new LinkedHashMap<>();
+        CreatorRuntimeServiceDispatcher services = new CreatorRuntimeServiceDispatcher().register(new CreatorRuntimeService() {
+            @Override public String getId() { return "capture"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                received.putAll(arguments);
+                return new Result(Status.SUCCEEDED, java.util.Collections.<String, Object>emptyMap(), null);
+            }
+        });
+        CreatorRuntimeEngine engine = engineWithButton();
+        engine.apply(op("state", 2, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "url", "value", "https://example.test")));
+        Map<String, Object> args = map("url", "state:url", "nested", map("token", "@url"));
+        attachWithServices(engine, new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                map("serviceId", "capture", "arguments", args)), services, 3);
+
+        new CreatorRuntimeExecutor(services).dispatch(engine, "button", "click");
+
+        assertThat(received.get("url")).isEqualTo("https://example.test");
+        @SuppressWarnings("unchecked") Map<String, Object> nested = (Map<String, Object>) received.get("nested");
+        assertThat(nested.get("token")).isEqualTo("https://example.test");
+    }
+
     @Test public void typedExpressionsAndIncrementUpdateRuntimeState() {
         CreatorRuntimeEngine engine = engineWithButton();
         List<CreatorRuntimeBlock> blocks = Arrays.asList(
@@ -100,6 +123,13 @@ public class CreatorRuntimeExecutorTest {
         engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
                 map("widgetId", "button", "widgetType", "button", "parentId", "root")));
         return engine;
+    }
+
+    private static void attachWithServices(CreatorRuntimeEngine engine, CreatorRuntimeBlock block,
+                                            CreatorRuntimeServiceDispatcher services, long revision) {
+        engine.apply(op("event-service-" + revision, revision, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_service_" + revision, "targetWidgetId", "button", "eventName", "click",
+                        "blocks", java.util.Collections.singletonList(block))));
     }
 
     private static void attach(CreatorRuntimeEngine engine, List<CreatorRuntimeBlock> blocks, long revision) {

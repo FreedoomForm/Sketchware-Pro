@@ -347,9 +347,16 @@ public final class CreatorLegacyArtifactImporter {
             call.put("serviceId", "gyroscope"); arguments.put("action", "start");
         } else if ("gyroscopystoplisten".equals(op)) {
             call.put("serviceId", "gyroscope"); arguments.put("action", "stop");
+        } else if ("requestnetworksetparams".equals(op) && values.size() >= 3) {
+            call.put("serviceId", "http"); arguments.put("action", "set_params");
+            arguments.put("requestId", values.get(0)); arguments.put("params", stateReference(values.get(1)));
+        } else if ("requestnetworksetheaders".equals(op) && values.size() >= 2) {
+            call.put("serviceId", "http"); arguments.put("action", "set_headers");
+            arguments.put("requestId", values.get(0)); arguments.put("headers", stateReference(values.get(1)));
         } else if ("requestnetworkstartrequestnetwork".equals(op) && values.size() >= 4) {
-            call.put("serviceId", "http"); arguments.put("method", values.get(1));
-            arguments.put("url", values.get(2)); arguments.put("body", values.get(3));
+            call.put("serviceId", "http"); arguments.put("action", "request");
+            arguments.put("requestId", values.get(0)); arguments.put("method", values.get(1));
+            arguments.put("url", values.get(2)); arguments.put("body", stateReference(values.get(3)));
         } else if ("dialogshow".equals(op)) {
             call.put("serviceId", "dialog"); arguments.put("action", "show");
         } else {
@@ -357,6 +364,12 @@ public final class CreatorLegacyArtifactImporter {
         }
         call.put("arguments", arguments);
         return call;
+    }
+
+    private static String stateReference(String value) {
+        if (value == null || value.trim().isEmpty()) return value;
+        if (value.startsWith("state:") || value.startsWith("@")) return value;
+        return "state:" + value;
     }
 
     private static String widgetProperty(String op) {

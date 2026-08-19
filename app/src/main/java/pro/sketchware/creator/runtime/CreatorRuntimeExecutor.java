@@ -109,10 +109,38 @@ public final class CreatorRuntimeExecutor {
         }
         String serviceId = String.valueOf(payload.get("serviceId"));
         Object rawArguments = payload.get("arguments");
-        @SuppressWarnings("unchecked") Map<String, Object> arguments = rawArguments instanceof Map
+        @SuppressWarnings("unchecked") Map<String, Object> rawMap = rawArguments instanceof Map
                 ? (Map<String, Object>) rawArguments : Collections.<String, Object>emptyMap();
+        Map<String, Object> arguments = resolveArguments(rawMap, engine.getCurrent().getState());
         CreatorRuntimeService.Result result = runtimeServices.dispatch(serviceId, arguments);
         effects.add(new Effect("runtime_service", serviceId + ":" + result.getStatus().name()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> resolveArguments(Map<String, Object> raw, Map<String, Object> state) {
+        Map<String, Object> resolved = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : raw.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof Map) value = resolveArguments((Map<String, Object>) value, state);
+            else if (value instanceof List) {
+                List<Object> list = new ArrayList<>();
+                for (Object item : (List<Object>) value) {
+                    if (item instanceof Map) list.add(resolveArguments((Map<String, Object>) item, state));
+                    else list.add(resolveValue(item, state));
+                }
+                value = list;
+            } else value = resolveValue(value, state);
+            resolved.put(entry.getKey(), value);
+        }
+        return resolved;
+    }
+
+    private static Object resolveValue(Object value, Map<String, Object> state) {
+        if (!(value instanceof String)) return value;
+        String text = (String) value;
+        if (text.startsWith("state:")) return state.get(text.substring("state:".length()));
+        if (text.startsWith("@")) return state.get(text.substring(1));
+        return value;
     }
 
     private static double number(Object value) {
