@@ -9,6 +9,7 @@ import java.util.UUID;
 
 /** Executes an attached event binding using only typed operations and visible effects. */
 public final class CreatorRuntimeExecutor {
+    private static final int MAX_REPEAT_ITERATIONS = 10_000;
     public static final class Effect {
         private final String type;
         private final String value;
@@ -88,6 +89,18 @@ public final class CreatorRuntimeExecutor {
                 Object expected = payload.get("equals");
                 boolean matches = expected == null ? actual == null : expected.equals(actual);
                 executeBlocks(engine, matches ? block.getThenBlocks() : block.getElseBlocks(), effects);
+            } else if (block.getType() == CreatorRuntimeBlock.Type.IF_BOOLEAN) {
+                boolean matches;
+                if (payload.containsKey("constant")) matches = Boolean.TRUE.equals(payload.get("constant"));
+                else matches = Boolean.TRUE.equals(engine.getCurrent().getState().get(String.valueOf(payload.get("stateId"))));
+                executeBlocks(engine, matches ? block.getThenBlocks() : block.getElseBlocks(), effects);
+            } else if (block.getType() == CreatorRuntimeBlock.Type.REPEAT) {
+                long requested = payload.containsKey("countStateId")
+                        ? number(engine.getCurrent().getState().get(String.valueOf(payload.get("countStateId"))))
+                        : number(payload.get("count"));
+                int count = (int) Math.max(0L, Math.min(MAX_REPEAT_ITERATIONS, requested));
+                if (requested > MAX_REPEAT_ITERATIONS) effects.add(new Effect("repeat", "capped:" + MAX_REPEAT_ITERATIONS));
+                for (int iteration = 0; iteration < count; iteration++) executeBlocks(engine, block.getThenBlocks(), effects);
             }
         }
     }

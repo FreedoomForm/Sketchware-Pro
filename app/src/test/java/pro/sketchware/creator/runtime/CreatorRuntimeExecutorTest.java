@@ -5,6 +5,7 @@ import static com.google.common.truth.Truth.assertThat;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,6 +97,32 @@ public class CreatorRuntimeExecutorTest {
         @SuppressWarnings("unchecked") Map<String, Object> profile =
                 (Map<String, Object>) engine.getCurrent().getState().get("profile");
         assertThat(profile).containsExactly("name", "Ada");
+    }
+
+    @Test public void executesBooleanConditionAndBoundedRepeatWithoutLegacyCodeExecution() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 30,
+                new CreatorRuntimeEventLog(30));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("enabled", 2, CreatorProjectOperation.Type.STATE_SET, map("stateId", "enabled", "value", true)));
+        engine.apply(op("counter", 3, CreatorProjectOperation.Type.STATE_SET, map("stateId", "counter", "value", 0L)));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_BOOLEAN, map("stateId", "enabled"),
+                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+                                map("stateId", "counter", "delta", 1L))),
+                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+                                map("stateId", "counter", "delta", -1L)))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.REPEAT, map("count", "3"),
+                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+                                map("stateId", "counter", "delta", 1L))), Collections.<CreatorRuntimeBlock>emptyList()));
+        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("counter")).isEqualTo(4L);
     }
 
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {

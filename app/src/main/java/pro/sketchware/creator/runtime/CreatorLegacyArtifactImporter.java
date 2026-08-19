@@ -279,6 +279,34 @@ public final class CreatorLegacyArtifactImporter {
             payload.put("equals", values.get(1));
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_STATE_EQUALS, payload, thenBlocks, elseBlocks);
         }
+        if ("if".equals(op) || "ifelse".equals(op)) {
+            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+            List<CreatorRuntimeBlock> thenBlocks = new ArrayList<>();
+            List<CreatorRuntimeBlock> elseBlocks = new ArrayList<>();
+            BlockBean thenStart = byId.get(block.subStack1);
+            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+            convertChain(thenStart, byId, visited, thenBlocks, unsupported, timerCallbacks, componentDescriptors);
+            if ("ifelse".equals(op) && block.subStack2 >= 0) {
+                BlockBean elseStart = byId.get(block.subStack2);
+                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+                convertChain(elseStart, byId, visited, elseBlocks, unsupported, timerCallbacks, componentDescriptors);
+            }
+            String condition = values.get(0).trim();
+            if ("true".equalsIgnoreCase(condition) || "false".equalsIgnoreCase(condition)) payload.put("constant", Boolean.valueOf(condition));
+            else payload.put("stateId", condition);
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_BOOLEAN, payload, thenBlocks, elseBlocks);
+        }
+        if ("repeat".equals(op)) {
+            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+            BlockBean bodyStart = byId.get(block.subStack1);
+            if (bodyStart == null) { unsupported.add(block.opCode + " (missing repeat substack)"); return null; }
+            List<CreatorRuntimeBlock> body = new ArrayList<>();
+            convertChain(bodyStart, byId, visited, body, unsupported, timerCallbacks, componentDescriptors);
+            String count = values.get(0).trim();
+            if (count.matches("-?\\d+")) payload.put("count", count);
+            else payload.put("countStateId", count);
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.REPEAT, payload, body, Collections.<CreatorRuntimeBlock>emptyList());
+        }
         boolean timerWithCallback = "timerafter".equals(op) || "timerevery".equals(op);
         if ((block.subStack1 >= 0 || block.subStack2 >= 0) && !timerWithCallback) {
             unsupported.add(block.opCode + " (control flow)"); return null;

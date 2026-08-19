@@ -655,6 +655,38 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsCanonicalIfElseAndRepeatSubstacksAsTypedControlFlow() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean conditional = new BlockBean("1", "", "", "ifElse");
+        conditional.parameters.add("enabled");
+        conditional.subStack1 = 2;
+        conditional.subStack2 = 3;
+        BlockBean thenIncrement = new BlockBean("2", "", "", "increaseInt");
+        thenIncrement.parameters.add("counter");
+        BlockBean elseIncrement = new BlockBean("3", "", "", "decreaseInt");
+        elseIncrement.parameters.add("counter");
+        BlockBean repeat = new BlockBean("4", "", "", "repeat");
+        repeat.parameters.add("3");
+        repeat.subStack1 = 5;
+        BlockBean repeatedIncrement = new BlockBean("5", "", "", "increaseInt");
+        repeatedIncrement.parameters.add("counter");
+        conditional.nextBlock = 4;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(conditional, thenIncrement, elseIncrement, repeat, repeatedIncrement));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(2);
+        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.IF_BOOLEAN);
+        assertThat(imported.get(0).getThenBlocks()).hasSize(1);
+        assertThat(imported.get(0).getElseBlocks()).hasSize(1);
+        assertThat(imported.get(1).getType()).isEqualTo(CreatorRuntimeBlock.Type.REPEAT);
+        assertThat(imported.get(1).getThenBlocks()).hasSize(1);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");
