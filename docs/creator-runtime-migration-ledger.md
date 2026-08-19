@@ -79,3 +79,5 @@ The current service-call slice maps direct legacy operations to structured argum
 The HTTP service now retains per-request headers and params, accepts `set_headers` and `set_params` actions, and resolves request body data from the stored typed params. The executor recursively resolves `state:` and `@state` references inside nested service argument maps and lists before dispatch; a regression test verifies this behavior.
 
 Valid component, activity, and drawer events are now represented as actual runtime bindings even when their target is not a widget. The importer still preserves event metadata for inspection, while executor dispatch can address these bindings by target ID and normalized event name.
+
+After installing the required Android SDK platform/build tools and JDK 21, the full `:app:testDebugUnitTest` task passes: 192 tests completed successfully. One parser defect found by that suite—whitespace around expression operands prevented state lookup—was fixed by normalizing operands before evaluation. An unrelated pre-existing resource warning remains for `link_github_commits_url` using multiple non-positional substitutions.

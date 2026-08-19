@@ -16,7 +16,7 @@ public final class CreatorRuntimeExpression {
     }
 
     private static Object evaluateInternal(String expression, Map<String, Object> state) {
-        String value = stripParentheses(expression);
+        String value = stripParentheses(expression.trim());
         if (value.isEmpty()) return "";
         int index = findOperator(value, "||");
         if (index >= 0) return truthy(evaluateInternal(value.substring(0, index), state))

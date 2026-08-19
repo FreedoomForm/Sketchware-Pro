@@ -97,7 +97,7 @@ public class CreatorRuntimeExecutorTest {
 
         new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
 
-        assertThat(engine.getCurrent().getState().get("counter")).isEqualTo(3L);
+        assertThat(engine.getCurrent().getState().get("counter")).isEqualTo(3.0d);
     }
 
     @Test public void typedConditionChoosesThenBranchUsingRuntimeState() {
