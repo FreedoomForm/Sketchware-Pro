@@ -311,6 +311,8 @@ public final class CreatorRuntimeExecutor {
             return left == null || right == null ? null : (double) (number(left) - number(right));
         }
         if ("firebasegetpushkey".equals(op)) return firebaseValue(engine, first, "push_key", "key");
+        if ("firebaseauthisloggedin".equals(op)) return firebaseAuthValue("signedIn");
+        if ("firebaseauthgetuid".equals(op)) return firebaseAuthValue("uid");
         if ("objectanimatorisrunning".equals(op)) return animatorValue(first, "is_running", "value");
         if ("texttospeechisspeaking".equals(op)) return textToSpeechValue(first, "is_speaking", "value");
         if ("filegetdata".equals(op)) return storageValue(first, second, "get", "value");
@@ -413,6 +415,13 @@ public final class CreatorRuntimeExecutor {
         CreatorRuntimeService.Result result = runtimeServices.dispatch("intent",
                 CreatorRuntimeServiceArguments.output("intentId", String.valueOf(intentId), "action", action,
                         "key", String.valueOf(key)));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
+    }
+
+    private Object firebaseAuthValue(String outputKey) {
+        if (runtimeServices == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("firebase_auth",
+                CreatorRuntimeServiceArguments.output("action", "status"));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
     }
 
