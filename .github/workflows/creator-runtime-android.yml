@@ -85,7 +85,7 @@ jobs:
         include:
           - api-level: 30
             target: default
-            arch: x86
+            arch: x86_64
           - api-level: 34
             target: default
             arch: x86_64
