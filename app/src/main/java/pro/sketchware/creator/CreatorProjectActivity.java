@@ -838,6 +838,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         view.setTranslationY(propertyFloat(widget, "translationY", 0f));
         view.setScaleX(propertyFloat(widget, "scaleX", 1f));
         view.setScaleY(propertyFloat(widget, "scaleY", 1f));
+        applyLegacyLayoutProperties(widget, view);
         String backgroundColor = pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveColor(document,
                 propertyString(widget, "backgroundColor", ""), resourceVariant());
         if (!backgroundColor.isEmpty()) {
@@ -846,8 +847,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         String backgroundResource = propertyString(widget, "backgroundResource", "");
         if (!backgroundResource.isEmpty()) {
-            int resourceId = getResources().getIdentifier(backgroundResource, "drawable", getPackageName());
-            if (resourceId != 0) view.setBackgroundResource(resourceId);
+            android.graphics.drawable.Drawable drawable = resolveProjectDrawable(document, backgroundResource);
+            if (drawable != null) view.setBackground(drawable);
         }
         if (view instanceof TextView) {
             TextView text = (TextView) view;
@@ -868,6 +869,32 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 catch (IllegalArgumentException ignored) { }
             }
         }
+    }
+
+    private void applyLegacyLayoutProperties(CreatorWidget widget, View view) {
+        view.setPadding(dp(propertyInt(widget, "paddingLeft", 0)), dp(propertyInt(widget, "paddingTop", 0)),
+                dp(propertyInt(widget, "paddingRight", 0)), dp(propertyInt(widget, "paddingBottom", 0)));
+        int width = runtimeLayoutDimension(propertyInt(widget, "legacyWidth", ViewGroup.LayoutParams.WRAP_CONTENT));
+        int height = runtimeLayoutDimension(propertyInt(widget, "legacyHeight", ViewGroup.LayoutParams.WRAP_CONTENT));
+        LinearLayout.LayoutParams parameters = new LinearLayout.LayoutParams(width, height,
+                Math.max(0f, propertyFloat(widget, "legacyWeight", 0f)));
+        parameters.setMargins(dp(propertyInt(widget, "marginLeft", 0)), dp(propertyInt(widget, "marginTop", 0)),
+                dp(propertyInt(widget, "marginRight", 0)), dp(propertyInt(widget, "marginBottom", 0)));
+        int gravity = propertyInt(widget, "legacyLayoutGravity", Gravity.NO_GRAVITY);
+        if (gravity != Gravity.NO_GRAVITY) parameters.gravity = gravity;
+        view.setLayoutParams(parameters);
+        if (view instanceof LinearLayout) {
+            LinearLayout layout = (LinearLayout) view;
+            int contentGravity = propertyInt(widget, "legacyGravity", Gravity.NO_GRAVITY);
+            if (contentGravity != Gravity.NO_GRAVITY) layout.setGravity(contentGravity);
+            int weightSum = propertyInt(widget, "legacyWeightSum", 0);
+            if (weightSum > 0) layout.setWeightSum(weightSum);
+        }
+    }
+
+    private int runtimeLayoutDimension(int value) {
+        if (value == ViewGroup.LayoutParams.MATCH_PARENT || value == ViewGroup.LayoutParams.WRAP_CONTENT) return value;
+        return value > 0 ? dp(value) : ViewGroup.LayoutParams.WRAP_CONTENT;
     }
 
     private void applyRuntimeTypeface(CreatorProjectDocument document, TextView text, CreatorWidget widget) {

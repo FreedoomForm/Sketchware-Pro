@@ -79,6 +79,47 @@ public class CreatorLegacyViewImporterTest {
         assertThat(properties).containsEntry("hintTextColor", "@color/muted");
     }
 
+    @Test public void preservesFullLegacyLayoutBeanPropertiesForRuntimeRendering() {
+        ViewBean layout = new ViewBean("panel", ViewBean.VIEW_TYPE_LAYOUT_LINEAR);
+        layout.layout.paddingLeft = 2;
+        layout.layout.paddingTop = 3;
+        layout.layout.paddingRight = 5;
+        layout.layout.paddingBottom = 7;
+        layout.layout.marginLeft = 11;
+        layout.layout.marginTop = 13;
+        layout.layout.marginRight = 17;
+        layout.layout.marginBottom = 19;
+        layout.layout.width = LayoutBean.LAYOUT_MATCH_PARENT;
+        layout.layout.height = 48;
+        layout.layout.gravity = LayoutBean.GRAVITY_BOTTOM;
+        layout.layout.layoutGravity = LayoutBean.GRAVITY_RIGHT;
+        layout.layout.weight = 2;
+        layout.layout.weightSum = 4;
+        layout.layout.backgroundResColor = "surface";
+        layout.layout.backgroundResource = "panel_texture";
+
+        CreatorLegacyViewImporter.Result result = new CreatorLegacyViewImporter().importLayout(
+                "project", "Imported", "main", "/", Arrays.asList(layout));
+
+        java.util.Map<String, Object> properties = result.getDocument().getWidgets().get("panel").getProperties();
+        assertThat(properties).containsEntry("paddingLeft", 2);
+        assertThat(properties).containsEntry("paddingTop", 3);
+        assertThat(properties).containsEntry("paddingRight", 5);
+        assertThat(properties).containsEntry("paddingBottom", 7);
+        assertThat(properties).containsEntry("marginLeft", 11);
+        assertThat(properties).containsEntry("marginTop", 13);
+        assertThat(properties).containsEntry("marginRight", 17);
+        assertThat(properties).containsEntry("marginBottom", 19);
+        assertThat(properties).containsEntry("legacyWidth", LayoutBean.LAYOUT_MATCH_PARENT);
+        assertThat(properties).containsEntry("legacyHeight", 48);
+        assertThat(properties).containsEntry("legacyGravity", LayoutBean.GRAVITY_BOTTOM);
+        assertThat(properties).containsEntry("legacyLayoutGravity", LayoutBean.GRAVITY_RIGHT);
+        assertThat(properties).containsEntry("legacyWeight", 2);
+        assertThat(properties).containsEntry("legacyWeightSum", 4);
+        assertThat(properties).containsEntry("backgroundColor", "@color/surface");
+        assertThat(properties).containsEntry("backgroundResource", "panel_texture");
+    }
+
     @Test public void importsEveryInventoriedLegacyViewTypeAsTypedRuntimeWidget() {
         java.util.List<ViewBean> views = new java.util.ArrayList<>();
         for (int type = 0; type < 49; type++) {

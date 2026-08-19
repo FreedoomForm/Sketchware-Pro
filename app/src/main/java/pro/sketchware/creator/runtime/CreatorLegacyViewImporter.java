@@ -149,10 +149,22 @@ public final class CreatorLegacyViewImporter {
         }
         LayoutBean layout = view.layout;
         if (layout != null) {
-            properties.put("padding", Math.max(0, layout.paddingLeft));
+            properties.put("paddingLeft", Math.max(0, layout.paddingLeft));
+            properties.put("paddingTop", Math.max(0, layout.paddingTop));
+            properties.put("paddingRight", Math.max(0, layout.paddingRight));
+            properties.put("paddingBottom", Math.max(0, layout.paddingBottom));
+            properties.put("marginLeft", Math.max(0, layout.marginLeft));
+            properties.put("marginTop", Math.max(0, layout.marginTop));
+            properties.put("marginRight", Math.max(0, layout.marginRight));
+            properties.put("marginBottom", Math.max(0, layout.marginBottom));
             properties.put("legacyWidth", layout.width);
             properties.put("legacyHeight", layout.height);
             properties.put("legacyGravity", layout.gravity);
+            properties.put("legacyLayoutGravity", layout.layoutGravity);
+            properties.put("legacyWeight", layout.weight);
+            properties.put("legacyWeightSum", layout.weightSum);
+            properties.put("backgroundColor", colorReference(layout.backgroundResColor, layout.backgroundColor));
+            properties.put("backgroundResource", layout.backgroundResource == null ? "" : layout.backgroundResource);
             if (view.type == ViewBean.VIEW_TYPE_LAYOUT_LINEAR
                     && layout.orientation == LayoutBean.ORIENTATION_HORIZONTAL) {
                 properties.put("orientation", "horizontal");
