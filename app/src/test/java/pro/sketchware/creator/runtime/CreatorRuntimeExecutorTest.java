@@ -888,6 +888,44 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState()).containsEntry("downloads", "/storage/emulated/0/Download");
     }
 
+    @Test public void evaluatesCanonicalLiveWidgetReportersThroughRuntimeNativeWidgetService() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeService widget = new CreatorRuntimeService() {
+            @Override public String getId() { return "widget"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                String action = String.valueOf(arguments.get("action"));
+                if ("web_can_go_back".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", true);
+                if ("web_can_go_forward".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", false);
+                if ("list_checked_position".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", 3);
+                if ("list_checked_count".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", 2);
+                return CreatorRuntimeServiceArguments.invalid("unsupported");
+            }
+        };
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "canBack", "expression", reporter("webviewcangoback", literal("web1")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "canForward", "expression", reporter("webviewcangoforward", literal("web1")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "checkedPosition", "expression", reporter("listgetcheckedposition", literal("list1")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "checkedCount", "expression", reporter("listgetcheckedcount", literal("list1")))));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(widget)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState()).containsEntry("canBack", true);
+        assertThat(engine.getCurrent().getState()).containsEntry("canForward", false);
+        assertThat(engine.getCurrent().getState()).containsEntry("checkedPosition", 3);
+        assertThat(engine.getCurrent().getState()).containsEntry("checkedCount", 2);
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

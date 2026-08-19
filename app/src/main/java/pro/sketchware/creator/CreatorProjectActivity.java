@@ -495,7 +495,25 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             input.setOnItemClickListener((parent, view, position, id) -> dispatchRuntimeEvent(widget.getId(), "item_selected"));
             return registerRuntimeWidget(widget, input);
         }
-        if ("list".equals(widget.getType()) || "grid".equals(widget.getType())) {
+        if ("list".equals(widget.getType())) {
+            android.widget.ListView list = new android.widget.ListView(this);
+            java.util.List<String> entries = new java.util.ArrayList<>();
+            Object rawItems = widget.getProperties().get("items");
+            if (rawItems instanceof java.util.List) {
+                for (Object item : (java.util.List<?>) rawItems) entries.add(String.valueOf(item));
+            }
+            if (entries.isEmpty()) entries.add(propertyString(widget, "text", "Item"));
+            int choiceMode = propertyInt(widget, "choiceMode", android.widget.ListView.CHOICE_MODE_NONE);
+            list.setChoiceMode(choiceMode);
+            int rowLayout = choiceMode == android.widget.ListView.CHOICE_MODE_MULTIPLE
+                    ? android.R.layout.simple_list_item_multiple_choice
+                    : choiceMode == android.widget.ListView.CHOICE_MODE_SINGLE
+                    ? android.R.layout.simple_list_item_single_choice : android.R.layout.simple_list_item_1;
+            list.setAdapter(new android.widget.ArrayAdapter<>(this, rowLayout, entries));
+            list.setOnItemClickListener((parent, view, position, id) -> dispatchRuntimeEvent(widget.getId(), "item_click"));
+            return registerRuntimeWidget(widget, list);
+        }
+        if ("grid".equals(widget.getType())) {
             LinearLayout list = new LinearLayout(this);
             list.setOrientation("grid".equals(widget.getType()) ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
             Object rawItems = widget.getProperties().get("items");

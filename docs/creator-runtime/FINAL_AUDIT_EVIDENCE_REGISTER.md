@@ -45,6 +45,8 @@ The evaluator also covers canonical `random` with the legacy inclusive integer r
 
 The evaluator now reads canonical `webViewGetUrl` and `calendarViewGetDate` from typed widget properties (`url` and `date`) maintained by their corresponding runtime setters. Regression verifies both result types as runtime state values; real WebView navigation and CalendarView rendering remain device-level evidence gaps.
 
+Canonical `webViewCanGoBack`, `webViewCanGoForward`, `listGetCheckedPosition`, and `listGetCheckedCount` now use the dedicated read-only `widget` runtime service over Creator Runtime’s active widget registry. The live renderer uses a native `ListView` for legacy list widgets and retains an explicit native choice-mode property, while the service reads actual WebView navigation or ListView checked state rather than generated code or stale document-only values. A deterministic evaluator regression verifies the exact four typed service actions and state results; the complete JVM suite now has **131 passing tests and zero failures**. Real navigation and touch-selection behavior remains device-level evidence still required by the open gates.
+
 `mapGetAllKeys` is now imported as a typed `replace_map_keys` list mutation. The executor clears the destination list, copies the source map’s ordered key set, and persists it back into runtime state. Importer and executor regressions verify the exact legacy map/list parameter order and resulting key order.
 
 The canonical `mapToStr` and `listMapToStr` reporters now serialize typed map/list data directly through the runtime serialization library. Regression verifies the exact JSON values held in state; this replaces generated Java-expression emission while preserving data-only execution.

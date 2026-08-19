@@ -337,6 +337,10 @@ public final class CreatorRuntimeExecutor {
         if ("seekbargetprogress".equals(op)) return decimal(widgetValue(engine, first, "progress", 0d));
         if ("spngetselection".equals(op)) return decimal(widgetValue(engine, first, "selectedIndex", 0d));
         if ("webviewgeturl".equals(op)) return String.valueOf(widgetValue(engine, first, "url", ""));
+        if ("webviewcangoback".equals(op)) return widgetQueryValue(first, "web_can_go_back");
+        if ("webviewcangoforward".equals(op)) return widgetQueryValue(first, "web_can_go_forward");
+        if ("listgetcheckedposition".equals(op)) return widgetQueryValue(first, "list_checked_position");
+        if ("listgetcheckedcount".equals(op)) return widgetQueryValue(first, "list_checked_count");
         if ("calendarviewgetdate".equals(op)) return decimal(widgetValue(engine, first, "date", 0d));
         if ("lengthlist".equals(op)) return (double) listValue(first).size();
         if ("getatlistint".equals(op) || "getatliststr".equals(op)) {
@@ -390,6 +394,13 @@ public final class CreatorRuntimeExecutor {
         if (directory != null) arguments.put("directory", String.valueOf(directory));
         CreatorRuntimeService.Result result = runtimeServices.dispatch("file", arguments);
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("path") : null;
+    }
+
+    private Object widgetQueryValue(Object widgetId, String action) {
+        if (runtimeServices == null || widgetId == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("widget",
+                CreatorRuntimeServiceArguments.output("widgetId", String.valueOf(widgetId), "action", action));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("value") : null;
     }
 
     private Object calendarTimestamp(Object componentId) {
