@@ -8,6 +8,8 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.view.View;
+
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -30,9 +32,9 @@ public class AISettingsActivityTest {
     @Test public void activityLaunchesAndShowsToolbar() {
         try (ActivityScenario<AISettingsActivity> scenario = ActivityScenario.launch(AISettingsActivity.class)) {
             scenario.onActivity(activity -> {
-                assertThat(activity.findViewById(R.id.toolbar)).isNotNull();
-                assertThat(activity.findViewById(R.id.nav)).isNotNull();
-                assertThat(activity.findViewById(R.id.content_frame)).isNotNull();
+                assertThat((View) activity.findViewById(R.id.toolbar)).isNotNull();
+                assertThat((View) activity.findViewById(R.id.nav)).isNotNull();
+                assertThat((View) activity.findViewById(R.id.content_frame)).isNotNull();
             });
         }
     }

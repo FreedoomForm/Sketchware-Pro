@@ -165,7 +165,7 @@ public class ChatFragmentE2ETest {
         // ============= Phase 3: launch ChatFragment =============
         FragmentScenario<ChatFragment> fragmentScenario =
                 FragmentScenario.launchInContainer(ChatFragment.class,
-                        R.style.Theme_SketchwarePro);
+                        null, R.style.Theme_SketchwarePro);
 
         // The chat input field should be visible.
         onView(withId(R.id.input)).check(matches(isDisplayed()));
@@ -238,7 +238,6 @@ public class ChatFragmentE2ETest {
         if (!selected) {
             try {
                 onView(withText(itemText))
-                        .inRoot(androidx.test.espresso.RootMatchers.isPlatformPopupWindow())
                         .perform(click());
                 selected = true;
             } catch (Throwable ignored) {}

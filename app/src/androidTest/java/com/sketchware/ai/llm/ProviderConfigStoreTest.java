@@ -176,7 +176,7 @@ public class ProviderConfigStoreTest {
         p.backgroundEditing = true;
         store.upsertProfile(p);
 
-        ProviderConfigStore loaded = new ProviderConfigStore(context).getActiveProfile();
+        ProviderConfigStore.Profile loaded = new ProviderConfigStore(context).getActiveProfile();
         store.setActiveProfile(p.id);
         loaded = new ProviderConfigStore(context).getActiveProfile();
 
