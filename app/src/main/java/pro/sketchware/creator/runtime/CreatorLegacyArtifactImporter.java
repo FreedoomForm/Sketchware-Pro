@@ -493,6 +493,12 @@ public final class CreatorLegacyArtifactImporter {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             return firebaseCall(values.get(0), "firebasestartlisten".equals(op) ? "listen" : "stop_listen",
                     firebasePath(componentDescriptors, values.get(0), null));
+        } else if ("datepickerdialogshow".equals(op)) {
+            return serviceCall("date_picker", CreatorRuntimeServiceArguments.output("action", "show"));
+        } else if ("timepickerdialogshow".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("time_picker", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "show"));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported);

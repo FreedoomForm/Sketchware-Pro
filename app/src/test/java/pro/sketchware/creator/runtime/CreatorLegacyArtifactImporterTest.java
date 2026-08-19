@@ -546,6 +546,25 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyPickerDialogShowBlocksAsRuntimeNativeServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean date = new BlockBean("1", "", "", "datePickerDialogShow");
+        BlockBean time = new BlockBean("2", "", "", "timePickerDialogShow");
+        time.parameters.add("timePicker1");
+        date.nextBlock = 2;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(date, time));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "date_picker", "show");
+        assertServiceCall(imported.get(1), "time_picker", "show");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");
