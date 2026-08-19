@@ -831,6 +831,16 @@ public final class CreatorLegacyArtifactImporter {
                 || "spnsetcustomviewdata".equals(op) || "pagersetcustomviewdata".equals(op)
                 || "gridsetcustomviewdata".equals(op)) {
             return widgetCustomDataProperty(block, values, unsupported);
+        } else if ("adviewloadad".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "ad_load"));
+        } else if ("interstitialadcreate".equals(op) || "interstitialadloadad".equals(op)
+                || "interstitialadshow".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            String action = "interstitialadcreate".equals(op) ? "create"
+                    : "interstitialadloadad".equals(op) ? "load" : "show";
+            return interstitialCall(values.get(0), action, componentDescriptors);
         } else if ("objectanimatorsettarget".equals(op)) {
             return animatorCall(block, values, "set_target", 2, unsupported);
         } else if ("objectanimatorsetproperty".equals(op)) {
@@ -1368,6 +1378,20 @@ public final class CreatorLegacyArtifactImporter {
     private static CreatorRuntimeBlock firebaseCall(String componentId, String action, String path) {
         return serviceCall("firebase", CreatorRuntimeServiceArguments.output(
                 "componentId", componentId, "action", action, "path", path));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static CreatorRuntimeBlock interstitialCall(String componentId, String action,
+                                                        Map<String, Object> componentDescriptors) {
+        Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("componentId", componentId);
+        arguments.put("action", action);
+        Object raw = componentDescriptors == null ? null : componentDescriptors.get(componentId);
+        if (raw instanceof Map && "load".equals(action)) {
+            Object unitId = ((Map<?, ?>) raw).get("param1");
+            if (unitId != null && !String.valueOf(unitId).trim().isEmpty()) arguments.put("adUnitId", String.valueOf(unitId));
+        }
+        return serviceCall("ads_interstitial", arguments);
     }
 
     private static CreatorRuntimeBlock calendarCall(String componentId, String action, String key, String value) {

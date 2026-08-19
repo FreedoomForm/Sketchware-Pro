@@ -75,6 +75,8 @@ Canonical `setThumbResource` and `setTrackResource` now import as typed SeekBar 
 
 Canonical custom-adapter data blocks for ListView/Recycler, Spinner, ViewPager, and Grid now persist a typed list-map state reference on their runtime widgets. The live renderer resolves that state after each render and presents map rows through the native widget families, without generated adapter classes; importer regression verifies all five canonical opcodes. The complete JVM suite now has **151 passing tests and zero failures**. Detailed custom row-layout and device interaction parity remain evidence under the open block/event and view gates.
 
+Canonical `adViewLoadAd`, `interstitialadCreate`, `interstitialadLoadAd`, and `interstitialadShow` now map to runtime-native live AdView and component-isolated interstitial services. Interstitial unit IDs are resolved from visible component descriptors; the importer regression verifies banner plus create/load/show contracts. The complete JVM suite now has **152 passing tests and zero failures**. Network delivery, policy configuration, and full-screen ad behavior remain device-level evidence under the open component gate.
+
 `mapGetAllKeys` is now imported as a typed `replace_map_keys` list mutation. The executor clears the destination list, copies the source map’s ordered key set, and persists it back into runtime state. Importer and executor regressions verify the exact legacy map/list parameter order and resulting key order.
 
 The canonical `mapToStr` and `listMapToStr` reporters now serialize typed map/list data directly through the runtime serialization library. Regression verifies the exact JSON values held in state; this replaces generated Java-expression emission while preserving data-only execution.

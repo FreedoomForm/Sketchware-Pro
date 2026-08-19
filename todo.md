@@ -74,3 +74,6 @@
 - [x] Rename residual runtime service implementation classes that still use the retired `Plugin` term, and verify no active Creator Runtime source or test path retains plugin terminology.
 - [ ] After every verified runtime batch, create a focused local commit and periodically push accumulated commits to the configured GitHub remote; record push failures without stopping local preservation.
 - [x] Configure the `origin` remote for `ozodbekasilbekov2-gif/Sketchware-Pro` and validate the initial push of the `creator-runtime` branch.
+- [x] Commit and push the currently verified runtime-native Ads batch before importing external skills.
+- [ ] Read the Manus skill-creation workflow and assess the requested external skills repository for compatible, safe skill packages.
+- [ ] Import only compatible skills using the required Manus skill structure and validate each imported package.

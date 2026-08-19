@@ -623,6 +623,38 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyBannerAndInterstitialActionsAsTypedRuntimeServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean banner = new BlockBean("1", "", "", "adViewLoadAd");
+        banner.parameters.add("banner");
+        BlockBean create = new BlockBean("2", "", "", "interstitialadCreate");
+        create.parameters.add("interstitial1");
+        BlockBean load = new BlockBean("3", "", "", "interstitialadLoadAd");
+        load.parameters.add("interstitial1");
+        BlockBean show = new BlockBean("4", "", "", "interstitialadShow");
+        show.parameters.add("interstitial1");
+        banner.nextBlock = 2;
+        create.nextBlock = 3;
+        load.nextBlock = 4;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(banner, create, load, show));
+        ComponentBean interstitial = new ComponentBean(ComponentBean.COMPONENT_TYPE_INTERSTITIAL_AD,
+                "interstitial1", "ca-app-pub-runtime-test");
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.singletonList(interstitial), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "widget", "ad_load");
+        assertServiceCall(imported.get(1), "ads_interstitial", "create");
+        assertServiceCall(imported.get(2), "ads_interstitial", "load");
+        assertServiceCall(imported.get(3), "ads_interstitial", "show");
+        @SuppressWarnings("unchecked") Map<String, Object> loadArguments = (Map<String, Object>) imported.get(2).getPayload().get("arguments");
+        assertThat(loadArguments).containsEntry("adUnitId", "ca-app-pub-runtime-test");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsLegacyMapListInsertAndGetWithCanonicalArgumentOrder() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean insert = new BlockBean("1", "", "", "insertMapToList");

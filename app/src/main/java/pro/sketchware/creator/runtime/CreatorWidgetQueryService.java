@@ -14,6 +14,8 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -148,6 +150,10 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
             if (color == null) return CreatorRuntimeServiceArguments.invalid("Image color filter requires an Android color value.");
             ((ImageView) widget).setColorFilter(color, PorterDuff.Mode.MULTIPLY);
             return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("ad_load".equals(action) && widget instanceof AdView) {
+            ((AdView) widget).loadAd(new AdRequest.Builder().build());
+            return CreatorRuntimeServiceArguments.succeeded("started", true);
         }
         if ("web_go_back".equals(action) && widget instanceof WebView) {
             WebView web = (WebView) widget;
