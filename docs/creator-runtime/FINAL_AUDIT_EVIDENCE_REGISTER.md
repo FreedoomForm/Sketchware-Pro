@@ -71,6 +71,8 @@ Canonical bitmap file transforms now execute through `CreatorBitmapService` with
 
 Canonical `viewOnClick` now installs a typed dynamic `click` binding instead of generating an Android listener. The live renderer honors installed click bindings on registered native widgets, and the executor regression verifies that installation and subsequent target dispatch remain deferred typed runtime behavior. The complete JVM suite now has **149 passing tests and zero failures**. End-user interaction behavior remains device-level evidence under the open block/event and view gates.
 
+Canonical `setThumbResource` and `setTrackResource` now import as typed SeekBar widget properties. The live renderer resolves imported project drawables or available app drawables at runtime, normalizing legacy `.9` resource names without requiring compiled project resources; the importer regression verifies both mappings. The complete JVM suite now has **150 passing tests and zero failures**. Actual drawable rendering remains device-level evidence under the open view/resource gates.
+
 `mapGetAllKeys` is now imported as a typed `replace_map_keys` list mutation. The executor clears the destination list, copies the source map’s ordered key set, and persists it back into runtime state. Importer and executor regressions verify the exact legacy map/list parameter order and resulting key order.
 
 The canonical `mapToStr` and `listMapToStr` reporters now serialize typed map/list data directly through the runtime serialization library. Regression verifies the exact JSON values held in state; this replaces generated Java-expression emission while preserving data-only execution.

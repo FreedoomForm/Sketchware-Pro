@@ -567,6 +567,31 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacySeekBarThumbAndTrackResourcesAsTypedWidgetProperties() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean thumb = new BlockBean("1", "", "", "setThumbResource");
+        thumb.parameters.add("slider");
+        thumb.parameters.add("Handle.9");
+        BlockBean track = new BlockBean("2", "", "", "setTrackResource");
+        track.parameters.add("slider");
+        track.parameters.add("Track.9");
+        thumb.nextBlock = 2;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(thumb, track));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY);
+        assertThat(imported.get(0).getPayload()).containsEntry("property", "thumbResource");
+        assertThat(imported.get(0).getPayload()).containsEntry("value", "handle");
+        assertThat(imported.get(1).getPayload()).containsEntry("property", "trackResource");
+        assertThat(imported.get(1).getPayload()).containsEntry("value", "track");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsLegacyMapListInsertAndGetWithCanonicalArgumentOrder() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean insert = new BlockBean("1", "", "", "insertMapToList");

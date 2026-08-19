@@ -823,6 +823,10 @@ public final class CreatorLegacyArtifactImporter {
             return bitmapCall(block, values, "brightness", 3, unsupported);
         } else if ("setbitmapfilecontrast".equals(op)) {
             return bitmapCall(block, values, "contrast", 3, unsupported);
+        } else if ("setthumbresource".equals(op)) {
+            return widgetResourceProperty(block, values, "thumbResource", unsupported);
+        } else if ("settrackresource".equals(op)) {
+            return widgetResourceProperty(block, values, "trackResource", unsupported);
         } else if ("objectanimatorsettarget".equals(op)) {
             return animatorCall(block, values, "set_target", 2, unsupported);
         } else if ("objectanimatorsetproperty".equals(op)) {
@@ -1320,6 +1324,14 @@ public final class CreatorLegacyArtifactImporter {
         } else if ("color_filter".equals(action)) arguments.put("color", values.get(2));
         else if ("brightness".equals(action) || "contrast".equals(action)) arguments.put("value", values.get(2));
         return serviceCall("bitmap", arguments);
+    }
+
+    private static CreatorRuntimeBlock widgetResourceProperty(BlockBean block, List<String> values, String property,
+                                                              List<String> unsupported) {
+        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+        String resourceName = values.get(1) == null ? "" : values.get(1).replace(".9", "").toLowerCase(Locale.ROOT);
+        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY,
+                CreatorRuntimeServiceArguments.output("widgetId", values.get(0), "property", property, "value", resourceName));
     }
 
     private static CreatorRuntimeBlock animatorCall(BlockBean block, List<String> values, String action, int required,

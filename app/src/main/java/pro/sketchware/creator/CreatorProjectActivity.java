@@ -443,6 +443,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             android.widget.SeekBar seekBar = new android.widget.SeekBar(this);
             seekBar.setMax(Math.max(1, propertyInt(widget, "max", 100)));
             seekBar.setProgress(Math.max(0, propertyInt(widget, "progress", 0)));
+            applySeekBarResources(seekBar, document, widget);
             seekBar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
                 @Override public void onProgressChanged(android.widget.SeekBar view, int progress, boolean fromUser) {
                     if (fromUser) dispatchRuntimeEvent(widget.getId(), "change");
@@ -879,6 +880,25 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         } catch (IllegalArgumentException ignored) {
             image.setScaleType(ImageView.ScaleType.CENTER);
         }
+    }
+
+    private void applySeekBarResources(android.widget.SeekBar seekBar, CreatorProjectDocument document, CreatorWidget widget) {
+        android.graphics.drawable.Drawable thumb = resolveProjectDrawable(document,
+                propertyString(widget, "thumbResource", ""));
+        if (thumb != null) seekBar.setThumb(thumb);
+        android.graphics.drawable.Drawable track = resolveProjectDrawable(document,
+                propertyString(widget, "trackResource", ""));
+        if (track != null) seekBar.setProgressDrawable(track);
+    }
+
+    private android.graphics.drawable.Drawable resolveProjectDrawable(CreatorProjectDocument document, String resourceName) {
+        if (resourceName == null || resourceName.trim().isEmpty()) return null;
+        String normalized = resourceName.replace(".9", "").toLowerCase(java.util.Locale.ROOT);
+        java.io.File file = resolveProjectImage(document, normalized);
+        if (file == null && !normalized.equals(resourceName)) file = resolveProjectImage(document, resourceName);
+        if (file != null) return android.graphics.drawable.Drawable.createFromPath(file.getPath());
+        int resourceId = getResources().getIdentifier(normalized, "drawable", getPackageName());
+        return resourceId == 0 ? null : getResources().getDrawable(resourceId, getTheme());
     }
 
     private java.io.File resolveProjectImage(CreatorProjectDocument document, String resourceName) {
