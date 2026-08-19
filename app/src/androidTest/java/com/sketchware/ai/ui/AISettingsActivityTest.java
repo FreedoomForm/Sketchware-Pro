@@ -39,11 +39,10 @@ public class AISettingsActivityTest {
         }
     }
 
-    @Test public void defaultFragmentIsApiConfiguration() {
+    @Test public void defaultFragmentIsProvidersList() {
         try (ActivityScenario<AISettingsActivity> scenario = ActivityScenario.launch(AISettingsActivity.class)) {
-            // The default fragment (ApiConfiguration) should have the provider spinner visible.
-            onView(withId(R.id.spinner_provider)).check(matches(isDisplayed()));
-            onView(withId(R.id.et_api_key)).check(matches(isDisplayed()));
+            // The current default fragment is ProvidersListFragment.
+            onView(withId(R.id.providers_recycler)).check(matches(isDisplayed()));
         }
     }
 
