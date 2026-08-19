@@ -171,6 +171,7 @@ public final class CreatorLegacyArtifactImporter {
         CreatorCompatibilityReport report = new CreatorCompatibilityReport();
         Map<String, Object> state = new LinkedHashMap<>(base.getState());
         List<Object> imported = new ArrayList<>();
+        Map<String, Object> sounds = new LinkedHashMap<>();
         for (ProjectResourceBean resource : resources == null ? Collections.<ProjectResourceBean>emptyList() : resources) {
             if (resource == null || blank(resource.resName) || blank(resource.resFullName)) {
                 report.add("unknown", "ProjectResourceBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
@@ -186,11 +187,18 @@ public final class CreatorLegacyArtifactImporter {
             descriptor.put("flipVertical", resource.flipVertical);
             descriptor.put("ninePatch", resource.isNinePatch());
             descriptor.put("svg", resource.isSvg());
+            descriptor.put("currentSoundPosition", resource.curSoundPosition);
+            descriptor.put("totalSoundDuration", resource.totalSoundDuration);
+            if (isSound(resource.resFullName)) {
+                descriptor.put("kind", "sound");
+                sounds.put(resource.resName, new LinkedHashMap<>(descriptor));
+            }
             imported.add(descriptor);
             report.add(resource.resName, "ProjectResourceBean", CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
                     "Preserved as runtime resource metadata for live widget and media services.");
         }
         state.put("legacy.resources", imported);
+        state.put("legacy.soundResources", sounds);
         return new Result(base.withRuntimeState(base.getRevision(), state, base.getEvents()), report);
     }
 
@@ -540,4 +548,10 @@ public final class CreatorLegacyArtifactImporter {
     }
 
     private static boolean blank(String value) { return value == null || value.trim().isEmpty(); }
+
+    private static boolean isSound(String source) {
+        String value = source == null ? "" : source.toLowerCase(Locale.ROOT);
+        return value.endsWith(".mp3") || value.endsWith(".wav") || value.endsWith(".ogg")
+                || value.endsWith(".m4a") || value.endsWith(".aac") || value.endsWith(".flac");
+    }
 }

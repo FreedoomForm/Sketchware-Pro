@@ -393,6 +393,24 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R1_RUNTIME_NATIVE)).isEqualTo(1);
     }
 
+    @Test public void preservesSoundResourceMetadataForRuntimeNativeMediaConsumption() {
+        ProjectResourceBean sound = new ProjectResourceBean(ProjectResourceBean.PROJECT_RES_TYPE_FILE,
+                "intro", "sounds/intro.mp3");
+        sound.curSoundPosition = 120;
+        sound.totalSoundDuration = 2400;
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importResources(
+                documentWithButton(), Collections.singletonList(sound));
+
+        @SuppressWarnings("unchecked") Map<String, Object> sounds =
+                (Map<String, Object>) result.getDocument().getState().get("legacy.soundResources");
+        @SuppressWarnings("unchecked") Map<String, Object> descriptor = (Map<String, Object>) sounds.get("intro");
+        assertThat(descriptor).containsEntry("kind", "sound");
+        assertThat(descriptor).containsEntry("source", "sounds/intro.mp3");
+        assertThat(descriptor).containsEntry("currentSoundPosition", 120);
+        assertThat(descriptor).containsEntry("totalSoundDuration", 2400);
+    }
+
     private static CreatorProjectDocument documentWithButton() {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         widgets.put("root", new CreatorWidget("root", "column", null, Arrays.asList("button"), null));
