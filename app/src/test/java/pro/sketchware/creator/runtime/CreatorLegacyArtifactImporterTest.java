@@ -195,6 +195,30 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsCanonicalJsonToMapAndListMapMutations() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean map = new BlockBean("1", "2", "", "strToMap");
+        map.parameters.add("{\"name\":\"Ada\"}");
+        map.parameters.add("profile");
+        BlockBean list = new BlockBean("2", "", "", "strToListMap");
+        list.parameters.add("[{\"name\":\"Ada\"}]");
+        list.parameters.add("rows");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(map, list));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.MAP_MUTATE);
+        assertThat(imported.get(0).getPayload()).containsEntry("action", "replace_json");
+        assertThat(imported.get(0).getPayload()).containsEntry("stateId", "profile");
+        assertThat(imported.get(1).getType()).isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+        assertThat(imported.get(1).getPayload()).containsEntry("action", "replace_json_maps");
+        assertThat(imported.get(1).getPayload()).containsEntry("stateId", "rows");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsSupportedStateEqualityConditionalSubstackGraph() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

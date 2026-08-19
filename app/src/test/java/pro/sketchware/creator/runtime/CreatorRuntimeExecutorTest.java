@@ -558,6 +558,30 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("listJson")).isEqualTo("[{\"name\":\"Ada\"}]");
     }
 
+    @Test public void parsesTypedJsonIntoMapAndListMapStateWithoutGeneratedJava() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE,
+                        map("stateId", "profile", "action", "replace_json", "json", "{\"name\":\"Ada\"}")),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+                        map("stateId", "rows", "action", "replace_json_maps", "json", "[{\"name\":\"Ada\"}]")));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        @SuppressWarnings("unchecked") Map<String, Object> profile = (Map<String, Object>) engine.getCurrent().getState().get("profile");
+        assertThat(profile).containsExactly("name", "Ada");
+        @SuppressWarnings("unchecked") List<Map<String, Object>> rows = (List<Map<String, Object>>) (List<?>) engine.getCurrent().getState().get("rows");
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0)).containsExactly("name", "Ada");
+    }
+
     @Test public void assignsTypedNestedReporterResultToRuntimeState() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
                 new CreatorRuntimeEventLog(20));

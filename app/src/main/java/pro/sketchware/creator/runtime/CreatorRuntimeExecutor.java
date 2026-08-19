@@ -57,6 +57,7 @@ public final class CreatorRuntimeExecutor {
                 java.util.List<Object> list = list(engine.getCurrent().getState().get(stateId));
                 String action = String.valueOf(payload.get("action"));
                 Object value = payload.containsKey("valueExpression") ? evaluate(payload.get("valueExpression"), engine) : payload.get("value");
+                Object json = payload.containsKey("jsonExpression") ? evaluate(payload.get("jsonExpression"), engine) : payload.get("json");
                 int index = (int) number(payload.containsKey("indexExpression") ? evaluate(payload.get("indexExpression"), engine) : payload.get("index"));
                 Object key = payload.containsKey("keyExpression") ? evaluate(payload.get("keyExpression"), engine) : payload.get("key");
                 if ("add".equals(action)) list.add(value);
@@ -75,6 +76,13 @@ public final class CreatorRuntimeExecutor {
                     list.addAll(map(engine.getCurrent().getState().get(
                             String.valueOf(payload.get("sourceMapStateId")))).keySet());
                 }
+                else if ("replace_json_maps".equals(action)) {
+                    try {
+                        Object parsed = new com.google.gson.Gson().fromJson(String.valueOf(json), java.util.List.class);
+                        list.clear();
+                        list.addAll(list(parsed));
+                    } catch (com.google.gson.JsonSyntaxException ignored) { }
+                }
                 else if ("map_put_at".equals(action) && index >= 0 && index < list.size()) {
                     Map<String, Object> item = map(list.get(index));
                     item.put(String.valueOf(key), value);
@@ -87,9 +95,17 @@ public final class CreatorRuntimeExecutor {
                 String action = String.valueOf(payload.get("action"));
                 Object key = payload.containsKey("keyExpression") ? evaluate(payload.get("keyExpression"), engine) : payload.get("key");
                 Object value = payload.containsKey("valueExpression") ? evaluate(payload.get("valueExpression"), engine) : payload.get("value");
+                Object json = payload.containsKey("jsonExpression") ? evaluate(payload.get("jsonExpression"), engine) : payload.get("json");
                 if ("put".equals(action)) values.put(String.valueOf(key), value);
                 else if ("remove".equals(action)) values.remove(String.valueOf(key));
                 else if ("clear".equals(action) || "create".equals(action)) values.clear();
+                else if ("replace_json".equals(action)) {
+                    try {
+                        Object parsed = new com.google.gson.Gson().fromJson(String.valueOf(json), java.util.Map.class);
+                        values.clear();
+                        values.putAll(map(parsed));
+                    } catch (com.google.gson.JsonSyntaxException ignored) { }
+                }
                 apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", stateId, "value", values));
             } else if (block.getType() == CreatorRuntimeBlock.Type.SHOW_MESSAGE) {
                 effects.add(new Effect("message", String.valueOf(payload.get("message"))));
