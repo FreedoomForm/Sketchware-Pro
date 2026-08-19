@@ -550,6 +550,21 @@ public final class CreatorLegacyArtifactImporter {
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.CUSTOM_FUNCTION_CALL,
                     CreatorRuntimeServiceArguments.output("functionId", functionId, "arguments", arguments));
         }
+        if ("return".equals(op) || "returnvalue".equals(op)) {
+            if (values.size() > 1 || block.subStack1 >= 0 || block.subStack2 >= 0) {
+                unsupported.add(block.opCode);
+                return null;
+            }
+            if (values.isEmpty()) return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RETURN, payload);
+            Map<String, Object> returnExpression = expression(values.get(0), byId,
+                    new java.util.LinkedHashSet<Integer>());
+            if (returnExpression == null) {
+                unsupported.add(block.opCode + " (invalid return expression)");
+                return null;
+            }
+            payload.put("expression", returnExpression);
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RETURN, payload);
+        }
         if ("if_state_equals".equals(op) || "ifstateequals".equals(op)) {
             if (values.size() < 2 || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
             List<CreatorRuntimeBlock> thenBlocks = new ArrayList<>();

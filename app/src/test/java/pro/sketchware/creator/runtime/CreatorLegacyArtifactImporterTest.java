@@ -123,6 +123,35 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(engine.getCurrent().getState().get("received")).isEqualTo("Ada");
     }
 
+    @Test public void importsAndEvaluatesTypedMoreBlockReturnValue() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean assign = new BlockBean("1", "", "", "setVar");
+        assign.parameters.add("received");
+        assign.parameters.add("@2");
+        BlockBean call = new BlockBean("2", "echo[s]", "s", "definedFunc");
+        call.parameters.add("Ada");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(assign, call));
+
+        BlockBean returnBlock = new BlockBean("1", "", "", "return");
+        returnBlock.parameters.add("@2");
+        BlockBean argument = new BlockBean("2", "name", "s", "getArg");
+        MoreBlockCollectionBean definition = new MoreBlockCollectionBean("echo[s]", "echo %s.name",
+                new java.util.ArrayList<>(Arrays.asList(returnBlock, argument)));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks,
+                Collections.singletonList(definition));
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+        CreatorRuntimeBlock returnRuntimeBlock = result.getDocument().getEvents()
+                .get("legacy_moreblock_echo").getBlocks().get(0);
+        assertThat(returnRuntimeBlock.getType()).isEqualTo(CreatorRuntimeBlock.Type.RETURN);
+
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(result.getDocument(), 20, new CreatorRuntimeEventLog(20));
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+        assertThat(engine.getCurrent().getState().get("received")).isEqualTo("Ada");
+    }
+
     @Test public void keepsArbitraryAddSourceDirectlyVisibleAndBlockedWithoutFallbackExecution() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean source = new BlockBean("1", "", "", "addSourceDirectly");

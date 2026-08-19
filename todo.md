@@ -82,3 +82,4 @@
 - [x] Import and execute legacy More Block definitions, calls, and scoped getArg reporters through a typed Creator Runtime contract; keep arbitrary addSourceDirectly visible and blocked rather than executing Java.
 - [x] Preserve legacy DrawerLayout back behavior by closing an open runtime-native drawer before leaving the active Creator screen.
 - [x] Preserve legacy LayoutBean padding, margins, dimensions, gravity, weight, and background references in typed runtime widgets, then apply them in the live renderer without a compiled project resource path.
+- [x] Import and execute typed More Block return values through scoped frames; keep arbitrary direct-source execution visibly blocked as R0.
