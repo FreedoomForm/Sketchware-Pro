@@ -398,6 +398,29 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyViewOnClickSubstackAsTypedDynamicClickBinding() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean attach = new BlockBean("1", "", "", "viewOnClick");
+        attach.parameters.add("button");
+        attach.subStack1 = 2;
+        BlockBean callback = new BlockBean("2", "", "", "showMessage");
+        callback.parameters.add("Tapped again");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(attach, callback));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock binding = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertThat(binding.getType()).isEqualTo(CreatorRuntimeBlock.Type.ATTACH_EVENT);
+        assertThat(binding.getPayload()).containsEntry("bindingId", "legacy_button_onClick");
+        assertThat(binding.getPayload()).containsEntry("targetWidgetId", "button");
+        assertThat(binding.getPayload()).containsEntry("eventName", "click");
+        assertThat(binding.getThenBlocks()).hasSize(1);
+        assertThat(binding.getThenBlocks().get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.SHOW_MESSAGE);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsCanonicalListMutationOpcodesAsTypedRuntimeBlocks() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean add = new BlockBean("1", "", "", "addListStr");

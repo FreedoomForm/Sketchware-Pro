@@ -33,6 +33,7 @@ import pro.sketchware.R;
 import pro.sketchware.creator.runtime.CreatorApplyResult;
 import pro.sketchware.creator.runtime.CreatorCompatibilityReport;
 import pro.sketchware.creator.runtime.CreatorCompatibilityTier;
+import pro.sketchware.creator.runtime.CreatorEventBinding;
 import pro.sketchware.creator.runtime.CreatorLegacyArtifactImporter;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectOperation;
@@ -730,7 +731,16 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private View registerRuntimeWidget(CreatorWidget widget, View view) {
         applyCommonViewProperties(widget, view);
         runtimeEnvironment.registerWidget(widget.getId(), view);
+        if (hasRuntimeClickBinding(widget.getId())) view.setOnClickListener(v -> dispatchRuntimeEvent(widget.getId(), "click"));
         return view;
+    }
+
+    private boolean hasRuntimeClickBinding(String widgetId) {
+        if (session == null || widgetId == null) return false;
+        for (CreatorEventBinding binding : session.getDocument().getEvents().values()) {
+            if (widgetId.equals(binding.getTargetWidgetId()) && "click".equals(binding.getEventName())) return true;
+        }
+        return false;
     }
 
     private void applyCommonViewProperties(CreatorWidget widget, View view) {

@@ -1188,6 +1188,32 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState()).containsEntry("rotation", 90);
     }
 
+    @Test public void installsAndDispatchesTypedDynamicClickBinding() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("text", 2, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "text", "widgetType", "text", "parentId", "root")));
+        CreatorRuntimeBlock attach = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.ATTACH_EVENT,
+                map("bindingId", "legacy_text_onClick", "targetWidgetId", "text", "eventName", "click"),
+                Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE,
+                        map("message", "Text tapped"))), Collections.<CreatorRuntimeBlock>emptyList());
+        engine.apply(op("event", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click",
+                        "blocks", Collections.singletonList(attach))));
+        CreatorRuntimeExecutor executor = new CreatorRuntimeExecutor();
+
+        executor.dispatch(engine, "button", "click");
+        java.util.List<CreatorRuntimeExecutor.Effect> effects = executor.dispatch(engine, "text", "click");
+
+        assertThat(engine.getCurrent().getEvents()).containsKey("legacy_text_onClick");
+        assertThat(effects).hasSize(1);
+        assertThat(effects.get(0).getValue()).isEqualTo("Text tapped");
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

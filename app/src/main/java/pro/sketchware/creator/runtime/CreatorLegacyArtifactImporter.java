@@ -572,13 +572,15 @@ public final class CreatorLegacyArtifactImporter {
         boolean firebaseChildrenWithCallback = "firebasegetchildren".equals(op);
         boolean dialogButtonWithCallback = "dialogokbutton".equals(op) || "dialogcancelbutton".equals(op)
                 || "dialogneutralbutton".equals(op);
+        boolean viewOnClickWithCallback = "viewonclick".equals(op);
         if ((block.subStack1 >= 0 || block.subStack2 >= 0) && !timerWithCallback && !firebaseChildrenWithCallback
-                && !dialogButtonWithCallback) {
+                && !dialogButtonWithCallback && !viewOnClickWithCallback) {
             unsupported.add(block.opCode + " (control flow)"); return null;
         }
         if (timerWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
         if (firebaseChildrenWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
         if (dialogButtonWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+        if (viewOnClickWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
         if ("timerafter".equals(op) || "timerevery".equals(op)) {
             int required = "timerafter".equals(op) ? 2 : 3;
             if (values.size() < required) { unsupported.add(block.opCode); return null; }
@@ -704,6 +706,18 @@ public final class CreatorLegacyArtifactImporter {
                 arguments.put("callbackTargetId", "legacy_dialog_button_callback_" + callbackId);
             }
             return serviceCall("dialog", arguments);
+        } else if ("viewonclick".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            List<CreatorRuntimeBlock> callback = new ArrayList<>();
+            if (block.subStack1 >= 0) {
+                BlockBean callbackStart = byId.get(block.subStack1);
+                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+                convertChain(callbackStart, byId, visited, callback, unsupported, timerCallbacks, componentDescriptors);
+            }
+            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.ATTACH_EVENT,
+                    CreatorRuntimeServiceArguments.output("bindingId", "legacy_" + values.get(0) + "_onClick",
+                            "targetWidgetId", values.get(0), "eventName", "click"), callback,
+                    Collections.<CreatorRuntimeBlock>emptyList());
         } else if ("mediaplayercreate".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("media", CreatorRuntimeServiceArguments.output("id", values.get(0),
