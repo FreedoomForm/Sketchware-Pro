@@ -739,6 +739,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if (view instanceof TextView) {
             TextView text = (TextView) view;
+            applyRuntimeTypeface(document, text, widget);
             String textColor = pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveColor(document,
                     propertyString(widget, "textColor", ""), resourceVariant());
             if (!textColor.isEmpty()) {
@@ -754,6 +755,25 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 try { ((EditText) view).setHintTextColor(android.graphics.Color.parseColor(hintColor)); }
                 catch (IllegalArgumentException ignored) { }
             }
+        }
+    }
+
+    private void applyRuntimeTypeface(CreatorProjectDocument document, TextView text, CreatorWidget widget) {
+        int style = propertyInt(widget, "textType", android.graphics.Typeface.NORMAL);
+        String fontName = propertyString(widget, "textFont", "default_font");
+        if ("default_font".equals(fontName) || fontName.trim().isEmpty()) {
+            text.setTypeface(android.graphics.Typeface.DEFAULT, style);
+            return;
+        }
+        java.io.File font = resolveProjectFont(document, fontName);
+        if (font == null) {
+            text.setTypeface(android.graphics.Typeface.DEFAULT, style);
+            return;
+        }
+        try {
+            text.setTypeface(android.graphics.Typeface.createFromFile(font), style);
+        } catch (RuntimeException ignored) {
+            text.setTypeface(android.graphics.Typeface.DEFAULT, style);
         }
     }
 
@@ -824,6 +844,23 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             Map<?, ?> resource = (Map<?, ?>) raw;
             if (!resourceName.equals(String.valueOf(resource.get("name")))) continue;
             Object source = resource.get("source");
+            return source == null ? null : CreatorRuntimeResourceResolver.resolveProjectImage(
+                    document.getProjectId(), String.valueOf(source));
+        }
+        return null;
+    }
+
+    private java.io.File resolveProjectFont(CreatorProjectDocument document, String fontName) {
+        if (document == null) return null;
+        Object rawFonts = document.getState().get("legacy.fontResources");
+        if (!(rawFonts instanceof Map)) return null;
+        for (Map.Entry<?, ?> entry : ((Map<?, ?>) rawFonts).entrySet()) {
+            if (!(entry.getValue() instanceof Map)) continue;
+            Map<?, ?> descriptor = (Map<?, ?>) entry.getValue();
+            Object source = descriptor.get("source");
+            String name = String.valueOf(entry.getKey());
+            String baseName = name.replaceFirst("\\.[^.]+$", "");
+            if (!fontName.equals(name) && !fontName.equals(baseName)) continue;
             return source == null ? null : CreatorRuntimeResourceResolver.resolveProjectImage(
                     document.getProjectId(), String.valueOf(source));
         }
