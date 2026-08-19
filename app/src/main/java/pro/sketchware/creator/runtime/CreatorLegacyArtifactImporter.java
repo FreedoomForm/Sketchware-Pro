@@ -612,9 +612,9 @@ public final class CreatorLegacyArtifactImporter {
                     "id", values.get(0), "action", "sound_stop_stream", "streamId", values.get(1)));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
-            return widgetProperty(block, values, "text", unsupported);
+            return widgetProperty(block, values, "text", unsupported, byId);
         } else if ("setchecked".equals(op) || "set_checked".equals(op)) {
-            return widgetProperty(block, values, "checked", unsupported);
+            return widgetProperty(block, values, "checked", unsupported, byId);
         } else if ("setenable".equals(op)) {
             return widgetProperty(block, values, "enabled", unsupported);
         } else if ("setvisible".equals(op)) {
@@ -622,11 +622,11 @@ public final class CreatorLegacyArtifactImporter {
         } else if ("setclickable".equals(op)) {
             return widgetProperty(block, values, "clickable", unsupported);
         } else if ("sethint".equals(op)) {
-            return widgetProperty(block, values, "hint", unsupported);
+            return widgetProperty(block, values, "hint", unsupported, byId);
         } else if ("settextcolor".equals(op)) {
-            return widgetProperty(block, values, "textColor", unsupported);
+            return widgetProperty(block, values, "textColor", unsupported, byId);
         } else if ("settextsize".equals(op)) {
-            return widgetProperty(block, values, "textSize", unsupported);
+            return widgetProperty(block, values, "textSize", unsupported, byId);
         } else if ("sethinttextcolor".equals(op)) {
             return widgetProperty(block, values, "hintTextColor", unsupported);
         } else if ("setbgcolor".equals(op)) {
@@ -856,6 +856,20 @@ public final class CreatorLegacyArtifactImporter {
         payload.put("widgetId", values.get(0));
         payload.put("property", property);
         payload.put("value", values.get(1));
+        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload);
+    }
+
+    private static CreatorRuntimeBlock widgetProperty(BlockBean block, List<String> values, String property,
+                                                      List<String> unsupported, Map<Integer, BlockBean> byId) {
+        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("widgetId", values.get(0));
+        payload.put("property", property);
+        if (values.get(1).trim().startsWith("@")) {
+            Map<String, Object> expression = expression(values.get(1), byId, new java.util.LinkedHashSet<Integer>());
+            if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+            payload.put("expression", expression);
+        } else payload.put("value", values.get(1));
         return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload);
     }
 

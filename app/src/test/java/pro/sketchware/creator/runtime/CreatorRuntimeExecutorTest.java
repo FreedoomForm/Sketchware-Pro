@@ -172,6 +172,28 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("total")).isEqualTo(9d);
     }
 
+    @Test public void appliesTypedNestedReporterResultToLiveWidgetProperty() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("label", 2, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "label", "widgetType", "text", "parentId", "root")));
+        engine.apply(op("name", 3, CreatorProjectOperation.Type.STATE_SET, map("stateId", "name", "value", "Ada")));
+        Map<String, Object> join = map("kind", "reporter", "opCode", "stringjoin", "arguments", Arrays.asList(
+                map("kind", "literal", "value", "Hello "), map("kind", "literal", "value", "name")));
+        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks",
+                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY,
+                                map("widgetId", "label", "property", "text", "expression", join))))));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getWidgets().get("label").getProperties().get("text")).isEqualTo("Hello Ada");
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

@@ -36,8 +36,9 @@ public final class CreatorRuntimeExecutor {
         for (CreatorRuntimeBlock block : blocks) {
             Map<String, Object> payload = block.getPayload();
             if (block.getType() == CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY) {
+                Object value = payload.containsKey("expression") ? evaluate(payload.get("expression"), engine) : payload.get("value");
                 apply(engine, CreatorProjectOperation.Type.WIDGET_SET_PROPERTY, map(
-                        "widgetId", payload.get("widgetId"), "property", payload.get("property"), "value", payload.get("value")));
+                        "widgetId", payload.get("widgetId"), "property", payload.get("property"), "value", value));
             } else if (block.getType() == CreatorRuntimeBlock.Type.SET_STATE) {
                 Object value = payload.containsKey("expression") ? evaluate(payload.get("expression"), engine) : payload.get("value");
                 apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", payload.get("stateId"), "value", value));
