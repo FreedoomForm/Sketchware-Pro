@@ -516,6 +516,36 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyFirebaseDeleteAndListenersUsingComponentBasePath() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean delete = new BlockBean("1", "", "", "firebaseDelete");
+        delete.parameters.add("firebase1");
+        delete.parameters.add("users/ada");
+        BlockBean listen = new BlockBean("2", "", "", "firebaseStartListen");
+        listen.parameters.add("firebase1");
+        BlockBean stop = new BlockBean("3", "", "", "firebaseStopListen");
+        stop.parameters.add("firebase1");
+        delete.nextBlock = 2;
+        listen.nextBlock = 3;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(delete, listen, stop));
+        ComponentBean firebase = new ComponentBean(ComponentBean.COMPONENT_TYPE_FIREBASE, "firebase1", "profiles");
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.singletonList(firebase), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "firebase", "remove");
+        assertServiceCall(imported.get(1), "firebase", "listen");
+        assertServiceCall(imported.get(2), "firebase", "stop_listen");
+        @SuppressWarnings("unchecked") Map<String, Object> deleteArguments = (Map<String, Object>) imported.get(0).getPayload().get("arguments");
+        @SuppressWarnings("unchecked") Map<String, Object> listenArguments = (Map<String, Object>) imported.get(1).getPayload().get("arguments");
+        assertThat(deleteArguments).containsEntry("path", "profiles/users/ada");
+        assertThat(listenArguments).containsEntry("path", "profiles");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

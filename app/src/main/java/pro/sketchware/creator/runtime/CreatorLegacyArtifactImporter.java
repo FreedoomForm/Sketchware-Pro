@@ -71,7 +71,7 @@ public final class CreatorLegacyArtifactImporter {
             }
             String eventKey = event.getEventKey();
             List<BlockBean> legacyBlocks = blocksByEvent == null ? null : blocksByEvent.get(eventKey);
-            BlockConversion blocks = convertBlocks(legacyBlocks);
+            BlockConversion blocks = convertBlocks(legacyBlocks, componentState);
             if (!blocks.unsupported.isEmpty()) {
                 deferredEvents.put(eventKey, blocks.unsupported);
                 report.add(eventKey, "BlockBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
@@ -214,7 +214,7 @@ public final class CreatorLegacyArtifactImporter {
         final Map<String, List<CreatorRuntimeBlock>> timerCallbacks = new LinkedHashMap<>();
     }
 
-    private BlockConversion convertBlocks(List<BlockBean> blocks) {
+    private BlockConversion convertBlocks(List<BlockBean> blocks, Map<String, Object> componentDescriptors) {
         BlockConversion result = new BlockConversion();
         Map<Integer, BlockBean> byId = new LinkedHashMap<>();
         java.util.Set<Integer> referenced = new java.util.LinkedHashSet<>();
@@ -230,7 +230,7 @@ public final class CreatorLegacyArtifactImporter {
         java.util.Set<Integer> visited = new java.util.LinkedHashSet<>();
         for (Map.Entry<Integer, BlockBean> entry : byId.entrySet()) {
             if (!referenced.contains(entry.getKey())) convertChain(entry.getValue(), byId, visited, result.converted,
-                    result.unsupported, result.timerCallbacks);
+                    result.unsupported, result.timerCallbacks, componentDescriptors);
         }
         for (Map.Entry<Integer, BlockBean> entry : byId.entrySet()) {
             if (!visited.contains(entry.getKey())) result.unsupported.add("orphan block " + entry.getKey());
@@ -240,7 +240,8 @@ public final class CreatorLegacyArtifactImporter {
 
     private void convertChain(BlockBean start, Map<Integer, BlockBean> byId, java.util.Set<Integer> visited,
                               List<CreatorRuntimeBlock> target, List<String> unsupported,
-                              Map<String, List<CreatorRuntimeBlock>> timerCallbacks) {
+                              Map<String, List<CreatorRuntimeBlock>> timerCallbacks,
+                              Map<String, Object> componentDescriptors) {
         BlockBean current = start;
         while (current != null) {
             int id;
@@ -248,7 +249,7 @@ public final class CreatorLegacyArtifactImporter {
                 unsupported.add("invalid block id"); return;
             }
             if (!visited.add(id)) { unsupported.add("cyclic block graph at " + id); return; }
-            CreatorRuntimeBlock converted = convertBlock(current, byId, visited, unsupported, timerCallbacks);
+            CreatorRuntimeBlock converted = convertBlock(current, byId, visited, unsupported, timerCallbacks, componentDescriptors);
             if (converted != null) target.add(converted);
             current = byId.get(current.nextBlock);
         }
@@ -256,7 +257,8 @@ public final class CreatorLegacyArtifactImporter {
 
     private CreatorRuntimeBlock convertBlock(BlockBean block, Map<Integer, BlockBean> byId,
                                              java.util.Set<Integer> visited, List<String> unsupported,
-                                             Map<String, List<CreatorRuntimeBlock>> timerCallbacks) {
+                                             Map<String, List<CreatorRuntimeBlock>> timerCallbacks,
+                                             Map<String, Object> componentDescriptors) {
         if (blank(block.opCode)) { unsupported.add("empty"); return null; }
         String op = block.opCode.trim().toLowerCase(Locale.ROOT);
         List<String> values = block.parameters == null ? Collections.<String>emptyList() : block.parameters;
@@ -267,11 +269,11 @@ public final class CreatorLegacyArtifactImporter {
             List<CreatorRuntimeBlock> elseBlocks = new ArrayList<>();
             BlockBean thenStart = byId.get(block.subStack1);
             if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
-            convertChain(thenStart, byId, visited, thenBlocks, unsupported, timerCallbacks);
+            convertChain(thenStart, byId, visited, thenBlocks, unsupported, timerCallbacks, componentDescriptors);
             if (block.subStack2 >= 0) {
                 BlockBean elseStart = byId.get(block.subStack2);
                 if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
-                convertChain(elseStart, byId, visited, elseBlocks, unsupported, timerCallbacks);
+                convertChain(elseStart, byId, visited, elseBlocks, unsupported, timerCallbacks, componentDescriptors);
             }
             payload.put("stateId", values.get(0));
             payload.put("equals", values.get(1));
@@ -289,7 +291,7 @@ public final class CreatorLegacyArtifactImporter {
                 BlockBean callbackStart = byId.get(block.subStack1);
                 if (callbackStart == null) { unsupported.add(block.opCode + " (missing timer substack)"); return null; }
                 List<CreatorRuntimeBlock> callback = new ArrayList<>();
-                convertChain(callbackStart, byId, visited, callback, unsupported, timerCallbacks);
+                convertChain(callbackStart, byId, visited, callback, unsupported, timerCallbacks, componentDescriptors);
                 timerCallbacks.put(values.get(0), callback);
             }
             Map<String, Object> arguments = new LinkedHashMap<>();
@@ -484,6 +486,13 @@ public final class CreatorLegacyArtifactImporter {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("firebase_storage", CreatorRuntimeServiceArguments.output(
                     "componentId", values.get(0), "action", "delete_url", "url", values.get(1)));
+        } else if ("firebasedelete".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return firebaseCall(values.get(0), "remove", firebasePath(componentDescriptors, values.get(0), values.get(1)));
+        } else if ("firebasestartlisten".equals(op) || "firebasestoplisten".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return firebaseCall(values.get(0), "firebasestartlisten".equals(op) ? "listen" : "stop_listen",
+                    firebasePath(componentDescriptors, values.get(0), null));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported);
@@ -638,6 +647,23 @@ public final class CreatorLegacyArtifactImporter {
         else if ("set_repeat_count".equals(action)) arguments.put("repeatCount", values.get(1));
         else if ("set_interpolator".equals(action)) arguments.put("interpolator", values.get(1));
         return serviceCall("animator", arguments);
+    }
+
+    private static CreatorRuntimeBlock firebaseCall(String componentId, String action, String path) {
+        return serviceCall("firebase", CreatorRuntimeServiceArguments.output(
+                "componentId", componentId, "action", action, "path", path));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static String firebasePath(Map<String, Object> componentDescriptors, String componentId, String childPath) {
+        Object raw = componentDescriptors == null ? null : componentDescriptors.get(componentId);
+        Map<String, Object> descriptor = raw instanceof Map ? (Map<String, Object>) raw : Collections.<String, Object>emptyMap();
+        String base = String.valueOf(descriptor.get("param1") == null ? "" : descriptor.get("param1")).trim();
+        String child = childPath == null ? "" : childPath.trim();
+        while (base.startsWith("/")) base = base.substring(1);
+        while (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+        while (child.startsWith("/")) child = child.substring(1);
+        return base.isEmpty() ? child : child.isEmpty() ? base : base + "/" + child;
     }
 
     private static CreatorRuntimeBlock widgetProperty(BlockBean block, List<String> values, String property,
