@@ -916,6 +916,39 @@ public final class CreatorLegacyArtifactImporter {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("bluetooth", CreatorRuntimeServiceArguments.output(
                     "componentId", values.get(0), "action", "paired_devices", "resultStateId", values.get(1), "resultKey", "devices"));
+        } else if ("listsetdata".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "list_set_data", "itemsStateId", values.get(1)));
+        } else if ("listrefresh".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "list_refresh"));
+        } else if ("listsetitemchecked".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "list_set_item_checked",
+                    "position", values.get(1), "checked", values.get(2)));
+        } else if ("listsmoothscrollto".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "list_smooth_scroll_to", "position", values.get(1)));
+        } else if ("spnsetdata".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "spinner_set_data", "itemsStateId", values.get(1)));
+        } else if ("spnrefresh".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "spinner_refresh"));
+        } else if ("requestfocus".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "request_focus"));
+        } else if ("webviewgoback".equals(op) || "webviewgoforward".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "webviewgoback".equals(op) ? "web_go_back" : "web_go_forward"));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported, byId);

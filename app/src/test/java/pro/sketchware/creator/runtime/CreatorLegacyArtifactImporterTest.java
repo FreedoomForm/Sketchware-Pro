@@ -394,6 +394,55 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyWidgetDataFocusAndNavigationActionsAsTypedRuntimeCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean listData = new BlockBean("1", "", "", "listSetData");
+        listData.parameters.add("list1");
+        listData.parameters.add("items");
+        BlockBean checked = new BlockBean("2", "", "", "listSetItemChecked");
+        checked.parameters.add("list1");
+        checked.parameters.add("2");
+        checked.parameters.add("true");
+        BlockBean scroll = new BlockBean("3", "", "", "listSmoothScrollTo");
+        scroll.parameters.add("list1");
+        scroll.parameters.add("4");
+        BlockBean spinnerData = new BlockBean("4", "", "", "spnSetData");
+        spinnerData.parameters.add("spinner1");
+        spinnerData.parameters.add("items");
+        BlockBean focus = new BlockBean("5", "", "", "requestFocus");
+        focus.parameters.add("input1");
+        BlockBean back = new BlockBean("6", "", "", "webViewGoBack");
+        back.parameters.add("web1");
+        BlockBean forward = new BlockBean("7", "", "", "webViewGoForward");
+        forward.parameters.add("web1");
+        listData.nextBlock = 2;
+        checked.nextBlock = 3;
+        scroll.nextBlock = 4;
+        spinnerData.nextBlock = 5;
+        focus.nextBlock = 6;
+        back.nextBlock = 7;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(listData, checked, scroll, spinnerData, focus, back, forward));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(7);
+        for (CreatorRuntimeBlock block : imported) assertThat(block.getPayload().get("serviceId")).isEqualTo("widget");
+        assertWidgetAction(imported.get(0), "list_set_data");
+        assertWidgetAction(imported.get(1), "list_set_item_checked");
+        assertWidgetAction(imported.get(2), "list_smooth_scroll_to");
+        assertWidgetAction(imported.get(3), "spinner_set_data");
+        assertWidgetAction(imported.get(4), "request_focus");
+        assertWidgetAction(imported.get(5), "web_go_back");
+        assertWidgetAction(imported.get(6), "web_go_forward");
+        @SuppressWarnings("unchecked") Map<String, Object> dataArguments = (Map<String, Object>) imported.get(0).getPayload().get("arguments");
+        assertThat(dataArguments).containsEntry("itemsStateId", "items");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsCanonicalMapMutationOpcodesAsTypedRuntimeBlocks() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean put = new BlockBean("1", "", "", "mapPut");
@@ -1216,6 +1265,10 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(block.getPayload().get("serviceId")).isEqualTo(serviceId);
         @SuppressWarnings("unchecked") Map<String, Object> arguments = (Map<String, Object>) block.getPayload().get("arguments");
         assertThat(arguments).containsEntry("action", action);
+    }
+
+    private static void assertWidgetAction(CreatorRuntimeBlock block, String action) {
+        assertServiceCall(block, "widget", action);
     }
 
     private static CreatorProjectDocument documentWithButton() {

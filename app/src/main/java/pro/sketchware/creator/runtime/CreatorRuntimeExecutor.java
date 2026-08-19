@@ -192,6 +192,7 @@ public final class CreatorRuntimeExecutor {
         Map<String, Object> resolved = new LinkedHashMap<>(arguments);
         resolveStateMap(engine, resolved, "paramsStateId", "params");
         resolveStateMap(engine, resolved, "headersStateId", "headers");
+        resolveStateList(engine, resolved, "itemsStateId", "items");
         return resolved;
     }
 
@@ -200,6 +201,13 @@ public final class CreatorRuntimeExecutor {
         if (reference == null) return;
         Object value = engine.getCurrent().getState().get(String.valueOf(reference));
         if (value instanceof Map) arguments.put(valueKey, value);
+    }
+
+    private static void resolveStateList(CreatorRuntimeEngine engine, Map<String, Object> arguments, String referenceKey, String valueKey) {
+        Object reference = arguments.get(referenceKey);
+        if (reference == null) return;
+        Object value = engine.getCurrent().getState().get(String.valueOf(reference));
+        if (value instanceof List) arguments.put(valueKey, value);
     }
 
     @SuppressWarnings("unchecked")

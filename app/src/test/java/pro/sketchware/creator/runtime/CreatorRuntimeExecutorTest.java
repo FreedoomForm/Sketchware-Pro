@@ -926,6 +926,36 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState()).containsEntry("checkedCount", 2);
     }
 
+    @Test public void resolvesTypedRuntimeListStateForWidgetDataServiceCalls() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("items", 2, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "items", "value", Arrays.asList("one", "two"))));
+        final Map<String, Object> captured = new LinkedHashMap<>();
+        CreatorRuntimeService widget = new CreatorRuntimeService() {
+            @Override public String getId() { return "widget"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                captured.putAll(arguments);
+                return CreatorRuntimeServiceArguments.succeeded("updated", true);
+            }
+        };
+        engine.apply(op("event", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks",
+                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map("widgetId", "list1",
+                                        "action", "list_set_data", "itemsStateId", "items")))))));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(widget)).dispatch(engine, "button", "click");
+
+        assertThat(captured).containsEntry("widgetId", "list1");
+        assertThat(captured).containsEntry("action", "list_set_data");
+        assertThat((java.util.List<?>) captured.get("items")).containsExactly("one", "two").inOrder();
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }
