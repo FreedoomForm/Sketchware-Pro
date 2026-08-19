@@ -557,6 +557,23 @@ public final class CreatorLegacyArtifactImporter {
             if (values.size() < 4) { unsupported.add(block.opCode); return null; }
             return serviceCall("http", CreatorRuntimeServiceArguments.output(
                     "componentId", values.get(0), "action", "start", "method", values.get(1), "url", values.get(2), "tag", values.get(3)));
+        } else if ("progressdialogsettitle".equals(op) || "progressdialogsetmessage".equals(op)
+                || "progressdialogsetmax".equals(op) || "progressdialogsetprogress".equals(op)
+                || "progressdialogsetcancelable".equals(op) || "progressdialogsetcanceled".equals(op)
+                || "progressdialogsetcanceledoutside".equals(op) || "progressdialogsetstyle".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            String action = "progressdialogsettitle".equals(op) ? "progress_set_title"
+                    : "progressdialogsetmessage".equals(op) ? "progress_set_message"
+                    : "progressdialogsetmax".equals(op) ? "progress_set_max"
+                    : "progressdialogsetprogress".equals(op) ? "progress_set_value"
+                    : "progressdialogsetcancelable".equals(op) ? "progress_set_cancelable"
+                    : "progressdialogsetstyle".equals(op) ? "progress_set_style" : "progress_set_cancel_on_touch_outside";
+            return serviceCall("dialog", CreatorRuntimeServiceArguments.output(
+                    "dialogId", values.get(0), "action", action, "value", values.get(1)));
+        } else if ("progressdialogshow".equals(op) || "progressdialogdismiss".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("dialog", CreatorRuntimeServiceArguments.output(
+                    "dialogId", values.get(0), "action", "progressdialogshow".equals(op) ? "show_progress" : "dismiss_progress"));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported);

@@ -687,6 +687,35 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyProgressDialogConfigurationAndVisibilityAsRuntimeNativeCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean title = new BlockBean("1", "", "", "progressdialogSetTitle");
+        title.parameters.add("progress1");
+        title.parameters.add("Loading");
+        BlockBean max = new BlockBean("2", "", "", "progressdialogSetMax");
+        max.parameters.add("progress1");
+        max.parameters.add("100");
+        BlockBean show = new BlockBean("3", "", "", "progressdialogShow");
+        show.parameters.add("progress1");
+        BlockBean dismiss = new BlockBean("4", "", "", "progressdialogDismiss");
+        dismiss.parameters.add("progress1");
+        title.nextBlock = 2;
+        max.nextBlock = 3;
+        show.nextBlock = 4;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(title, max, show, dismiss));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "dialog", "progress_set_title");
+        assertServiceCall(imported.get(1), "dialog", "progress_set_max");
+        assertServiceCall(imported.get(2), "dialog", "show_progress");
+        assertServiceCall(imported.get(3), "dialog", "dismiss_progress");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");
