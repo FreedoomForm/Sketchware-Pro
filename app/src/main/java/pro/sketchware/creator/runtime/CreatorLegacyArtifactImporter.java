@@ -530,6 +530,10 @@ public final class CreatorLegacyArtifactImporter {
             if (values.size() < 3) { unsupported.add(block.opCode); return null; }
             return serviceCall("firebase_storage", CreatorRuntimeServiceArguments.output(
                     "componentId", values.get(0), "action", "upload_file", "filePath", values.get(1), "path", values.get(2)));
+        } else if ("firebasestoragedownloadfile".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return serviceCall("firebase_storage", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "download_file", "url", values.get(1), "filePath", values.get(2)));
         } else if ("firebasestoragedelete".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("firebase_storage", CreatorRuntimeServiceArguments.output(

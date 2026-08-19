@@ -868,6 +868,26 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyFirebaseStorageDownloadAsRuntimeNativeCall() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean download = new BlockBean("1", "", "", "firebaseStorageDownloadFile");
+        download.parameters.add("storage1");
+        download.parameters.add("gs://example.appspot.com/photos/ada.jpg");
+        download.parameters.add("/storage/emulated/0/Download/ada.jpg");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Collections.singletonList(download));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertServiceCall(imported, "firebase_storage", "download_file");
+        @SuppressWarnings("unchecked") Map<String, Object> arguments = (Map<String, Object>) imported.getPayload().get("arguments");
+        assertThat(arguments).containsEntry("url", "gs://example.appspot.com/photos/ada.jpg");
+        assertThat(arguments).containsEntry("filePath", "/storage/emulated/0/Download/ada.jpg");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

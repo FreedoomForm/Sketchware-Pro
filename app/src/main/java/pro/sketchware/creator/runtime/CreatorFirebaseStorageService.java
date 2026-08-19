@@ -29,6 +29,31 @@ public final class CreatorFirebaseStorageService implements CreatorRuntimeServic
                 return CreatorRuntimeServiceArguments.invalid("delete_url requires a valid Firebase Storage URL.");
             }
         }
+        if ("download_file".equals(action)) {
+            String url = CreatorRuntimeServiceArguments.string(arguments, "url");
+            String filePath = CreatorRuntimeServiceArguments.string(arguments, "filePath");
+            if (url == null || filePath == null || filePath.trim().isEmpty()) {
+                return CreatorRuntimeServiceArguments.invalid("download_file requires url and filePath.");
+            }
+            File destination = new File(filePath);
+            File parent = destination.getParentFile();
+            if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                return CreatorRuntimeServiceArguments.failed("Download destination directory cannot be created.");
+            }
+            try {
+                storage.getReferenceFromUrl(url).getFile(destination)
+                        .addOnProgressListener(snapshot -> environment.publish(getId(), "download_progress",
+                                CreatorRuntimeServiceArguments.output("url", url, "filePath", filePath,
+                                        "bytes", snapshot.getBytesTransferred(), "totalBytes", snapshot.getTotalByteCount())))
+                        .addOnSuccessListener(snapshot -> environment.publish(getId(), "downloaded",
+                                CreatorRuntimeServiceArguments.output("url", url, "filePath", filePath,
+                                        "bytes", snapshot.getBytesTransferred())))
+                        .addOnFailureListener(error -> publishError(action, url, error));
+                return CreatorRuntimeServiceArguments.succeeded("started", true, "url", url, "filePath", filePath);
+            } catch (IllegalArgumentException error) {
+                return CreatorRuntimeServiceArguments.invalid("download_file requires a valid Firebase Storage URL.");
+            }
+        }
         if (path == null || path.trim().isEmpty()) return CreatorRuntimeServiceArguments.invalid("firebase_storage requires path.");
         StorageReference reference = storage.getReference().child(path);
         if ("upload_uri".equals(action)) {
@@ -44,8 +69,11 @@ public final class CreatorFirebaseStorageService implements CreatorRuntimeServic
             if (filePath == null || filePath.trim().isEmpty()) return CreatorRuntimeServiceArguments.invalid("upload_file requires filePath.");
             File localFile = new File(filePath);
             if (!localFile.isFile()) return CreatorRuntimeServiceArguments.invalid("upload_file requires an existing file.");
-            reference.putFile(Uri.fromFile(localFile)).addOnSuccessListener(snapshot -> environment.publish(getId(), "uploaded",
-                    CreatorRuntimeServiceArguments.output("path", path, "bytes", snapshot.getBytesTransferred())))
+            reference.putFile(Uri.fromFile(localFile)).addOnProgressListener(snapshot -> environment.publish(getId(), "upload_progress",
+                    CreatorRuntimeServiceArguments.output("path", path, "bytes", snapshot.getBytesTransferred(), "totalBytes", snapshot.getTotalByteCount())))
+                    .addOnSuccessListener(snapshot -> reference.getDownloadUrl().addOnSuccessListener(uri -> environment.publish(getId(), "uploaded",
+                            CreatorRuntimeServiceArguments.output("path", path, "bytes", snapshot.getBytesTransferred(), "url", uri.toString())))
+                            .addOnFailureListener(error -> publishError("download_url", path, error)))
                     .addOnFailureListener(error -> publishError(action, path, error));
             return CreatorRuntimeServiceArguments.succeeded("started", true, "path", path);
         }
