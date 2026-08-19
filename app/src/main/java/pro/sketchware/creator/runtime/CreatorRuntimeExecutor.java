@@ -289,6 +289,7 @@ public final class CreatorRuntimeExecutor {
             return left == null || right == null ? null : (double) (number(left) - number(right));
         }
         if ("firebasegetpushkey".equals(op)) return firebaseValue(engine, first, "push_key", "key");
+        if ("objectanimatorisrunning".equals(op)) return animatorValue(first, "is_running", "value");
         if ("getvar".equals(op)) return engine.getCurrent().getState().get(literalName(rawArguments, first));
         if ("gettext".equals(op)) return String.valueOf(widgetValue(engine, first, "text", ""));
         if ("getenable".equals(op)) return booleanValue(widgetValue(engine, first, "enabled", true));
@@ -353,6 +354,13 @@ public final class CreatorRuntimeExecutor {
         CreatorRuntimeService.Result result = runtimeServices.dispatch("calendar",
                 CreatorRuntimeServiceArguments.output("componentId", String.valueOf(componentId), "action", "get_time"));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("timestamp") : null;
+    }
+
+    private Object animatorValue(Object componentId, String action, String outputKey) {
+        if (runtimeServices == null || componentId == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("animator",
+                CreatorRuntimeServiceArguments.output("componentId", String.valueOf(componentId), "action", action));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
     }
 
     @SuppressWarnings("unchecked")

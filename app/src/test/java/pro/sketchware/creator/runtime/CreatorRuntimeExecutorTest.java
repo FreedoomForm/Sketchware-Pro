@@ -397,6 +397,30 @@ public class CreatorRuntimeExecutorTest {
         assertThat(captured).containsEntry("path", "users");
     }
 
+    @Test public void evaluatesObjectAnimatorIsRunningReporterThroughRuntimeNativeService() {
+        CreatorRuntimeService animator = new CreatorRuntimeService() {
+            @Override public String getId() { return "animator"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                return new Result(Status.SUCCEEDED, map("value", true), null);
+            }
+        };
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeBlock setState = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                map("stateId", "running", "expression", reporter("objectanimatorisrunning", literal("animator1"))));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click",
+                        "blocks", Collections.singletonList(setState))));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(animator)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("running")).isEqualTo(true);
+    }
+
     @Test public void assignsTypedNestedReporterResultToRuntimeState() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
                 new CreatorRuntimeEventLog(20));
