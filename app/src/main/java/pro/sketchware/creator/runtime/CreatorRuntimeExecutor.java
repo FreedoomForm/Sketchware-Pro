@@ -314,6 +314,7 @@ public final class CreatorRuntimeExecutor {
         if ("objectanimatorisrunning".equals(op)) return animatorValue(first, "is_running", "value");
         if ("texttospeechisspeaking".equals(op)) return textToSpeechValue(first, "is_speaking", "value");
         if ("filegetdata".equals(op)) return storageValue(first, second, "get", "value");
+        if ("intentgetstring".equals(op)) return intentValue(first, second, "get_string", "value");
         if ("getresstr".equals(op)) return CreatorRuntimeResourceValues.resolveString(engine.getCurrent(),
                 "@string/" + literalName(rawArguments, first));
         if ("maptostr".equals(op) || "listmaptostr".equals(op)) return new com.google.gson.Gson().toJson(first);
@@ -403,6 +404,14 @@ public final class CreatorRuntimeExecutor {
         if (runtimeServices == null || componentId == null || key == null) return null;
         CreatorRuntimeService.Result result = runtimeServices.dispatch("local_storage",
                 CreatorRuntimeServiceArguments.output("componentId", String.valueOf(componentId), "action", action,
+                        "key", String.valueOf(key)));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
+    }
+
+    private Object intentValue(Object intentId, Object key, String action, String outputKey) {
+        if (runtimeServices == null || intentId == null || key == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("intent",
+                CreatorRuntimeServiceArguments.output("intentId", String.valueOf(intentId), "action", action,
                         "key", String.valueOf(key)));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
     }

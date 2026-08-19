@@ -609,6 +609,33 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("name")).isEqualTo("Ada");
     }
 
+    @Test public void evaluatesIntentGetStringReporterThroughRuntimeNativeIntentService() {
+        CreatorRuntimeService intent = new CreatorRuntimeService() {
+            @Override public String getId() { return "intent"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                assertThat(arguments).containsEntry("intentId", "launch");
+                assertThat(arguments).containsEntry("action", "get_string");
+                assertThat(arguments).containsEntry("key", "name");
+                return new Result(Status.SUCCEEDED, map("value", "Ada"), null);
+            }
+        };
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeBlock setState = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                map("stateId", "name", "expression", reporter("intentgetstring", literal("launch"), literal("name"))));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click",
+                        "blocks", Collections.singletonList(setState))));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(intent)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("name")).isEqualTo("Ada");
+    }
+
     @Test public void assignsTypedNestedReporterResultToRuntimeState() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
                 new CreatorRuntimeEventLog(20));

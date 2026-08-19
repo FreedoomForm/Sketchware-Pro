@@ -41,6 +41,11 @@ public final class CreatorIntentService implements CreatorRuntimeService {
                 intent(arguments).putExtra(key, CreatorRuntimeServiceArguments.string(arguments, "value"));
                 return CreatorRuntimeServiceArguments.succeeded("action", action, "key", key);
             }
+            if ("get_string".equals(action)) {
+                String key = CreatorRuntimeServiceArguments.string(arguments, "key");
+                if (key == null) return CreatorRuntimeServiceArguments.invalid("get_string requires key.");
+                return CreatorRuntimeServiceArguments.succeeded("value", intent(arguments).getStringExtra(key));
+            }
             if ("set_flags".equals(action)) {
                 String flag = CreatorRuntimeServiceArguments.string(arguments, "flag");
                 if (flag == null) return CreatorRuntimeServiceArguments.invalid("set_flags requires flag.");
