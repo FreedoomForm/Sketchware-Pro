@@ -610,6 +610,32 @@ public final class CreatorLegacyArtifactImporter {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("media", CreatorRuntimeServiceArguments.output(
                     "id", values.get(0), "action", "sound_stop_stream", "streamId", values.get(1)));
+        } else if ("bluetoothconnectreadyconnection".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return bluetoothCall(values.get(0), "ready_connection", null, null, values.get(1));
+        } else if ("bluetoothconnectreadyconnectiontouuid".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return bluetoothCall(values.get(0), "ready_connection", values.get(1), null, values.get(2));
+        } else if ("bluetoothconnectstartconnection".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return bluetoothCall(values.get(0), "start_connection", null, values.get(1), values.get(2));
+        } else if ("bluetoothconnectstartconnectiontouuid".equals(op)) {
+            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+            return bluetoothCall(values.get(0), "start_connection", values.get(1), values.get(2), values.get(3));
+        } else if ("bluetoothconnectstopconnection".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return bluetoothCall(values.get(0), "stop_connection", null, null, values.get(1));
+        } else if ("bluetoothconnectsenddata".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return serviceCall("bluetooth", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "send_data", "data", values.get(1), "tag", values.get(2)));
+        } else if ("bluetoothconnectactivatebluetooth".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return serviceCall("bluetooth", CreatorRuntimeServiceArguments.output("componentId", values.get(0), "action", "request_enable"));
+        } else if ("bluetoothconnectgetpaireddevices".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("bluetooth", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "paired_devices", "resultStateId", values.get(1), "resultKey", "devices"));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported, byId);
@@ -799,6 +825,16 @@ public final class CreatorLegacyArtifactImporter {
             arguments.put("value", value);
         }
         return serviceCall("calendar", arguments);
+    }
+
+    private static CreatorRuntimeBlock bluetoothCall(String componentId, String action, String uuid, String address, String tag) {
+        Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("componentId", componentId);
+        arguments.put("action", action);
+        arguments.put("tag", tag);
+        if (uuid != null) arguments.put("uuid", uuid);
+        if (address != null) arguments.put("address", address);
+        return serviceCall("bluetooth", arguments);
     }
 
     private static Map<String, Object> expression(String parameter, Map<Integer, BlockBean> byId, java.util.Set<Integer> path) {

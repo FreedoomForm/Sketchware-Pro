@@ -843,6 +843,31 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyBluetoothConnectionAndPairedDeviceBlocksAsRuntimeNativeCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean ready = new BlockBean("1", "", "", "bluetoothConnectReadyConnectionToUuid");
+        ready.parameters.add("bluetooth1"); ready.parameters.add("00001101-0000-1000-8000-00805F9B34FB"); ready.parameters.add("server");
+        BlockBean start = new BlockBean("2", "", "", "bluetoothConnectStartConnection");
+        start.parameters.add("bluetooth1"); start.parameters.add("00:11:22:33:44:55"); start.parameters.add("client");
+        BlockBean send = new BlockBean("3", "", "", "bluetoothConnectSendData");
+        send.parameters.add("bluetooth1"); send.parameters.add("hello"); send.parameters.add("client");
+        BlockBean paired = new BlockBean("4", "", "", "bluetoothConnectGetPairedDevices");
+        paired.parameters.add("bluetooth1"); paired.parameters.add("paired");
+        ready.nextBlock = 2; start.nextBlock = 3; send.nextBlock = 4;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(ready, start, send, paired));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "bluetooth", "ready_connection");
+        assertServiceCall(imported.get(1), "bluetooth", "start_connection");
+        assertServiceCall(imported.get(2), "bluetooth", "send_data");
+        assertServiceCall(imported.get(3), "bluetooth", "paired_devices");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

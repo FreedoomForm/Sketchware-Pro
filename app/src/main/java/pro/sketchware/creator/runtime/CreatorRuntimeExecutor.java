@@ -85,6 +85,12 @@ public final class CreatorRuntimeExecutor {
                     @SuppressWarnings("unchecked") Map<String, Object> arguments = rawArguments instanceof Map
                             ? (Map<String, Object>) rawArguments : Collections.<String, Object>emptyMap();
                     CreatorRuntimeService.Result result = runtimeServices.dispatch(serviceId, resolveServiceArguments(engine, arguments));
+                    String resultStateId = CreatorRuntimeServiceArguments.string(arguments, "resultStateId");
+                    String resultKey = CreatorRuntimeServiceArguments.string(arguments, "resultKey");
+                    if (result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED && resultStateId != null) {
+                        Object value = resultKey == null ? result.getOutput() : result.getOutput().get(resultKey);
+                        apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", resultStateId, "value", value));
+                    }
                     effects.add(new Effect("runtime_service", serviceId + ":" + result.getStatus().name()));
                 }
             } else if (block.getType() == CreatorRuntimeBlock.Type.IF_STATE_EQUALS) {

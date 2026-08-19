@@ -249,6 +249,28 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState()).containsEntry("replacement", "baak");
     }
 
+    @Test public void storesConfiguredServiceOutputInTypedRuntimeState() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeService service = new CreatorRuntimeService() {
+            @Override public String getId() { return "devices"; }
+            @Override public Result execute(Map<String, Object> ignored) { return CreatorRuntimeServiceArguments.succeeded("items", Arrays.asList("one", "two")); }
+        };
+        CreatorRuntimeServiceDispatcher dispatcher = new CreatorRuntimeServiceDispatcher().register(service);
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks",
+                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "devices", "arguments", map("resultStateId", "paired", "resultKey", "items")))))));
+
+        new CreatorRuntimeExecutor(dispatcher).dispatch(engine, "button", "click");
+
+        assertThat((java.util.List<?>) engine.getCurrent().getState().get("paired")).containsExactly("one", "two").inOrder();
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }
