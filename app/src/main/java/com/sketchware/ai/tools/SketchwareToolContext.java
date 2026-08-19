@@ -1,0 +1,181 @@
+package com.sketchware.ai.tools;
+
+import android.app.Activity;
+import android.content.Context;
+
+import com.besome.sketch.design.DesignActivity;
+import com.sketchware.ai.util.SketchwareApi;
+
+import java.util.function.Consumer;
+
+/**
+ * Context object passed to every tool execution. Encapsulates everything a
+ * tool needs to act on the current project.
+ *
+ * <p>The {@code sc_id} and {@code projectFile} come from the currently
+ * active project in {@link DesignActivity}. The activity reference is used
+ * for UI-thread dispatch (refreshing the canvas after a tool call).
+ */
+public class SketchwareToolContext {
+
+    private final Context context;
+    private final String scId;
+    // Mutable: tools like view_manage_layout(switch_active) and view_manage_layout(create)
+    // update this so subsequent view_add_widget / view_set_property calls operate
+    // on the newly active layout. Previously this was final, which caused
+    // view_add_widget to keep adding widgets to the OLD layout (e.g. 'main')
+    // even after the assistant had explicitly switched to a new one.
+    private String currentJavaName;
+    private final ToolPermissionGate permissionGate;
+    /**
+     * Accepts the xml layout name the AI just modified. If it differs from
+     * what the editor is currently showing, the editor will switch to it.
+     * This is the fix for "в окне view не видно то что он сделал": the AI
+     * was creating 'calculator' but the editor was still showing 'main'.
+     */
+    private final Consumer<String> viewRefreshCallback;
+    private final Runnable logicRefreshCallback;
+    private final Runnable eventRefreshCallback;
+    private final Runnable componentRefreshCallback;
+
+    public SketchwareToolContext(Context context,
+                                 String scId,
+                                 String currentJavaName,
+                                 ToolPermissionGate permissionGate,
+                                 Consumer<String> viewRefreshCallback,
+                                 Runnable logicRefreshCallback,
+                                 Runnable eventRefreshCallback,
+                                 Runnable componentRefreshCallback) {
+        this.context = context;
+        this.scId = scId;
+        this.currentJavaName = currentJavaName;
+        this.permissionGate = permissionGate;
+        this.viewRefreshCallback = viewRefreshCallback;
+        this.logicRefreshCallback = logicRefreshCallback;
+        this.eventRefreshCallback = eventRefreshCallback;
+        this.componentRefreshCallback = componentRefreshCallback;
+    }
+
+    public Context getContext() { return context; }
+    public String getScId() { return scId; }
+    public String getCurrentJavaName() { return currentJavaName; }
+    public ToolPermissionGate getPermissionGate() { return permissionGate; }
+
+    /**
+     * Update the active layout/file name. Called by view_manage_layout when
+     * the user/assistant switches or creates a layout, so subsequent tool
+     * calls operate on the new active layout.
+     *
+     * <p>CRITICAL: Sketchware's {@code eC} (project data manager) stores
+     * ViewBeans in a HashMap keyed by the <b>full XML name</b> (e.g.
+     * {@code "main.xml"}, NOT {@code "main"}). All calls to
+     * {@code jC.a(scId).d(name)}, {@code .a(name, viewBean)},
+     * {@code .h(name)} etc. MUST use the {@code .xml}-suffixed name.
+     *
+     * <p>Previously this method stored the name WITHOUT the {@code .xml}
+     * suffix, which caused:
+     * <ul>
+     *   <li>{@code view_list_widgets} to return 0 widgets even after
+     *       {@code view_add_widget} succeeded — the widget was stored
+     *       under key {@code "main"} while the editor looked it up
+     *       under {@code "main.xml"}.</li>
+     *   <li>{@code view_set_property} to fail with "Widget not found"
+     *       because the widget list lookup used the wrong key.</li>
+     *   <li>The View editor canvas never showed AI-added widgets
+     *       because {@code ViewEditorFragment.i()} calls
+     *       {@code jC.a(scId).d(projectFileBean.getXmlName())} with the
+     *       {@code .xml}-suffixed name.</li>
+     * </ul>
+     *
+     * <p>This method now normalises the name to always end with
+     * {@code ".xml"} so all downstream eC calls use the correct key.
+     */
+    public void setCurrentJavaName(String javaName) {
+        if (javaName != null && !javaName.isEmpty()) {
+            // Normalise: eC expects the .xml-suffixed name.
+            if (!javaName.endsWith(".xml")) {
+                javaName = javaName + ".xml";
+            }
+            this.currentJavaName = javaName;
+        }
+    }
+
+    public Activity getActivity() {
+        if (context instanceof Activity) return (Activity) context;
+        return null;
+    }
+
+    public void runOnUiThread(Runnable r) {
+        Activity a = getActivity();
+        if (a != null) a.runOnUiThread(r);
+    }
+
+    /**
+     * Refresh the View editor canvas so changes are visible in real time.
+     * Passes the AI's current layout name so DesignActivity can switch the
+     * editor to it if the user is viewing a different layout.
+     */
+    public void refreshViewEditor() {
+        if (viewRefreshCallback != null) {
+            final String layout = currentJavaName;
+            runOnUiThread(() -> viewRefreshCallback.accept(layout));
+        }
+    }
+
+    /** Refresh the Logic editor canvas. */
+    public void refreshLogicEditor() {
+        if (logicRefreshCallback != null) {
+            runOnUiThread(logicRefreshCallback);
+        }
+    }
+
+    /** Refresh the Event list. */
+    public void refreshEventList() {
+        if (eventRefreshCallback != null) {
+            runOnUiThread(eventRefreshCallback);
+        }
+    }
+
+    /** Refresh the Component list. */
+    public void refreshComponentList() {
+        if (componentRefreshCallback != null) {
+            runOnUiThread(componentRefreshCallback);
+        }
+    }
+
+    /** Refresh all known editors. */
+    public void refreshAllEditors() {
+        refreshViewEditor();
+        refreshLogicEditor();
+        refreshEventList();
+        refreshComponentList();
+    }
+
+    /**
+     * Persist the in-memory view data (ViewBeans, events, components) to disk
+     * WITHOUT clearing the in-memory cache. This is the fix for the desync
+     * where {@code view_list_widgets} reported N widgets but the editor showed
+     * 0 — the widgets were in the in-memory {@code eC.c} HashMap but were
+     * never written to disk, so when the editor reloaded from disk (e.g. on
+     * layout switch) it got 0.
+     *
+     * <p>Implementation: calls {@code jC.a(scId).n(path)} reflectively, which
+     * serializes the view HashMap to a StringBuffer and writes it to the
+     * {@code <project>/view} file. Unlike {@code jC.a(scId).j()} (which saves
+     * AND clears), this preserves the in-memory cache so subsequent tool calls
+     * still see the data.
+     */
+    public void persistViewToDisk() {
+        try {
+            Object eC = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
+            // Build the path: wq.b(sc_id) + File.separator + "view"
+            String projectPath = (String) SketchwareApi.invokeStatic("a.a.a.wq", "b", scId);
+            String viewPath = projectPath + java.io.File.separator + "view";
+            // Call n(String path) — saves view data to disk without clearing memory.
+            SketchwareApi.invoke(eC, "n", viewPath);
+        } catch (Throwable t) {
+            // Best-effort persistence; don't fail the tool call if saving fails.
+            android.util.Log.w("SketchwareToolContext", "persistViewToDisk failed", t);
+        }
+    }
+}

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Provider icon: ic_provider_agentrouter. Single-tone 24dp vector.
+     AgentRouter is a multi-model aggregator that routes requests to the
+     right upstream LLM. Icon: a central hub with four outbound arrows
+     (one per model family). Tint via app:tint to recolor for dark/light
+     themes; brand teal (#0EA5E9) is baked in as the default fillColor. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorOnSurface">
+    <!-- Central hub -->
+    <path
+        android:fillColor="#0EA5E9"
+        android:pathData="M10.5,10.5 H13.5 V13.5 H10.5 Z" />
+    <!-- Four outbound arrows: top, right, bottom, left -->
+    <path
+        android:fillColor="#0EA5E9"
+        android:pathData="M11,4 L13,4 L13,7 L15.5,7 L12,3.5 L8.5,7 L11,7 Z" />
+    <path
+        android:fillColor="#0EA5E9"
+        android:pathData="M20,11 L20,13 L17,13 L17,15.5 L20.5,12 L17,8.5 L17,11 Z" />
+    <path
+        android:fillColor="#0EA5E9"
+        android:pathData="M13,20 L11,20 L11,17 L8.5,17 L12,20.5 L15.5,17 L13,17 Z" />
+    <path
+        android:fillColor="#0EA5E9"
+        android:pathData="M4,13 L4,11 L7,11 L7,8.5 L3.5,12 L7,15.5 L7,13 Z" />
+</vector>

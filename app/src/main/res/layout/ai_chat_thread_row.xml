@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chat thread row inside the side drawer — inspired by
+     FabioSilva11/Sketchware-IA's item_kelivo_drawer_thread.xml.
+     Layout: thread icon + title (single line) + subtitle (last message preview)
+     + pinned star (shown only for pinned threads).
+     The previous three-dots overflow button was removed — long-press the
+     row to open the same actions bottom-sheet (Open / Rename / Export /
+     Pin / Delete). One less icon per row makes the list cleaner. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:minHeight="56dp"
+    android:orientation="horizontal"
+    android:paddingStart="10dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="10dp"
+    android:paddingBottom="8dp">
+
+    <FrameLayout
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:background="@drawable/ai_avatar_bg">
+
+        <ImageView
+            android:id="@+id/thread_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/kelivo_lucide_bot_message_square"
+            app:tint="@color/ai_avatar_text" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/thread_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/ai_chat_text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/thread_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/ai_chat_text_secondary"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/thread_pinned_star"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_marginEnd="2dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_star"
+        android:visibility="gone"
+        app:tint="@color/ai_chat_accent" />
+
+    <!-- Kept for backward compatibility with adapter.findViewById lookups.
+         Hidden because long-press already opens the actions sheet. -->
+    <ImageView
+        android:id="@+id/btn_thread_more"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+</LinearLayout>

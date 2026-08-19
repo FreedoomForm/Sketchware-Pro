@@ -1,0 +1,65 @@
+package pro.sketchware.creator.runtime;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import com.google.gson.JsonObject;
+
+import org.junit.Test;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/** Validates the first complete live-edit loop without depending on Android UI. */
+public class CreatorRuntimeWorkflowTest {
+
+    @Test public void userAndAiCanCreatePreviewableProjectAndPreserveRecoveryGuarantees() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(
+                CreatorProjectDocument.empty("project", "Demo"), 20, new CreatorRuntimeEventLog(50));
+
+        CreatorApplyResult screen = engine.apply(operation("user-screen", 0,
+                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.checkpoint("empty-home");
+
+        JsonObject aiArgs = new JsonObject();
+        aiArgs.addProperty("action", "add_widget");
+        aiArgs.addProperty("widget_id", "continue_button");
+        aiArgs.addProperty("widget_type", "button");
+        aiArgs.addProperty("parent_id", "root");
+        JsonObject properties = new JsonObject();
+        properties.addProperty("text", "Continue");
+        aiArgs.add("properties", properties);
+        CreatorProjectOperation aiOperation = CreatorRuntimeOperationMapper.map(aiArgs, engine.getCurrent(),
+                CreatorProjectOperation.ActorKind.AI);
+        CreatorApplyResult aiWidget = engine.apply(aiOperation);
+
+        CreatorApplyResult entryControl = engine.apply(operation("user-entry", 2,
+                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE,
+                map("label", "Open editor", "placement", "top_end")));
+        CreatorCompatibilityAnalyzer analyzer = new CreatorCompatibilityAnalyzer(CreatorRuntimeServiceCatalog.defaults());
+
+        assertThat(screen.isApplied()).isTrue();
+        assertThat(aiWidget.isApplied()).isTrue();
+        assertThat(entryControl.isApplied()).isTrue();
+        assertThat(engine.getCurrent().getEntryScreenId()).isEqualTo("home");
+        assertThat(engine.getCurrent().getWidgets().get("root").getChildren()).containsExactly("continue_button");
+        assertThat(engine.getCurrent().getEntryControl().getPlacement()).isEqualTo("top_end");
+        assertThat(engine.getRevisionStore().getCheckpointRevision("empty-home")).isEqualTo(1L);
+        assertThat(analyzer.classify("service:camera")).isEqualTo(CreatorCompatibilityTier.R1_RUNTIME_NATIVE);
+        assertThat(analyzer.classify("java:CustomActivity")).isEqualTo(CreatorCompatibilityTier.R0_UNSUPPORTED);
+        assertThat(engine.getEventLog().snapshot()).isNotEmpty();
+    }
+
+    private static CreatorProjectOperation operation(String id, long revision,
+                                                      CreatorProjectOperation.ActorKind actor,
+                                                      CreatorProjectOperation.Type type,
+                                                      Map<String, Object> payload) {
+        return new CreatorProjectOperation(id, "project", revision, actor, type, payload, 1L);
+    }
+
+    private static Map<String, Object> map(Object... values) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (int i = 0; i + 1 < values.length; i += 2) result.put(String.valueOf(values[i]), values[i + 1]);
+        return result;
+    }
+}

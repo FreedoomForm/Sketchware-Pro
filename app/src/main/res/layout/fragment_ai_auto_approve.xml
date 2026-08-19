@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_auto_approve_main"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Auto-Approve (YOLO mode)" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_aa_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="View operations (add/delete/edit widgets)" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_aa_event"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Event operations (attach/delete events)" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_aa_block"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Block operations (add/move/delete blocks)" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_aa_component"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Component operations (add/delete components)" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_aa_project"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Project settings (rename/package change)" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_aa_resource"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Resource operations (add images/sounds/fonts)" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_aa_java"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Java files (create/edit/delete)" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_aa_library"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Library/permission changes" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_aa_manifest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Manifest/AppCompat/XML command changes" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_aa_build"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Build &amp; run" />
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw_aa_export"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Export APK / AAB / source zip" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Max requests per run">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_max_requests"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+</ScrollView>

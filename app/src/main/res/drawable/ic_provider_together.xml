@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Provider icon: ic_provider_together. Auto-generated single-tone 24dp vector.
+     Tint via app:tint to recolor for dark/light themes; brand color is
+     baked in as the default fillColor so the icon is recognizable when
+     untinted. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorOnSurface">
+    <path
+        android:fillColor="#0F6FFF"
+        android:pathData="M5,5 L11,5 L11,11 L5,11 Z M13,5 L19,5 L19,11 L13,11 Z M5,13 L11,13 L11,19 L5,19 Z M13,13 L19,13 L19,19 L13,19 Z" />
+</vector>

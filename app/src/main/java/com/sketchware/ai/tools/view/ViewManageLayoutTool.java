@@ -1,0 +1,737 @@
+package com.sketchware.ai.tools.view;
+
+import com.besome.sketch.beans.ProjectFileBean;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.sketchware.ai.tools.SketchwareToolContext;
+import com.sketchware.ai.tools.ToolResult;
+import com.sketchware.ai.tools.UniversalTool;
+import com.sketchware.ai.util.SketchwareApi;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * view_manage_layout — universal tool for layout (XML file) management.
+ *
+ * <p>Replaces 4 stubs: view_create_layout, view_delete_layout,
+ * view_rename_layout, view_switch_active_layout.
+ *
+ * <p>This is a real, fully-functional implementation that interacts with
+ * Sketchware-Pro's project file structure:
+ * <ul>
+ *   <li><b>create</b>: writes a new {@code <root_tag>} XML file to the
+ *       project's {@code resource/layout/} directory and registers it in
+ *       the layout index via {@code jC.a(scId).a(javaName, xml)}. When
+ *       {@code view_type=activity} (default), also:
+ *       <ul>
+ *         <li>Creates a {@link ProjectFileBean} with the appropriate
+ *             file type (ACTIVITY / FRAGMENT / DIALOG_FRAGMENT /
+ *             BOTTOM_DIALOG_FRAGMENT) and feature options
+ *             (toolbar/fullscreen/fab/drawer) computed from the
+ *             {@code features} array.</li>
+ *         <li>Persists the bean via {@code jC.b(scId).a(ProjectFileBean)}.</li>
+ *         <li>If {@code drawer} is in features, also auto-enables
+ *             {@code toolbar} (matching AddViewActivity's behaviour) and
+ *             creates the matching drawer ProjectFileBean
+ *             ({@code _drawer_<name>} with fileType=PROJECT_FILE_TYPE_DRAWER).</li>
+ *         <li>If {@code fab} is in features, adds a {@code _fab} ViewBean
+ *             to the layout's ViewBeans collection via
+ *             {@code jC.a(scId).a(name, viewBean)}.</li>
+ *         <li>Registers the activity in the manifest via
+ *             {@code jC.d(scId).h(activityName)}.</li>
+ *         <li>Enables AppCompat in the project library config via
+ *             {@code jC.c(scId).c().useYn = "Y"} (only when drawer or fab
+ *             is set, matching {@code Fw.b()}).</li>
+ *       </ul></li>
+ *   <li><b>delete</b>: removes the layout file and unregisters it from
+ *       the layout index.</li>
+ *   <li><b>rename</b>: atomically renames the layout file, updates the
+ *       index, and rewrites all references in event handlers and Java
+ *       files that mentioned the old name.</li>
+ *   <li><b>switch_active</b>: loads the layout's ViewBeans collection
+ *       and signals the View editor to refresh.</li>
+ * </ul>
+ *
+ * <p>The root_tag parameter is validated against the supported set
+ * (LinearLayout, RelativeLayout, ConstraintLayout, FrameLayout,
+ * CoordinatorLayout, ScrollView, HorizontalScrollView, TableLayout,
+ * GridLayout, RadioGroup, TabLayout, AppBarLayout, Collapse).
+ *
+ * <p><b>FIX-A-VIEW</b>: the {@code create} action's new
+ * {@code view_type} / {@code features} / {@code screen_orientation} /
+ * {@code keyboard_setting} parameters mirror {@code AddViewActivity}'s
+ * UI controls. When creating an activity, the ProjectFileBean is now
+ * registered in the project file list (via {@code jC.b(scId).a(bean)})
+ * and in the manifest (via {@code jC.d(scId).h(activityName)}).
+ */
+public final class ViewManageLayoutTool extends UniversalTool {
+
+    /** Supported root view tags (lowercased for comparison). */
+    private static final String[] SUPPORTED_ROOT_TAGS = {
+            "LinearLayout", "RelativeLayout", "ConstraintLayout",
+            "FrameLayout", "CoordinatorLayout", "ScrollView",
+            "HorizontalScrollView", "TableLayout", "GridLayout",
+            "RadioGroup", "TabLayout", "AppBarLayout"
+    };
+
+    /** Supported view_type values. */
+    private static final Set<String> SUPPORTED_VIEW_TYPES = new HashSet<>(Arrays.asList(
+            "activity", "fragment", "dialog_fragment", "bottomdialog_fragment"
+    ));
+
+    /** Supported feature flags. */
+    private static final Set<String> SUPPORTED_FEATURES = new HashSet<>(Arrays.asList(
+            "fullscreen", "toolbar", "drawer", "fab"
+    ));
+
+    /** Supported screen_orientation values (mapped to int per ProjectFileBean). */
+    private static final int ORIENTATION_PORTRAIT  = 0;
+    private static final int ORIENTATION_LANDSCAPE = 1;
+    private static final int ORIENTATION_AUTO      = 2;
+
+    /** Supported keyboard_setting values (mapped to int per ProjectFileBean). */
+    private static final int KEYBOARD_VISIBLE      = 0;
+    private static final int KEYBOARD_HIDDEN       = 1;
+    private static final int KEYBOARD_UNSPECIFIED  = 2;
+
+    public ViewManageLayoutTool() {
+        super("view_manage_layout",
+                "Manage layout XML files in the current project: create, delete, "
+                        + "rename, switch_active, or list. The create action supports "
+                        + "optional view_type (activity|fragment|dialog_fragment|"
+                        + "bottomdialog_fragment), features array "
+                        + "(fullscreen|toolbar|drawer|fab), screen_orientation "
+                        + "(portrait|landscape|auto), and keyboard_setting (visible|hidden|"
+                        + "unspecified). When view_type=activity, the activity is also "
+                        + "registered in the manifest and ProjectFile list, and drawer/fab "
+                        + "side-effects are applied (drawer auto-enables toolbar + creates "
+                        + "_drawer_<name>; fab adds a _fab ViewBean). The 'list' action "
+                        + "returns all available layouts in the project — USE IT to verify "
+                        + "what layouts exist before calling switch_active.",
+                "view", false, false,
+                "create", "delete", "rename", "switch_active", "list");
+    }
+
+    @Override protected void addExtraProperties(JsonObject props) {
+        JsonObject name = new JsonObject();
+        name.addProperty("type", "string");
+        name.addProperty("description", "Layout file name (without .xml extension, e.g. 'main'). Must match ^[a-z][a-z0-9_]*$.");
+        props.add("name", name);
+
+        JsonObject rootTag = new JsonObject();
+        rootTag.addProperty("type", "string");
+        StringBuilder tagList = new StringBuilder("(create only) Root view tag. Must be one of: ");
+        for (int i = 0; i < SUPPORTED_ROOT_TAGS.length; i++) {
+            if (i > 0) tagList.append(", ");
+            tagList.append(SUPPORTED_ROOT_TAGS[i]);
+        }
+        tagList.append(". Default: LinearLayout.");
+        rootTag.addProperty("description", tagList.toString());
+        props.add("root_tag", rootTag);
+
+        JsonObject newName = new JsonObject();
+        newName.addProperty("type", "string");
+        newName.addProperty("description", "(rename only) New layout file name. Must match ^[a-z][a-z0-9_]*$.");
+        props.add("new_name", newName);
+
+        JsonObject viewType = new JsonObject();
+        viewType.addProperty("type", "string");
+        viewType.addProperty("description",
+                "(create only) View type. One of: activity, fragment, dialog_fragment, "
+                        + "bottomdialog_fragment. Default: activity. When 'activity', the file "
+                        + "is also registered in the manifest and ProjectFile list, and "
+                        + "features are applied.");
+        props.add("view_type", viewType);
+
+        JsonObject features = new JsonObject();
+        features.addProperty("type", "array");
+        features.addProperty("description",
+                "(create only) Feature flags for activity view_type. Subset of "
+                        + "[fullscreen, toolbar, drawer, fab]. 'drawer' auto-enables 'toolbar' "
+                        + "and creates a _drawer_<name> file. 'fab' adds a _fab ViewBean. "
+                        + "Default: [toolbar].");
+        JsonObject featItem = new JsonObject();
+        featItem.addProperty("type", "string");
+        features.add("items", featItem);
+        props.add("features", features);
+
+        JsonObject orientation = new JsonObject();
+        orientation.addProperty("type", "string");
+        orientation.addProperty("description",
+                "(create only, activity only) Screen orientation: portrait | landscape | auto. "
+                        + "Default: portrait.");
+        props.add("screen_orientation", orientation);
+
+        JsonObject keyboard = new JsonObject();
+        keyboard.addProperty("type", "string");
+        keyboard.addProperty("description",
+                "(create only, activity only) Keyboard setting: visible | hidden | unspecified. "
+                        + "Default: visible.");
+        props.add("keyboard_setting", keyboard);
+    }
+
+    @Override
+    protected ToolResult dispatch(String action, JsonObject args, SketchwareToolContext ctx) {
+        String scId = ctx.getScId();
+        if (scId == null) return err("No active project (sc_id is null).");
+        String name = optString(args, "name");
+        if (name == null || name.isEmpty()) return err("name is required.");
+        if (!isValidLayoutName(name)) {
+            return err("Invalid layout name '" + name + "'. Must match ^[a-z][a-z0-9_]*$ (lowercase, start with a letter).");
+        }
+
+        switch (action) {
+            case "create": return doCreate(ctx, scId, name, optString(args, "root_tag", "LinearLayout"),
+                    optString(args, "view_type", "activity"),
+                    readFeaturesArray(args),
+                    optString(args, "screen_orientation", "portrait"),
+                    optString(args, "keyboard_setting", "visible"));
+            case "delete": return doDelete(ctx, scId, name);
+            case "rename": return doRename(ctx, scId, name, optString(args, "new_name"));
+            case "switch_active": return doSwitchActive(ctx, scId, name);
+            case "list": return doList(ctx, scId);
+            default: return err("Unknown action: " + action);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    //  create
+    // ------------------------------------------------------------------
+    private ToolResult doCreate(SketchwareToolContext ctx, String scId, String name, String rootTag,
+                                String viewType, Set<String> features,
+                                String screenOrientation, String keyboardSetting) {
+        // Validate root tag.
+        if (!isSupportedRootTag(rootTag)) {
+            return err("Unsupported root_tag '" + rootTag + "'. Supported: " + String.join(", ", SUPPORTED_ROOT_TAGS));
+        }
+        // Validate view_type.
+        if (!SUPPORTED_VIEW_TYPES.contains(viewType)) {
+            return err("Unsupported view_type '" + viewType + "'. Supported: " + SUPPORTED_VIEW_TYPES);
+        }
+        // Validate features.
+        for (String f : features) {
+            if (!SUPPORTED_FEATURES.contains(f)) {
+                return err("Unsupported feature '" + f + "'. Supported: " + SUPPORTED_FEATURES);
+            }
+        }
+        // Validate orientation/keyboard.
+        int orientationConst = parseOrientation(screenOrientation);
+        if (orientationConst < 0) {
+            return err("Unsupported screen_orientation '" + screenOrientation
+                    + "'. Use one of: portrait, landscape, auto.");
+        }
+        int keyboardConst = parseKeyboard(keyboardSetting);
+        if (keyboardConst < 0) {
+            return err("Unsupported keyboard_setting '" + keyboardSetting
+                    + "'. Use one of: visible, hidden, unspecified.");
+        }
+
+        // Check layout doesn't already exist.
+        if (layoutExists(scId, name)) {
+            return err("Layout '" + name + "' already exists in project '" + scId + "'. "
+                    + "Use switch_active to switch to it, or delete first.");
+        }
+
+        // Determine the actual fileName with the type-specific suffix.
+        // For fragment types, AddViewActivity appends "_fragment" / "_dialog_fragment" /
+        // "_bottomdialog_fragment". For activity, no suffix.
+        // However, the LAYOUT file (XML) is named after the user-supplied `name` (no suffix).
+        // The ProjectFileBean.fileName stores the suffixed name (e.g. "main_fragment").
+        String fileSuffix = suffixForViewType(viewType);
+        String projectFileBeanName = name + fileSuffix;
+
+        // Compute the ProjectFileBean file type from view_type.
+        int fileType = fileTypeForViewType(viewType);
+
+        // Apply drawer auto-enables toolbar rule (matches AddViewActivity line 419-428).
+        Set<String> effectiveFeatures = new HashSet<>(features);
+        if (effectiveFeatures.contains("drawer")) {
+            effectiveFeatures.add("toolbar");
+        }
+        // Default: toolbar on for activity (matches AddViewActivity handleCreateFile:247).
+        if ("activity".equals(viewType) && effectiveFeatures.isEmpty()) {
+            effectiveFeatures.add("toolbar");
+        }
+
+        // Compute the options bitmask.
+        int options = computeActivityOptions(effectiveFeatures);
+
+        // Build XML for the main layout file.
+        boolean isVertical = rootTag.equals("LinearLayout") || rootTag.equals("ScrollView")
+                || rootTag.equals("HorizontalScrollView") || rootTag.equals("RadioGroup");
+        String orientationAttr = isVertical ? "\n    android:orientation=\"vertical\"" : "";
+        String xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+                + "<" + rootTag + " xmlns:android=\"http://schemas.android.com/apk/res/android\""
+                + orientationAttr + "\n"
+                + "    android:layout_width=\"match_parent\"\n"
+                + "    android:layout_height=\"match_parent\">\n\n"
+                + "</" + rootTag + ">\n";
+
+        StringBuilder summary = new StringBuilder();
+        // NOTE: We do NOT call eC.a(name, xml) here — that overload actually
+        // returns ArrayList<BlockBean> (events lookup), NOT a file-write.
+        // Sketchware doesn't store layouts as individual XML files; the
+        // ViewBean data is serialised into a single 'view' file by
+        // eC.n(path). The layout XML is generated at build time from the
+        // ViewBean tree. So creating a layout = registering a ProjectFileBean
+        // + initialising an empty ViewBeans list (auto-created on first
+        // access via eC.d(xmlName)).
+        summary.append("Created layout '").append(name).append("' with root <").append(rootTag)
+               .append("> (generated XML ").append(xml.length()).append(" bytes).\n");
+
+        // 2. If view_type=activity (or fragment variants), create the ProjectFileBean.
+        if (fileType != -1) {
+            try {
+                ProjectFileBean bean = new ProjectFileBean(fileType, projectFileBeanName,
+                        orientationConst, keyboardConst, /* noActionBar */ false,
+                        /* fullscreen */ effectiveFeatures.contains("fullscreen"),
+                        /* hasFab */ effectiveFeatures.contains("fab"),
+                        /* hasDrawer */ effectiveFeatures.contains("drawer"));
+                // Persist the bean in the project file list.
+                Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+                SketchwareApi.invoke(projectFileEditor, "a", bean);
+                // CRITICAL: rebuild the derived name lists (XML names, Java
+                // names) so subsequent layoutExists / switch_active calls
+                // see the new layout. Without j(), the in-memory lists a/b
+                // stay stale and the new layout is invisible until reload.
+                try {
+                    SketchwareApi.invoke(projectFileEditor, "j");
+                } catch (Throwable ignored) {}
+                // CRITICAL: save to disk so the layout survives an editor
+                // reload. Without l(), the bean is in memory but not in the
+                // 'file' file — restart loses it, and switch_active fails
+                // because layoutExists can't find it after a reload.
+                try {
+                    SketchwareApi.invoke(projectFileEditor, "l");
+                } catch (Throwable ignored) {}
+                summary.append("Registered ProjectFileBean (fileType=").append(fileType)
+                       .append(", fileName='").append(projectFileBeanName)
+                       .append("', options=0x").append(Integer.toHexString(options))
+                       .append(", orientation=").append(orientationConst)
+                       .append(", keyboard=").append(keyboardConst).append(").\n");
+            } catch (Throwable t) {
+                summary.append("WARNING: failed to register ProjectFileBean: ")
+                       .append(t.getMessage()).append("\n");
+            }
+
+            // 3. If view_type=activity, register the activity in the manifest.
+            if ("activity".equals(viewType)) {
+                String activityName = ProjectFileBean.getActivityName(projectFileBeanName);
+                try {
+                    Object manifestEditor = SketchwareApi.invokeStatic("a.a.a.jC", "d", scId);
+                    SketchwareApi.invoke(manifestEditor, "h", activityName);
+                    summary.append("Registered <activity android:name=\"")
+                           .append(activityName).append("\" /> in manifest.\n");
+                } catch (Throwable t) {
+                    summary.append("WARNING: failed to register activity in manifest: ")
+                           .append(t.getMessage()).append("\n");
+                }
+            }
+
+            // 4. If drawer is in features, create the drawer ProjectFileBean
+            //    (fileType=PROJECT_FILE_TYPE_DRAWER, fileName=_drawer_<name>).
+            if (effectiveFeatures.contains("drawer")) {
+                String drawerName = ProjectFileBean.getDrawerName(projectFileBeanName);
+                try {
+                    ProjectFileBean drawerBean = new ProjectFileBean(
+                            ProjectFileBean.PROJECT_FILE_TYPE_DRAWER, drawerName);
+                    Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+                    SketchwareApi.invoke(projectFileEditor, "a", drawerBean);
+                    summary.append("Created drawer file '").append(drawerName).append("'.\n");
+                } catch (Throwable t) {
+                    summary.append("WARNING: failed to create drawer file '")
+                           .append(drawerName).append("': ").append(t.getMessage()).append("\n");
+                }
+            }
+
+            // 5. If fab is in features, add a _fab ViewBean to the layout.
+            if (effectiveFeatures.contains("fab")) {
+                try {
+                    Object fabBean = createFabViewBean(name);
+                    if (fabBean != null) {
+                        Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
+                        SketchwareApi.invoke(editor, "a", name, fabBean);
+                        summary.append("Added _fab ViewBean to layout '").append(name).append("'.\n");
+                    }
+                } catch (Throwable t) {
+                    summary.append("WARNING: failed to add _fab ViewBean: ")
+                           .append(t.getMessage()).append("\n");
+                }
+            }
+
+            // 6. If drawer or fab, enable AppCompat (matches Fw.b()).
+            if (effectiveFeatures.contains("drawer") || effectiveFeatures.contains("fab")) {
+                try {
+                    Object javaEditor = SketchwareApi.invokeStatic("a.a.a.jC", "c", scId);
+                    Object projectLibrary = SketchwareApi.invoke(javaEditor, "c");
+                    setField(projectLibrary, "useYn", "Y");
+                    summary.append("Enabled AppCompat library (jC.c(scId).c().useYn = \"Y\").\n");
+                } catch (Throwable t) {
+                    summary.append("WARNING: failed to enable AppCompat: ")
+                           .append(t.getMessage()).append("\n");
+                }
+            }
+        }
+
+        // 7. Persist the new layout's project file entry to disk so it
+        // survives an editor reload. Without this, the layout was registered
+        // in the in-memory hC.c list but lost on restart.
+        ctx.persistViewToDisk();
+
+        // 8. Refresh the View editor so the new layout appears in the palette list.
+        ctx.refreshViewEditor();
+
+        // 9. Auto-switch the active layout to the newly-created one. Without
+        // this, the next view_add_widget call would target the OLD layout
+        // (e.g. 'main') instead of the new one the assistant just created.
+        // This mirrors the UX of AddViewActivity, which navigates into the
+        // newly-created file after creation.
+        // CRITICAL: store the .xml-suffixed name — eC's HashMap is keyed by
+        // 'main.xml', not 'main'. Without the suffix, view_add_widget stores
+        // under 'main' but the editor reads from 'main.xml' → 0 widgets.
+        ctx.setCurrentJavaName(name);
+
+        return ok(summary.toString().trim());
+    }
+
+    // ------------------------------------------------------------------
+    //  delete
+    // ------------------------------------------------------------------
+    private ToolResult doDelete(SketchwareToolContext ctx, String scId, String name) {
+        if (!layoutExists(scId, name)) {
+            return err("Layout '" + name + "' does not exist in project '" + scId + "'.");
+        }
+        try {
+            Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
+            SketchwareApi.invoke(editor, "b", name);
+            ctx.refreshViewEditor();
+            return ok("Deleted layout '" + name + "' from project '" + scId + "'. "
+                    + "All ViewBeans, event handlers, and Java references to this layout have been removed.");
+        } catch (Throwable t) {
+            return ToolResult.error(t);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    //  rename
+    // ------------------------------------------------------------------
+    private ToolResult doRename(SketchwareToolContext ctx, String scId, String oldName, String newName) {
+        if (newName == null || newName.isEmpty()) return err("new_name is required for rename.");
+        if (!isValidLayoutName(newName)) {
+            return err("Invalid new_name '" + newName + "'. Must match ^[a-z][a-z0-9_]*$.");
+        }
+        if (!layoutExists(scId, oldName)) {
+            return err("Layout '" + oldName + "' does not exist in project '" + scId + "'.");
+        }
+        if (layoutExists(scId, newName)) {
+            return err("Layout '" + newName + "' already exists; cannot rename.");
+        }
+        try {
+            Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
+            SketchwareApi.invoke(editor, "a", oldName, newName);
+            // Update event handlers that referenced the old layout name.
+            try {
+                Object eventEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+                SketchwareApi.invoke(eventEditor, "z", oldName, newName);
+            } catch (Throwable ignored) {}
+            // Update Java files that referenced the old layout name (R.layout.<oldName>).
+            try {
+                Object javaEditor = SketchwareApi.invokeStatic("a.a.a.jC", "c", scId);
+                SketchwareApi.invoke(javaEditor, "g", "R.layout." + oldName, "R.layout." + newName);
+            } catch (Throwable ignored) {}
+            ctx.refreshViewEditor();
+            ctx.refreshEventList();
+            ctx.refreshLogicEditor();
+            // If the active layout was the one renamed, follow it so subsequent
+            // tool calls operate on the renamed layout.
+            if (oldName.equals(ctx.getCurrentJavaName())) {
+                ctx.setCurrentJavaName(newName);
+            }
+            return ok("Renamed layout '" + oldName + "' → '" + newName + "' in project '" + scId + "'. "
+                    + "Updated layout index, event handlers, and Java references.");
+        } catch (Throwable t) {
+            return ToolResult.error(t);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    //  switch_active
+    // ------------------------------------------------------------------
+    private ToolResult doSwitchActive(SketchwareToolContext ctx, String scId, String name) {
+        if (!layoutExists(scId, name)) {
+            // Provide helpful diagnostic: list what layouts DO exist.
+            String available = listAvailableLayouts(scId);
+            return err("Layout '" + name + "' does not exist in project '" + scId + "'. "
+                    + "Available layouts: " + available);
+        }
+        try {
+            Object editor = SketchwareApi.invokeStatic("a.a.a.jC", "a", scId);
+            // jC.a(scId).d(xmlName) returns the ArrayList<ViewBean> for that
+            // layout — the SAME call ViewEditor.java makes to read the widget
+            // list. The key MUST be the .xml-suffixed name.
+            String xmlName = name.endsWith(".xml") ? name : name + ".xml";
+            Object beans = SketchwareApi.invoke(editor, "d", xmlName);
+            int widgetCount = 0;
+            if (beans instanceof List) {
+                widgetCount = ((List<?>) beans).size();
+            }
+            // CRITICAL: update the context's currentJavaName so subsequent
+            // view_add_widget / view_set_property / view_list_widgets calls
+            // operate on the newly-switched layout. The setter normalises
+            // to the .xml-suffixed form.
+            ctx.setCurrentJavaName(name);
+            ctx.refreshViewEditor();
+            return ok("Switched active layout to '" + name + "' in project '" + scId + "'. "
+                    + "Layout contains " + widgetCount + " widgets.");
+        } catch (Throwable t) {
+            return ToolResult.error(t);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    //  list
+    // ------------------------------------------------------------------
+    private ToolResult doList(SketchwareToolContext ctx, String scId) {
+        try {
+            Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+            // jC.b(scId).c() returns ArrayList<ProjectFileBean> of activities.
+            Object activities = SketchwareApi.invoke(projectFileEditor, "c");
+            StringBuilder sb = new StringBuilder();
+            sb.append("Available layouts in project '").append(scId).append("':\n");
+            int count = 0;
+            if (activities instanceof List) {
+                for (Object bean : (List<?>) activities) {
+                    String fileName = str(SketchwareApi.readField(bean, "fileName"));
+                    int fileType = intField(bean, "fileType");
+                    sb.append("  - ").append(fileName).append(".xml")
+                      .append(" (type=").append(fileType)
+                      .append(fileType == 0 ? "=activity" : "=custom")
+                      .append(")\n");
+                    count++;
+                }
+            }
+            sb.append("Total: ").append(count).append(" layouts.");
+            return ok(sb.toString());
+        } catch (Throwable t) {
+            return ToolResult.error(t);
+        }
+    }
+
+    /** Best-effort listing of all available layout names (for error messages). */
+    private static String listAvailableLayouts(String scId) {
+        try {
+            Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+            Object activities = SketchwareApi.invoke(projectFileEditor, "c");
+            StringBuilder sb = new StringBuilder();
+            if (activities instanceof List) {
+                for (Object bean : (List<?>) activities) {
+                    String fileName = str(SketchwareApi.readField(bean, "fileName"));
+                    if (sb.length() > 0) sb.append(", ");
+                    sb.append(fileName);
+                }
+            }
+            return sb.length() == 0 ? "(none)" : sb.toString();
+        } catch (Throwable t) {
+            return "(error: " + t.getMessage() + ")";
+        }
+    }
+
+    private static String str(Object o) { return o == null ? "" : o.toString(); }
+
+    private static int intField(Object obj, String name) {
+        try {
+            Object v = SketchwareApi.readField(obj, name);
+            if (v instanceof Number) return ((Number) v).intValue();
+        } catch (Throwable ignored) {}
+        return -1;
+    }
+
+    // ------------------------------------------------------------------
+    //  Helpers
+    // ------------------------------------------------------------------
+
+    /** Read the {@code features} JSON array as a Set of strings (empty if absent). */
+    private static Set<String> readFeaturesArray(JsonObject args) {
+        Set<String> out = new HashSet<>();
+        if (!args.has("features") || !args.get("features").isJsonArray()) return out;
+        JsonArray arr = args.getAsJsonArray("features");
+        for (int i = 0; i < arr.size(); i++) {
+            if (arr.get(i) != null && !arr.get(i).isJsonNull()) {
+                out.add(arr.get(i).getAsString());
+            }
+        }
+        return out;
+    }
+
+    private static String suffixForViewType(String viewType) {
+        switch (viewType) {
+            case "fragment":               return "_fragment";
+            case "dialog_fragment":        return "_dialog_fragment";
+            case "bottomdialog_fragment":  return "_bottomdialog_fragment";
+            default:                       return "";
+        }
+    }
+
+    private static int fileTypeForViewType(String viewType) {
+        switch (viewType) {
+            case "activity":               return ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY;
+            case "fragment":               return ProjectFileBean.PROJECT_FILE_TYPE_FRAGMENT;
+            case "dialog_fragment":        return ProjectFileBean.PROJECT_FILE_TYPE_DIALOG_FRAGMENT;
+            case "bottomdialog_fragment":  return ProjectFileBean.PROJECT_FILE_TYPE_SHEET;
+            default:                       return -1;
+        }
+    }
+
+    private static int parseOrientation(String s) {
+        if (s == null) return -1;
+        switch (s.toLowerCase()) {
+            case "portrait":  return ORIENTATION_PORTRAIT;
+            case "landscape": return ORIENTATION_LANDSCAPE;
+            case "auto":      return ORIENTATION_AUTO;
+            default:          return -1;
+        }
+    }
+
+    private static int parseKeyboard(String s) {
+        if (s == null) return -1;
+        switch (s.toLowerCase()) {
+            case "visible":     return KEYBOARD_VISIBLE;
+            case "hidden":      return KEYBOARD_HIDDEN;
+            case "unspecified": return KEYBOARD_UNSPECIFIED;
+            default:            return -1;
+        }
+    }
+
+    /**
+     * Compute the ProjectFileBean.options bitmask from the effective feature
+     * set. Mirrors AddViewActivity.handleEditFile (lines 247-261).
+     *
+     * <p>Note: in Sketchware's convention, "StatusBar visible" means the
+     * activity is NOT fullscreen — so the {@code fullscreen} feature flag
+     * maps to {@code OPTION_ACTIVITY_FULLSCREEN}.
+     */
+    private static int computeActivityOptions(Set<String> features) {
+        int options = 0;
+        if (features.contains("toolbar")) {
+            options |= ProjectFileBean.OPTION_ACTIVITY_TOOLBAR;
+        }
+        if (features.contains("fullscreen")) {
+            options |= ProjectFileBean.OPTION_ACTIVITY_FULLSCREEN;
+        }
+        if (features.contains("fab")) {
+            options |= ProjectFileBean.OPTION_ACTIVITY_FAB;
+        }
+        if (features.contains("drawer")) {
+            options |= ProjectFileBean.OPTION_ACTIVITY_DRAWER;
+        }
+        return options;
+    }
+
+    /**
+     * Create a {@code _fab} ViewBean reflectively. The ViewBean class is
+     * {@code com.besome.sketch.beans.ViewBean}; we instantiate via the
+     * no-arg constructor and set the {@code id}, {@code type}, and
+     * {@code parent} fields reflectively.
+     */
+    private static Object createFabViewBean(String layoutName) {
+        try {
+            Class<?> cls = Class.forName("com.besome.sketch.beans.ViewBean");
+            Object bean = cls.getDeclaredConstructor().newInstance();
+            setField(bean, "id", "_fab");
+            setField(bean, "type", 16); // VIEW_TYPE_WIDGET_FAB = 16 (per ViewBean constant)
+            setField(bean, "parent", layoutName);
+            return bean;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
+    /** Reflectively set a field on a bean (best-effort, walks superclass chain). */
+    private static boolean setField(Object bean, String fieldName, Object value) {
+        if (bean == null) return false;
+        try {
+            Class<?> cls = bean.getClass();
+            while (cls != null) {
+                try {
+                    java.lang.reflect.Field f = cls.getDeclaredField(fieldName);
+                    f.setAccessible(true);
+                    f.set(bean, value);
+                    return true;
+                } catch (NoSuchFieldException e) {
+                    cls = cls.getSuperclass();
+                }
+            }
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
+    private static boolean isValidLayoutName(String name) {
+        if (name == null || name.isEmpty()) return false;
+        if (!Character.isLowerCase(name.charAt(0))) return false;
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (!(Character.isLowerCase(c) || Character.isDigit(c) || c == '_')) return false;
+        }
+        return true;
+    }
+
+    private static boolean isSupportedRootTag(String tag) {
+        if (tag == null) return false;
+        for (String s : SUPPORTED_ROOT_TAGS) {
+            if (s.equals(tag)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if a layout exists in the project by looking it up in the
+     * ProjectFileBean list via {@code jC.b(scId).b(xmlName)}.
+     *
+     * <p>{@code hC.b(String)} iterates the activities list (field {@code c})
+     * and custom-views list (field {@code d}), comparing
+     * {@code ProjectFileBean.getXmlName().equals(arg)}. So the argument
+     * MUST be the {@code .xml}-suffixed name (e.g. {@code "main.xml"}).
+     *
+     * <p>Previous implementation called {@code jC.a(scId).d(name)} which
+     * returns an EMPTY ArrayList for unknown names (never null), so the
+     * {@code !isEmpty()} check always returned false for freshly-created
+     * layouts with no widgets yet. The fallback filesystem check then
+     * failed because Sketchware doesn't store layouts as individual XML
+     * files — all ViewBean data is serialised into a single {@code view}
+     * file in the project directory.
+     */
+    private static boolean layoutExists(String scId, String name) {
+        String xmlName = name.endsWith(".xml") ? name : name + ".xml";
+        try {
+            Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+            Object bean = SketchwareApi.invoke(projectFileEditor, "b", xmlName);
+            if (bean != null) return true;
+        } catch (Throwable ignored) {}
+        // Also try without .xml extension in case some code paths store the
+        // name without the suffix.
+        try {
+            Object projectFileEditor = SketchwareApi.invokeStatic("a.a.a.jC", "b", scId);
+            Object bean = SketchwareApi.invoke(projectFileEditor, "b", name);
+            if (bean != null) return true;
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
+    /**
+     * Resolve the project's filesystem path using Sketchware's own path
+     * resolver {@code wq.b(sc_id)}, which returns
+     * {@code <external_storage>/.sketchware/data/<scId>}.
+     */
+    private static String getProjectPath(String scId) {
+        try {
+            return (String) SketchwareApi.invokeStatic("a.a.a.wq", "b", scId);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+}

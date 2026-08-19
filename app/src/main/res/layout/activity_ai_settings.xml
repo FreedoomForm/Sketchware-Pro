@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AI Settings host — drawer + toolbar + content frame. Uses the Kelivo
+     accent palette so it visually matches the chat page. -->
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ai_chat_background"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/ai_chat_background"
+        android:orientation="vertical">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/ai_chat_surface"
+            android:elevation="0dp"
+            app:title="@string/ai_settings_title"
+            app:titleTextColor="@color/ai_chat_text_primary"
+            app:navigationIcon="@drawable/ic_back"
+            app:navigationIconTint="@color/ai_chat_text_primary" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/ai_chat_border_soft" />
+
+        <FrameLayout
+            android:id="@+id/content_frame"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/ai_chat_surface"
+        app:itemTextColor="@color/ai_chat_text_primary"
+        app:itemIconTint="@color/ai_chat_accent"
+        app:menu="@menu/ai_settings_menu" />
+</androidx.drawerlayout.widget.DrawerLayout>

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AI / chat strings ported & inspired by FabioSilva11/Sketchware-IA.
+  All user-facing text for the new provider list, provider detail screen,
+  model picker, and enriched chat UI lives here so it can be localized.
+-->
+<resources>
+    <!-- ===== AISettingsActivity drawer / titles ===== -->
+    <string name="ai_settings_title">AI Settings</string>
+    <string name="ai_settings_providers_section">Providers</string>
+    <string name="ai_settings_chat_section">Chat &amp; Agent</string>
+    <string name="ai_settings_updates_section">Updates</string>
+
+    <!-- ===== Providers list ===== -->
+    <string name="ai_providers_search_hint">Search providers…</string>
+    <string name="ai_providers_add">Add provider</string>
+    <string name="ai_providers_refresh">Refresh statuses</string>
+    <string name="ai_providers_checked">Checked %1$d providers</string>
+    <string name="ai_providers_status_on">ON</string>
+    <string name="ai_providers_status_off">OFF</string>
+    <string name="ai_providers_empty">No providers match</string>
+    <string name="ai_providers_max_tokens_title">Chat max tokens</string>
+    <string name="ai_providers_max_tokens_current">Current global fallback: %1$d tokens</string>
+    <string name="ai_providers_max_tokens_edit">Edit</string>
+    <string name="ai_providers_max_tokens_hint">Tokens</string>
+    <string name="ai_providers_max_tokens_saved">Saved</string>
+
+    <!-- ===== Provider detail ===== -->
+    <string name="ai_provider_detail_config">Config</string>
+    <string name="ai_provider_detail_models">Models</string>
+    <string name="ai_provider_detail_type">Type</string>
+    <string name="ai_provider_detail_group">Group</string>
+    <string name="ai_provider_detail_enabled">Enabled</string>
+    <string name="ai_provider_detail_multi_key">Multi-key mode</string>
+    <string name="ai_provider_detail_multi_key_summary">Rotate through several API keys</string>
+    <string name="ai_provider_detail_response_api">Use /responses endpoint</string>
+    <string name="ai_provider_detail_balance">Get account balance</string>
+    <string name="ai_provider_detail_network">Network &amp; proxy</string>
+    <string name="ai_provider_detail_name">Name</string>
+    <string name="ai_provider_detail_api_key">API Key</string>
+    <string name="ai_provider_detail_api_key_empty">Not set</string>
+    <string name="ai_provider_detail_base_url">API Base URL</string>
+    <string name="ai_provider_detail_api_path">API Path</string>
+    <string name="ai_provider_detail_api_path_hint">/chat/completions</string>
+    <string name="ai_provider_detail_extra_headers">Extra headers (JSON)</string>
+    <string name="ai_provider_detail_test">Test provider</string>
+    <string name="ai_provider_detail_share">Share</string>
+    <string name="ai_provider_detail_delete">Delete</string>
+    <string name="ai_provider_detail_delete_message">Remove this provider permanently?</string>
+    <string name="ai_provider_detail_save">Save</string>
+    <string name="ai_provider_detail_saved">Saved</string>
+    <string name="ai_provider_detail_test_ok">Connection OK</string>
+    <string name="ai_provider_detail_test_failed">Failed: %1$s</string>
+
+    <!-- ===== Models tab ===== -->
+    <string name="ai_models_empty_title">No Models</string>
+    <string name="ai_models_empty_subtitle">Tap Fetch to autodetect or Add Model to enter one manually.</string>
+    <string name="ai_models_fetch">Fetch</string>
+    <string name="ai_models_fetching">Fetching models from %1$s…</string>
+    <string name="ai_models_fetched">Fetched %1$d model(s)</string>
+    <string name="ai_models_fetch_failed">Fetch failed: %1$s</string>
+    <string name="ai_models_add">Add Model</string>
+    <string name="ai_models_add_title">Add model</string>
+    <string name="ai_models_add_id">Model ID</string>
+    <string name="ai_models_add_id_hint">e.g. gpt-4o-mini</string>
+    <string name="ai_models_add_name">Display name (optional)</string>
+    <string name="ai_models_add_confirm">Add</string>
+    <string name="ai_models_add_cancel">Cancel</string>
+    <string name="ai_models_add_invalid">Model ID cannot be empty</string>
+    <string name="ai_models_delete">Delete model</string>
+
+    <!-- ===== Add provider dialog ===== -->
+    <string name="ai_add_provider_title">Add provider</string>
+    <string name="ai_add_provider_type_openai">OpenAI</string>
+    <string name="ai_add_provider_type_anthropic">Anthropic</string>
+    <string name="ai_add_provider_type_gemini">Gemini</string>
+    <string name="ai_add_provider_type_ollama">Ollama</string>
+    <string name="ai_add_provider_type_compat">OpenAI-Compatible</string>
+    <string name="ai_add_provider_name">Provider name</string>
+    <string name="ai_add_provider_name_required">Name is required</string>
+
+    <!-- ===== Model selector bottom sheet ===== -->
+    <string name="ai_model_sheet_title">Select model</string>
+    <string name="ai_model_sheet_search_hint">Search model…</string>
+    <string name="ai_model_sheet_favorites">Favorites</string>
+    <string name="ai_model_sheet_no_models">No models configured</string>
+    <string name="ai_model_sheet_configure">Configure providers</string>
+    <string name="ai_model_sheet_selected">Model: %1$s</string>
+
+    <!-- ===== Chat UI ===== -->
+    <string name="ai_chat_title">AI Assistant</string>
+    <string name="ai_chat_subtitle_idle">Ready</string>
+    <string name="ai_chat_subtitle_running">Working…</string>
+    <string name="ai_chat_input_hint">What can I help you build?</string>
+    <string name="ai_chat_send">Send</string>
+    <string name="ai_chat_stop">Stop</string>
+    <string name="ai_chat_attach">Attach</string>
+    <string name="ai_chat_mode_act">Act</string>
+    <string name="ai_chat_mode_plan">Plan</string>
+    <string name="ai_chat_mode_yolo">YOLO</string>
+    <string name="ai_chat_action_copy">Copy</string>
+    <string name="ai_chat_action_copy_done">Copied</string>
+    <string name="ai_chat_action_refresh">Regenerate</string>
+    <string name="ai_chat_action_edit">Edit</string>
+    <string name="ai_chat_action_speak">Speak</string>
+    <string name="ai_chat_action_more">More</string>
+    <string name="ai_chat_token_count">%1$s tokens</string>
+    <string name="ai_chat_token_meter_empty">0 tokens</string>
+    <string name="ai_chat_reasoning_label">Reasoning</string>
+    <string name="ai_chat_show_reasoning">Show reasoning</string>
+    <string name="ai_chat_hide_reasoning">Hide reasoning</string>
+    <string name="ai_chat_typing">typing</string>
+    <string name="ai_chat_running_status">Running: %1$s</string>
+    <string name="ai_chat_clear">Clear conversation</string>
+    <string name="ai_chat_export">Export conversation</string>
+    <string name="ai_chat_settings">Settings</string>
+    <string name="ai_chat_history">Task history</string>
+    <string name="ai_chat_new_chat">New chat</string>
+    <string name="ai_chat_open_drawer">Open menu</string>
+    <string name="ai_chat_close_drawer">Close menu</string>
+    <string name="ai_chat_status_chip_running">Running</string>
+    <string name="ai_chat_status_chip_thinking">Thinking</string>
+    <string name="ai_chat_status_chip_done">Done</string>
+    <string name="ai_chat_status_chip_error">Error</string>
+
+    <!-- ===== Drawer / threads (ported from reference layout_kelivo_drawer) ===== -->
+    <string name="ai_chat_drawer_title">Chats</string>
+    <string name="ai_chat_drawer_search_hint">Search chats…</string>
+    <string name="ai_chat_drawer_history">History</string>
+    <string name="ai_chat_drawer_settings">Settings</string>
+    <string name="ai_chat_drawer_default_user">You</string>
+    <string name="ai_chat_thread_title_default">New chat</string>
+    <string name="ai_chat_thread_subtitle_empty">No messages yet</string>
+    <string name="ai_chat_thread_delete">Delete</string>
+    <string name="ai_chat_thread_rename">Rename</string>
+    <string name="ai_chat_threads_empty">No previous chats</string>
+    <string name="ai_chat_threads_empty_hint">Start a new chat to see it here</string>
+    <string name="ai_chat_profile_avatar">Your avatar</string>
+    <string name="ai_chat_model_icon">Model icon</string>
+
+    <!-- ===== Input area extras (ported from reference activity_chat) ===== -->
+    <string name="ai_chat_compile_button">Compile project</string>
+    <string name="ai_chat_header_new_chat">New chat</string>
+    <string name="ai_chat_input_hint_v2">Ask anything…</string>
+    <string name="ai_chat_model_selector_desc">Change model</string>
+    <string name="ai_chat_input_web">Web search</string>
+    <string name="ai_chat_input_tools">Tools</string>
+    <string name="ai_tool_catalog_title">AI tools</string>
+    <string name="ai_tool_catalog_description">Browse the capabilities available to your current agent.</string>
+    <string name="ai_tool_catalog_safety">Read-only tools run automatically. Changes request your approval unless Auto-approve is enabled.</string>
+    <string name="ai_chat_mode_agent">Agent</string>
+    <string name="ai_chat_cancel_run">Cancel current run</string>
+    <string name="ai_chat_changed_files_placeholder">No files changed</string>
+    <string name="ai_chat_selected_context_placeholder">No context selected</string>
+
+    <!-- ===== Model sheet extras (ported from reference bottom_sheet_kelivo_model) ===== -->
+    <string name="ai_model_sheet_tag_chat">Chat</string>
+    <string name="ai_model_sheet_tag_text">Text</string>
+    <string name="ai_model_sheet_tag_image_in">Image in</string>
+    <string name="ai_model_sheet_favorite">Favorite</string>
+    <string name="ai_model_sheet_favorites_jump">Jump to favorites</string>
+    <string name="ai_model_sheet_filter_empty">No models match \"%1$s\"</string>
+    <string name="ai_model_sheet_provider_section_favorites">Favorites</string>
+
+    <!-- ===== Attach tools bottom sheet (ported from reference bottom_sheet_kelivo_tools) ===== -->
+    <string name="ai_attach_sheet_title">Attach</string>
+    <string name="ai_attach_tool_camera">Camera</string>
+    <string name="ai_attach_tool_photos">Photos</string>
+    <string name="ai_attach_tool_upload">Upload</string>
+    <string name="ai_attach_tool_instruction">Instruction</string>
+    <string name="ai_attach_tool_context">Context</string>
+    <string name="ai_attach_image_failed">Could not load image</string>
+    <string name="ai_attach_image_added">Image attached</string>
+    <string name="ai_attach_image_removed">Image removed</string>
+    <string name="ai_attach_no_camera">No camera app found</string>
+    <string name="ai_attach_no_gallery">No gallery app found</string>
+    <string name="ai_attach_no_file_picker">No file picker found</string>
+    <string name="ai_attach_max_reached">Maximum image attachments reached</string>
+
+    <!-- ===== Thread actions (drawer long-press) ===== -->
+    <string name="ai_thread_actions_title">Chat actions</string>
+    <string name="ai_thread_action_open">Open</string>
+    <string name="ai_thread_action_rename">Rename</string>
+    <string name="ai_thread_action_delete">Delete</string>
+    <string name="ai_thread_action_export">Export</string>
+    <string name="ai_thread_action_pin">Pin</string>
+    <string name="ai_thread_action_unpin">Unpin</string>
+    <string name="ai_thread_delete_confirm">Delete this chat permanently?</string>
+    <string name="ai_thread_rename_title">Rename chat</string>
+    <string name="ai_thread_rename_hint">Chat title</string>
+    <string name="ai_thread_empty_hint">Send a message to start a new chat</string>
+    <string name="ai_thread_export_empty">This chat has no messages to export</string>
+    <string name="ai_thread_export_done">Chat exported</string>
+    <string name="ai_thread_export_failed">Export failed: %1$s</string>
+
+    <!-- ===== Provider display names ===== -->
+    <string name="ai_provider_openai">OpenAI</string>
+    <string name="ai_provider_anthropic">Anthropic</string>
+    <string name="ai_provider_gemini">Gemini</string>
+    <string name="ai_provider_ollama">Ollama</string>
+    <string name="ai_provider_mistral">Mistral</string>
+    <string name="ai_provider_openrouter">OpenRouter</string>
+    <string name="ai_provider_deepseek">DeepSeek</string>
+    <string name="ai_provider_zai">Z.AI (GLM)</string>
+    <string name="ai_provider_together">Together AI</string>
+    <string name="ai_provider_fireworks">Fireworks AI</string>
+    <string name="ai_provider_groq">Groq</string>
+    <string name="ai_provider_grok_xai">Grok (xAI)</string>
+    <string name="ai_provider_huggingface">Hugging Face</string>
+    <string name="ai_provider_minimax">MiniMax</string>
+    <string name="ai_provider_litellm">LiteLLM</string>
+    <string name="ai_provider_vllm">vLLM</string>
+    <string name="ai_provider_lm_studio">LM Studio</string>
+    <string name="ai_provider_openai_compat">OpenAI-Compatible</string>
+</resources>

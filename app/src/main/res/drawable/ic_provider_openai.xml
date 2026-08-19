@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Provider icon: ic_provider_openai. Auto-generated single-tone 24dp vector.
+     Tint via app:tint to recolor for dark/light themes; brand color is
+     baked in as the default fillColor so the icon is recognizable when
+     untinted. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorOnSurface">
+    <path
+        android:fillColor="#10A37F"
+        android:pathData="M12,2 L14.5,7 L20,7 L15.5,11 L17.5,17 L12,13.5 L6.5,17 L8.5,11 L4,7 L9.5,7 Z" />
+</vector>

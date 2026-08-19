@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rounded search bar background for drawer & model sheet. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/ai_chat_surface_soft" />
+    <corners android:radius="24dp" />
+</shape>

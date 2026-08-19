@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Provider icon: ic_provider_deepseek. Auto-generated single-tone 24dp vector.
+     Tint via app:tint to recolor for dark/light themes; brand color is
+     baked in as the default fillColor so the icon is recognizable when
+     untinted. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorOnSurface">
+    <path
+        android:fillColor="#4D6BFE"
+        android:pathData="M4,6 C8,6 12,8 12,12 C12,16 8,18 4,18 C6,17 8,15 8,12 C8,9 6,7 4,6 Z M20,6 C16,6 12,8 12,12 C12,16 16,18 20,18 C18,17 16,15 16,12 C16,9 18,7 20,6 Z" />
+</vector>

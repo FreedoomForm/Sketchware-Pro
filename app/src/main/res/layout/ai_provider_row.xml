@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Single provider row in the providers list. Mirrors the look of
+     FabioSilva11/Sketchware-IA's item_provider_row.xml: round avatar with
+     provider icon on the left, provider name in the middle, ON/OFF status
+     badge on the right, chevron at the end, hairline divider at the bottom.
+     Click handling is done by the RecyclerView item click listener, not by
+     any widget here, so the row uses ?attr/selectableItemBackground for
+     the ripple. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:minHeight="64dp"
+    android:orientation="vertical"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="14dp"
+            android:background="@drawable/ai_avatar_bg">
+
+            <ImageView
+                android:id="@+id/provider_icon"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:scaleType="centerInside"
+                tools:src="@drawable/ic_provider_openai" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/provider_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/ai_chat_text_primary"
+                android:textSize="15sp"
+                android:textStyle="normal"
+                tools:text="OpenAI" />
+
+            <TextView
+                android:id="@+id/provider_model_hint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/ai_chat_text_secondary"
+                android:textSize="11sp"
+                tools:text="gpt-4o" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/provider_status_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/ai_provider_status_badge"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:minWidth="38dp"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:textColor="@color/ai_provider_status_on_text"
+            android:textSize="11sp"
+            tools:text="ON" />
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_mtrl_chevron_right_24"
+            app:tint="@color/ai_chat_text_secondary" />
+    </LinearLayout>
+
+    <View
+        android:id="@+id/row_divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="50dp"
+        android:background="@color/ai_chat_divider" />
+</LinearLayout>

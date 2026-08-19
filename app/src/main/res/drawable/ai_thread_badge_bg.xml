@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Soft badge background for run-status / files-changed / context hints
+     inside the chat input card. Matches reference bg_chat_thread_badge. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/ai_chat_surface_soft" />
+    <stroke android:width="1dp" android:color="@color/ai_chat_border" />
+    <corners android:radius="8dp" />
+</shape>

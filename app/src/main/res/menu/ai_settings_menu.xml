@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_ai_provider" android:title="API Configuration" />
+    <item android:id="@+id/nav_ai_advanced" android:title="Advanced" />
+    <item android:id="@+id/nav_ai_auto_approve" android:title="Auto-Approve" />
+    <item android:id="@+id/nav_ai_experimental" android:title="Experimental" />
+    <item android:id="@+id/nav_ai_versions" android:title="@string/ai_versions_nav_title" />
+</menu>

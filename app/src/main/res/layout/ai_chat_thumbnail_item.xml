@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Single thumbnail chip shown in the chat input area when the user has
+     attached one or more images. Layout: square image + close button. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="64dp"
+    android:layout_height="64dp"
+    android:layout_marginStart="6dp"
+    android:layout_marginEnd="6dp"
+    android:background="@drawable/ai_avatar_user_bg">
+
+    <ImageView
+        android:id="@+id/thumb_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/ai_chat_attach"
+        android:padding="2dp"
+        android:scaleType="centerCrop" />
+
+    <ImageView
+        android:id="@+id/thumb_remove"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="end|top"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/ai_attach_image_removed"
+        android:padding="2dp"
+        android:src="@drawable/ic_mtrl_close" />
+</FrameLayout>

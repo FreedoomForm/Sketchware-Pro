@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Oval avatar background (28dp), used for bot & user avatars in chat,
+     and for provider icon container in the settings list. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/ai_avatar_bg" />
+</shape>

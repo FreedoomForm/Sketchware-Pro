@@ -1,0 +1,123 @@
+name: Build AI APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - '*ai*'
+    paths:
+      - '.github/workflows/build_ai_apk.yml'
+      - '.github/workflows/create_mock_google_services.sh'
+      - 'app/**'
+      - 'gradle/**'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'public-stable-ids.txt'
+      - 'settings.gradle'
+  pull_request:
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same branch when a new push arrives.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # =========================================================================
+  # Build the Debug APK. The Android CI workflow (android.yml) already
+  # verifies assembleRelease on every push, so this workflow focuses on
+  # producing a downloadable APK artifact with AI features enabled.
+  #
+  # JVM unit tests are run as a quick pre-check; if they fail, the APK
+  # build is skipped. Instrumentation tests require an emulator and are
+  # best run manually via workflow_dispatch.
+  # =========================================================================
+  build:
+    name: Build AI-Enabled APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      short_sha: ${{ steps.set_sha.outputs.short_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Set short SHA
+        id: set_sha
+        run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: Create mock google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: bash .github/workflows/create_mock_google_services.sh
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run JVM unit tests (non-network only)
+        env:
+          SKETCHUB_API_KEY: ${{ secrets.SKETCHUB_API_KEY }}
+        run: |
+          # Run only the pure-JVM tests (skip MockWebServer-backed provider
+          # tests which are slow on cold CI runners due to OkHttp init).
+          # The MockWebServer tests are still run locally before each push.
+          ./gradlew testDebugUnitTest --continue --console=plain \
+            --tests "com.sketchware.ai.tools.*" \
+            --tests "com.sketchware.ai.agent.*" \
+            --tests "com.sketchware.ai.ui.chat.*" \
+            --tests "com.sketchware.ai.llm.http.*" \
+            --tests "com.sketchware.ai.llm.reasoning.*" \
+            --tests "com.sketchware.ai.llm.routing.*"
+
+      - name: Upload unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports-${{ steps.set_sha.outputs.short_sha }}
+          path: |
+            app/build/reports/tests/
+            app/build/test-results/
+          retention-days: 14
+
+      - name: Build Debug APK
+        env:
+          SKETCHUB_API_KEY: ${{ secrets.SKETCHUB_API_KEY }}
+        run: ./gradlew assembleDebug --console=plain
+
+      - name: Rename APK with commit hash + branch
+        run: |
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          BRANCH_SAFE=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9_-]/_/g')
+          cp app/build/outputs/apk/debug/app-debug.apk \
+             app/build/outputs/apk/debug/sketchware-pro-ai-${BRANCH_SAFE}-${{ steps.set_sha.outputs.short_sha }}.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sketchware-pro-ai-apk-${{ steps.set_sha.outputs.short_sha }}
+          path: app/build/outputs/apk/debug/sketchware-pro-ai-*.apk
+          retention-days: 90
+          compression-level: 0
+
+      - name: Upload build reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports-${{ steps.set_sha.outputs.short_sha }}
+          path: |
+            app/build/reports/
+            build/reports/
+          retention-days: 7
