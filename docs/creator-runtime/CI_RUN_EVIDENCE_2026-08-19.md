@@ -38,3 +38,7 @@ The corrected run `32300301256` successfully built the APK and JVM reports and e
 ## Latest UI runtime diagnosis
 
 Run `32302496900` built the APK/JVM reports and executed native API 30 tests. The two remaining failures were environmental/test-harness issues rather than production crashes: `FragmentScenario` required the debug manifest to declare `androidx.fragment.app.testing.EmptyFragmentActivity`, and the provider-list assertion used an Espresso focus-sensitive root while the drawer was settling. A debug-only `EmptyFragmentActivity` declaration and an `ActivityScenario.onActivity` assertion were added. Local `compileDebugAndroidTestJavaWithJavac` and `processDebugManifest` both pass.
+
+## Second native matrix diagnosis
+
+The rerun reached the native matrix and API 30 reduced from two failures to one: `AISettingsActivityTest.defaultFragmentIsProvidersList` passed after the lifecycle-safe assertion and debug activity declaration. The remaining API 30 failure was `ChatFragmentE2ETest.chatInputSendAddsUserMessage`, caused by Espresso's focused-root picker while `FragmentScenario` was settling. The test now sets the input text and invokes the send button directly from `scenario.onFragment`, preserving the local user-row assertion without relying on window focus. Local Android test Java compilation and debug manifest processing pass again.

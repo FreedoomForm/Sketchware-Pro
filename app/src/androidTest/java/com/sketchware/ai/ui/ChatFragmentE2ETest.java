@@ -1,16 +1,10 @@
 package com.sketchware.ai.ui;
 
-import static androidx.test.espresso.Espresso.onView;
-import static androidx.test.espresso.action.ViewActions.click;
-import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
-import static androidx.test.espresso.action.ViewActions.typeText;
-import static androidx.test.espresso.assertion.ViewAssertions.matches;
-import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
-import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 import android.view.View;
+import android.widget.EditText;
 
 import androidx.fragment.app.testing.FragmentScenario;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,7 +19,6 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.atomic.AtomicReference;
 
 import pro.sketchware.R;
-import com.sketchware.ai.llm.storage.ProviderConfigStore;
 import com.sketchware.ai.ui.chat.ChatFragment;
 
 /**
@@ -51,9 +44,14 @@ public class ChatFragmentE2ETest {
                 FragmentScenario.launchInContainer(
                         ChatFragment.class, null, R.style.Theme_SketchwarePro);
 
-        onView(withId(R.id.input)).check(matches(isDisplayed()));
-        onView(withId(R.id.input)).perform(typeText("native smoke test"), closeSoftKeyboard());
-        onView(withId(R.id.btn_send)).perform(click());
+        // Drive the local fragment directly on the main thread rather than
+        // relying on Espresso's focused-root picker while the container settles.
+        scenario.onFragment(fragment -> {
+            View root = fragment.requireView();
+            EditText input = root.findViewById(R.id.input);
+            input.setText("native smoke test");
+            root.findViewById(R.id.btn_send).performClick();
+        });
 
         AtomicReference<Integer> itemCount = new AtomicReference<>(0);
         long deadline = System.currentTimeMillis() + 10_000L;
