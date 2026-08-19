@@ -52,4 +52,21 @@ public class CreatorCalendarServiceTest {
         arguments.put("value", "1");
         assertThat(service.execute(arguments).getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
     }
+
+    @Test public void getTimeQueryPreservesExistingComponentScopedState() {
+        CreatorCalendarService service = new CreatorCalendarService();
+        Map<String, Object> setTime = new LinkedHashMap<>();
+        setTime.put("componentId", "calendar1");
+        setTime.put("action", "set_time");
+        setTime.put("timestamp", 12345L);
+        service.execute(setTime);
+
+        Map<String, Object> query = new LinkedHashMap<>();
+        query.put("componentId", "calendar1");
+        query.put("action", "get_time");
+        CreatorRuntimeService.Result result = service.execute(query);
+
+        assertThat(result.getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+        assertThat(result.getOutput().get("timestamp")).isEqualTo(12345L);
+    }
 }

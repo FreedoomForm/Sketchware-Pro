@@ -20,7 +20,9 @@ public final class CreatorCalendarService implements CreatorRuntimeService {
             calendars.put(componentId, calendar);
         }
         try {
-            if ("now".equals(action) || "reset".equals(action)) {
+            if ("get_time".equals(action)) {
+                // Query only: preserve the component-scoped Calendar state.
+            } else if ("now".equals(action) || "reset".equals(action)) {
                 calendar.setTimeInMillis(System.currentTimeMillis());
             } else if ("add".equals(action) || "set".equals(action)) {
                 String fieldName = CreatorRuntimeServiceArguments.string(arguments, "field");

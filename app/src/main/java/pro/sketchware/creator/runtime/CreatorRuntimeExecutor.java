@@ -267,6 +267,24 @@ public final class CreatorRuntimeExecutor {
         if ("fileutilisdir".equals(op)) return fileValue(first, "is_dir", "value");
         if ("fileutilisfile".equals(op)) return fileValue(first, "is_file", "value");
         if ("fileutillength".equals(op)) return fileValue(first, "length", "value");
+        if ("calendargettime".equals(op)) return calendarTimestamp(first);
+        if ("calendarformat".equals(op)) {
+            Object timestamp = calendarTimestamp(first);
+            if (timestamp == null) return null;
+            String pattern = second == null || String.valueOf(second).isEmpty()
+                    ? "yyyy/MM/dd hh:mm:ss" : String.valueOf(second);
+            try {
+                return new java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault())
+                        .format(new java.util.Date(number(timestamp)));
+            } catch (IllegalArgumentException ignored) {
+                return null;
+            }
+        }
+        if ("calendardiff".equals(op)) {
+            Object left = calendarTimestamp(first);
+            Object right = calendarTimestamp(second);
+            return left == null || right == null ? null : (double) (number(left) - number(right));
+        }
         if ("lengthlist".equals(op)) return (double) listValue(first).size();
         if ("getatlistint".equals(op) || "getatliststr".equals(op)) {
             return at(listValue(second), (int) decimal(first));
@@ -301,6 +319,13 @@ public final class CreatorRuntimeExecutor {
         CreatorRuntimeService.Result result = runtimeServices.dispatch("file",
                 CreatorRuntimeServiceArguments.output("path", String.valueOf(path), "action", action));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get(outputKey) : null;
+    }
+
+    private Object calendarTimestamp(Object componentId) {
+        if (runtimeServices == null || componentId == null) return null;
+        CreatorRuntimeService.Result result = runtimeServices.dispatch("calendar",
+                CreatorRuntimeServiceArguments.output("componentId", String.valueOf(componentId), "action", "get_time"));
+        return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("timestamp") : null;
     }
 
     private static int boundedIndex(double value, int length) {

@@ -252,6 +252,34 @@ public class CreatorRuntimeExecutorTest {
         assertThat(rows.get(0)).containsExactly("name", "Ada", "age", "43");
     }
 
+    @Test public void evaluatesCalendarTimeFormatAndDiffReportersThroughRuntimeNativeService() {
+        CreatorRuntimeServiceDispatcher services = new CreatorRuntimeServiceDispatcher().register(new CreatorCalendarService());
+        services.dispatch("calendar", map("componentId", "start", "action", "set_time", "timestamp", 20_000L));
+        services.dispatch("calendar", map("componentId", "end", "action", "set_time", "timestamp", 5_000L));
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 30,
+                new CreatorRuntimeEventLog(30));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "time", "expression", reporter("calendargettime", literal("start")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "formatted", "expression", reporter("calendarformat", literal("start"), literal("HH:mm:ss.SSS")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "diff", "expression", reporter("calendardiff", literal("start"), literal("end")))));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor(services).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("time")).isEqualTo(20_000L);
+        assertThat(engine.getCurrent().getState().get("formatted")).isEqualTo(
+                new java.text.SimpleDateFormat("HH:mm:ss.SSS", java.util.Locale.getDefault()).format(new java.util.Date(20_000L)));
+        assertThat(engine.getCurrent().getState().get("diff")).isEqualTo(15_000d);
+    }
+
     @Test public void assignsTypedNestedReporterResultToRuntimeState() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
                 new CreatorRuntimeEventLog(20));
