@@ -39,7 +39,8 @@ public final class CreatorRuntimeExecutor {
                 apply(engine, CreatorProjectOperation.Type.WIDGET_SET_PROPERTY, map(
                         "widgetId", payload.get("widgetId"), "property", payload.get("property"), "value", payload.get("value")));
             } else if (block.getType() == CreatorRuntimeBlock.Type.SET_STATE) {
-                apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", payload.get("stateId"), "value", payload.get("value")));
+                Object value = payload.containsKey("expression") ? evaluate(payload.get("expression"), engine) : payload.get("value");
+                apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", payload.get("stateId"), "value", value));
             } else if (block.getType() == CreatorRuntimeBlock.Type.INCREMENT_STATE) {
                 String stateId = String.valueOf(payload.get("stateId"));
                 Object rawCurrent = engine.getCurrent().getState().get(stateId);

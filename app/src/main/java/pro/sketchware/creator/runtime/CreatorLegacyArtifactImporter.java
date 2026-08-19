@@ -664,7 +664,12 @@ public final class CreatorLegacyArtifactImporter {
         } else if ("setvar".equals(op) || "set_var".equals(op)
                 || "setvarboolean".equals(op) || "setvarint".equals(op) || "setvarstring".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
-            payload.put("stateId", values.get(0)); payload.put("value", values.get(1));
+            payload.put("stateId", values.get(0));
+            if (values.get(1).trim().startsWith("@")) {
+                Map<String, Object> expression = expression(values.get(1), byId, new java.util.LinkedHashSet<Integer>());
+                if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+                payload.put("expression", expression);
+            } else payload.put("value", values.get(1));
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, payload);
         } else if ("showmessage".equals(op) || "show_message".equals(op) || "toast".equals(op)
                 || "dotoast".equals(op)) {
