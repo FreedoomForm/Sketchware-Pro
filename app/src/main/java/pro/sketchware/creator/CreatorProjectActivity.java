@@ -313,7 +313,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("text".equals(widget.getType())) {
             TextView text = new TextView(this);
             text.setText(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
-                    propertyString(widget, "text", "Text")));
+                    propertyString(widget, "text", "Text"), resourceVariant()));
             text.setTextSize(propertyInt(widget, "textSize", 18));
             text.setPadding(dp(16), dp(12), dp(16), dp(12));
             return registerRuntimeWidget(widget, text);
@@ -321,7 +321,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("button".equals(widget.getType())) {
             MaterialButton button = new MaterialButton(this);
             button.setText(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
-                    propertyString(widget, "text", "Button")));
+                    propertyString(widget, "text", "Button"), resourceVariant()));
             button.setOnClickListener(v -> dispatchRuntimeEvent(widget.getId(), "click"));
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -332,9 +332,9 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("input".equals(widget.getType())) {
             EditText input = new EditText(this);
             input.setText(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
-                    propertyString(widget, "text", "")));
+                    propertyString(widget, "text", ""), resourceVariant()));
             input.setHint(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
-                    propertyString(widget, "hint", "Type here")));
+                    propertyString(widget, "hint", "Type here"), resourceVariant()));
             input.setSingleLine(propertyBoolean(widget, "singleLine", false));
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -345,7 +345,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("checkbox".equals(widget.getType())) {
             MaterialCheckBox checkbox = new MaterialCheckBox(this);
             checkbox.setText(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
-                    propertyString(widget, "text", "Checkbox")));
+                    propertyString(widget, "text", "Checkbox"), resourceVariant()));
             checkbox.setChecked(propertyBoolean(widget, "checked", false));
             checkbox.setOnCheckedChangeListener((button, checked) -> dispatchRuntimeEvent(widget.getId(), "change"));
             checkbox.setPadding(dp(12), dp(8), dp(12), dp(8));
@@ -354,7 +354,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("switch".equals(widget.getType())) {
             SwitchCompat toggle = new SwitchCompat(this);
             toggle.setText(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
-                    propertyString(widget, "text", "Switch")));
+                    propertyString(widget, "text", "Switch"), resourceVariant()));
             toggle.setChecked(propertyBoolean(widget, "checked", false));
             toggle.setOnCheckedChangeListener((button, checked) -> dispatchRuntimeEvent(widget.getId(), "change"));
             toggle.setPadding(dp(16), dp(8), dp(16), dp(8));
@@ -727,7 +727,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         view.setScaleX(propertyFloat(widget, "scaleX", 1f));
         view.setScaleY(propertyFloat(widget, "scaleY", 1f));
         String backgroundColor = pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveColor(document,
-                propertyString(widget, "backgroundColor", ""));
+                propertyString(widget, "backgroundColor", ""), resourceVariant());
         if (!backgroundColor.isEmpty()) {
             try { view.setBackgroundColor(android.graphics.Color.parseColor(backgroundColor)); }
             catch (IllegalArgumentException ignored) { }
@@ -740,7 +740,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if (view instanceof TextView) {
             TextView text = (TextView) view;
             String textColor = pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveColor(document,
-                    propertyString(widget, "textColor", ""));
+                    propertyString(widget, "textColor", ""), resourceVariant());
             if (!textColor.isEmpty()) {
                 try { text.setTextColor(android.graphics.Color.parseColor(textColor)); }
                 catch (IllegalArgumentException ignored) { }
@@ -749,7 +749,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if (view instanceof EditText) {
             String hintColor = pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveColor(document,
-                    propertyString(widget, "hintTextColor", ""));
+                    propertyString(widget, "hintTextColor", ""), resourceVariant());
             if (!hintColor.isEmpty()) {
                 try { ((EditText) view).setHintTextColor(android.graphics.Color.parseColor(hintColor)); }
                 catch (IllegalArgumentException ignored) { }
@@ -759,6 +759,11 @@ public final class CreatorProjectActivity extends AppCompatActivity {
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private String resourceVariant() {
+        int nightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return nightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES ? "-night" : "";
     }
 
     private String propertyString(CreatorWidget widget, String key, String fallback) {

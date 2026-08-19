@@ -20,6 +20,21 @@ public class CreatorRuntimeResourceValuesTest {
         assertThat(CreatorRuntimeResourceValues.resolveColor(document, "@color/missing")).isEqualTo("@color/missing");
     }
 
+    @Test public void selectsExactQualifierThenFallsBackToDefaultVariant() {
+        Map<String, Object> state = new LinkedHashMap<>();
+        Map<String, Object> strings = families("title", "Day");
+        Map<String, Object> night = new LinkedHashMap<>();
+        night.put("title", "Night");
+        strings.put("-night", night);
+        state.put("legacy.stringResources", strings);
+        state.put("legacy.colorResources", families("ink", "#102030"));
+        CreatorProjectDocument document = CreatorProjectDocument.empty("p", "Demo").withRuntimeState(0L, state,
+                new LinkedHashMap<String, CreatorEventBinding>());
+
+        assertThat(CreatorRuntimeResourceValues.resolveString(document, "@string/title", "-night")).isEqualTo("Night");
+        assertThat(CreatorRuntimeResourceValues.resolveColor(document, "@color/ink", "-night")).isEqualTo("#102030");
+    }
+
     private static Map<String, Object> families(String key, String value) {
         Map<String, Object> entries = new LinkedHashMap<>();
         entries.put(key, value);
