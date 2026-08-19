@@ -1294,6 +1294,30 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsCalendarReporterServiceCallsWithComponentScopedArguments() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean format = new BlockBean("1", "", "", "calendarFormat");
+        format.parameters.add("calendar1");
+        format.parameters.add("yyyy");
+        BlockBean diff = new BlockBean("2", "", "", "calendarDiff");
+        diff.parameters.add("calendar1");
+        diff.parameters.add("calendar2");
+        BlockBean getTime = new BlockBean("3", "", "", "calendarGetTime");
+        getTime.parameters.add("calendar1");
+        format.nextBlock = 2;
+        diff.nextBlock = 3;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(format, diff, getTime));
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "calendar", "format");
+        assertServiceCall(imported.get(1), "calendar", "diff");
+        assertServiceCall(imported.get(2), "calendar", "get_time");
+        assertThat(imported.get(0).getPayload().get("arguments").toString()).contains("componentId=calendar1");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
     @Test public void importsLegacyFileComponentMutationsWithNamedStorageMetadata() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean setFile = new BlockBean("1", "", "", "fileSetFileName");

@@ -1027,6 +1027,21 @@ public final class CreatorLegacyArtifactImporter {
         } else if ("calendarsettime".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return calendarCall(values.get(0), "set_time", "timestamp", values.get(1));
+        } else if ("calendargettime".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return calendarCall(values.get(0), "get_time", null, null);
+        } else if ("calendarformat".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            Map<String, Object> arguments = new LinkedHashMap<>();
+            arguments.put("componentId", values.get(0)); arguments.put("action", "format");
+            arguments.put("pattern", values.get(1));
+            return serviceCall("calendar", arguments);
+        } else if ("calendardiff".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            Map<String, Object> arguments = new LinkedHashMap<>();
+            arguments.put("componentId", values.get(0)); arguments.put("action", "diff");
+            arguments.put("otherComponentId", values.get(1));
+            return serviceCall("calendar", arguments);
         } else if ("filesetfilename".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return storageCall(values.get(0), "configure", null, values.get(1), null, componentDescriptors);
