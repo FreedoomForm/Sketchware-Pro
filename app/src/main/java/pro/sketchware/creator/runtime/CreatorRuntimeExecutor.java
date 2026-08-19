@@ -91,11 +91,13 @@ public final class CreatorRuntimeExecutor {
                 executeBlocks(engine, matches ? block.getThenBlocks() : block.getElseBlocks(), effects);
             } else if (block.getType() == CreatorRuntimeBlock.Type.IF_BOOLEAN) {
                 boolean matches;
-                if (payload.containsKey("constant")) matches = Boolean.TRUE.equals(payload.get("constant"));
+                if (payload.containsKey("expression")) matches = booleanValue(evaluate(payload.get("expression"), engine));
+                else if (payload.containsKey("constant")) matches = Boolean.TRUE.equals(payload.get("constant"));
                 else matches = Boolean.TRUE.equals(engine.getCurrent().getState().get(String.valueOf(payload.get("stateId"))));
                 executeBlocks(engine, matches ? block.getThenBlocks() : block.getElseBlocks(), effects);
             } else if (block.getType() == CreatorRuntimeBlock.Type.REPEAT) {
-                long requested = payload.containsKey("countStateId")
+                long requested = payload.containsKey("countExpression") ? number(evaluate(payload.get("countExpression"), engine))
+                        : payload.containsKey("countStateId")
                         ? number(engine.getCurrent().getState().get(String.valueOf(payload.get("countStateId"))))
                         : number(payload.get("count"));
                 int count = (int) Math.max(0L, Math.min(MAX_REPEAT_ITERATIONS, requested));
@@ -136,6 +138,55 @@ public final class CreatorRuntimeExecutor {
         if (reference == null) return;
         Object value = engine.getCurrent().getState().get(String.valueOf(reference));
         if (value instanceof Map) arguments.put(valueKey, value);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object evaluate(Object rawExpression, CreatorRuntimeEngine engine) {
+        if (!(rawExpression instanceof Map)) return rawExpression;
+        Map<String, Object> expression = (Map<String, Object>) rawExpression;
+        if ("literal".equals(expression.get("kind"))) {
+            String literal = String.valueOf(expression.get("value"));
+            if (engine.getCurrent().getState().containsKey(literal)) return engine.getCurrent().getState().get(literal);
+            if ("true".equalsIgnoreCase(literal) || "false".equalsIgnoreCase(literal)) return Boolean.valueOf(literal);
+            try { return Double.valueOf(literal); } catch (NumberFormatException ignored) { return literal; }
+        }
+        if (!"reporter".equals(expression.get("kind"))) return null;
+        String op = String.valueOf(expression.get("opCode"));
+        List<Object> values = new ArrayList<>();
+        Object rawArguments = expression.get("arguments");
+        if (rawArguments instanceof List) for (Object argument : (List<?>) rawArguments) values.add(evaluate(argument, engine));
+        Object first = values.isEmpty() ? null : values.get(0);
+        Object second = values.size() < 2 ? null : values.get(1);
+        if ("true".equals(op)) return true;
+        if ("false".equals(op)) return false;
+        if ("not".equals(op)) return !booleanValue(first);
+        if ("&&".equals(op)) return booleanValue(first) && booleanValue(second);
+        if ("||".equals(op)) return booleanValue(first) || booleanValue(second);
+        if ("=".equals(op) || "stringequals".equals(op)) return first == null ? second == null : first.toString().equals(String.valueOf(second));
+        if (">".equals(op)) return decimal(first) > decimal(second);
+        if ("<".equals(op)) return decimal(first) < decimal(second);
+        if ("+".equals(op)) return decimal(first) + decimal(second);
+        if ("-".equals(op)) return decimal(first) - decimal(second);
+        if ("*".equals(op)) return decimal(first) * decimal(second);
+        if ("/".equals(op)) return decimal(second) == 0d ? 0d : decimal(first) / decimal(second);
+        if ("%".equals(op)) return decimal(second) == 0d ? 0d : decimal(first) % decimal(second);
+        if ("stringlength".equals(op)) return first == null ? 0d : (double) String.valueOf(first).length();
+        if ("stringjoin".equals(op)) return String.valueOf(first) + String.valueOf(second);
+        if ("stringcontains".equals(op)) return first != null && String.valueOf(first).contains(String.valueOf(second));
+        if ("trim".equals(op)) return first == null ? "" : String.valueOf(first).trim();
+        if ("touppercase".equals(op)) return first == null ? "" : String.valueOf(first).toUpperCase(java.util.Locale.ROOT);
+        if ("tolowercase".equals(op)) return first == null ? "" : String.valueOf(first).toLowerCase(java.util.Locale.ROOT);
+        if ("tonumber".equals(op)) return decimal(first);
+        return null;
+    }
+
+    private static boolean booleanValue(Object value) {
+        return value instanceof Boolean ? (Boolean) value : "true".equalsIgnoreCase(String.valueOf(value));
+    }
+
+    private static double decimal(Object value) {
+        if (value instanceof Number) return ((Number) value).doubleValue();
+        try { return Double.parseDouble(String.valueOf(value)); } catch (NumberFormatException ignored) { return 0d; }
     }
 
     private static long number(Object value) {

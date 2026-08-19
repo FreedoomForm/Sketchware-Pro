@@ -218,6 +218,7 @@ public final class CreatorLegacyArtifactImporter {
         BlockConversion result = new BlockConversion();
         Map<Integer, BlockBean> byId = new LinkedHashMap<>();
         java.util.Set<Integer> referenced = new java.util.LinkedHashSet<>();
+        java.util.Set<Integer> reporterReferences = new java.util.LinkedHashSet<>();
         for (BlockBean block : blocks == null ? Collections.<BlockBean>emptyList() : blocks) {
             if (block == null) continue;
             try { byId.put(Integer.parseInt(block.id), block); } catch (NumberFormatException ignored) {
@@ -226,12 +227,23 @@ public final class CreatorLegacyArtifactImporter {
             if (block.nextBlock >= 0) referenced.add(block.nextBlock);
             if (block.subStack1 >= 0) referenced.add(block.subStack1);
             if (block.subStack2 >= 0) referenced.add(block.subStack2);
+            for (String parameter : block.parameters == null ? Collections.<String>emptyList() : block.parameters) {
+                if (parameter == null || !parameter.trim().startsWith("@")) continue;
+                try {
+                    int reporterId = Integer.parseInt(parameter.trim().substring(1));
+                    referenced.add(reporterId);
+                    reporterReferences.add(reporterId);
+                } catch (NumberFormatException ignored) {
+                    result.unsupported.add("invalid reporter reference " + parameter);
+                }
+            }
         }
         java.util.Set<Integer> visited = new java.util.LinkedHashSet<>();
         for (Map.Entry<Integer, BlockBean> entry : byId.entrySet()) {
             if (!referenced.contains(entry.getKey())) convertChain(entry.getValue(), byId, visited, result.converted,
                     result.unsupported, result.timerCallbacks, componentDescriptors);
         }
+        visited.addAll(reporterReferences);
         for (Map.Entry<Integer, BlockBean> entry : byId.entrySet()) {
             if (!visited.contains(entry.getKey())) result.unsupported.add("orphan block " + entry.getKey());
         }
@@ -292,7 +304,11 @@ public final class CreatorLegacyArtifactImporter {
                 convertChain(elseStart, byId, visited, elseBlocks, unsupported, timerCallbacks, componentDescriptors);
             }
             String condition = values.get(0).trim();
-            if ("true".equalsIgnoreCase(condition) || "false".equalsIgnoreCase(condition)) payload.put("constant", Boolean.valueOf(condition));
+            if (condition.startsWith("@")) {
+                Map<String, Object> expression = expression(condition, byId, new java.util.LinkedHashSet<Integer>());
+                if (expression == null) { unsupported.add(block.opCode + " (invalid reporter expression)"); return null; }
+                payload.put("expression", expression);
+            } else if ("true".equalsIgnoreCase(condition) || "false".equalsIgnoreCase(condition)) payload.put("constant", Boolean.valueOf(condition));
             else payload.put("stateId", condition);
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_BOOLEAN, payload, thenBlocks, elseBlocks);
         }
@@ -303,7 +319,11 @@ public final class CreatorLegacyArtifactImporter {
             List<CreatorRuntimeBlock> body = new ArrayList<>();
             convertChain(bodyStart, byId, visited, body, unsupported, timerCallbacks, componentDescriptors);
             String count = values.get(0).trim();
-            if (count.matches("-?\\d+")) payload.put("count", count);
+            if (count.startsWith("@")) {
+                Map<String, Object> expression = expression(count, byId, new java.util.LinkedHashSet<Integer>());
+                if (expression == null) { unsupported.add(block.opCode + " (invalid count expression)"); return null; }
+                payload.put("countExpression", expression);
+            } else if (count.matches("-?\\d+")) payload.put("count", count);
             else payload.put("countStateId", count);
             return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.REPEAT, payload, body, Collections.<CreatorRuntimeBlock>emptyList());
         }
@@ -761,6 +781,37 @@ public final class CreatorLegacyArtifactImporter {
             arguments.put("value", value);
         }
         return serviceCall("calendar", arguments);
+    }
+
+    private static Map<String, Object> expression(String parameter, Map<Integer, BlockBean> byId, java.util.Set<Integer> path) {
+        if (parameter == null) return literalExpression("");
+        String value = parameter.trim();
+        if (!value.startsWith("@")) return literalExpression(value);
+        int id;
+        try { id = Integer.parseInt(value.substring(1)); }
+        catch (NumberFormatException ignored) { return null; }
+        if (!path.add(id)) return null;
+        try {
+            BlockBean block = byId.get(id);
+            if (block == null || blank(block.opCode)) return null;
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("kind", "reporter");
+            result.put("opCode", block.opCode.trim().toLowerCase(Locale.ROOT));
+            List<Object> arguments = new ArrayList<>();
+            for (String argument : block.parameters == null ? Collections.<String>emptyList() : block.parameters) {
+                Map<String, Object> nested = expression(argument, byId, path);
+                if (nested == null) return null;
+                arguments.add(nested);
+            }
+            result.put("arguments", arguments);
+            return result;
+        } finally {
+            path.remove(id);
+        }
+    }
+
+    private static Map<String, Object> literalExpression(String value) {
+        return CreatorRuntimeServiceArguments.output("kind", "literal", "value", value);
     }
 
     @SuppressWarnings("unchecked")

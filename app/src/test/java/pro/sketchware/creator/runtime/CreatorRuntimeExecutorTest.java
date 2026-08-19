@@ -125,6 +125,34 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("counter")).isEqualTo(4L);
     }
 
+    @Test public void evaluatesNestedLegacyReporterExpressionsForIfAndRepeat() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 30,
+                new CreatorRuntimeEventLog(30));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("name", 2, CreatorProjectOperation.Type.STATE_SET, map("stateId", "name", "value", "Ada")));
+        engine.apply(op("counter", 3, CreatorProjectOperation.Type.STATE_SET, map("stateId", "counter", "value", 0L)));
+        Map<String, Object> equal = map("kind", "reporter", "opCode", "stringequals", "arguments", Arrays.asList(
+                map("kind", "literal", "value", "name"), map("kind", "literal", "value", "Ada")));
+        Map<String, Object> addition = map("kind", "reporter", "opCode", "+", "arguments", Arrays.asList(
+                map("kind", "literal", "value", "1"), map("kind", "literal", "value", "2")));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_BOOLEAN, map("expression", equal),
+                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+                                map("stateId", "counter", "delta", 1L))), Collections.<CreatorRuntimeBlock>emptyList()),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.REPEAT, map("countExpression", addition),
+                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+                                map("stateId", "counter", "delta", 1L))), Collections.<CreatorRuntimeBlock>emptyList()));
+        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("counter")).isEqualTo(4L);
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

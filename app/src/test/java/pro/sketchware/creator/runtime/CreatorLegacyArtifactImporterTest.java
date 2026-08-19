@@ -748,6 +748,37 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsNestedReporterExpressionsForIfAndRepeatWithoutJavaFallback() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean conditional = new BlockBean("1", "", "", "if");
+        conditional.parameters.add("@2");
+        conditional.subStack1 = 3;
+        BlockBean equals = new BlockBean("2", "", "", "stringEquals");
+        equals.parameters.add("name");
+        equals.parameters.add("Ada");
+        BlockBean increment = new BlockBean("3", "", "", "increaseInt");
+        increment.parameters.add("counter");
+        BlockBean repeat = new BlockBean("4", "", "", "repeat");
+        repeat.parameters.add("@5");
+        repeat.subStack1 = 6;
+        BlockBean sum = new BlockBean("5", "", "", "+");
+        sum.parameters.add("1");
+        sum.parameters.add("2");
+        BlockBean repeated = new BlockBean("6", "", "", "increaseInt");
+        repeated.parameters.add("counter");
+        conditional.nextBlock = 4;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(conditional, equals, increment, repeat, sum, repeated));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertThat(imported.get(0).getPayload()).containsKey("expression");
+        assertThat(imported.get(1).getPayload()).containsKey("countExpression");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");
