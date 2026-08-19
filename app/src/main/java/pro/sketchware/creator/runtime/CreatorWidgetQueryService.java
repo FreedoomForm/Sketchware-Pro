@@ -5,8 +5,11 @@ import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.CalendarView;
+import android.widget.CompoundButton;
 import android.widget.ListView;
+import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +41,34 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
             int[] location = new int[2];
             widget.getLocationInWindow(location);
             return CreatorRuntimeServiceArguments.succeeded("value", "location_x".equals(action) ? location[0] : location[1]);
+        }
+        if ("get_enabled".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", widget.isEnabled());
+        if ("get_alpha".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", widget.getAlpha());
+        if ("get_rotation".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", widget.getRotation());
+        if ("get_translation_x".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", widget.getTranslationX());
+        if ("get_translation_y".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", widget.getTranslationY());
+        if ("get_scale_x".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", widget.getScaleX());
+        if ("get_scale_y".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", widget.getScaleY());
+        if ("get_text".equals(action) && widget instanceof TextView) {
+            return CreatorRuntimeServiceArguments.succeeded("value", String.valueOf(((TextView) widget).getText()));
+        }
+        if ("get_checked".equals(action) && widget instanceof CompoundButton) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((CompoundButton) widget).isChecked());
+        }
+        if ("seek_max".equals(action) && widget instanceof SeekBar) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((SeekBar) widget).getMax());
+        }
+        if ("seek_progress".equals(action) && widget instanceof SeekBar) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((SeekBar) widget).getProgress());
+        }
+        if ("spinner_selection".equals(action) && widget instanceof Spinner) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((Spinner) widget).getSelectedItemPosition());
+        }
+        if ("web_url".equals(action) && widget instanceof WebView) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((WebView) widget).getUrl());
+        }
+        if ("calendar_date".equals(action) && widget instanceof CalendarView) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((CalendarView) widget).getDate());
         }
         if ("web_can_go_back".equals(action) && widget instanceof WebView) {
             return CreatorRuntimeServiceArguments.succeeded("value", ((WebView) widget).canGoBack());

@@ -1021,6 +1021,48 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState()).containsEntry("y", 96);
     }
 
+    @Test public void prefersLiveRuntimeWidgetValuesForCommonWidgetReporters() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeService widget = new CreatorRuntimeService() {
+            @Override public String getId() { return "widget"; }
+            @Override public Result execute(Map<String, Object> arguments) {
+                String action = String.valueOf(arguments.get("action"));
+                if ("get_text".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", "live text");
+                if ("get_checked".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", true);
+                if ("seek_progress".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", 64);
+                if ("web_url".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", "https://runtime.example");
+                if ("calendar_date".equals(action)) return CreatorRuntimeServiceArguments.succeeded("value", 1700000000000L);
+                return CreatorRuntimeServiceArguments.invalid("unsupported");
+            }
+        };
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "text", "expression", reporter("gettext", literal("input1")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "checked", "expression", reporter("getchecked", literal("check1")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "progress", "expression", reporter("seekbargetprogress", literal("seek1")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "url", "expression", reporter("webviewgeturl", literal("web1")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "date", "expression", reporter("calendarviewgetdate", literal("calendar1")))));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor(new CreatorRuntimeServiceDispatcher().register(widget)).dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState()).containsEntry("text", "live text");
+        assertThat(engine.getCurrent().getState()).containsEntry("checked", true);
+        assertThat(engine.getCurrent().getState()).containsEntry("progress", 64d);
+        assertThat(engine.getCurrent().getState()).containsEntry("url", "https://runtime.example");
+        assertThat(engine.getCurrent().getState()).containsEntry("date", 1700000000000d);
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

@@ -335,26 +335,26 @@ public final class CreatorRuntimeExecutor {
                 "@string/" + literalName(rawArguments, first));
         if ("maptostr".equals(op) || "listmaptostr".equals(op)) return new com.google.gson.Gson().toJson(first);
         if ("getvar".equals(op)) return engine.getCurrent().getState().get(literalName(rawArguments, first));
-        if ("gettext".equals(op)) return String.valueOf(widgetValue(engine, first, "text", ""));
-        if ("getenable".equals(op)) return booleanValue(widgetValue(engine, first, "enabled", true));
-        if ("getchecked".equals(op)) return booleanValue(widgetValue(engine, first, "checked", false));
-        if ("getalpha".equals(op)) return decimal(widgetValue(engine, first, "alpha", 1d));
-        if ("getrotate".equals(op)) return decimal(widgetValue(engine, first, "rotation", 0d));
-        if ("gettranslationx".equals(op)) return decimal(widgetValue(engine, first, "translationX", 0d));
-        if ("gettranslationy".equals(op)) return decimal(widgetValue(engine, first, "translationY", 0d));
+        if ("gettext".equals(op)) return String.valueOf(liveWidgetValue(engine, first, "get_text", "text", ""));
+        if ("getenable".equals(op)) return booleanValue(liveWidgetValue(engine, first, "get_enabled", "enabled", true));
+        if ("getchecked".equals(op)) return booleanValue(liveWidgetValue(engine, first, "get_checked", "checked", false));
+        if ("getalpha".equals(op)) return decimal(liveWidgetValue(engine, first, "get_alpha", "alpha", 1d));
+        if ("getrotate".equals(op)) return decimal(liveWidgetValue(engine, first, "get_rotation", "rotation", 0d));
+        if ("gettranslationx".equals(op)) return decimal(liveWidgetValue(engine, first, "get_translation_x", "translationX", 0d));
+        if ("gettranslationy".equals(op)) return decimal(liveWidgetValue(engine, first, "get_translation_y", "translationY", 0d));
         if ("getlocationx".equals(op)) return widgetQueryValue(first, "location_x");
         if ("getlocationy".equals(op)) return widgetQueryValue(first, "location_y");
-        if ("getscalex".equals(op)) return decimal(widgetValue(engine, first, "scaleX", 1d));
-        if ("getscaley".equals(op)) return decimal(widgetValue(engine, first, "scaleY", 1d));
-        if ("seekbargetmax".equals(op)) return decimal(widgetValue(engine, first, "max", 100d));
-        if ("seekbargetprogress".equals(op)) return decimal(widgetValue(engine, first, "progress", 0d));
-        if ("spngetselection".equals(op)) return decimal(widgetValue(engine, first, "selectedIndex", 0d));
-        if ("webviewgeturl".equals(op)) return String.valueOf(widgetValue(engine, first, "url", ""));
+        if ("getscalex".equals(op)) return decimal(liveWidgetValue(engine, first, "get_scale_x", "scaleX", 1d));
+        if ("getscaley".equals(op)) return decimal(liveWidgetValue(engine, first, "get_scale_y", "scaleY", 1d));
+        if ("seekbargetmax".equals(op)) return decimal(liveWidgetValue(engine, first, "seek_max", "max", 100d));
+        if ("seekbargetprogress".equals(op)) return decimal(liveWidgetValue(engine, first, "seek_progress", "progress", 0d));
+        if ("spngetselection".equals(op)) return decimal(liveWidgetValue(engine, first, "spinner_selection", "selectedIndex", 0d));
+        if ("webviewgeturl".equals(op)) return String.valueOf(liveWidgetValue(engine, first, "web_url", "url", ""));
         if ("webviewcangoback".equals(op)) return widgetQueryValue(first, "web_can_go_back");
         if ("webviewcangoforward".equals(op)) return widgetQueryValue(first, "web_can_go_forward");
         if ("listgetcheckedposition".equals(op)) return widgetQueryValue(first, "list_checked_position");
         if ("listgetcheckedcount".equals(op)) return widgetQueryValue(first, "list_checked_count");
-        if ("calendarviewgetdate".equals(op)) return decimal(widgetValue(engine, first, "date", 0d));
+        if ("calendarviewgetdate".equals(op)) return decimal(liveWidgetValue(engine, first, "calendar_date", "date", 0d));
         if ("lengthlist".equals(op)) return (double) listValue(first).size();
         if ("getatlistint".equals(op) || "getatliststr".equals(op)) {
             return at(listValue(second), (int) decimal(first));
@@ -414,6 +414,12 @@ public final class CreatorRuntimeExecutor {
         CreatorRuntimeService.Result result = runtimeServices.dispatch("widget",
                 CreatorRuntimeServiceArguments.output("widgetId", String.valueOf(widgetId), "action", action));
         return result.getStatus() == CreatorRuntimeService.Status.SUCCEEDED ? result.getOutput().get("value") : null;
+    }
+
+    private Object liveWidgetValue(CreatorRuntimeEngine engine, Object widgetId, String action,
+                                   String property, Object fallback) {
+        Object live = widgetQueryValue(widgetId, action);
+        return live == null ? widgetValue(engine, widgetId, property, fallback) : live;
     }
 
     private Object calendarTimestamp(Object componentId) {
