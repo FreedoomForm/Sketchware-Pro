@@ -200,6 +200,7 @@ public final class CreatorRuntimeExecutor {
         Object second = values.size() < 2 ? null : values.get(1);
         if ("true".equals(op)) return true;
         if ("false".equals(op)) return false;
+        if ("random".equals(op)) return randomInclusive(first, second);
         if ("not".equals(op)) return !booleanValue(first);
         if ("&&".equals(op)) return booleanValue(first) && booleanValue(second);
         if ("||".equals(op)) return booleanValue(first) || booleanValue(second);
@@ -410,6 +411,14 @@ public final class CreatorRuntimeExecutor {
     private static int boundedIndex(double value, int length) {
         if (Double.isNaN(value)) return 0;
         return Math.max(0, Math.min(length, (int) value));
+    }
+
+    private static Object randomInclusive(Object minimum, Object maximum) {
+        long min = (long) decimal(minimum);
+        long max = (long) decimal(maximum);
+        long span = max - min + 1L;
+        if (max < min || span <= 0L || span > Integer.MAX_VALUE) return null;
+        return (double) (min + java.util.concurrent.ThreadLocalRandom.current().nextInt((int) span));
     }
 
     private static boolean booleanValue(Object value) {

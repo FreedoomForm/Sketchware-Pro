@@ -72,3 +72,4 @@
 - [x] Remove the retired Creator Runtime plugin and native-build fallback classes from the active execution path.
 - [x] Persist imported component descriptors and typed event blocks in the versioned Project IR codec.
 - [x] Rename residual runtime service implementation classes that still use the retired `Plugin` term, and verify no active Creator Runtime source or test path retains plugin terminology.
+- [ ] After every verified runtime batch, create a focused local commit and periodically push accumulated commits to the configured GitHub remote; record push failures without stopping local preservation.

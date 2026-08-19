@@ -441,6 +441,27 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("message")).isEqualTo("Creator Runtime");
     }
 
+    @Test public void evaluatesRandomReporterWithinLegacyInclusiveIntegerBounds() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeBlock setState = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                map("stateId", "value", "expression", reporter("random", literal("5"), literal("9"))));
+        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click",
+                        "blocks", Collections.singletonList(setState))));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        double value = ((Number) engine.getCurrent().getState().get("value")).doubleValue();
+        assertThat(value).isAtLeast(5d);
+        assertThat(value).isAtMost(9d);
+        assertThat(value).isEqualTo(Math.rint(value));
+    }
+
     @Test public void assignsTypedNestedReporterResultToRuntimeState() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
                 new CreatorRuntimeEventLog(20));
