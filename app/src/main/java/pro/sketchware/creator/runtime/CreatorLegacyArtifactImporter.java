@@ -499,6 +499,15 @@ public final class CreatorLegacyArtifactImporter {
             if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
             return serviceCall("time_picker", CreatorRuntimeServiceArguments.output(
                     "componentId", values.get(0), "action", "show"));
+        } else if ("calendargetnow".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            return calendarCall(values.get(0), "reset", null, null);
+        } else if ("calendaradd".equals(op) || "calendarset".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return calendarCall(values.get(0), "calendaradd".equals(op) ? "add" : "set", values.get(1), values.get(2));
+        } else if ("calendarsettime".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return calendarCall(values.get(0), "set_time", "timestamp", values.get(1));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported);
@@ -658,6 +667,18 @@ public final class CreatorLegacyArtifactImporter {
     private static CreatorRuntimeBlock firebaseCall(String componentId, String action, String path) {
         return serviceCall("firebase", CreatorRuntimeServiceArguments.output(
                 "componentId", componentId, "action", action, "path", path));
+    }
+
+    private static CreatorRuntimeBlock calendarCall(String componentId, String action, String key, String value) {
+        Map<String, Object> arguments = new LinkedHashMap<>();
+        arguments.put("componentId", componentId);
+        arguments.put("action", action);
+        if ("set_time".equals(action)) arguments.put("timestamp", value);
+        else if (key != null) {
+            arguments.put("field", key);
+            arguments.put("value", value);
+        }
+        return serviceCall("calendar", arguments);
     }
 
     @SuppressWarnings("unchecked")

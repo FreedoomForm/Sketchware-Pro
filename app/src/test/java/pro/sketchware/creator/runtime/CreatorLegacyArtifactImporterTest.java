@@ -565,6 +565,33 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsMutatingLegacyCalendarBlocksAsRuntimeNativeServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean now = new BlockBean("1", "", "", "calendarGetNow");
+        now.parameters.add("calendar1");
+        BlockBean add = new BlockBean("2", "", "", "calendarAdd");
+        add.parameters.add("calendar1");
+        add.parameters.add("Calendar.DAY_OF_MONTH");
+        add.parameters.add("2");
+        BlockBean setTime = new BlockBean("3", "", "", "calendarSetTime");
+        setTime.parameters.add("calendar1");
+        setTime.parameters.add("1735689600000");
+        now.nextBlock = 2;
+        add.nextBlock = 3;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(now, add, setTime));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "calendar", "reset");
+        assertServiceCall(imported.get(1), "calendar", "add");
+        assertServiceCall(imported.get(2), "calendar", "set_time");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");
