@@ -1,0 +1,74 @@
+# Project TODO
+
+- [x] Map the current AI features, dependencies, source files, and user interface flows.
+- [x] Identify focused improvements to the AI-tool workflow and UI.
+- [x] Add a discoverable in-chat tool catalog, grouped by the agent's registered tool categories.
+- [x] Add an accessible tools action to the chat composer and improve the `/tools` summary.
+- [x] Correct tool execution feedback so failures use an error state and user prompts retain copy actions.
+- [x] Implement the selected improvements with Android-compatible code and resources.
+- [x] Compile the Android app and run the focused AI tool-catalog unit tests successfully.
+- [ ] Complete a full debug APK assembly; the sandbox terminated the long dexing stage before an APK was produced.
+- [x] Trace the agent tool-call pipeline and reproduce the faulty execution behavior.
+- [x] Review and correct the agent system prompt so tool contracts are precise and actionable.
+- [x] Repair umbrella schemas and missing-name inference so action-specific arguments reach the intended tool.
+- [x] Remove stale hidden layout-tool names from live tool descriptions injected into the system prompt.
+- [x] Add regression tests for the corrected tool execution and prompt contract.
+- [x] Validate and publish the corrected AI-agent behavior.
+- [x] Map the proposed white launcher, project entry button, editable in-app entry control, auto-save/build, preview, and shake-recovery flow onto current architecture.
+- [x] Define a safe phased implementation plan for the creator mode without removing recoverability or project transparency.
+- [x] Map the current Sketchware feature surface that a live-update runtime must preserve.
+- [x] Compare Dart/Flutter, an interpreted runtime, and a hybrid migration path for live project updates.
+- [x] Write and review the Creator Runtime product charter, compatibility policy, and success criteria.
+- [x] Define the versioned Project IR, operation log, checkpoint, recovery, and diagnostic contracts.
+- [x] Build the core runtime state layer with deterministic operations and regression tests.
+- [x] Build Creator Home, live preview, editable editor-entry control, and shake recovery.
+- [x] Route AI and manual edits through the same validated operation pipeline with visible history.
+- [x] Add plugin migration tiers, revision-pinned native-build queue contracts, and background diagnostic logging foundations.
+- [ ] Implement production plugin bridges and connect the native-build queue to the existing Sketchware compiler.
+- [x] Validate deterministic user/AI operation flows, document persistence, recovery protection, compatibility tiers, and build-queue provenance with JVM regression tests.
+- [ ] Complete device or emulator interaction tests, migration import tests, and a full debug APK package; the sandbox stalls during external dex merging.
+- [x] Audit the core Sketchware view and event storage needed for an initial Runtime importer.
+- [x] Expand the live renderer and Project IR for core input, image, and layout widgets.
+- [x] Add a compatibility report and initial legacy-project mapping for supported legacy ViewBean layout data.
+- [x] Validate the second runtime milestone and publish its compatibility status.
+- [x] Define the user-facing revision history, checkpoint, restore, and compatibility-report interaction model.
+- [x] Implement a readable in-project history inspector with safe revision restoration.
+- [x] Surface imported-layout compatibility results in a user-visible report view.
+- [x] Validate and publish the transparency-interface milestone.
+- [x] Define the minimal transparent event graph, variable state, and block execution contract.
+- [x] Extend Project IR and operations for event attachment and explicit state transitions.
+- [x] Implement and test deterministic core blocks for property updates, variables, messages, and navigation.
+- [x] Connect supported live-preview widget events to the runtime executor without hidden code paths.
+- [x] Validate and publish the interactive runtime milestone.
+- [ ] Inventory every current Sketchware capability, storage model, editor action, component, block, and build path with source evidence.
+- [ ] Publish the definitive R1/R2/R3/R0 compatibility matrix with acceptance tests and no unclassified capabilities.
+- [ ] Migrate and validate all core layout, widget, resource, styling, state, block, event, navigation, and component capabilities.
+- [ ] Implement and audit all permitted device/integration plugins and the transparent native fallback path.
+- [ ] Build user-visible import, migration, fallback, and compatibility-report controls for existing Sketchware projects.
+- [ ] Execute reproducible behavior-parity, regression, recovery, migration, and build audits; publish evidence and remaining exceptions.
+- [ ] Classify Camera, Location, Bluetooth, Calendar, Firebase, Intent, Network, Notification, Media, Sensor, File Picker, Ads, Shared Preferences, Timers, and dialogs with exact plugin or fallback contracts.
+- [ ] Implement the first permission-aware Creator Runtime plugin bridge and its success/denial/error evidence.
+- [ ] Add machine-checkable component matrix coverage and import fixtures for the classified component families.
+- [x] Build a host-side permission request/result adapter that uses explicit capability IDs and never grants permissions implicitly.
+- [x] Test permission request, grant, denial, unsupported-capability, and no-context outcomes before exposing the bridge to Creator Runtime plugins.
+- [ ] Require an automated evidence record for every inventoried capability before declaring 100% coverage.
+- [ ] Require a clean full migration audit with no unclassified capability, untested exception, or unpinned fallback before notifying the user of completion.
+- [ ] Create a stable component capability matrix for every `ComponentBean` type with no implicit default classification.
+- [ ] Add test fixtures proving each component capability is either runtime-native, permission-aware host-plugin, or revision-pinned native fallback.
+- [x] Create a stable component capability matrix for every `ComponentBean` type with no implicit default classification.
+- [x] Validate the complete ComponentBean classification matrix with Creator Runtime regression tests.
+- [ ] Connect CreatorNativeBuildQueue to a real legacy ProjectBuilder invocation with revision provenance and compiler diagnostics.
+- [ ] Add an end-to-end fallback fixture proving an R3 capability creates a pinned build request and surfaces its result to the user.
+- [ ] Continue implementation and evidence collection without declaring completion until every audit record is closed and 100% coverage is independently verified.
+- [x] Remove R3 native-build fallback as an acceptable capability tier; every inventoried Sketchware capability must have a verified R1 live-runtime or R2 host-runtime implementation.
+- [ ] Replace each current R3 component classification with a concrete runtime implementation, including capability-specific success, denial, error, and recovery evidence where applicable.
+- [ ] Replace legacy build/export dependence with runtime project execution, live resource handling, and portable project revision persistence without APK reinstallation.
+- [ ] Require the final audit to report zero R3 fallback entries, zero R0 omissions, and zero unclassified capabilities before user notification.
+- [x] Eliminate the R2 host-plugin layer as an accepted architecture; consolidate all device and integration capabilities into the Creator Runtime-native service and execution model.
+- [ ] Require the final evidence audit to report zero R2, zero R3, zero R0, and zero unclassified capability entries before notification.
+- [x] Implement concrete Creator Runtime-native services for all remaining `ComponentBean` capabilities, replacing R2/R3 fallback architecture.
+- [x] Wire Creator Runtime services to the live project activity, rendered widget registry, lifecycle, permissions, and event effects.
+- [ ] Add capability-specific behavior tests and close evidence records only after verified runtime execution.
+- [x] Remove the retired Creator Runtime plugin and native-build fallback classes from the active execution path.
+- [x] Persist imported component descriptors and typed event blocks in the versioned Project IR codec.
+- [x] Rename residual runtime service implementation classes that still use the retired `Plugin` term, and verify no active Creator Runtime source or test path retains plugin terminology.
