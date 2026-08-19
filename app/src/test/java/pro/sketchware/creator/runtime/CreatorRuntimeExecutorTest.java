@@ -533,6 +533,31 @@ public class CreatorRuntimeExecutorTest {
         assertThat((List<?>) engine.getCurrent().getState().get("keys")).containsExactly("first", "second").inOrder();
     }
 
+    @Test public void serializesTypedMapAndListMapReportersWithoutGeneratedJava() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("profile", 2, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "profile", "value", map("name", "Ada"))));
+        engine.apply(op("rows", 3, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "rows", "value", Collections.singletonList(map("name", "Ada")))));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "mapJson", "expression", reporter("maptostr", literal("profile")))),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+                        map("stateId", "listJson", "expression", reporter("listmaptostr", literal("rows")))));
+        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("mapJson")).isEqualTo("{\"name\":\"Ada\"}");
+        assertThat(engine.getCurrent().getState().get("listJson")).isEqualTo("[{\"name\":\"Ada\"}]");
+    }
+
     @Test public void assignsTypedNestedReporterResultToRuntimeState() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
                 new CreatorRuntimeEventLog(20));

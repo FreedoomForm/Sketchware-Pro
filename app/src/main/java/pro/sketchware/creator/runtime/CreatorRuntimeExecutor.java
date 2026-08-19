@@ -299,6 +299,7 @@ public final class CreatorRuntimeExecutor {
         if ("texttospeechisspeaking".equals(op)) return textToSpeechValue(first, "is_speaking", "value");
         if ("getresstr".equals(op)) return CreatorRuntimeResourceValues.resolveString(engine.getCurrent(),
                 "@string/" + literalName(rawArguments, first));
+        if ("maptostr".equals(op) || "listmaptostr".equals(op)) return new com.google.gson.Gson().toJson(first);
         if ("getvar".equals(op)) return engine.getCurrent().getState().get(literalName(rawArguments, first));
         if ("gettext".equals(op)) return String.valueOf(widgetValue(engine, first, "text", ""));
         if ("getenable".equals(op)) return booleanValue(widgetValue(engine, first, "enabled", true));
