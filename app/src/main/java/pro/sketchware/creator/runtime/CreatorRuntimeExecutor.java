@@ -58,6 +58,7 @@ public final class CreatorRuntimeExecutor {
                 String action = String.valueOf(payload.get("action"));
                 Object value = payload.containsKey("valueExpression") ? evaluate(payload.get("valueExpression"), engine) : payload.get("value");
                 int index = (int) number(payload.containsKey("indexExpression") ? evaluate(payload.get("indexExpression"), engine) : payload.get("index"));
+                Object key = payload.containsKey("keyExpression") ? evaluate(payload.get("keyExpression"), engine) : payload.get("key");
                 if ("add".equals(action)) list.add(value);
                 else if ("insert".equals(action)) {
                     if (index >= 0 && index <= list.size()) list.add(index, payload.get("value"));
@@ -66,6 +67,11 @@ public final class CreatorRuntimeExecutor {
                 } else if ("clear".equals(action)) list.clear();
                 else if ("add_all".equals(action)) list.addAll(list(engine.getCurrent().getState().get(
                         String.valueOf(payload.get("sourceStateId")))));
+                else if ("map_put_at".equals(action) && index >= 0 && index < list.size()) {
+                    Map<String, Object> item = map(list.get(index));
+                    item.put(String.valueOf(key), value);
+                    list.set(index, item);
+                }
                 apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", stateId, "value", list));
             } else if (block.getType() == CreatorRuntimeBlock.Type.MAP_MUTATE) {
                 String stateId = String.valueOf(payload.get("stateId"));
@@ -261,6 +267,25 @@ public final class CreatorRuntimeExecutor {
         if ("fileutilisdir".equals(op)) return fileValue(first, "is_dir", "value");
         if ("fileutilisfile".equals(op)) return fileValue(first, "is_file", "value");
         if ("fileutillength".equals(op)) return fileValue(first, "length", "value");
+        if ("lengthlist".equals(op)) return (double) listValue(first).size();
+        if ("getatlistint".equals(op) || "getatliststr".equals(op)) {
+            return at(listValue(second), (int) decimal(first));
+        }
+        if ("getatlistmap".equals(op)) {
+            Object row = at(listValue(values.size() < 3 ? null : values.get(2)), (int) decimal(first));
+            Object value = mapValue(row).get(String.valueOf(second));
+            return value == null ? null : String.valueOf(value);
+        }
+        if ("containlistint".equals(op) || "containliststr".equals(op)) return listValue(first).contains(second);
+        if ("indexlistint".equals(op) || "indexliststr".equals(op)) return (double) listValue(second).indexOf(first);
+        if ("containlistmap".equals(op)) {
+            Object row = at(listValue(first), (int) decimal(second));
+            return mapValue(row).containsKey(String.valueOf(values.size() < 3 ? null : values.get(2)));
+        }
+        if ("mapget".equals(op)) return mapValue(first).get(String.valueOf(second));
+        if ("mapcontainkey".equals(op)) return mapValue(first).containsKey(String.valueOf(second));
+        if ("mapsize".equals(op)) return (double) mapValue(first).size();
+        if ("mapisempty".equals(op)) return mapValue(first).isEmpty();
         return null;
     }
 
@@ -313,5 +338,17 @@ public final class CreatorRuntimeExecutor {
             }
         }
         return result;
+    }
+
+    private static List<?> listValue(Object value) {
+        return value instanceof List ? (List<?>) value : Collections.emptyList();
+    }
+
+    private static Object at(List<?> values, int index) {
+        return index >= 0 && index < values.size() ? values.get(index) : null;
+    }
+
+    private static Map<String, Object> mapValue(Object value) {
+        return map(value);
     }
 }

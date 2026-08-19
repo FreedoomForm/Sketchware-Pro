@@ -132,6 +132,29 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsSetListMapUsingItsLegacyKeyValueIndexListArgumentOrder() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean setListMap = new BlockBean("1", "", "", "setListMap");
+        setListMap.parameters.add("title");
+        setListMap.parameters.add("Creator");
+        setListMap.parameters.add("0");
+        setListMap.parameters.add("rows");
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Collections.singletonList(setListMap));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        CreatorRuntimeBlock imported = result.getDocument().getEvents().get("legacy_button_onClick").getBlocks().get(0);
+        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+        assertThat(imported.getPayload()).containsEntry("stateId", "rows");
+        assertThat(imported.getPayload()).containsEntry("action", "map_put_at");
+        assertThat(imported.getPayload()).containsEntry("key", "title");
+        assertThat(imported.getPayload()).containsEntry("value", "Creator");
+        assertThat(imported.getPayload()).containsEntry("index", "0");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsSupportedStateEqualityConditionalSubstackGraph() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

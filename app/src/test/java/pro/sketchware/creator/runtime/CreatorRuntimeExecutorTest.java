@@ -200,6 +200,58 @@ public class CreatorRuntimeExecutorTest {
         assertThat(engine.getCurrent().getState().get("counter")).isEqualTo(4L);
     }
 
+    @Test public void evaluatesCanonicalListAndMapReportersAndMutatesMapRowWithoutGeneratedJava() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 30,
+                new CreatorRuntimeEventLog(30));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("numbers", 2, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "numbers", "value", Arrays.asList(7d, 9d))));
+        engine.apply(op("names", 3, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "names", "value", Arrays.asList("Ada", "Lin"))));
+        engine.apply(op("rows", 4, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "rows", "value", Collections.singletonList(map("name", "Ada", "age", "42")))));
+        engine.apply(op("profile", 5, CreatorProjectOperation.Type.STATE_SET,
+                map("stateId", "profile", "value", map("city", "Tashkent", "score", 2d))));
+        Map<String, Object> numberAt = reporter("getatlistint", literal("1"), literal("numbers"));
+        Map<String, Object> nameAt = reporter("getatliststr", literal("0"), literal("names"));
+        Map<String, Object> mapAt = reporter("getatlistmap", literal("0"), literal("name"), literal("rows"));
+        Map<String, Object> containsRowKey = reporter("containlistmap", literal("rows"), literal("0"), literal("name"));
+        Map<String, Object> listSize = reporter("lengthlist", literal("names"));
+        Map<String, Object> mapValue = reporter("mapget", literal("profile"), literal("city"));
+        Map<String, Object> containsMapKey = reporter("mapcontainkey", literal("profile"), literal("score"));
+        Map<String, Object> mapSize = reporter("mapsize", literal("profile"));
+        List<CreatorRuntimeBlock> blocks = Arrays.asList(
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "numberAt", "expression", numberAt)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "nameAt", "expression", nameAt)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "mapAt", "expression", mapAt)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "containsRowKey", "expression", containsRowKey)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "listSize", "expression", listSize)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "mapValue", "expression", mapValue)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "containsMapKey", "expression", containsMapKey)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "mapSize", "expression", mapSize)),
+                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+                        map("stateId", "rows", "action", "map_put_at", "key", "age", "value", "43", "index", 0)));
+        engine.apply(op("event", 6, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "button_click", "targetWidgetId", "button", "eventName", "click", "blocks", blocks)));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+
+        assertThat(engine.getCurrent().getState().get("numberAt")).isEqualTo(9d);
+        assertThat(engine.getCurrent().getState().get("nameAt")).isEqualTo("Ada");
+        assertThat(engine.getCurrent().getState().get("mapAt")).isEqualTo("Ada");
+        assertThat(engine.getCurrent().getState().get("containsRowKey")).isEqualTo(true);
+        assertThat(engine.getCurrent().getState().get("listSize")).isEqualTo(2d);
+        assertThat(engine.getCurrent().getState().get("mapValue")).isEqualTo("Tashkent");
+        assertThat(engine.getCurrent().getState().get("containsMapKey")).isEqualTo(true);
+        assertThat(engine.getCurrent().getState().get("mapSize")).isEqualTo(2d);
+        @SuppressWarnings("unchecked") List<Map<String, Object>> rows =
+                (List<Map<String, Object>>) (List<?>) engine.getCurrent().getState().get("rows");
+        assertThat(rows.get(0)).containsExactly("name", "Ada", "age", "43");
+    }
+
     @Test public void assignsTypedNestedReporterResultToRuntimeState() {
         CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
                 new CreatorRuntimeEventLog(20));
@@ -391,5 +443,13 @@ public class CreatorRuntimeExecutorTest {
         Map<String, Object> result = new LinkedHashMap<>();
         for (int i = 0; i + 1 < values.length; i += 2) result.put(String.valueOf(values[i]), values[i + 1]);
         return result;
+    }
+
+    private static Map<String, Object> literal(String value) {
+        return map("kind", "literal", "value", value);
+    }
+
+    private static Map<String, Object> reporter(String opCode, Map<String, Object>... arguments) {
+        return map("kind", "reporter", "opCode", opCode, "arguments", Arrays.asList(arguments));
     }
 }
