@@ -623,6 +623,38 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyRequestNetworkConfigurationAsRuntimeNativeServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean params = new BlockBean("1", "", "", "requestnetworkSetParams");
+        params.parameters.add("network1");
+        params.parameters.add("requestParams");
+        params.parameters.add("REQUEST_PARAM");
+        BlockBean headers = new BlockBean("2", "", "", "requestnetworkSetHeaders");
+        headers.parameters.add("network1");
+        headers.parameters.add("requestHeaders");
+        BlockBean start = new BlockBean("3", "", "", "requestnetworkStartRequestNetwork");
+        start.parameters.add("network1");
+        start.parameters.add("GET");
+        start.parameters.add("https://example.test/probe");
+        start.parameters.add("profile");
+        params.nextBlock = 2;
+        headers.nextBlock = 3;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(params, headers, start));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "http", "set_params");
+        assertServiceCall(imported.get(1), "http", "set_headers");
+        assertServiceCall(imported.get(2), "http", "start");
+        @SuppressWarnings("unchecked") Map<String, Object> paramsArguments = (Map<String, Object>) imported.get(0).getPayload().get("arguments");
+        assertThat(paramsArguments).containsEntry("paramsStateId", "requestParams");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void rejectsConditionalWithMissingSubstackReference() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean branch = new BlockBean("1", "", "", "if_state_equals");

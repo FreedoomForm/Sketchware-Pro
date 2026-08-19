@@ -517,6 +517,18 @@ public final class CreatorLegacyArtifactImporter {
         } else if ("fileremovedata".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return storageCall(values.get(0), "remove", values.get(1), null, null, componentDescriptors);
+        } else if ("requestnetworksetparams".equals(op)) {
+            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+            return serviceCall("http", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "set_params", "paramsStateId", values.get(1), "requestType", values.get(2)));
+        } else if ("requestnetworksetheaders".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("http", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "set_headers", "headersStateId", values.get(1)));
+        } else if ("requestnetworkstartrequestnetwork".equals(op)) {
+            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+            return serviceCall("http", CreatorRuntimeServiceArguments.output(
+                    "componentId", values.get(0), "action", "start", "method", values.get(1), "url", values.get(2), "tag", values.get(3)));
         }
         if ("settext".equals(op) || "set_text".equals(op)) {
             return widgetProperty(block, values, "text", unsupported);

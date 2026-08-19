@@ -79,7 +79,7 @@ public final class CreatorRuntimeExecutor {
                     Object rawArguments = payload.get("arguments");
                     @SuppressWarnings("unchecked") Map<String, Object> arguments = rawArguments instanceof Map
                             ? (Map<String, Object>) rawArguments : Collections.<String, Object>emptyMap();
-                    CreatorRuntimeService.Result result = runtimeServices.dispatch(serviceId, arguments);
+                    CreatorRuntimeService.Result result = runtimeServices.dispatch(serviceId, resolveServiceArguments(engine, arguments));
                     effects.add(new Effect("runtime_service", serviceId + ":" + result.getStatus().name()));
                 }
             } else if (block.getType() == CreatorRuntimeBlock.Type.IF_STATE_EQUALS) {
@@ -109,6 +109,20 @@ public final class CreatorRuntimeExecutor {
         Map<String, Object> result = new LinkedHashMap<>();
         for (int i = 0; i + 1 < values.length; i += 2) result.put(String.valueOf(values[i]), values[i + 1]);
         return result;
+    }
+
+    private static Map<String, Object> resolveServiceArguments(CreatorRuntimeEngine engine, Map<String, Object> arguments) {
+        Map<String, Object> resolved = new LinkedHashMap<>(arguments);
+        resolveStateMap(engine, resolved, "paramsStateId", "params");
+        resolveStateMap(engine, resolved, "headersStateId", "headers");
+        return resolved;
+    }
+
+    private static void resolveStateMap(CreatorRuntimeEngine engine, Map<String, Object> arguments, String referenceKey, String valueKey) {
+        Object reference = arguments.get(referenceKey);
+        if (reference == null) return;
+        Object value = engine.getCurrent().getState().get(String.valueOf(reference));
+        if (value instanceof Map) arguments.put(valueKey, value);
     }
 
     private static long number(Object value) {
