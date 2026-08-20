@@ -32,6 +32,24 @@ public class CreatorRuntimeControlFlowTest {
                 new CreatorRuntimeEventLog(10)), "button", "click").get(0).getValue()).isEqualTo("Pending");
     }
 
+    @Test public void emitsTypedNavigateEffectForAiVisibleBlock() {
+        CreatorRuntimeEngine engine = engineWithBranch("approved");
+        CreatorRuntimeBlock navigate = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.NAVIGATE,
+                map("screenId", "settings"));
+        Map<String, CreatorEventBinding> events = new LinkedHashMap<>();
+        events.put("navigate", new CreatorEventBinding("navigate", "button", "click",
+                Collections.singletonList(navigate)));
+        CreatorProjectDocument source = engine.getCurrent();
+        CreatorProjectDocument document = new CreatorProjectDocument(CreatorProjectDocument.SCHEMA_VERSION,
+                source.getProjectId(), source.getRevision(), source.getName(), source.getEntryScreenId(),
+                source.getScreens(), source.getWidgets(), source.getEntryControl(), source.getState(), events);
+        List<CreatorRuntimeExecutor.Effect> effects = new CreatorRuntimeExecutor().dispatch(
+                new CreatorRuntimeEngine(document, 10, new CreatorRuntimeEventLog(10)), "button", "click");
+        assertThat(effects).hasSize(1);
+        assertThat(effects.get(0).getType()).isEqualTo("navigate");
+        assertThat(effects.get(0).getValue()).isEqualTo("settings");
+    }
+
     private static CreatorRuntimeEngine engineWithBranch(String status) {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         widgets.put("root", new CreatorWidget("root", "column", null, Arrays.asList("button"), null));
