@@ -191,3 +191,7 @@ The Notification batch adds `CreatorRuntimeNativeWidgetTest.notificationRejectsU
 ## Map validation batch — next checkpoint
 
 The Map batch adds `CreatorRuntimeNativeWidgetTest.mapRejectsUnavailableWidgetAndInvalidActionOnNativeRuntime` for missing widget/action data, unsupported action, and unavailable rendered MapView paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. API-key/configuration, map readiness, camera/marker behavior, lifecycle, renderer/network behavior, and device parity remain open integration/device gates.
+
+## Bitmap validation batch — next checkpoint
+
+The Bitmap batch adds `CreatorRuntimeNativeWidgetTest.bitmapRejectsInvalidInputsOnNativeRuntime` through the production Activity environment for missing action/path, empty path, and missing source cases. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual bitmap decode/transform, destination encoding, EXIF behavior, storage permission UX, memory behavior, and filesystem/device parity remain open integration/device gates.

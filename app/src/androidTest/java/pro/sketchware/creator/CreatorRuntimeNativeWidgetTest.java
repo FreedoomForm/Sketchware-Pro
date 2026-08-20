@@ -59,6 +59,7 @@ import pro.sketchware.creator.runtime.CreatorDialogService;
 import pro.sketchware.creator.runtime.CreatorAnimatorService;
 import pro.sketchware.creator.runtime.CreatorDeviceMetricsService;
 import pro.sketchware.creator.runtime.CreatorMapService;
+import pro.sketchware.creator.runtime.CreatorBitmapService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -366,6 +367,22 @@ public class CreatorRuntimeNativeWidgetTest {
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
         assertThat(service.execute(map("widgetId", "map", "action", "zoom_in"))
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+    }
+
+    @Test public void bitmapRejectsInvalidInputsOnNativeRuntime() {
+        try (ActivityScenario<CreatorProjectActivity> scenario =
+                     ActivityScenario.launch(CreatorProjectActivity.class)) {
+            scenario.onActivity(activity -> {
+                CreatorBitmapService service = new CreatorBitmapService(
+                        new CreatorRuntimeEnvironment(activity, null));
+                assertThat(service.execute(map()).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "resize_square", "path", ""))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "resize_square", "path", "missing.png", "destination", "out.png"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.FAILED);
+            });
+        }
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {
