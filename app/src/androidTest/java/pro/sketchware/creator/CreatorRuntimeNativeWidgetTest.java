@@ -142,6 +142,11 @@ public class CreatorRuntimeNativeWidgetTest {
                 assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
                         .get("videoPlaying")).isEqualTo(false);
 
+                requireButton(canvas, "Generate Bluetooth UUID").performClick();
+                String bluetoothUuid = String.valueOf(CreatorRuntimeSession.get(activity).getDocument()
+                        .getState().get("bluetoothUuid"));
+                assertThat(bluetoothUuid).isNotEmpty();
+
                 CalendarView calendar = requireView(canvas, CalendarView.class);
                 requireButton(canvas, "Set date").performClick();
                 assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
@@ -189,7 +194,7 @@ public class CreatorRuntimeNativeWidgetTest {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         widgets.put("root", new CreatorWidget("root", "column", null,
                 Arrays.asList("button", "drawer_button", "calendar_button", "timer_button", "control_button", "rating_button",
-                        "next_button", "list", "spinner", "progress", "seek", "web", "rating", "autocomplete", "search", "clock", "video",
+                        "next_button", "uuid_button", "list", "spinner", "progress", "seek", "web", "rating", "autocomplete", "search", "clock", "video",
                         "calendar", "date_picker", "time_picker"), null));
         widgets.put("button", new CreatorWidget("button", "button", "root",
                 null, map("text", "Increment")));
@@ -205,6 +210,8 @@ public class CreatorRuntimeNativeWidgetTest {
                 null, map("text", "Configure rating")));
         widgets.put("next_button", new CreatorWidget("next_button", "button", "root",
                 null, map("text", "Configure next widgets")));
+        widgets.put("uuid_button", new CreatorWidget("uuid_button", "button", "root",
+                null, map("text", "Generate Bluetooth UUID")));
         widgets.put("list", new CreatorWidget("list", "list", "root", null,
                 map("customDataStateId", "items", "choiceMode", ListView.CHOICE_MODE_SINGLE)));
         widgets.put("spinner", new CreatorWidget("spinner", "spinner", "root", null,
@@ -251,6 +258,7 @@ public class CreatorRuntimeNativeWidgetTest {
         state.put("clockFormat12", "");
         state.put("clockFormat24", "");
         state.put("videoPlaying", false);
+        state.put("bluetoothUuid", "");
         state.put("suggestions", Arrays.asList("Ada", "Grace", "Linus"));
         state.put("calendarDate", 0L);
         state.put("datePickerYear", 0L);
@@ -349,6 +357,11 @@ public class CreatorRuntimeNativeWidgetTest {
                                 map("serviceId", "widget", "arguments", map(
                                         "widgetId", "video", "action", "video_is_playing",
                                         "resultStateId", "videoPlaying"))))));
+        events.put("uuid-click", new CreatorEventBinding("uuid-click", "uuid_button", "click",
+                Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                        map("serviceId", "bluetooth", "arguments", map(
+                                "componentId", "bluetooth1", "action", "random_uuid",
+                                "resultStateId", "bluetoothUuid", "resultKey", "uuid"))))));
         events.put("rating-click", new CreatorEventBinding("rating-click", "rating_button", "click",
                 Arrays.asList(
                         new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
