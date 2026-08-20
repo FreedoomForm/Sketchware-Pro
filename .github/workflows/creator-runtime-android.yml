@@ -16,6 +16,11 @@ on:
         required: false
         default: ''
         type: string
+      test-filter:
+        description: Optional Android instrumentation filter in Class#method form
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -125,9 +130,6 @@ jobs:
           ls -l /dev/kvm || true
 
       - name: Run connected Android tests on emulator
-        env:
-          TEST_CLASS_ARG: ${{ inputs.test-class != '' && format('-Pandroid.testInstrumentationRunnerArguments.class={0}', inputs.test-class) || '' }}
-          TEST_METHOD_ARG: ${{ inputs.test-method != '' && format('-Pandroid.testInstrumentationRunnerArguments.method={0}', inputs.test-method) || '' }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
@@ -137,7 +139,7 @@ jobs:
           emulator-boot-timeout: 600
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -no-metrics
-          script: ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${TEST_CLASS_ARG} ${TEST_METHOD_ARG}
+          script: ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${{ inputs.test-filter != '' && format('-Pandroid.testInstrumentationRunnerArguments.class={0}', inputs.test-filter) || '' }}
 
       - name: Upload connected Android test reports
         if: always()
