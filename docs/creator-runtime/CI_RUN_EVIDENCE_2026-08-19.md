@@ -167,3 +167,7 @@ The File Picker batch adds `CreatorRuntimeNativeWidgetTest.filePickerRejectsUnsu
 ## Date Picker validation batch — next checkpoint
 
 The Date Picker batch adds `CreatorRuntimeNativeWidgetTest.datePickerRejectsInvalidInputsOnNativeRuntime` for unsupported action and malformed year input before dialog/activity access. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual dialog rendering, selection events, locale/theme behavior, date bounds, and device parity remain open integration/device gates.
+
+## Time Picker validation batch — next checkpoint
+
+The Time Picker batch adds `CreatorRuntimeNativeWidgetTest.timePickerRejectsInvalidInputsOnNativeRuntime` for unsupported action and malformed hour input before dialog/activity access. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual dialog rendering, selection events, 12/24-hour behavior, locale/theme behavior, time bounds, and device parity remain open integration/device gates.

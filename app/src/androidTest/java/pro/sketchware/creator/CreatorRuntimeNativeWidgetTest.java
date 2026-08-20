@@ -54,6 +54,7 @@ import pro.sketchware.creator.runtime.CreatorMediaService;
 import pro.sketchware.creator.runtime.CreatorCameraService;
 import pro.sketchware.creator.runtime.CreatorFilePickerService;
 import pro.sketchware.creator.runtime.CreatorDatePickerService;
+import pro.sketchware.creator.runtime.CreatorTimePickerService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -290,6 +291,14 @@ public class CreatorRuntimeNativeWidgetTest {
         assertThat(service.execute(map("action", "invalid")).getStatus())
                 .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
         assertThat(service.execute(map("action", "show", "year", "not-a-year"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+    }
+
+    @Test public void timePickerRejectsInvalidInputsOnNativeRuntime() {
+        CreatorTimePickerService service = new CreatorTimePickerService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "show", "hour", "not-an-hour"))
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
     }
 
