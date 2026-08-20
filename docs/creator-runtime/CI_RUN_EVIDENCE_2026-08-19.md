@@ -135,3 +135,7 @@ The Location batch adds `CreatorRuntimeNativeWidgetTest.locationRejectsInvalidPr
 ## Interstitial Ad validation batch — next checkpoint
 
 The Interstitial Ad batch adds `CreatorRuntimeNativeWidgetTest.interstitialAdRejectsInvalidInputsOnNativeRuntime` for unsupported action, missing `adUnitId`, show-before-load failure, and typed component creation. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid ad SDK initialization, consent/policy, configuration, network, timing, activity lifecycle, and display behavior remain open integration gates.
+
+## Base Firebase Auth validation batch — next checkpoint
+
+The base Firebase Auth batch adds `CreatorRuntimeNativeWidgetTest.firebaseAuthRejectsInvalidInputsOnNativeRuntime` for unsupported/incomplete sign-in, registration, and password-reset arguments plus local `status` and `sign_out` paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid account operations, Firebase project initialization, credentials, network, quota, persistence, and real account behavior remain open integration gates.

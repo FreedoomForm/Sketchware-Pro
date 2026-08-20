@@ -46,6 +46,7 @@ import pro.sketchware.R;
 import pro.sketchware.creator.runtime.CreatorEntryControl;
 import pro.sketchware.creator.runtime.CreatorEventBinding;
 import pro.sketchware.creator.runtime.CreatorFirebaseAuthPhoneService;
+import pro.sketchware.creator.runtime.CreatorFirebaseAuthService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -181,6 +182,22 @@ public class CreatorRuntimeNativeWidgetTest {
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.FAILED);
         assertThat(service.execute(map("action", "create", "componentId", "banner"))
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+    }
+
+    @Test public void firebaseAuthRejectsInvalidInputsOnNativeRuntime() {
+        CreatorFirebaseAuthService service = new CreatorFirebaseAuthService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "sign_in", "email", "user@example.com"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "register", "password", "secret"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "reset_password")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "status")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+        assertThat(service.execute(map("action", "sign_out")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {
