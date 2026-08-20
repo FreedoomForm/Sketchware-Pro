@@ -207,3 +207,7 @@ The Speech-to-Text batch adds `CreatorRuntimeNativeWidgetTest.speechToTextReject
 ## File validation batch — next checkpoint
 
 The File batch adds `CreatorRuntimeNativeWidgetTest.fileRejectsInvalidInputsOnNativeRuntime` through the production Activity environment for missing action/path, unsupported public directory, and missing-source read cases. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual private-file operations, root/traversal edge cases, storage permission UX, scoped-storage differences, and filesystem/device parity remain open integration/device gates.
+
+## Calendar validation batch — next checkpoint
+
+The Calendar batch adds `CreatorRuntimeNativeWidgetTest.calendarRejectsInvalidInputsAndReturnsTypedStateOnNativeRuntime` for unsupported action/field, malformed format, unknown diff component, and typed set_time/get_time state paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Timezone/locale behavior, leniency, timestamp precision, lifecycle persistence, and device/API parity remain open behavior gates.
