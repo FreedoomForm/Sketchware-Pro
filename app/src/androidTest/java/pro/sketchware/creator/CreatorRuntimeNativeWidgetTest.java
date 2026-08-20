@@ -2,6 +2,7 @@ package pro.sketchware.creator;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.Manifest;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,10 +27,12 @@ import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
+import androidx.test.rule.GrantPermissionRule;
 
 import com.google.android.material.button.MaterialButton;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,6 +51,7 @@ import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
 import pro.sketchware.creator.runtime.CreatorFragmentAdapterService;
 import pro.sketchware.creator.runtime.CreatorGyroscopeService;
+import pro.sketchware.creator.runtime.CreatorLocationService;
 import pro.sketchware.creator.runtime.CreatorRuntimeEnvironment;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectDocumentCodec;
@@ -72,6 +76,9 @@ import pro.sketchware.creator.runtime.CreatorWidget;
 public class CreatorRuntimeNativeWidgetTest {
 
     private Context context;
+
+    @Rule public GrantPermissionRule locationPermissions = GrantPermissionRule.grant(
+            Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION);
 
     @Before public void clearRuntimeStore() {
         context = ApplicationProvider.getApplicationContext();
@@ -143,6 +150,22 @@ public class CreatorRuntimeNativeWidgetTest {
                 CreatorRuntimeService.Result stop = service.execute(map("action", "stop"));
                 assertThat(stop.getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
                 assertThat(stop.getOutput().get("listening")).isEqualTo(false);
+            });
+        }
+    }
+
+    @Test public void locationRejectsInvalidProviderOnNativeRuntime() {
+        try (ActivityScenario<CreatorProjectActivity> scenario =
+                     ActivityScenario.launch(CreatorProjectActivity.class)) {
+            scenario.onActivity(activity -> {
+                CreatorRuntimeEnvironment environment = new CreatorRuntimeEnvironment(activity, null);
+                CreatorLocationService service = new CreatorLocationService(environment);
+                assertThat(service.execute(map("action", "invalid")).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "start", "provider", "invalid-provider"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.FAILED);
+                assertThat(service.execute(map("action", "stop")).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
             });
         }
     }

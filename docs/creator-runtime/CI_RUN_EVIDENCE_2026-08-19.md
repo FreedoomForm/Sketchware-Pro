@@ -127,3 +127,7 @@ The Fragment Adapter batch adds `CreatorRuntimeNativeWidgetTest.fragmentAdapterR
 ## Gyroscope lifecycle validation batch — next checkpoint
 
 The Gyroscope batch adds `CreatorRuntimeNativeWidgetTest.gyroscopeStartStopContractOnNativeRuntime` through a production Activity host. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Sensor event fidelity, timing, permission/device policy, and hardware parity remain open device gates.
+
+## Location invalid-provider validation batch — next checkpoint
+
+The Location batch adds `CreatorRuntimeNativeWidgetTest.locationRejectsInvalidProviderOnNativeRuntime` with `GrantPermissionRule`, a production Activity host, invalid-provider failure validation, and deterministic stop validation. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Provider enablement, permission UX, GPS/network fixes, last-known semantics, interval/distance behavior, and device parity remain open gates.
