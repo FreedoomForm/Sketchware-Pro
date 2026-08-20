@@ -49,6 +49,7 @@ import pro.sketchware.creator.runtime.CreatorFirebaseAuthPhoneService;
 import pro.sketchware.creator.runtime.CreatorFirebaseAuthService;
 import pro.sketchware.creator.runtime.CreatorFirebaseStorageService;
 import pro.sketchware.creator.runtime.CreatorFirebaseDatabaseService;
+import pro.sketchware.creator.runtime.CreatorVibratorService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -234,6 +235,18 @@ public class CreatorRuntimeNativeWidgetTest {
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
         assertThat(service.execute(map("action", "stop_listen", "path", "items"))
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+    }
+
+    @Test public void vibratorValidatesDurationBeforeHardwareOnNativeRuntime() {
+        CreatorVibratorService service = new CreatorVibratorService(context);
+        assertThat(service.execute(map("durationMs", "bad")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("durationMs", 0L)).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("durationMs", 10001L)).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("durationMs", 1L)).getStatus())
+                .isAnyOf(CreatorRuntimeService.Status.SUCCEEDED, CreatorRuntimeService.Status.FAILED);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {

@@ -147,3 +147,7 @@ The Firebase Storage batch adds `CreatorRuntimeNativeWidgetTest.firebaseStorageR
 ## Firebase Realtime Database validation batch — next checkpoint
 
 The Firebase Database batch adds `CreatorRuntimeNativeWidgetTest.firebaseDatabaseRejectsInvalidInputsOnNativeRuntime` for unsupported action, missing/absolute paths, offline-safe `push_key`, and `stop_listen` lifecycle paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid Firebase rules/configuration, network, set/update/remove/get behavior, child listeners, cancellation, and data-shape parity remain open integration gates.
+
+## Vibrator validation batch — next checkpoint
+
+The Vibrator batch strengthens duration validation before hardware lookup and adds `CreatorRuntimeNativeWidgetTest.vibratorValidatesDurationBeforeHardwareOnNativeRuntime` for non-numeric and out-of-range durations plus the hardware-dependent valid-duration result. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully with only the existing Android vibration API deprecation note. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Haptic effect, amplitude/timing, Android-version behavior, and hardware parity remain open device gates.
