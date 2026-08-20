@@ -50,6 +50,7 @@ import pro.sketchware.creator.runtime.CreatorFirebaseAuthService;
 import pro.sketchware.creator.runtime.CreatorFirebaseStorageService;
 import pro.sketchware.creator.runtime.CreatorFirebaseDatabaseService;
 import pro.sketchware.creator.runtime.CreatorVibratorService;
+import pro.sketchware.creator.runtime.CreatorMediaService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -247,6 +248,24 @@ public class CreatorRuntimeNativeWidgetTest {
                 .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
         assertThat(service.execute(map("durationMs", 1L)).getStatus())
                 .isAnyOf(CreatorRuntimeService.Status.SUCCEEDED, CreatorRuntimeService.Status.FAILED);
+    }
+
+    @Test public void mediaRejectsInvalidInputsOnNativeRuntime() {
+        CreatorMediaService service = new CreatorMediaService(null);
+        assertThat(service.execute(map("action", "invalid", "id", "player"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "play")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "load", "id", "player"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "play", "id", "player"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "sound_create", "id", "sound", "maxStreams", 0L))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "sound_play", "id", "sound"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "sound_stop_stream", "id", "sound"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {

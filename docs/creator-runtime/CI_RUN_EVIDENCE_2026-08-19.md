@@ -151,3 +151,7 @@ The Firebase Database batch adds `CreatorRuntimeNativeWidgetTest.firebaseDatabas
 ## Vibrator validation batch — next checkpoint
 
 The Vibrator batch strengthens duration validation before hardware lookup and adds `CreatorRuntimeNativeWidgetTest.vibratorValidatesDurationBeforeHardwareOnNativeRuntime` for non-numeric and out-of-range durations plus the hardware-dependent valid-duration result. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully with only the existing Android vibration API deprecation note. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Haptic effect, amplitude/timing, Android-version behavior, and hardware parity remain open device gates.
+
+## Media validation batch — next checkpoint
+
+The Media batch adds `CreatorRuntimeNativeWidgetTest.mediaRejectsInvalidInputsOnNativeRuntime` for missing IDs/sources, unsupported action, unloaded player/sound operations, invalid SoundPool bounds, and missing stream IDs. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid URI/resource resolution, playback/completion, SoundPool behavior, audio focus, codec support, timing, and device audio behavior remain open integration/device gates.
