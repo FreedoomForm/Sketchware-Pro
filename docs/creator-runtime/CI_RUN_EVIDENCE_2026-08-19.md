@@ -195,3 +195,7 @@ The Map batch adds `CreatorRuntimeNativeWidgetTest.mapRejectsUnavailableWidgetAn
 ## Bitmap validation batch — next checkpoint
 
 The Bitmap batch adds `CreatorRuntimeNativeWidgetTest.bitmapRejectsInvalidInputsOnNativeRuntime` through the production Activity environment for missing action/path, empty path, and missing source cases. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual bitmap decode/transform, destination encoding, EXIF behavior, storage permission UX, memory behavior, and filesystem/device parity remain open integration/device gates.
+
+## Text-to-Speech validation batch — next checkpoint
+
+The Text-to-Speech batch adds `CreatorRuntimeNativeWidgetTest.textToSpeechRejectsInvalidInputsOnNativeRuntime` through the production Activity environment for unsupported action, missing text, `is_speaking`, and shutdown paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual TTS engine initialization, language availability, speech queueing, pitch/rate behavior, audio output, lifecycle timing, and device/engine parity remain open integration/device gates.

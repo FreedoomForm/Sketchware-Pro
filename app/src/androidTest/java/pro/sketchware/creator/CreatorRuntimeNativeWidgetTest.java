@@ -60,6 +60,7 @@ import pro.sketchware.creator.runtime.CreatorAnimatorService;
 import pro.sketchware.creator.runtime.CreatorDeviceMetricsService;
 import pro.sketchware.creator.runtime.CreatorMapService;
 import pro.sketchware.creator.runtime.CreatorBitmapService;
+import pro.sketchware.creator.runtime.CreatorTextToSpeechService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -381,6 +382,24 @@ public class CreatorRuntimeNativeWidgetTest {
                         .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
                 assertThat(service.execute(map("action", "resize_square", "path", "missing.png", "destination", "out.png"))
                         .getStatus()).isEqualTo(CreatorRuntimeService.Status.FAILED);
+            });
+        }
+    }
+
+    @Test public void textToSpeechRejectsInvalidInputsOnNativeRuntime() {
+        try (ActivityScenario<CreatorProjectActivity> scenario =
+                     ActivityScenario.launch(CreatorProjectActivity.class)) {
+            scenario.onActivity(activity -> {
+                CreatorTextToSpeechService service = new CreatorTextToSpeechService(
+                        new CreatorRuntimeEnvironment(activity, null));
+                assertThat(service.execute(map("action", "invalid")).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "speak")).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "is_speaking")).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+                assertThat(service.execute(map("action", "shutdown")).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
             });
         }
     }
