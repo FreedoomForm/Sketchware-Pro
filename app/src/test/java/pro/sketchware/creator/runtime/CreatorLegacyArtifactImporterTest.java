@@ -1267,6 +1267,51 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyTimePickerSettersAsTypedWidgetServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean is24 = new BlockBean("1", "", "", "timepickerSetIs24Hour");
+        is24.parameters.add("timePicker1");
+        is24.parameters.add("true");
+        BlockBean currentHour = new BlockBean("2", "", "", "timepickerSetCurrentHour");
+        currentHour.parameters.add("timePicker1");
+        currentHour.parameters.add("7");
+        BlockBean hour = new BlockBean("3", "", "", "timepickerSetHour");
+        hour.parameters.add("timePicker1");
+        hour.parameters.add("8");
+        BlockBean minute = new BlockBean("4", "", "", "timepickerSetMinute");
+        minute.parameters.add("timePicker1");
+        minute.parameters.add("45");
+        is24.nextBlock = 2;
+        currentHour.nextBlock = 3;
+        hour.nextBlock = 4;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(is24, currentHour, hour, minute));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "widget", "time_picker_set_24_hour");
+        assertServiceCall(imported.get(1), "widget", "time_picker_set_hour");
+        assertServiceCall(imported.get(2), "widget", "time_picker_set_hour");
+        assertServiceCall(imported.get(3), "widget", "time_picker_set_minute");
+        @SuppressWarnings("unchecked") Map<String, Object> is24Args =
+                (Map<String, Object>) imported.get(0).getPayload().get("arguments");
+        assertThat(is24Args).containsEntry("widgetId", "timePicker1");
+        assertThat(is24Args).containsEntry("is24Hour", "true");
+        @SuppressWarnings("unchecked") Map<String, Object> hourArgs =
+                (Map<String, Object>) imported.get(1).getPayload().get("arguments");
+        assertThat(hourArgs).containsEntry("hour", "7");
+        @SuppressWarnings("unchecked") Map<String, Object> secondHourArgs =
+                (Map<String, Object>) imported.get(2).getPayload().get("arguments");
+        assertThat(secondHourArgs).containsEntry("hour", "8");
+        @SuppressWarnings("unchecked") Map<String, Object> minuteArgs =
+                (Map<String, Object>) imported.get(3).getPayload().get("arguments");
+        assertThat(minuteArgs).containsEntry("minute", "45");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsMutatingLegacyCalendarBlocksAsRuntimeNativeServiceCalls() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean now = new BlockBean("1", "", "", "calendarGetNow");

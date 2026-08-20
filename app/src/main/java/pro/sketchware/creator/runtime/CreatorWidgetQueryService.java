@@ -238,6 +238,26 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
             ((TimePicker) widget).setMinute(minute);
             return CreatorRuntimeServiceArguments.succeeded("updated", true);
         }
+        if ("time_picker_set_24_hour".equals(action) && widget instanceof TimePicker) {
+            ((TimePicker) widget).setIs24HourView(booleanValue(arguments.get("is24Hour")));
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("time_picker_set_hour".equals(action) && widget instanceof TimePicker) {
+            int hour = intValue(arguments.get("hour"), -1);
+            if (hour < 0 || hour > 23) {
+                return CreatorRuntimeServiceArguments.invalid("TimePicker hour must be between 0 and 23.");
+            }
+            ((TimePicker) widget).setHour(hour);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("time_picker_set_minute".equals(action) && widget instanceof TimePicker) {
+            int minute = intValue(arguments.get("minute"), -1);
+            if (minute < 0 || minute > 59) {
+                return CreatorRuntimeServiceArguments.invalid("TimePicker minute must be between 0 and 59.");
+            }
+            ((TimePicker) widget).setMinute(minute);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
         return CreatorRuntimeServiceArguments.invalid("Widget does not support action: " + action);
     }
 

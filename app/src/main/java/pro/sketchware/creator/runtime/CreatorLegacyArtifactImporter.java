@@ -1122,6 +1122,17 @@ public final class CreatorLegacyArtifactImporter {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("bluetooth", CreatorRuntimeServiceArguments.output(
                     "componentId", values.get(0), "action", "paired_devices", "resultStateId", values.get(1), "resultKey", "devices"));
+        } else if ("timepickersetis24hour".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "time_picker_set_24_hour", "is24Hour", values.get(1)));
+        } else if ("timepickersetcurrenthour".equals(op) || "timepickersethour".equals(op)
+                || "timepickersetcurrentminute".equals(op) || "timepickersetminute".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            boolean minute = op.endsWith("minute");
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", minute ? "time_picker_set_minute" : "time_picker_set_hour",
+                    minute ? "minute" : "hour", values.get(1)));
         } else if ("listsetdata".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("widget", CreatorRuntimeServiceArguments.output(
