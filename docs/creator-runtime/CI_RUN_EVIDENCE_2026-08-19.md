@@ -139,3 +139,7 @@ The Interstitial Ad batch adds `CreatorRuntimeNativeWidgetTest.interstitialAdRej
 ## Base Firebase Auth validation batch — next checkpoint
 
 The base Firebase Auth batch adds `CreatorRuntimeNativeWidgetTest.firebaseAuthRejectsInvalidInputsOnNativeRuntime` for unsupported/incomplete sign-in, registration, and password-reset arguments plus local `status` and `sign_out` paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid account operations, Firebase project initialization, credentials, network, quota, persistence, and real account behavior remain open integration gates.
+
+## Firebase Storage validation batch — next checkpoint
+
+The Firebase Storage batch adds `CreatorRuntimeNativeWidgetTest.firebaseStorageRejectsInvalidInputsOnNativeRuntime` for unsupported/missing actions, malformed Storage URL, missing upload/download inputs, and missing path cases. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid bucket/rules configuration, credentials, network, upload/download/delete behavior, progress events, URI semantics, and device filesystem behavior remain open integration gates.
