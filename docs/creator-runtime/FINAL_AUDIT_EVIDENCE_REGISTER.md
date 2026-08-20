@@ -110,3 +110,6 @@ The `7dd1a8286` capability batch adds allow-listed R1 runtime actions for AutoCo
 
 
 The Bluetooth incremental slice adds native coverage for the hardware-independent `random_uuid` action. `CreatorRuntimeNativeWidgetTest` now invokes a production event binding through `CreatorBluetoothService` and verifies a non-empty UUID in runtime state; local JVM, debug APK, and Android-test compilation checks pass. Bluetooth adapter status, Android permission prompting, paired-device enumeration, and RFCOMM transport remain **Open** device gates and are not masked by any fallback implementation.
+
+
+The permission bridge incremental batch adds `CreatorRuntimeNativeWidgetTest.permissionBridgeRequiresExplicitDecisionOnNativeRuntime`. The native runner verifies `NO_HOST`, `REQUEST_REQUIRED`, `DENIED`, `GRANTED`, and `UNSUPPORTED` outcomes from the reviewed `CreatorRuntimePermissionBridge`; no real permission is silently granted and no fallback path is introduced. Android system dialog/result behavior through `CreatorRuntimeEnvironment` and service-specific permission gates remain **Open** for device evidence.

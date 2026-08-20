@@ -35,6 +35,7 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -43,6 +44,8 @@ import pro.sketchware.creator.runtime.CreatorEntryControl;
 import pro.sketchware.creator.runtime.CreatorEventBinding;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectDocumentCodec;
+import pro.sketchware.creator.runtime.CreatorRuntimeCapability;
+import pro.sketchware.creator.runtime.CreatorRuntimePermissionBridge;
 import pro.sketchware.creator.runtime.CreatorRuntimeBlock;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 import pro.sketchware.creator.runtime.CreatorScreen;
@@ -65,6 +68,23 @@ public class CreatorRuntimeNativeWidgetTest {
         context = ApplicationProvider.getApplicationContext();
         context.getSharedPreferences("creator_runtime", Context.MODE_PRIVATE)
                 .edit().clear().commit();
+    }
+
+    @Test public void permissionBridgeRequiresExplicitDecisionOnNativeRuntime() {
+        CreatorRuntimePermissionBridge bridge = new CreatorRuntimePermissionBridge(
+                EnumSet.of(CreatorRuntimeCapability.CAMERA));
+        assertThat(bridge.check(CreatorRuntimeCapability.CAMERA, false))
+                .isEqualTo(CreatorRuntimePermissionBridge.Outcome.NO_HOST);
+        assertThat(bridge.check(CreatorRuntimeCapability.CAMERA, true))
+                .isEqualTo(CreatorRuntimePermissionBridge.Outcome.REQUEST_REQUIRED);
+        assertThat(bridge.resolve(CreatorRuntimeCapability.CAMERA, false))
+                .isEqualTo(CreatorRuntimePermissionBridge.Outcome.DENIED);
+        assertThat(bridge.resolve(CreatorRuntimeCapability.CAMERA, true))
+                .isEqualTo(CreatorRuntimePermissionBridge.Outcome.GRANTED);
+        assertThat(bridge.check(CreatorRuntimeCapability.CAMERA, true))
+                .isEqualTo(CreatorRuntimePermissionBridge.Outcome.GRANTED);
+        assertThat(bridge.check(CreatorRuntimeCapability.FINE_LOCATION, true))
+                .isEqualTo(CreatorRuntimePermissionBridge.Outcome.UNSUPPORTED);
     }
 
     @Test public void typedWidgetEventsAndDrawerSurviveNativeRerender() {

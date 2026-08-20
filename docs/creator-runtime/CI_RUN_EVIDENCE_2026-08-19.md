@@ -87,3 +87,8 @@ The next local increment adds a production native event binding for Bluetooth `r
 ## Android CI success — commit 8d3e41ad0
 
 Public workflow status now reports `Android CI` run `32356402263` for commit `8d3e41ad0` as `success`. This confirms the general Android CI path for the Bluetooth UUID native slice. The specialized `Creator Runtime Android` run `32356402215`, which carries the required debug APK/JVM plus API 30/API 34 native matrix, remains `pending`; its native evidence gate is therefore still open.
+
+
+## Permission bridge native batch — next checkpoint
+
+The permission bridge batch adds a deterministic Android-test-runner regression for explicit `NO_HOST`, `REQUEST_REQUIRED`, `DENIED`, `GRANTED`, and `UNSUPPORTED` outcomes. Local `testDebugUnitTest`, `assembleDebug`, and `compileDebugAndroidTestJavaWithJavac` pass. The batch will be committed and pushed as a separate checkpoint; remote API 30/API 34 native execution remains open until the corresponding workflow completes.
