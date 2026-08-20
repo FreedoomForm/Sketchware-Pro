@@ -183,3 +183,7 @@ The Animator batch adds `CreatorRuntimeNativeWidgetTest.animatorRejectsInvalidIn
 ## Device Metrics validation batch — next checkpoint
 
 The Device Metrics batch adds `CreatorRuntimeNativeWidgetTest.deviceMetricsQueriesTypedValuesOnNativeRuntime` through the production Activity environment for unsupported action, display width/height, and DIP queries. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Exact density/scaling, configuration/window-inset behavior, multi-window behavior, and device parity remain open device gates.
+
+## Notification action validation batch — next checkpoint
+
+The Notification batch adds `CreatorRuntimeNativeWidgetTest.notificationRejectsUnsupportedActionOnNativeRuntime` alongside the existing SDK permission predicate evidence. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual system permission UX, channel creation, notification posting/cancel behavior, OEM policy, API-level differences, and device notification behavior remain open device gates.

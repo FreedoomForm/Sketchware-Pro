@@ -351,6 +351,12 @@ public class CreatorRuntimeNativeWidgetTest {
         }
     }
 
+    @Test public void notificationRejectsUnsupportedActionOnNativeRuntime() {
+        CreatorNotificationService service = new CreatorNotificationService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+    }
+
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {
         assertThat(CreatorNotificationService.requiresNotificationPermission(
                 32, android.content.pm.PackageManager.PERMISSION_DENIED)).isFalse();
