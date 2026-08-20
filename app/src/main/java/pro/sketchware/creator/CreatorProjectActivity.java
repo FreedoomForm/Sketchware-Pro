@@ -1120,6 +1120,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
 
     private void dispatchRuntimeEvent(String widgetId, String eventName) {
         java.util.List<CreatorRuntimeExecutor.Effect> effects = runtimeExecutor.dispatch(session.getEngine(), widgetId, eventName);
+        if (effects == null || effects.isEmpty()) return;
         renderEffects(effects);
         render();
     }
