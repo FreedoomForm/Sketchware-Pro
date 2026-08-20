@@ -138,14 +138,14 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -no-metrics
           script: |
-            args=(":app:connectedDebugAndroidTest" "--no-daemon" "--stacktrace")
-            if [[ -n "${TEST_CLASS}" ]]; then
-              args+=("-Pandroid.testInstrumentationRunnerArguments.class=${TEST_CLASS}")
+            gradle_args=":app:connectedDebugAndroidTest --no-daemon --stacktrace"
+            if [ -n "${TEST_CLASS}" ]; then
+              gradle_args="${gradle_args} -Pandroid.testInstrumentationRunnerArguments.class=${TEST_CLASS}"
             fi
-            if [[ -n "${TEST_METHOD}" ]]; then
-              args+=("-Pandroid.testInstrumentationRunnerArguments.method=${TEST_METHOD}")
+            if [ -n "${TEST_METHOD}" ]; then
+              gradle_args="${gradle_args} -Pandroid.testInstrumentationRunnerArguments.method=${TEST_METHOD}"
             fi
-            ./gradlew "${args[@]}"
+            ./gradlew ${gradle_args}
 
       - name: Upload connected Android test reports
         if: always()

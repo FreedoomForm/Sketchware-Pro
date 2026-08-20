@@ -82,11 +82,11 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -no-metrics
           script: |
-            args=(":app:connectedDebugAndroidTest" "--no-daemon" "--stacktrace" "-Pandroid.testInstrumentationRunnerArguments.class=${TEST_CLASS}")
-            if [[ -n "${TEST_METHOD}" ]]; then
-              args+=("-Pandroid.testInstrumentationRunnerArguments.method=${TEST_METHOD}")
+            gradle_args=":app:connectedDebugAndroidTest --no-daemon --stacktrace -Pandroid.testInstrumentationRunnerArguments.class=${TEST_CLASS}"
+            if [ -n "${TEST_METHOD}" ]; then
+              gradle_args="${gradle_args} -Pandroid.testInstrumentationRunnerArguments.method=${TEST_METHOD}"
             fi
-            ./gradlew "${args[@]}"
+            ./gradlew ${gradle_args}
 
       - name: Upload targeted Android reports
         if: always()
