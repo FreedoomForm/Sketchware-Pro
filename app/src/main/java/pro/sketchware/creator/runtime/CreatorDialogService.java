@@ -24,7 +24,8 @@ public final class CreatorDialogService implements CreatorRuntimeService {
     @Override public Result execute(Map<String, Object> arguments) {
         String action = CreatorRuntimeServiceArguments.string(arguments, "action");
         if ("set_title".equals(action) || "set_message".equals(action)) {
-            String id = id(arguments);
+            String id = CreatorRuntimeServiceArguments.string(arguments, "dialogId");
+            if (id == null) return CreatorRuntimeServiceArguments.invalid(action + " requires dialogId.");
             String value = CreatorRuntimeServiceArguments.string(arguments, "value");
             if (value == null) return CreatorRuntimeServiceArguments.invalid(action + " requires value.");
             if ("set_title".equals(action)) titles.put(id, value); else messages.put(id, value);
@@ -32,7 +33,8 @@ public final class CreatorDialogService implements CreatorRuntimeService {
         }
         if ("set_positive_button".equals(action) || "set_negative_button".equals(action)
                 || "set_neutral_button".equals(action)) {
-            String id = id(arguments);
+            String id = CreatorRuntimeServiceArguments.string(arguments, "dialogId");
+            if (id == null) return CreatorRuntimeServiceArguments.invalid(action + " requires dialogId.");
             String label = CreatorRuntimeServiceArguments.string(arguments, "label");
             if (label == null) return CreatorRuntimeServiceArguments.invalid(action + " requires label.");
             DialogButton button = new DialogButton(label,
