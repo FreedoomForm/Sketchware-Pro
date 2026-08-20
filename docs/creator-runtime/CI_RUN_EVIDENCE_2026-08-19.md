@@ -82,3 +82,8 @@ Local pre-push evidence for `7dd1a8286` is complete: `./gradlew test`, `assemble
 ## Bluetooth UUID native slice — pending next push
 
 The next local increment adds a production native event binding for Bluetooth `random_uuid` and a non-empty runtime-state assertion in `CreatorRuntimeNativeWidgetTest`. Local `testDebugUnitTest`, `assembleDebug`, and `compileDebugAndroidTestJavaWithJavac` pass. The code and evidence documents will be pushed together; native hardware status, permission, paired-device, and RFCOMM transport behavior remain separate open gates.
+
+
+## Android CI success — commit 8d3e41ad0
+
+Public workflow status now reports `Android CI` run `32356402263` for commit `8d3e41ad0` as `success`. This confirms the general Android CI path for the Bluetooth UUID native slice. The specialized `Creator Runtime Android` run `32356402215`, which carries the required debug APK/JVM plus API 30/API 34 native matrix, remains `pending`; its native evidence gate is therefore still open.
