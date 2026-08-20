@@ -107,3 +107,7 @@ Public workflow status reports `Android CI` run `32358158139` for commit `bd0820
 ## Firebase Cloud Message validation batch — next checkpoint
 
 The Firebase Cloud Message batch adds deterministic Android-runner validation for unsupported actions and missing subscribe/unsubscribe topics. Local `testDebugUnitTest`, `assembleDebug`, and `compileDebugAndroidTestJavaWithJavac` pass. Valid FCM token/topic operations remain an open Firebase configuration and device/network gate; this validation batch will be committed and pushed separately.
+
+## Firebase Auth Phone validation batch — commit 5ffb33c07
+
+The Firebase Auth Phone batch adds `CreatorRuntimeNativeWidgetTest.firebaseAuthPhoneRejectsInvalidInputsOnNativeRuntime` for unsupported action and incomplete `send_code`/`confirm_code` arguments. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. Commit `5ffb33c07` was pushed to `FreedoomForm/Sketchware-Pro:creator-runtime`; Creator Runtime Android run `32359775216` was pending and Android CI run `32359775219` was in progress at the first public poll. API 30/API 34 native evidence remains open until the remote workflow completes. Valid phone verification, Firebase project configuration, SMS/reCAPTCHA, credential, network, and device behavior remain separate open integration gates.
