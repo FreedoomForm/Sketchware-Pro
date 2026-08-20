@@ -1312,6 +1312,33 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacySeekBarSettersAsTypedWidgetServiceCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean max = new BlockBean("1", "", "", "seekbarSetMax");
+        max.parameters.add("seek1");
+        max.parameters.add("120");
+        BlockBean progress = new BlockBean("2", "", "", "seekbarSetProgress");
+        progress.parameters.add("seek1");
+        progress.parameters.add("64");
+        max.nextBlock = 2;
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(max, progress));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+        java.util.List<CreatorRuntimeBlock> imported =
+                result.getDocument().getEvents().get("legacy_button_onClick").getBlocks();
+        assertServiceCall(imported.get(0), "widget", "seek_set_max");
+        assertServiceCall(imported.get(1), "widget", "seek_set_progress");
+        @SuppressWarnings("unchecked") Map<String, Object> maxArgs =
+                (Map<String, Object>) imported.get(0).getPayload().get("arguments");
+        assertThat(maxArgs).containsEntry("max", "120");
+        @SuppressWarnings("unchecked") Map<String, Object> progressArgs =
+                (Map<String, Object>) imported.get(1).getPayload().get("arguments");
+        assertThat(progressArgs).containsEntry("progress", "64");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsMutatingLegacyCalendarBlocksAsRuntimeNativeServiceCalls() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean now = new BlockBean("1", "", "", "calendarGetNow");

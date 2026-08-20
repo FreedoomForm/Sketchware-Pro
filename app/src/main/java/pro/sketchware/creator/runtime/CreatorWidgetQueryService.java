@@ -69,6 +69,9 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         if ("seek_progress".equals(action) && widget instanceof SeekBar) {
             return CreatorRuntimeServiceArguments.succeeded("value", ((SeekBar) widget).getProgress());
         }
+        if ("progress_indeterminate".equals(action) && widget instanceof ProgressBar) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((ProgressBar) widget).isIndeterminate());
+        }
         if ("spinner_selection".equals(action) && widget instanceof Spinner) {
             return CreatorRuntimeServiceArguments.succeeded("value", ((Spinner) widget).getSelectedItemPosition());
         }
@@ -160,6 +163,21 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         }
         if ("progress_set_indeterminate".equals(action) && widget instanceof ProgressBar) {
             ((ProgressBar) widget).setIndeterminate(booleanValue(arguments.get("indeterminate")));
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("seek_set_max".equals(action) && widget instanceof SeekBar) {
+            int max = intValue(arguments.get("max"), -1);
+            if (max < 1) return CreatorRuntimeServiceArguments.invalid("SeekBar max must be positive.");
+            ((SeekBar) widget).setMax(max);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("seek_set_progress".equals(action) && widget instanceof SeekBar) {
+            int progress = intValue(arguments.get("progress"), -1);
+            SeekBar seekBar = (SeekBar) widget;
+            if (progress < 0 || progress > seekBar.getMax()) {
+                return CreatorRuntimeServiceArguments.invalid("SeekBar progress must be within its max range.");
+            }
+            seekBar.setProgress(progress);
             return CreatorRuntimeServiceArguments.succeeded("updated", true);
         }
         if ("image_set_color_filter".equals(action) && widget instanceof ImageView) {

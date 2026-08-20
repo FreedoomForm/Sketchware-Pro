@@ -7,8 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CalendarView;
 import android.widget.DatePicker;
-import android.widget.ListView;
+import android.webkit.WebView;
 import android.widget.Spinner;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TimePicker;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -83,6 +86,22 @@ public class CreatorRuntimeNativeWidgetTest {
                 assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
                         .get("spinnerSelection")).isEqualTo(2L);
 
+                ProgressBar progress = requireView(canvas, ProgressBar.class);
+                SeekBar seek = requireView(canvas, SeekBar.class);
+                WebView web = requireView(canvas, WebView.class);
+                requireButton(canvas, "Configure controls").performClick();
+                assertThat(progress.isIndeterminate()).isTrue();
+                assertThat(seek.getMax()).isEqualTo(120);
+                assertThat(seek.getProgress()).isEqualTo(64);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("progressIndeterminate")).isEqualTo(true);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("seekMax")).isEqualTo(120L);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("seekProgress")).isEqualTo(64L);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("webUrl")).isEqualTo(web.getUrl());
+
                 CalendarView calendar = requireView(canvas, CalendarView.class);
                 requireButton(canvas, "Set date").performClick();
                 assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
@@ -129,8 +148,8 @@ public class CreatorRuntimeNativeWidgetTest {
     private void seedRuntimeDocument() {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         widgets.put("root", new CreatorWidget("root", "column", null,
-                Arrays.asList("button", "drawer_button", "calendar_button", "timer_button",
-                        "list", "spinner", "calendar", "date_picker", "time_picker"), null));
+                Arrays.asList("button", "drawer_button", "calendar_button", "timer_button", "control_button",
+                        "list", "spinner", "progress", "seek", "web", "calendar", "date_picker", "time_picker"), null));
         widgets.put("button", new CreatorWidget("button", "button", "root",
                 null, map("text", "Increment")));
         widgets.put("drawer_button", new CreatorWidget("drawer_button", "button", "root",
@@ -139,10 +158,17 @@ public class CreatorRuntimeNativeWidgetTest {
                 null, map("text", "Set date")));
         widgets.put("timer_button", new CreatorWidget("timer_button", "button", "root",
                 null, map("text", "Schedule timer")));
+        widgets.put("control_button", new CreatorWidget("control_button", "button", "root",
+                null, map("text", "Configure controls")));
         widgets.put("list", new CreatorWidget("list", "list", "root", null,
                 map("customDataStateId", "items", "choiceMode", ListView.CHOICE_MODE_SINGLE)));
         widgets.put("spinner", new CreatorWidget("spinner", "spinner", "root", null,
                 map("customDataStateId", "spinnerItems")));
+        widgets.put("progress", new CreatorWidget("progress", "progress", "root", null, null));
+        widgets.put("seek", new CreatorWidget("seek", "seekbar", "root", null,
+                map("max", 100L, "progress", 10L)));
+        widgets.put("web", new CreatorWidget("web", "web", "root", null,
+                map("url", "about:blank")));
         widgets.put("calendar", new CreatorWidget("calendar", "calendar_view", "root", null, null));
         widgets.put("date_picker", new CreatorWidget("date_picker", "date_picker", "root", null, null));
         widgets.put("time_picker", new CreatorWidget("time_picker", "time_picker", "root", null, null));
@@ -159,6 +185,10 @@ public class CreatorRuntimeNativeWidgetTest {
         state.put("clicks", 0L);
         state.put("items", Arrays.asList("A", "B", "C"));
         state.put("spinnerItems", Arrays.asList("One", "Two", "Three"));
+        state.put("progressIndeterminate", false);
+        state.put("seekMax", 0L);
+        state.put("seekProgress", 0L);
+        state.put("webUrl", "");
         state.put("calendarDate", 0L);
         state.put("datePickerYear", 0L);
         state.put("datePickerMonth", 0L);
@@ -174,6 +204,34 @@ public class CreatorRuntimeNativeWidgetTest {
         events.put("drawer-click", new CreatorEventBinding("drawer-click", "drawer_button", "click",
                 Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
                         map("serviceId", "drawer", "arguments", map("action", "open"))))));
+        events.put("control-click", new CreatorEventBinding("control-click", "control_button", "click",
+                Arrays.asList(
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "progress", "action", "progress_set_indeterminate",
+                                        "indeterminate", true))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "progress", "action", "progress_indeterminate",
+                                        "resultStateId", "progressIndeterminate"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "seek", "action", "seek_set_max", "max", 120L))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "seek", "action", "seek_set_progress", "progress", 64L))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "seek", "action", "seek_max",
+                                        "resultStateId", "seekMax"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "seek", "action", "seek_progress",
+                                        "resultStateId", "seekProgress"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "web", "action", "web_url",
+                                        "resultStateId", "webUrl"))))));
         events.put("calendar-click", new CreatorEventBinding("calendar-click", "calendar_button", "click",
                 Arrays.asList(
                         new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,

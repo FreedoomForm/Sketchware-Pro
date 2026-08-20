@@ -1249,12 +1249,14 @@ public final class CreatorLegacyArtifactImporter {
             return widgetProperty(block, values, "filePath", unsupported);
         } else if ("setimageurl".equals(op)) {
             return widgetProperty(block, values, "url", unsupported);
-        } else if ("seekbarsetmax".equals(op)) {
-            return widgetProperty(block, values, "max", unsupported);
-        } else if ("seekbarsetprogress".equals(op)) {
-            return widgetProperty(block, values, "progress", unsupported);
         } else if ("spnsetselection".equals(op)) {
             return widgetProperty(block, values, "selectedIndex", unsupported);
+        } else if ("seekbarsetmax".equals(op) || "seekbarsetprogress".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            boolean setMax = "seekbarsetmax".equals(op);
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", setMax ? "seek_set_max" : "seek_set_progress",
+                    setMax ? "max" : "progress", values.get(1)));
         } else if ("webviewloadurl".equals(op)) {
             return widgetProperty(block, values, "url", unsupported);
         } else if ("calendarviewsetdate".equals(op)) {
