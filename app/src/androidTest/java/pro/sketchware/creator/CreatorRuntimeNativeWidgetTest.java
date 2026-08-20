@@ -11,6 +11,7 @@ import android.webkit.WebView;
 import android.widget.Spinner;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RatingBar;
 import android.widget.SeekBar;
 import android.widget.TimePicker;
 
@@ -89,6 +90,7 @@ public class CreatorRuntimeNativeWidgetTest {
                 ProgressBar progress = requireView(canvas, ProgressBar.class);
                 SeekBar seek = requireView(canvas, SeekBar.class);
                 WebView web = requireView(canvas, WebView.class);
+                RatingBar rating = requireView(canvas, RatingBar.class);
                 requireButton(canvas, "Configure controls").performClick();
                 assertThat(progress.isIndeterminate()).isTrue();
                 assertThat(seek.getMax()).isEqualTo(120);
@@ -101,6 +103,17 @@ public class CreatorRuntimeNativeWidgetTest {
                         .get("seekProgress")).isEqualTo(64L);
                 assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
                         .get("webUrl")).isEqualTo(web.getUrl());
+
+                requireButton(canvas, "Configure rating").performClick();
+                assertThat(rating.getNumStars()).isEqualTo(7);
+                assertThat(rating.getStepSize()).isEqualTo(0.5f);
+                assertThat(rating.getRating()).isEqualTo(3.5f);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("ratingValue")).isEqualTo(3.5f);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("ratingStars")).isEqualTo(7L);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("ratingStep")).isEqualTo(0.5f);
 
                 CalendarView calendar = requireView(canvas, CalendarView.class);
                 requireButton(canvas, "Set date").performClick();
@@ -148,8 +161,8 @@ public class CreatorRuntimeNativeWidgetTest {
     private void seedRuntimeDocument() {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         widgets.put("root", new CreatorWidget("root", "column", null,
-                Arrays.asList("button", "drawer_button", "calendar_button", "timer_button", "control_button",
-                        "list", "spinner", "progress", "seek", "web", "calendar", "date_picker", "time_picker"), null));
+                Arrays.asList("button", "drawer_button", "calendar_button", "timer_button", "control_button", "rating_button",
+                        "list", "spinner", "progress", "seek", "web", "rating", "calendar", "date_picker", "time_picker"), null));
         widgets.put("button", new CreatorWidget("button", "button", "root",
                 null, map("text", "Increment")));
         widgets.put("drawer_button", new CreatorWidget("drawer_button", "button", "root",
@@ -160,6 +173,8 @@ public class CreatorRuntimeNativeWidgetTest {
                 null, map("text", "Schedule timer")));
         widgets.put("control_button", new CreatorWidget("control_button", "button", "root",
                 null, map("text", "Configure controls")));
+        widgets.put("rating_button", new CreatorWidget("rating_button", "button", "root",
+                null, map("text", "Configure rating")));
         widgets.put("list", new CreatorWidget("list", "list", "root", null,
                 map("customDataStateId", "items", "choiceMode", ListView.CHOICE_MODE_SINGLE)));
         widgets.put("spinner", new CreatorWidget("spinner", "spinner", "root", null,
@@ -169,6 +184,8 @@ public class CreatorRuntimeNativeWidgetTest {
                 map("max", 100L, "progress", 10L)));
         widgets.put("web", new CreatorWidget("web", "web", "root", null,
                 map("url", "about:blank")));
+        widgets.put("rating", new CreatorWidget("rating", "rating", "root", null,
+                map("max", 5L, "progress", 1L)));
         widgets.put("calendar", new CreatorWidget("calendar", "calendar_view", "root", null, null));
         widgets.put("date_picker", new CreatorWidget("date_picker", "date_picker", "root", null, null));
         widgets.put("time_picker", new CreatorWidget("time_picker", "time_picker", "root", null, null));
@@ -189,6 +206,9 @@ public class CreatorRuntimeNativeWidgetTest {
         state.put("seekMax", 0L);
         state.put("seekProgress", 0L);
         state.put("webUrl", "");
+        state.put("ratingValue", 0f);
+        state.put("ratingStars", 0L);
+        state.put("ratingStep", 0f);
         state.put("calendarDate", 0L);
         state.put("datePickerYear", 0L);
         state.put("datePickerMonth", 0L);
@@ -232,6 +252,29 @@ public class CreatorRuntimeNativeWidgetTest {
                                 map("serviceId", "widget", "arguments", map(
                                         "widgetId", "web", "action", "web_url",
                                         "resultStateId", "webUrl"))))));
+        events.put("rating-click", new CreatorEventBinding("rating-click", "rating_button", "click",
+                Arrays.asList(
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "rating", "action", "rating_set_num_stars", "stars", 7L))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "rating", "action", "rating_set_step_size", "step", 0.5f))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "rating", "action", "rating_set_value", "rating", 3.5f))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "rating", "action", "rating_value",
+                                        "resultStateId", "ratingValue"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "rating", "action", "rating_num_stars",
+                                        "resultStateId", "ratingStars"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "rating", "action", "rating_step_size",
+                                        "resultStateId", "ratingStep"))))));
         events.put("calendar-click", new CreatorEventBinding("calendar-click", "calendar_button", "click",
                 Arrays.asList(
                         new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,

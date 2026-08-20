@@ -12,6 +12,7 @@ import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RatingBar;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -71,6 +72,15 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         }
         if ("progress_indeterminate".equals(action) && widget instanceof ProgressBar) {
             return CreatorRuntimeServiceArguments.succeeded("value", ((ProgressBar) widget).isIndeterminate());
+        }
+        if ("rating_value".equals(action) && widget instanceof RatingBar) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((RatingBar) widget).getRating());
+        }
+        if ("rating_num_stars".equals(action) && widget instanceof RatingBar) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((RatingBar) widget).getNumStars());
+        }
+        if ("rating_step_size".equals(action) && widget instanceof RatingBar) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((RatingBar) widget).getStepSize());
         }
         if ("spinner_selection".equals(action) && widget instanceof Spinner) {
             return CreatorRuntimeServiceArguments.succeeded("value", ((Spinner) widget).getSelectedItemPosition());
@@ -163,6 +173,27 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         }
         if ("progress_set_indeterminate".equals(action) && widget instanceof ProgressBar) {
             ((ProgressBar) widget).setIndeterminate(booleanValue(arguments.get("indeterminate")));
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("rating_set_value".equals(action) && widget instanceof RatingBar) {
+            float rating = floatValue(arguments.get("rating"), -1f);
+            RatingBar ratingBar = (RatingBar) widget;
+            if (rating < 0f || rating > ratingBar.getNumStars()) {
+                return CreatorRuntimeServiceArguments.invalid("RatingBar value must be within its star range.");
+            }
+            ratingBar.setRating(rating);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("rating_set_num_stars".equals(action) && widget instanceof RatingBar) {
+            int stars = intValue(arguments.get("stars"), -1);
+            if (stars < 1) return CreatorRuntimeServiceArguments.invalid("RatingBar star count must be positive.");
+            ((RatingBar) widget).setNumStars(stars);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("rating_set_step_size".equals(action) && widget instanceof RatingBar) {
+            float step = floatValue(arguments.get("step"), -1f);
+            if (step <= 0f) return CreatorRuntimeServiceArguments.invalid("RatingBar step size must be positive.");
+            ((RatingBar) widget).setStepSize(step);
             return CreatorRuntimeServiceArguments.succeeded("updated", true);
         }
         if ("seek_set_max".equals(action) && widget instanceof SeekBar) {
@@ -290,6 +321,12 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         List<String> items = new ArrayList<>();
         if (rawItems instanceof List) for (Object item : (List<?>) rawItems) items.add(String.valueOf(item));
         return items;
+    }
+
+    private static float floatValue(Object value, float fallback) {
+        if (value instanceof Number) return ((Number) value).floatValue();
+        try { return value == null ? fallback : Float.parseFloat(String.valueOf(value)); }
+        catch (NumberFormatException ignored) { return fallback; }
     }
 
     private static int intValue(Object value, int fallback) {
