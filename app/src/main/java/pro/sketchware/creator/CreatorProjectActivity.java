@@ -83,14 +83,14 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         session = CreatorRuntimeSession.get(this);
         runtimeEnvironment = new CreatorRuntimeEnvironment(this, (serviceId, eventName, payload) ->
                 runOnUiThread(() -> handleRuntimeServiceEvent(serviceId, eventName, payload)));
+        previewCanvas = findViewById(R.id.creator_preview_canvas);
+        revisionLabel = findViewById(R.id.creator_revision_label);
+        entryControl = findViewById(R.id.creator_project_entry_control);
         runtimeServices = CreatorRuntimeServices.defaults(this,
                 session.getDocument().getProjectId(), runtimeEnvironment,
                 timerId -> runtimeEnvironment.publish("timer", "tick",
                         java.util.Collections.<String, Object>singletonMap("timerId", timerId)));
         runtimeExecutor = new CreatorRuntimeExecutor(runtimeServices);
-        previewCanvas = findViewById(R.id.creator_preview_canvas);
-        revisionLabel = findViewById(R.id.creator_revision_label);
-        entryControl = findViewById(R.id.creator_project_entry_control);
         findViewById(R.id.creator_back).setOnClickListener(v -> finish());
         findViewById(R.id.creator_add_text).setOnClickListener(v -> addWidget("text", "New text"));
         findViewById(R.id.creator_add_button).setOnClickListener(v -> addWidget("button", "Button"));
