@@ -36,6 +36,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.EnumSet;
@@ -79,7 +80,11 @@ import pro.sketchware.creator.runtime.CreatorFragmentAdapterService;
 import pro.sketchware.creator.runtime.CreatorGyroscopeService;
 import pro.sketchware.creator.runtime.CreatorInterstitialAdService;
 import pro.sketchware.creator.runtime.CreatorLocationService;
+import com.besome.sketch.beans.ViewBean;
+
 import pro.sketchware.creator.runtime.CreatorRuntimeEnvironment;
+import pro.sketchware.creator.runtime.CreatorLegacyViewCapabilityMatrix;
+import pro.sketchware.creator.runtime.CreatorLegacyViewImporter;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectDocumentCodec;
 import pro.sketchware.creator.runtime.CreatorNotificationService;
@@ -601,6 +606,33 @@ public class CreatorRuntimeNativeWidgetTest {
                 33, android.content.pm.PackageManager.PERMISSION_DENIED)).isTrue();
         assertThat(CreatorNotificationService.requiresNotificationPermission(
                 36, android.content.pm.PackageManager.PERMISSION_GRANTED)).isFalse();
+    }
+
+    @Test public void allLegacyViewTypesImportThroughProductionRuntimeOnNativeRuntime() {
+        ArrayList<ViewBean> views = new ArrayList<>();
+        for (int type = 0; type < 49; type++) {
+            ViewBean view = new ViewBean("native_legacy_" + type, type);
+            view.parent = "root";
+            view.index = type;
+            views.add(view);
+        }
+        CreatorLegacyViewImporter.Result imported = new CreatorLegacyViewImporter().importLayout(
+                "native-all-types", "Native All Types", "main", "/", views);
+        assertThat(CreatorLegacyViewCapabilityMatrix.isComplete()).isTrue();
+        assertThat(imported.getReport().count(
+                pro.sketchware.creator.runtime.CreatorCompatibilityTier.R1_RUNTIME_NATIVE))
+                .isEqualTo(49);
+        context.getSharedPreferences("creator_runtime", Context.MODE_PRIVATE).edit()
+                .putString("active_document", CreatorProjectDocumentCodec.encode(imported.getDocument()))
+                .commit();
+        try (ActivityScenario<CreatorProjectActivity> scenario =
+                     ActivityScenario.launch(CreatorProjectActivity.class)) {
+            scenario.onActivity(activity -> {
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getWidgets()).hasSize(50);
+                View canvas = activity.findViewById(R.id.creator_preview_canvas);
+                assertThat((Object) canvas).isNotNull();
+            });
+        }
     }
 
     @Test public void permissionBridgeRequiresExplicitDecisionOnNativeRuntime() {
