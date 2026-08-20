@@ -643,6 +643,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if ("web".equals(widget.getType())) {
             android.webkit.WebView web = new android.webkit.WebView(this);
+            web.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
             web.getSettings().setJavaScriptEnabled(true);
             String url = propertyString(widget, "url", propertyString(widget, "text", "about:blank"));
             if (!url.startsWith("http://") && !url.startsWith("https://")) url = "about:blank";
