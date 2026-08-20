@@ -44,6 +44,7 @@ import pro.sketchware.creator.runtime.CreatorEntryControl;
 import pro.sketchware.creator.runtime.CreatorEventBinding;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectDocumentCodec;
+import pro.sketchware.creator.runtime.CreatorNotificationService;
 import pro.sketchware.creator.runtime.CreatorRuntimeCapability;
 import pro.sketchware.creator.runtime.CreatorRuntimePermissionBridge;
 import pro.sketchware.creator.runtime.CreatorRuntimeBlock;
@@ -68,6 +69,15 @@ public class CreatorRuntimeNativeWidgetTest {
         context = ApplicationProvider.getApplicationContext();
         context.getSharedPreferences("creator_runtime", Context.MODE_PRIVATE)
                 .edit().clear().commit();
+    }
+
+    @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {
+        assertThat(CreatorNotificationService.requiresNotificationPermission(
+                32, android.content.pm.PackageManager.PERMISSION_DENIED)).isFalse();
+        assertThat(CreatorNotificationService.requiresNotificationPermission(
+                33, android.content.pm.PackageManager.PERMISSION_DENIED)).isTrue();
+        assertThat(CreatorNotificationService.requiresNotificationPermission(
+                36, android.content.pm.PackageManager.PERMISSION_GRANTED)).isFalse();
     }
 
     @Test public void permissionBridgeRequiresExplicitDecisionOnNativeRuntime() {

@@ -92,3 +92,8 @@ Public workflow status now reports `Android CI` run `32356402263` for commit `8d
 ## Permission bridge native batch — next checkpoint
 
 The permission bridge batch adds a deterministic Android-test-runner regression for explicit `NO_HOST`, `REQUEST_REQUIRED`, `DENIED`, `GRANTED`, and `UNSUPPORTED` outcomes. Local `testDebugUnitTest`, `assembleDebug`, and `compileDebugAndroidTestJavaWithJavac` pass. The batch will be committed and pushed as a separate checkpoint; remote API 30/API 34 native execution remains open until the corresponding workflow completes.
+
+
+## Notification permission native batch — next checkpoint
+
+The notification batch adds Android-runner coverage for the production `POST_NOTIFICATIONS` gate across API 32, API 33, and API 36 contract cases. Local `testDebugUnitTest`, `assembleDebug`, and `compileDebugAndroidTestJavaWithJavac` pass. The batch will be committed and pushed separately; actual system permission request/result behavior and API 30/API 34 workflow execution remain open until remote evidence completes.

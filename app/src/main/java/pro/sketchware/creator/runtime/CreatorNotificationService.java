@@ -62,7 +62,7 @@ public final class CreatorNotificationService implements CreatorRuntimeService {
         return (NotificationManager) environment.getContext().getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
-    static boolean requiresNotificationPermission(int sdkInt, int permissionStatus) {
+    public static boolean requiresNotificationPermission(int sdkInt, int permissionStatus) {
         return sdkInt >= 33 && permissionStatus != PackageManager.PERMISSION_GRANTED;
     }
 }

@@ -113,3 +113,6 @@ The Bluetooth incremental slice adds native coverage for the hardware-independen
 
 
 The permission bridge incremental batch adds `CreatorRuntimeNativeWidgetTest.permissionBridgeRequiresExplicitDecisionOnNativeRuntime`. The native runner verifies `NO_HOST`, `REQUEST_REQUIRED`, `DENIED`, `GRANTED`, and `UNSUPPORTED` outcomes from the reviewed `CreatorRuntimePermissionBridge`; no real permission is silently granted and no fallback path is introduced. Android system dialog/result behavior through `CreatorRuntimeEnvironment` and service-specific permission gates remain **Open** for device evidence.
+
+
+The notification permission batch adds `CreatorRuntimeNativeWidgetTest.notificationPermissionGateMatchesAndroidSdkOnNativeRuntime` and makes the production `CreatorNotificationService.requiresNotificationPermission` predicate publicly testable. Native coverage verifies the API 32 denied, API 33 denied, and API 36 granted contracts; local JVM, APK, and Android-test compilation checks pass. Real system permission request/result behavior remains **Open** device evidence, and no R2/R3 or generated-code path was introduced.
