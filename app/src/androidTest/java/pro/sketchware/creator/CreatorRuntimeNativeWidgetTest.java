@@ -51,6 +51,7 @@ import pro.sketchware.creator.runtime.CreatorFirebaseStorageService;
 import pro.sketchware.creator.runtime.CreatorFirebaseDatabaseService;
 import pro.sketchware.creator.runtime.CreatorVibratorService;
 import pro.sketchware.creator.runtime.CreatorMediaService;
+import pro.sketchware.creator.runtime.CreatorCameraService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -266,6 +267,14 @@ public class CreatorRuntimeNativeWidgetTest {
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
         assertThat(service.execute(map("action", "sound_stop_stream", "id", "sound"))
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+    }
+
+    @Test public void cameraRejectsUnsupportedActionOnNativeRuntime() {
+        CreatorCameraService service = new CreatorCameraService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "capture", "mode", "invalid"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.PERMISSION_REQUIRED);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {

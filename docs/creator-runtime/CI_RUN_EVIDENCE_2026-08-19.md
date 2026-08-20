@@ -155,3 +155,7 @@ The Vibrator batch strengthens duration validation before hardware lookup and ad
 ## Media validation batch — next checkpoint
 
 The Media batch adds `CreatorRuntimeNativeWidgetTest.mediaRejectsInvalidInputsOnNativeRuntime` for missing IDs/sources, unsupported action, unloaded player/sound operations, invalid SoundPool bounds, and missing stream IDs. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid URI/resource resolution, playback/completion, SoundPool behavior, audio focus, codec support, timing, and device audio behavior remain open integration/device gates.
+
+## Camera permission/action validation batch — next checkpoint
+
+The Camera batch adds `CreatorRuntimeNativeWidgetTest.cameraRejectsUnsupportedActionOnNativeRuntime` for unsupported action and the production permission-gate status on capture. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual permission UX, capture intent resolution, returned media data, camera hardware, orientation, and device parity remain open device gates.
