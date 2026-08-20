@@ -5,6 +5,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CalendarView;
 import android.widget.ListView;
 import android.widget.Spinner;
 
@@ -23,6 +24,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -79,6 +81,13 @@ public class CreatorRuntimeNativeWidgetTest {
                 assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
                         .get("spinnerSelection")).isEqualTo(2L);
 
+                CalendarView calendar = requireView(canvas, CalendarView.class);
+                requireButton(canvas, "Set date").performClick();
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("calendarDate")).isEqualTo(fixtureDate());
+                assertThat(calendar.getDate()).isEqualTo(fixtureDate());
+
+                requireButton(canvas, "Schedule timer").performClick();
                 requireButton(canvas, "Open drawer").performClick();
                 DrawerLayout openDrawer = requireView(canvas, DrawerLayout.class);
                 assertThat(openDrawer.isDrawerOpen(GravityCompat.START)).isTrue();
@@ -87,21 +96,38 @@ public class CreatorRuntimeNativeWidgetTest {
                 DrawerLayout closedDrawer = requireView(canvas, DrawerLayout.class);
                 assertThat(closedDrawer.isDrawerOpen(GravityCompat.START)).isFalse();
             });
+            long deadline = System.currentTimeMillis() + 3000L;
+            while (System.currentTimeMillis() < deadline
+                    && !Long.valueOf(1L).equals(CreatorRuntimeSession.get(context).getDocument()
+                    .getState().get("timerTicks"))) {
+                try { Thread.sleep(50L); } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+            assertThat(CreatorRuntimeSession.get(context).getDocument().getState().get("timerTicks"))
+                    .isEqualTo(1L);
         }
     }
 
     private void seedRuntimeDocument() {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         widgets.put("root", new CreatorWidget("root", "column", null,
-                Arrays.asList("button", "drawer_button", "list", "spinner"), null));
+                Arrays.asList("button", "drawer_button", "calendar_button", "timer_button",
+                        "list", "spinner", "calendar"), null));
         widgets.put("button", new CreatorWidget("button", "button", "root",
                 null, map("text", "Increment")));
         widgets.put("drawer_button", new CreatorWidget("drawer_button", "button", "root",
                 null, map("text", "Open drawer")));
+        widgets.put("calendar_button", new CreatorWidget("calendar_button", "button", "root",
+                null, map("text", "Set date")));
+        widgets.put("timer_button", new CreatorWidget("timer_button", "button", "root",
+                null, map("text", "Schedule timer")));
         widgets.put("list", new CreatorWidget("list", "list", "root", null,
                 map("customDataStateId", "items", "choiceMode", ListView.CHOICE_MODE_SINGLE)));
         widgets.put("spinner", new CreatorWidget("spinner", "spinner", "root", null,
                 map("customDataStateId", "spinnerItems")));
+        widgets.put("calendar", new CreatorWidget("calendar", "calendar_view", "root", null, null));
         widgets.put("drawer_root", new CreatorWidget("drawer_root", "column", null,
                 Arrays.asList("drawer_text"), null));
         widgets.put("drawer_text", new CreatorWidget("drawer_text", "text", "drawer_root",
@@ -115,6 +141,8 @@ public class CreatorRuntimeNativeWidgetTest {
         state.put("clicks", 0L);
         state.put("items", Arrays.asList("A", "B", "C"));
         state.put("spinnerItems", Arrays.asList("One", "Two", "Three"));
+        state.put("calendarDate", 0L);
+        state.put("timerTicks", 0L);
         state.put("legacy.projectFileIndex", map("home", map("hasDrawer", true)));
 
         Map<String, CreatorEventBinding> events = new LinkedHashMap<>();
@@ -124,6 +152,23 @@ public class CreatorRuntimeNativeWidgetTest {
         events.put("drawer-click", new CreatorEventBinding("drawer-click", "drawer_button", "click",
                 Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
                         map("serviceId", "drawer", "arguments", map("action", "open"))))));
+        events.put("calendar-click", new CreatorEventBinding("calendar-click", "calendar_button", "click",
+                Arrays.asList(
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "calendar", "action", "calendar_set_date",
+                                        "timestamp", fixtureDate()))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "calendar", "action", "calendar_date",
+                                        "resultStateId", "calendarDate"))))));
+        events.put("timer-button", new CreatorEventBinding("timer-button", "timer_button", "click",
+                Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                        map("serviceId", "timer", "arguments", map(
+                                "timerId", "timer1", "action", "after", "delayMs", 75L))))));
+        events.put("timer-tick", new CreatorEventBinding("timer-tick", "timer1", "tick",
+                Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+                        map("stateId", "timerTicks", "delta", 1L)))));
         events.put("list-click", new CreatorEventBinding("list-click", "list", "item_click",
                 Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
                         map("serviceId", "widget", "arguments", map(
@@ -180,6 +225,18 @@ public class CreatorRuntimeNativeWidgetTest {
             }
         }
         return null;
+    }
+
+    private static long fixtureDate() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.YEAR, 2022);
+        calendar.set(Calendar.MONTH, Calendar.JANUARY);
+        calendar.set(Calendar.DAY_OF_MONTH, 2);
+        calendar.set(Calendar.HOUR_OF_DAY, 12);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
     }
 
     private static Map<String, Object> map(Object... values) {
