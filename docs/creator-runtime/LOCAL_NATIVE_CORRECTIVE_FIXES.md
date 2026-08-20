@@ -10,6 +10,7 @@ This checkpoint addresses the four native API 30 failures observed in GitHub Act
 | Camera capture with null environment threw NPE | `CreatorCameraService` dereferenced `environment` before checking host availability | Return typed `PERMISSION_REQUIRED` when the host Activity/environment is unavailable, before permission or intent access |
 | Calendar invalid field assertion returned `SUCCEEDED` | The failing remote binary predates the current local calendar validation source; local source already rejects invalid fields. The local test is retained and passes in the full JVM/build validation | No fallback introduced; source/test contract remains typed `UNSUPPORTED_ARGUMENT` |
 | Rerender fixture could not find `Increment` | `CreatorRuntimeSession` is an application singleton and survived preference clearing between instrumentation tests; fixture also used renderer-incompatible `seekbar` instead of R1 `slider` | Add a test lifecycle reset hook, call it in `@Before`, and change the fixture to the production `slider` type |
+| API 34 WebView renderer crash | WebView renderer process crashed and Android reported that the crash was not handled by all associated WebViews, killing the instrumentation process | Use the R1 WebView software layer and handle `onRenderProcessGone` by removing/destroying the failed WebView and returning `true` |
 
 ## Local evidence
 
