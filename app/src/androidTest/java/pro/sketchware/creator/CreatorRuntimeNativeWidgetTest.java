@@ -57,6 +57,7 @@ import pro.sketchware.creator.runtime.CreatorDatePickerService;
 import pro.sketchware.creator.runtime.CreatorTimePickerService;
 import pro.sketchware.creator.runtime.CreatorDialogService;
 import pro.sketchware.creator.runtime.CreatorAnimatorService;
+import pro.sketchware.creator.runtime.CreatorDeviceMetricsService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -330,6 +331,24 @@ public class CreatorRuntimeNativeWidgetTest {
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
         assertThat(service.execute(map("action", "cancel", "componentId", "anim"))
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+    }
+
+    @Test public void deviceMetricsQueriesTypedValuesOnNativeRuntime() {
+        try (ActivityScenario<CreatorProjectActivity> scenario =
+                     ActivityScenario.launch(CreatorProjectActivity.class)) {
+            scenario.onActivity(activity -> {
+                CreatorDeviceMetricsService service = new CreatorDeviceMetricsService(
+                        new CreatorRuntimeEnvironment(activity, null));
+                assertThat(service.execute(map("action", "invalid")).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "display_width")).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+                assertThat(service.execute(map("action", "display_height")).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+                assertThat(service.execute(map("action", "dip", "input", 8L)).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+            });
+        }
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {

@@ -179,3 +179,7 @@ The Dialog batch strengthens missing dialog configuration handling and adds `Cre
 ## Animator validation batch — next checkpoint
 
 The Animator batch adds `CreatorRuntimeNativeWidgetTest.animatorRejectsInvalidInputsOnNativeRuntime` for missing component/target IDs, duration/repeat bounds, and configured status/cancel paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual rendered-widget animation, timing, interpolation, repeat behavior, UI-thread lifecycle, and device visual parity remain open integration/device gates.
+
+## Device Metrics validation batch — next checkpoint
+
+The Device Metrics batch adds `CreatorRuntimeNativeWidgetTest.deviceMetricsQueriesTypedValuesOnNativeRuntime` through the production Activity environment for unsupported action, display width/height, and DIP queries. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Exact density/scaling, configuration/window-inset behavior, multi-window behavior, and device parity remain open device gates.
