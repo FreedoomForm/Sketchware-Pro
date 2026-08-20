@@ -65,6 +65,7 @@ import pro.sketchware.creator.runtime.CreatorSpeechToTextService;
 import pro.sketchware.creator.runtime.CreatorFileService;
 import pro.sketchware.creator.runtime.CreatorCalendarService;
 import pro.sketchware.creator.runtime.CreatorDrawerService;
+import pro.sketchware.creator.runtime.CreatorUiService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -461,6 +462,16 @@ public class CreatorRuntimeNativeWidgetTest {
         assertThat(service.execute(map("action", "invalid")).getStatus())
                 .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
         assertThat(service.execute(map("action", "open")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+    }
+
+    @Test public void uiRejectsInvalidInputsOnNativeRuntime() {
+        CreatorUiService service = new CreatorUiService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "set_title")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "copy_text")).getStatus())
                 .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
     }
 

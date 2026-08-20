@@ -215,3 +215,7 @@ The Calendar batch adds `CreatorRuntimeNativeWidgetTest.calendarRejectsInvalidIn
 ## Drawer validation batch — next checkpoint
 
 The Drawer batch adds `CreatorRuntimeNativeWidgetTest.drawerRejectsInvalidInputsOnNativeRuntime` for missing/unsupported actions and supported actions before DrawerLayout registration. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual DrawerLayout registration, open/close state, gravity, animation, lifecycle, accessibility, and device UI parity remain open integration/device gates.
+
+## UI validation batch — next checkpoint
+
+The UI batch adds `CreatorRuntimeNativeWidgetTest.uiRejectsInvalidInputsOnNativeRuntime` for unsupported action and missing title/text before Activity or clipboard access. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual Activity title behavior, clipboard availability, primary-clip semantics, privacy/OEM policy, lifecycle, and device parity remain open integration/device gates.
