@@ -187,3 +187,7 @@ The Device Metrics batch adds `CreatorRuntimeNativeWidgetTest.deviceMetricsQueri
 ## Notification action validation batch — next checkpoint
 
 The Notification batch adds `CreatorRuntimeNativeWidgetTest.notificationRejectsUnsupportedActionOnNativeRuntime` alongside the existing SDK permission predicate evidence. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual system permission UX, channel creation, notification posting/cancel behavior, OEM policy, API-level differences, and device notification behavior remain open device gates.
+
+## Map validation batch — next checkpoint
+
+The Map batch adds `CreatorRuntimeNativeWidgetTest.mapRejectsUnavailableWidgetAndInvalidActionOnNativeRuntime` for missing widget/action data, unsupported action, and unavailable rendered MapView paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. API-key/configuration, map readiness, camera/marker behavior, lifecycle, renderer/network behavior, and device parity remain open integration/device gates.

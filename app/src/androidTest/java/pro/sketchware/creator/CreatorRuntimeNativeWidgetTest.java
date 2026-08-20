@@ -58,6 +58,7 @@ import pro.sketchware.creator.runtime.CreatorTimePickerService;
 import pro.sketchware.creator.runtime.CreatorDialogService;
 import pro.sketchware.creator.runtime.CreatorAnimatorService;
 import pro.sketchware.creator.runtime.CreatorDeviceMetricsService;
+import pro.sketchware.creator.runtime.CreatorMapService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -355,6 +356,16 @@ public class CreatorRuntimeNativeWidgetTest {
         CreatorNotificationService service = new CreatorNotificationService(null);
         assertThat(service.execute(map("action", "invalid")).getStatus())
                 .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+    }
+
+    @Test public void mapRejectsUnavailableWidgetAndInvalidActionOnNativeRuntime() {
+        CreatorMapService service = new CreatorMapService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("widgetId", "map", "action", "invalid"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("widgetId", "map", "action", "zoom_in"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {
