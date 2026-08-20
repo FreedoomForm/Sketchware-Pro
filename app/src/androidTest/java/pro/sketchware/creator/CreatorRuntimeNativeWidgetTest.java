@@ -64,6 +64,7 @@ import pro.sketchware.creator.runtime.CreatorTextToSpeechService;
 import pro.sketchware.creator.runtime.CreatorSpeechToTextService;
 import pro.sketchware.creator.runtime.CreatorFileService;
 import pro.sketchware.creator.runtime.CreatorCalendarService;
+import pro.sketchware.creator.runtime.CreatorDrawerService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -451,6 +452,16 @@ public class CreatorRuntimeNativeWidgetTest {
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
         assertThat(service.execute(map("action", "get_time")).getStatus())
                 .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+    }
+
+    @Test public void drawerRejectsInvalidInputsOnNativeRuntime() {
+        CreatorDrawerService service = new CreatorDrawerService();
+        assertThat(service.execute(map()).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "open")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {
