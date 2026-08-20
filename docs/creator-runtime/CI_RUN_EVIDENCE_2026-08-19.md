@@ -65,3 +65,15 @@ The documentation push `97e143287` created run `32331071126`. Its APK/JVM job su
 | Native Android tests (API 34), original job | `96317413019` | success |
 
 This confirms both native emulator matrix legs pass after retrying the transient runner failure.
+
+
+## New typed widget batch — commit 7dd1a8286
+
+The push to `FreedoomForm/Sketchware-Pro` branch `creator-runtime` created the required workflows at `2026-08-20T09:49:45Z`:
+
+| Workflow | Run | Observation | Evidence |
+|---|---:|---|---|
+| Creator Runtime Android | `32355865972` | `pending` at first poll | Native matrix is queued behind the APK/JVM job; API 30/API 34 results are not yet confirmed |
+| Android CI | `32355865947` | `in_progress` at first poll | Release APK build was running; Update App Data completed successfully without changing `origin/creator-runtime` |
+
+Local pre-push evidence for `7dd1a8286` is complete: `./gradlew test`, `assembleDebug`, `testDebugUnitTest`, and `compileDebugAndroidTestJavaWithJavac` passed, and the working tree and `origin/creator-runtime` both resolve to `7dd1a8286`. The corresponding native emulator gate remains open until the Creator Runtime Android run reports successful API 30 and API 34 jobs.
