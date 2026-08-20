@@ -134,7 +134,7 @@ jobs:
           emulator-boot-timeout: 600
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -no-metrics
-          script: ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${{ inputs.test-class != '' && format('-Pandroid.testInstrumentationRunnerArguments.class={0}', inputs.test-class) || '' }}
+          script: timeout ${{ inputs.test-class != '' && '120' || '1800' }} ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${{ inputs.test-class != '' && format('-Pandroid.testInstrumentationRunnerArguments.class={0}', inputs.test-class) || '' }}; adb logcat -d > /tmp/creator-runtime-logcat.txt || true
 
       - name: Upload connected Android test reports
         if: always()
@@ -144,5 +144,6 @@ jobs:
           path: |
             app/build/outputs/androidTest-results/connected/**
             app/build/reports/androidTests/connected/**
+            /tmp/creator-runtime-logcat.txt
           if-no-files-found: warn
           retention-days: 14
