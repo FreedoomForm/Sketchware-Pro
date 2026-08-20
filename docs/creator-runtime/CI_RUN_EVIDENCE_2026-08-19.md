@@ -235,3 +235,12 @@ The matching acceptance plans are `NATIVE_TIMER_VALIDATION_BATCH_PLAN.md`, `NATI
 `CreatorRuntimeNativeWidgetTest.allLegacyViewTypesImportThroughProductionRuntimeOnNativeRuntime` imports all legacy ViewBean type IDs 0–48 through the production importer, verifies 49 R1 classifications, persists the imported document, and launches the production Activity. The local `testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac` command passes. Actual rendering/geometry/extension parity on API 30/API 34 remains an open device gate, and no remote push has been made.
 
 The subsequent full local `./gradlew test --no-daemon` suite also completed successfully. This is local regression evidence only and does not close API 30/API 34 emulator, live integration, or broad audit gates.
+
+### Corrective WebView handler run status (read-only checkpoint)
+
+- Workflow: Creator Runtime Android [run 32392159327](https://github.com/FreedoomForm/Sketchware-Pro/actions/runs/32392159327)
+- Commit: `580a272b7`
+- Build/JVM job: success
+- Native API 30 job: in_progress
+- Native API 34 job: in_progress
+- Captured at: 2026-08-20T17:29:55Z
