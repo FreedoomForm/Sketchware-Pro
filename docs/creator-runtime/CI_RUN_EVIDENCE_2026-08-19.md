@@ -143,3 +143,7 @@ The base Firebase Auth batch adds `CreatorRuntimeNativeWidgetTest.firebaseAuthRe
 ## Firebase Storage validation batch — next checkpoint
 
 The Firebase Storage batch adds `CreatorRuntimeNativeWidgetTest.firebaseStorageRejectsInvalidInputsOnNativeRuntime` for unsupported/missing actions, malformed Storage URL, missing upload/download inputs, and missing path cases. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid bucket/rules configuration, credentials, network, upload/download/delete behavior, progress events, URI semantics, and device filesystem behavior remain open integration gates.
+
+## Firebase Realtime Database validation batch — next checkpoint
+
+The Firebase Database batch adds `CreatorRuntimeNativeWidgetTest.firebaseDatabaseRejectsInvalidInputsOnNativeRuntime` for unsupported action, missing/absolute paths, offline-safe `push_key`, and `stop_listen` lifecycle paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid Firebase rules/configuration, network, set/update/remove/get behavior, child listeners, cancellation, and data-shape parity remain open integration gates.
