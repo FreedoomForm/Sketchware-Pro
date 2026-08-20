@@ -233,3 +233,5 @@ The matching acceptance plans are `NATIVE_TIMER_VALIDATION_BATCH_PLAN.md`, `NATI
 ## Exhaustive 49-type view importer — local-only checkpoint
 
 `CreatorRuntimeNativeWidgetTest.allLegacyViewTypesImportThroughProductionRuntimeOnNativeRuntime` imports all legacy ViewBean type IDs 0–48 through the production importer, verifies 49 R1 classifications, persists the imported document, and launches the production Activity. The local `testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac` command passes. Actual rendering/geometry/extension parity on API 30/API 34 remains an open device gate, and no remote push has been made.
+
+The subsequent full local `./gradlew test --no-daemon` suite also completed successfully. This is local regression evidence only and does not close API 30/API 34 emulator, live integration, or broad audit gates.

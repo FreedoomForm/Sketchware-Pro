@@ -12,6 +12,7 @@ This review covers the runtime service dispatcher, native validation harness, le
 | Legacy opcode inventory | **305/305 rows** | Every audited opcode has an explicit importer/executor/reporter disposition. |
 | Safe typed opcode target paths | **304/305** | `addSourceDirectly` is intentionally blocked as visible R0 because arbitrary Java source execution is outside the R1 trust boundary. |
 | Local JVM/APK/androidTest Java build | **PASS** | `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. |
+| Full local Gradle JVM suite | **PASS** | `./gradlew test --no-daemon` completed successfully after the exhaustive native test source changes. |
 | Enumerated R0 exception families | **14** | Listed in `R0_EXCEPTION_REGISTER.md`; these are visible blocks, not R1 execution and not R2/R3 fallback. |
 | Remote push | **NOT PERFORMED** | Required freeze remains active until all release gates are closed and the user confirms 100%. |
 
