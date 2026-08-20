@@ -651,8 +651,12 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if ("date_picker".equals(widget.getType())) {
             android.widget.DatePicker picker = new android.widget.DatePicker(this);
+            final boolean[] initializing = {true};
             picker.init(picker.getYear(), picker.getMonth(), picker.getDayOfMonth(),
-                    (view, year, month, day) -> dispatchRuntimeEvent(widget.getId(), "date_selected"));
+                    (view, year, month, day) -> {
+                        if (!initializing[0]) dispatchRuntimeEvent(widget.getId(), "date_selected");
+                    });
+            initializing[0] = false;
             return registerRuntimeWidget(widget, picker);
         }
         if ("time_picker".equals(widget.getType())) {
