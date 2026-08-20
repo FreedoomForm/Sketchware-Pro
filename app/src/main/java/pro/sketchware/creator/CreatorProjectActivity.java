@@ -541,12 +541,14 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             if (entries.isEmpty()) entries.add(propertyString(widget, "text", "Item"));
             spinner.setAdapter(new android.widget.ArrayAdapter<>(this,
                     android.R.layout.simple_spinner_dropdown_item, entries));
+            final boolean[] initializing = {true};
             spinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
                 @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                    dispatchRuntimeEvent(widget.getId(), "item_selected");
+                    if (!initializing[0]) dispatchRuntimeEvent(widget.getId(), "item_selected");
                 }
                 @Override public void onNothingSelected(android.widget.AdapterView<?> parent) { }
             });
+            initializing[0] = false;
             return registerRuntimeWidget(widget, spinner);
         }
         if ("slider".equals(widget.getType())) {
