@@ -163,3 +163,7 @@ The Camera batch adds `CreatorRuntimeNativeWidgetTest.cameraRejectsUnsupportedAc
 ## File Picker validation batch — next checkpoint
 
 The File Picker batch adds `CreatorRuntimeNativeWidgetTest.filePickerRejectsUnsupportedActionOnNativeRuntime` for unsupported action before intent/activity access. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual picker UI, MIME filtering, document-provider availability, persisted URI permissions, returned-data handling, and device UX parity remain open integration/device gates.
+
+## Date Picker validation batch — next checkpoint
+
+The Date Picker batch adds `CreatorRuntimeNativeWidgetTest.datePickerRejectsInvalidInputsOnNativeRuntime` for unsupported action and malformed year input before dialog/activity access. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual dialog rendering, selection events, locale/theme behavior, date bounds, and device parity remain open integration/device gates.

@@ -53,6 +53,7 @@ import pro.sketchware.creator.runtime.CreatorVibratorService;
 import pro.sketchware.creator.runtime.CreatorMediaService;
 import pro.sketchware.creator.runtime.CreatorCameraService;
 import pro.sketchware.creator.runtime.CreatorFilePickerService;
+import pro.sketchware.creator.runtime.CreatorDatePickerService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -282,6 +283,14 @@ public class CreatorRuntimeNativeWidgetTest {
         CreatorFilePickerService service = new CreatorFilePickerService(null);
         assertThat(service.execute(map("action", "invalid")).getStatus())
                 .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+    }
+
+    @Test public void datePickerRejectsInvalidInputsOnNativeRuntime() {
+        CreatorDatePickerService service = new CreatorDatePickerService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "show", "year", "not-a-year"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {
