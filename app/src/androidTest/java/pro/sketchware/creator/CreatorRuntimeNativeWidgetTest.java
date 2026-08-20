@@ -61,6 +61,7 @@ import pro.sketchware.creator.runtime.CreatorDeviceMetricsService;
 import pro.sketchware.creator.runtime.CreatorMapService;
 import pro.sketchware.creator.runtime.CreatorBitmapService;
 import pro.sketchware.creator.runtime.CreatorTextToSpeechService;
+import pro.sketchware.creator.runtime.CreatorSpeechToTextService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -402,6 +403,16 @@ public class CreatorRuntimeNativeWidgetTest {
                         .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
             });
         }
+    }
+
+    @Test public void speechToTextRejectsInvalidActionAndSupportsLifecycleOnNativeRuntime() {
+        CreatorSpeechToTextService service = new CreatorSpeechToTextService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "stop")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+        assertThat(service.execute(map("action", "shutdown")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {
