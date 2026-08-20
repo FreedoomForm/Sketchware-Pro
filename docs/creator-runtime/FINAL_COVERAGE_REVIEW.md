@@ -8,10 +8,11 @@ This review covers the runtime service dispatcher, native validation harness, le
 
 | Denominator | Local result | Gate interpretation |
 |---|---:|---|
-| Registered Creator Runtime services | **35/35** | Every registered service has a production implementation and a corresponding native test method in `CreatorRuntimeNativeWidgetTest`. |
+| Registered Creator Runtime services | **35/35** | Every registered service has a production implementation and a corresponding native test method in `CreatorRuntimeNativeWidgetTest` (39 native test methods total, including broad importer and permission evidence). |
 | Legacy opcode inventory | **305/305 rows** | Every audited opcode has an explicit importer/executor/reporter disposition. |
 | Safe typed opcode target paths | **304/305** | `addSourceDirectly` is intentionally blocked as visible R0 because arbitrary Java source execution is outside the R1 trust boundary. |
 | Local JVM/APK/androidTest Java build | **PASS** | `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. |
+| Enumerated R0 exception families | **14** | Listed in `R0_EXCEPTION_REGISTER.md`; these are visible blocks, not R1 execution and not R2/R3 fallback. |
 | Remote push | **NOT PERFORMED** | Required freeze remains active until all release gates are closed and the user confirms 100%. |
 
 ## Service evidence matrix
@@ -56,6 +57,6 @@ This review covers the runtime service dispatcher, native validation harness, le
 
 ## Release blockers
 
-The release gate is **not closed**. First, `addSourceDirectly` remains a deliberate visible R0 exception and must remain listed rather than silently counted as R1. Second, the broad inventory still has explicit device-behavior, live visual/resource, non-activity project-file, editor-action, and runtime-library behavior gates. Third, the existing pushed validation batches have remote API 30/API 34 evidence records that are historical/open per their acceptance plans; the newly added local batches have not yet executed remotely because the push freeze is active.
+The release gate is **not closed**. First, `addSourceDirectly` remains a deliberate visible R0 exception and must remain listed rather than silently counted as R1; the complete explicit R0 family register is `R0_EXCEPTION_REGISTER.md`. Second, the broad inventory still has explicit device-behavior, live visual/resource, non-activity project-file, editor-action, and runtime-library behavior gates. Third, the existing pushed validation batches have remote API 30/API 34 evidence records that are historical/open per their acceptance plans; the newly added local batches have not yet executed remotely because the push freeze is active.
 
 The local build passing is therefore necessary but not sufficient for 100% coverage. No GitHub push is permitted from this review. The next work must close or explicitly disposition every remaining broad audit gate, then rerun this review with zero unaddressed release blockers except the documented R0 `addSourceDirectly` boundary.

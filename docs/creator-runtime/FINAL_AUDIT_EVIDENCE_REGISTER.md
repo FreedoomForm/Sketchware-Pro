@@ -13,7 +13,7 @@ This register is intentionally incomplete until the migration is complete. A bla
 
 ## Release gate
 
-The 100% declaration is permitted only when every `Open` row has been decomposed into capability-level records with passing import and behavior evidence. The final audit must contain **zero R0 entries** and **zero R2/R3 execution paths**. An unsupported item must remain a visible R0 exception; it cannot be omitted from the denominator.
+The 100% declaration is permitted only when every `Open` row has been decomposed into capability-level records with passing import and behavior evidence, and every R0 disposition is enumerated in `R0_EXCEPTION_REGISTER.md`. The final audit must contain **zero unlisted R0 entries** and **zero R2/R3 execution paths**. Explicit validation blocks, unknown/untrusted legacy inputs, arbitrary libraries, unsupported resource XML, and the deliberate `addSourceDirectly` boundary may remain visible R0 exceptions; they cannot be silently counted as R1 or omitted from the denominator.
 
 ## Incremental evidence
 
