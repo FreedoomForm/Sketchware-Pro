@@ -8,14 +8,18 @@ import android.view.ViewGroup;
 import android.widget.CalendarView;
 import android.widget.DatePicker;
 import android.webkit.WebView;
+import android.widget.AutoCompleteTextView;
 import android.widget.Spinner;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.SeekBar;
 import android.widget.TimePicker;
+import android.widget.TextClock;
+import android.widget.VideoView;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.test.core.app.ActivityScenario;
@@ -115,6 +119,29 @@ public class CreatorRuntimeNativeWidgetTest {
                 assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
                         .get("ratingStep")).isEqualTo(0.5f);
 
+                AutoCompleteTextView autocomplete = requireView(canvas, AutoCompleteTextView.class);
+                SearchView search = requireView(canvas, SearchView.class);
+                TextClock clock = requireView(canvas, TextClock.class);
+                VideoView video = requireView(canvas, VideoView.class);
+                requireButton(canvas, "Configure next widgets").performClick();
+                assertThat(autocomplete.getAdapter().getCount()).isEqualTo(3);
+                assertThat(autocomplete.getThreshold()).isEqualTo(2);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("autocompleteThreshold")).isEqualTo(2L);
+                assertThat(search.getQuery().toString()).isEqualTo("Ada");
+                assertThat(search.getQueryHint().toString()).isEqualTo("Find suggestions");
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("searchQuery")).isEqualTo("Ada");
+                assertThat(String.valueOf(clock.getFormat12Hour())).isEqualTo("h:mm a");
+                assertThat(String.valueOf(clock.getFormat24Hour())).isEqualTo("HH:mm");
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("clockFormat12")).isEqualTo("h:mm a");
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("clockFormat24")).isEqualTo("HH:mm");
+                assertThat(video.isPlaying()).isFalse();
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("videoPlaying")).isEqualTo(false);
+
                 CalendarView calendar = requireView(canvas, CalendarView.class);
                 requireButton(canvas, "Set date").performClick();
                 assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
@@ -162,7 +189,8 @@ public class CreatorRuntimeNativeWidgetTest {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         widgets.put("root", new CreatorWidget("root", "column", null,
                 Arrays.asList("button", "drawer_button", "calendar_button", "timer_button", "control_button", "rating_button",
-                        "list", "spinner", "progress", "seek", "web", "rating", "calendar", "date_picker", "time_picker"), null));
+                        "next_button", "list", "spinner", "progress", "seek", "web", "rating", "autocomplete", "search", "clock", "video",
+                        "calendar", "date_picker", "time_picker"), null));
         widgets.put("button", new CreatorWidget("button", "button", "root",
                 null, map("text", "Increment")));
         widgets.put("drawer_button", new CreatorWidget("drawer_button", "button", "root",
@@ -175,6 +203,8 @@ public class CreatorRuntimeNativeWidgetTest {
                 null, map("text", "Configure controls")));
         widgets.put("rating_button", new CreatorWidget("rating_button", "button", "root",
                 null, map("text", "Configure rating")));
+        widgets.put("next_button", new CreatorWidget("next_button", "button", "root",
+                null, map("text", "Configure next widgets")));
         widgets.put("list", new CreatorWidget("list", "list", "root", null,
                 map("customDataStateId", "items", "choiceMode", ListView.CHOICE_MODE_SINGLE)));
         widgets.put("spinner", new CreatorWidget("spinner", "spinner", "root", null,
@@ -186,6 +216,13 @@ public class CreatorRuntimeNativeWidgetTest {
                 map("url", "about:blank")));
         widgets.put("rating", new CreatorWidget("rating", "rating", "root", null,
                 map("max", 5L, "progress", 1L)));
+        widgets.put("autocomplete", new CreatorWidget("autocomplete", "autocomplete", "root", null,
+                map("customDataStateId", "suggestions", "threshold", 1L, "hint", "Type a name")));
+        widgets.put("search", new CreatorWidget("search", "search", "root", null,
+                map("hint", "Search names")));
+        widgets.put("clock", new CreatorWidget("clock", "clock", "root", null,
+                map("format12", "h:mm a", "format24", "HH:mm")));
+        widgets.put("video", new CreatorWidget("video", "video", "root", null, null));
         widgets.put("calendar", new CreatorWidget("calendar", "calendar_view", "root", null, null));
         widgets.put("date_picker", new CreatorWidget("date_picker", "date_picker", "root", null, null));
         widgets.put("time_picker", new CreatorWidget("time_picker", "time_picker", "root", null, null));
@@ -209,6 +246,12 @@ public class CreatorRuntimeNativeWidgetTest {
         state.put("ratingValue", 0f);
         state.put("ratingStars", 0L);
         state.put("ratingStep", 0f);
+        state.put("autocompleteThreshold", 0L);
+        state.put("searchQuery", "");
+        state.put("clockFormat12", "");
+        state.put("clockFormat24", "");
+        state.put("videoPlaying", false);
+        state.put("suggestions", Arrays.asList("Ada", "Grace", "Linus"));
         state.put("calendarDate", 0L);
         state.put("datePickerYear", 0L);
         state.put("datePickerMonth", 0L);
@@ -252,6 +295,60 @@ public class CreatorRuntimeNativeWidgetTest {
                                 map("serviceId", "widget", "arguments", map(
                                         "widgetId", "web", "action", "web_url",
                                         "resultStateId", "webUrl"))))));
+        events.put("next-click", new CreatorEventBinding("next-click", "next_button", "click",
+                Arrays.asList(
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "autocomplete", "action", "autocomplete_set_data",
+                                        "itemsStateId", "suggestions"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "autocomplete", "action", "autocomplete_threshold", "threshold", 2L))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "autocomplete", "action", "autocomplete_threshold",
+                                        "resultStateId", "autocompleteThreshold"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "search", "action", "search_set_query", "query", "Ada"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "search", "action", "search_set_hint", "hint", "Find suggestions"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "search", "action", "search_query",
+                                        "resultStateId", "searchQuery"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "clock", "action", "clock_format_12h", "format", "h:mm a"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "clock", "action", "clock_format_24h", "format", "HH:mm"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "clock", "action", "clock_get_format_12h",
+                                        "resultStateId", "clockFormat12"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "clock", "action", "clock_get_format_24h",
+                                        "resultStateId", "clockFormat24"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "video", "action", "video_set_url",
+                                        "url", "android.resource://android/drawable/ic_media_play"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "video", "action", "video_start"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "video", "action", "video_pause"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "video", "action", "video_stop"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "video", "action", "video_is_playing",
+                                        "resultStateId", "videoPlaying"))))));
         events.put("rating-click", new CreatorEventBinding("rating-click", "rating_button", "click",
                 Arrays.asList(
                         new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,

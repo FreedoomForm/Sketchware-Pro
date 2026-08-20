@@ -1133,6 +1133,64 @@ public final class CreatorLegacyArtifactImporter {
             return serviceCall("widget", CreatorRuntimeServiceArguments.output(
                     "widgetId", values.get(0), "action", minute ? "time_picker_set_minute" : "time_picker_set_hour",
                     minute ? "minute" : "hour", values.get(1)));
+        } else if ("autocomsetdata".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "autocomplete_set_data", "itemsStateId", values.get(1)));
+        } else if ("setthreshold".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "autocomplete_threshold", "threshold", values.get(1)));
+        } else if ("searchviewsetquery".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "search_set_query", "query", values.get(1)));
+        } else if ("searchviewsetqueryhint".equals(op) || "searchviewsethint".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "search_set_hint", "hint", values.get(1)));
+        } else if ("setformat12hour".equals(op) || "textclocksetformat12hour".equals(op)
+                || "setformat24hour".equals(op) || "textclocksetformat24hour".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            boolean format12 = "setformat12hour".equals(op) || "textclocksetformat12hour".equals(op);
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", format12 ? "clock_format_12h" : "clock_format_24h",
+                    "format", values.get(1)));
+        } else if ("videoviewsetvideopath".equals(op) || "videoviewsetvideouri".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "video_set_url", "url", values.get(1)));
+        } else if ("videoviewstart".equals(op) || "videoviewpause".equals(op)
+                || "videoviewstopplayback".equals(op) || "videoviewstop".equals(op)) {
+            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+            String action = "videoviewstart".equals(op) ? "video_start"
+                    : "videoviewpause".equals(op) ? "video_pause" : "video_stop";
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", action));
+        } else if ("getrating".equals(op) || "ratingbargetrating".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "rating_value", "resultStateId", values.get(1), "resultKey", "value"));
+        } else if ("getnumstars".equals(op) || "ratingbargetnumstars".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "rating_num_stars", "resultStateId", values.get(1), "resultKey", "value"));
+        } else if ("getstepsize".equals(op) || "ratingbargetstepsize".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "rating_step_size", "resultStateId", values.get(1), "resultKey", "value"));
+        } else if ("setrating".equals(op) || "ratingbarsetrating".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "rating_set_value", "rating", values.get(1)));
+        } else if ("setnumstars".equals(op) || "ratingbarsetnumstars".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "rating_set_num_stars", "stars", values.get(1)));
+        } else if ("setstepsize".equals(op) || "ratingbarsetstepsize".equals(op)) {
+            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+            return serviceCall("widget", CreatorRuntimeServiceArguments.output(
+                    "widgetId", values.get(0), "action", "rating_set_step_size", "step", values.get(1)));
         } else if ("listsetdata".equals(op)) {
             if (values.size() < 2) { unsupported.add(block.opCode); return null; }
             return serviceCall("widget", CreatorRuntimeServiceArguments.output(

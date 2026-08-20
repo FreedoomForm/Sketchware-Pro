@@ -681,6 +681,53 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void importsLegacyRatingAndNextWidgetActionsAsTypedRuntimeCalls() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        String[] opcodes = {"getRating", "setRating", "setNumStars", "setStepSize", "autoComSetData",
+                "setThreshold", "searchViewSetQuery", "searchViewSetQueryHint", "setFormat12Hour",
+                "setFormat24Hour", "videoViewSetVideoPath", "videoViewStart", "videoViewPause", "videoViewStopPlayback"};
+        String[] widgets = {"rating", "rating", "rating", "rating", "autocomplete", "autocomplete", "search", "search",
+                "clock", "clock", "video", "video", "video", "video"};
+        String[] actions = {"rating_value", "rating_set_value", "rating_set_num_stars", "rating_set_step_size",
+                "autocomplete_set_data", "autocomplete_threshold", "search_set_query", "search_set_hint",
+                "clock_format_12h", "clock_format_24h", "video_set_url", "video_start", "video_pause", "video_stop"};
+        java.util.List<BlockBean> chain = new java.util.ArrayList<>();
+        for (int index = 0; index < opcodes.length; index++) {
+            BlockBean block = new BlockBean(String.valueOf(index + 1), "", "", opcodes[index]);
+            block.parameters.add(widgets[index]);
+            if ("getRating".equals(opcodes[index])) block.parameters.add("ratingValue");
+            else if ("setRating".equals(opcodes[index])) block.parameters.add("3.5");
+            else if ("setNumStars".equals(opcodes[index])) block.parameters.add("7");
+            else if ("setStepSize".equals(opcodes[index])) block.parameters.add("0.5");
+            else if ("autoComSetData".equals(opcodes[index])) block.parameters.add("suggestions");
+            else if ("setThreshold".equals(opcodes[index])) block.parameters.add("2");
+            else if ("searchViewSetQuery".equals(opcodes[index])) block.parameters.add("Ada");
+            else if ("searchViewSetQueryHint".equals(opcodes[index])) block.parameters.add("Find");
+            else if ("setFormat12Hour".equals(opcodes[index])) block.parameters.add("h:mm a");
+            else if ("setFormat24Hour".equals(opcodes[index])) block.parameters.add("HH:mm");
+            else if ("videoViewSetVideoPath".equals(opcodes[index])) block.parameters.add("https://example.invalid/video.mp4");
+            if (index + 1 < opcodes.length) block.nextBlock = index + 2;
+            chain.add(block);
+        }
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), chain);
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents()
+                .get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(actions.length);
+        for (int index = 0; index < actions.length; index++) assertWidgetAction(imported.get(index), actions[index]);
+        @SuppressWarnings("unchecked") Map<String, Object> ratingGetArguments =
+                (Map<String, Object>) imported.get(0).getPayload().get("arguments");
+        assertThat(ratingGetArguments).containsEntry("resultStateId", "ratingValue");
+        @SuppressWarnings("unchecked") Map<String, Object> dataArguments =
+                (Map<String, Object>) imported.get(4).getPayload().get("arguments");
+        assertThat(dataArguments).containsEntry("itemsStateId", "suggestions");
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void importsLegacySeekBarThumbAndTrackResourcesAsTypedWidgetProperties() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean thumb = new BlockBean("1", "", "", "setThumbResource");

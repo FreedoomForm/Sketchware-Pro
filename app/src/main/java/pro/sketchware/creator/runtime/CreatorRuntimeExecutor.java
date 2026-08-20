@@ -384,6 +384,24 @@ public final class CreatorRuntimeExecutor {
         if ("getscaley".equals(op)) return decimal(liveWidgetValue(engine, first, "get_scale_y", "scaleY", 1d));
         if ("seekbargetmax".equals(op)) return decimal(liveWidgetValue(engine, first, "seek_max", "max", 100d));
         if ("seekbargetprogress".equals(op)) return decimal(liveWidgetValue(engine, first, "seek_progress", "progress", 0d));
+        if ("getrating".equals(op) || "ratingbargetrating".equals(op)) {
+            return decimal(liveWidgetValue(engine, first, "rating_value", "value", 0d));
+        }
+        if ("getnumstars".equals(op) || "ratingbargetnumstars".equals(op)) {
+            return decimal(liveWidgetValue(engine, first, "rating_num_stars", "value", 0d));
+        }
+        if ("getstepsize".equals(op) || "ratingbargetstepsize".equals(op)) {
+            return decimal(liveWidgetValue(engine, first, "rating_step_size", "value", 0d));
+        }
+        if ("searchviewgetquery".equals(op) || "searchgetquery".equals(op)) {
+            return String.valueOf(liveWidgetValue(engine, first, "search_query", "value", ""));
+        }
+        if ("getformat12hour".equals(op) || "textclockgetformat12hour".equals(op)) {
+            return String.valueOf(liveWidgetValue(engine, first, "clock_get_format_12h", "value", ""));
+        }
+        if ("getformat24hour".equals(op) || "textclockgetformat24hour".equals(op)) {
+            return String.valueOf(liveWidgetValue(engine, first, "clock_get_format_24h", "value", ""));
+        }
         if ("spngetselection".equals(op)) return decimal(liveWidgetValue(engine, first, "spinner_selection", "selectedIndex", 0d));
         if ("webviewgeturl".equals(op)) return String.valueOf(liveWidgetValue(engine, first, "web_url", "url", ""));
         if ("webviewcangoback".equals(op)) return widgetQueryValue(first, "web_can_go_back");

@@ -4,6 +4,7 @@ import android.view.View;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.webkit.WebView;
+import android.widget.AutoCompleteTextView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.CalendarView;
@@ -14,9 +15,12 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.SeekBar;
+import android.widget.TextClock;
+import android.widget.VideoView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import androidx.appcompat.widget.SearchView;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import java.util.ArrayList;
@@ -81,6 +85,22 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         }
         if ("rating_step_size".equals(action) && widget instanceof RatingBar) {
             return CreatorRuntimeServiceArguments.succeeded("value", ((RatingBar) widget).getStepSize());
+        }
+        if ("autocomplete_threshold".equals(action) && widget instanceof AutoCompleteTextView
+                && !arguments.containsKey("threshold")) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((AutoCompleteTextView) widget).getThreshold());
+        }
+        if ("search_query".equals(action) && widget instanceof SearchView) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((SearchView) widget).getQuery().toString());
+        }
+        if ("clock_get_format_12h".equals(action) && widget instanceof TextClock) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((TextClock) widget).getFormat12Hour());
+        }
+        if ("clock_get_format_24h".equals(action) && widget instanceof TextClock) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((TextClock) widget).getFormat24Hour());
+        }
+        if ("video_is_playing".equals(action) && widget instanceof VideoView) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((VideoView) widget).isPlaying());
         }
         if ("spinner_selection".equals(action) && widget instanceof Spinner) {
             return CreatorRuntimeServiceArguments.succeeded("value", ((Spinner) widget).getSelectedItemPosition());
@@ -194,6 +214,52 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
             float step = floatValue(arguments.get("step"), -1f);
             if (step <= 0f) return CreatorRuntimeServiceArguments.invalid("RatingBar step size must be positive.");
             ((RatingBar) widget).setStepSize(step);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("autocomplete_set_data".equals(action) && widget instanceof AutoCompleteTextView) {
+            List<String> items = stringItems(arguments.get("items"));
+            ((AutoCompleteTextView) widget).setAdapter(new ArrayAdapter<>(environment.getContext(),
+                    android.R.layout.simple_dropdown_item_1line, items));
+            return CreatorRuntimeServiceArguments.succeeded("updated", true, "count", items.size());
+        }
+        if ("autocomplete_threshold".equals(action) && widget instanceof AutoCompleteTextView) {
+            int threshold = intValue(arguments.get("threshold"), -1);
+            if (threshold < 0) return CreatorRuntimeServiceArguments.invalid("AutoCompleteTextView threshold must be non-negative.");
+            ((AutoCompleteTextView) widget).setThreshold(threshold);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("search_set_query".equals(action) && widget instanceof SearchView) {
+            ((SearchView) widget).setQuery(String.valueOf(arguments.get("query")), false);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("search_set_hint".equals(action) && widget instanceof SearchView) {
+            ((SearchView) widget).setQueryHint(String.valueOf(arguments.get("hint")));
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("clock_format_12h".equals(action) && widget instanceof TextClock) {
+            ((TextClock) widget).setFormat12Hour(String.valueOf(arguments.get("format")));
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("clock_format_24h".equals(action) && widget instanceof TextClock) {
+            ((TextClock) widget).setFormat24Hour(String.valueOf(arguments.get("format")));
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("video_set_url".equals(action) && widget instanceof VideoView) {
+            String source = String.valueOf(arguments.get("url"));
+            if (source.isEmpty() || "null".equals(source)) return CreatorRuntimeServiceArguments.invalid("VideoView URL must not be empty.");
+            ((VideoView) widget).setVideoURI(android.net.Uri.parse(source));
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("video_start".equals(action) && widget instanceof VideoView) {
+            ((VideoView) widget).start();
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("video_pause".equals(action) && widget instanceof VideoView) {
+            ((VideoView) widget).pause();
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("video_stop".equals(action) && widget instanceof VideoView) {
+            ((VideoView) widget).stopPlayback();
             return CreatorRuntimeServiceArguments.succeeded("updated", true);
         }
         if ("seek_set_max".equals(action) && widget instanceof SeekBar) {

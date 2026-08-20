@@ -575,6 +575,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         if ("search".equals(widget.getType())) {
             androidx.appcompat.widget.SearchView search = new androidx.appcompat.widget.SearchView(this);
             search.setQueryHint(propertyString(widget, "hint", "Search"));
+            String initialQuery = propertyString(widget, "query", "");
+            if (!initialQuery.isEmpty()) search.setQuery(initialQuery, false);
             search.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
                 @Override public boolean onQueryTextSubmit(String query) { dispatchRuntimeEvent(widget.getId(), "submit"); return false; }
                 @Override public boolean onQueryTextChange(String value) { dispatchRuntimeEvent(widget.getId(), "change"); return false; }
@@ -585,6 +587,11 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             android.widget.AutoCompleteTextView input = new android.widget.AutoCompleteTextView(this);
             input.setText(propertyString(widget, "text", ""));
             input.setHint(propertyString(widget, "hint", "Type here"));
+            java.util.List<String> suggestions = new java.util.ArrayList<>();
+            for (Object item : runtimeItems(document, widget)) suggestions.add(runtimeItemText(item));
+            input.setAdapter(new android.widget.ArrayAdapter<>(this,
+                    android.R.layout.simple_dropdown_item_1line, suggestions));
+            input.setThreshold(Math.max(0, propertyInt(widget, "threshold", 1)));
             input.setOnItemClickListener((parent, view, position, id) -> dispatchRuntimeEvent(widget.getId(), "item_selected"));
             return registerRuntimeWidget(widget, input);
         }
