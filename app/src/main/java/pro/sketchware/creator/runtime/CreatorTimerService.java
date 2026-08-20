@@ -11,7 +11,11 @@ import java.util.concurrent.TimeUnit;
 /** Runtime-native scheduler for the legacy TimerTask component. */
 public final class CreatorTimerService implements CreatorRuntimeService {
     public interface Listener { void onTick(String timerId); }
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
+        Thread thread = new Thread(runnable, "creator-runtime-timer");
+        thread.setDaemon(true);
+        return thread;
+    });
     private final Listener listener;
     private final Map<String, ScheduledFuture<?>> scheduled = new ConcurrentHashMap<>();
     public CreatorTimerService(Listener listener) { this.listener = listener; }
