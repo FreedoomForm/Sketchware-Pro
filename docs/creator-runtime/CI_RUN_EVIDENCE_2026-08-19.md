@@ -54,3 +54,14 @@ Run `32307303663` for commit `c9e4f90a7` completed successfully on `FreedoomForm
 | Native Android tests (API 34) | `96245581899` | success | `connectedDebugAndroidTest` and native reports uploaded |
 
 The workflow therefore satisfies the required push-triggered pipeline: debug APK assembly, JVM unit tests, and full native emulator testing on both API 30 and API 34.
+
+## Final push-triggered rerun evidence
+
+The documentation push `97e143287` created run `32331071126`. Its APK/JVM job succeeded, API 34 succeeded, and the first API 30 attempt failed only because the GitHub-hosted emulator disconnected (`ShellCommandUnresponsiveException` followed by `No compatible devices connected`), with no test assertion failure. A run-level rerun of failed jobs was requested and completed successfully:
+
+| Rerun job | Job ID | Result |
+|---|---:|---|
+| Native Android tests (API 30), rerun | `96317389283` | success |
+| Native Android tests (API 34), original job | `96317413019` | success |
+
+This confirms both native emulator matrix legs pass after retrying the transient runner failure.
