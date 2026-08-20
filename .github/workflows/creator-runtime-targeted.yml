@@ -12,17 +12,12 @@ on:
           - '30'
           - '34'
       test-class:
-        description: Fully-qualified instrumentation test class
+        description: Fully-qualified instrumentation test class or Class#method filter
         required: true
         default: pro.sketchware.creator.CreatorRuntimeNativeWidgetTest
         type: string
       test-method:
         description: Optional single test method; leave empty for the whole selected class
-        required: false
-        default: ''
-        type: string
-      test-filter:
-        description: Android instrumentation filter in Class#method form
         required: false
         default: ''
         type: string
@@ -83,7 +78,7 @@ jobs:
           emulator-boot-timeout: 600
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -no-metrics
-          script: ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace -Pandroid.testInstrumentationRunnerArguments.class=${{ inputs.test-filter }}
+          script: ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace -Pandroid.testInstrumentationRunnerArguments.class=${{ inputs.test-class }}
 
       - name: Upload targeted Android reports
         if: always()

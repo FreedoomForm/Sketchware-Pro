@@ -7,17 +7,12 @@ on:
   workflow_dispatch:
     inputs:
       test-class:
-        description: Optional instrumentation class for focused manual diagnostics
+        description: Optional instrumentation class or Class#method filter for focused manual diagnostics
         required: false
         default: ''
         type: string
       test-method:
         description: Optional instrumentation method for focused manual diagnostics
-        required: false
-        default: ''
-        type: string
-      test-filter:
-        description: Optional Android instrumentation filter in Class#method form
         required: false
         default: ''
         type: string
@@ -139,7 +134,7 @@ jobs:
           emulator-boot-timeout: 600
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -no-metrics
-          script: ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${{ inputs.test-filter != '' && format('-Pandroid.testInstrumentationRunnerArguments.class={0}', inputs.test-filter) || '' }}
+          script: ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${{ inputs.test-class != '' && format('-Pandroid.testInstrumentationRunnerArguments.class={0}', inputs.test-class) || '' }}
 
       - name: Upload connected Android test reports
         if: always()
