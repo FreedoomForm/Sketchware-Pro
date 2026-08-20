@@ -13,6 +13,7 @@ This batch closes the typed runtime bridge for native `DatePicker` and `TimePick
 | Read TimePicker hour | `time_picker_hour` | Native emulator reads the selected hour into runtime state |
 | Read TimePicker minute | `time_picker_minute` | Typed service branch is present; native coverage remains paired with the hour callback path |
 | Set TimePicker time | `time_picker_set_time` | Typed service validates bounds and updates the real rendered TimePicker |
+| Import TimePicker setters | `timepickerSetIs24Hour`, `timepickerSetCurrentHour`, `timepickerSetHour`, `timepickerSetCurrentMinute`, `timepickerSetMinute` | JVM importer test verifies all legacy opcodes become typed widget service calls |
 | Invalid values | Explicit invalid result | Values outside the Android picker ranges are rejected visibly as runtime errors |
 
 ## Native acceptance test
@@ -21,7 +22,7 @@ This batch closes the typed runtime bridge for native `DatePicker` and `TimePick
 
 ## JVM acceptance test
 
-The legacy importer JVM suite already asserts that `datepickerdialogshow` and `timepickerdialogshow` become typed `date_picker` and `time_picker` service calls. The Android compilation gate additionally verifies the widget service and instrumentation test compile against the configured SDK.
+The legacy importer JVM suite asserts that `datepickerdialogshow` and `timepickerdialogshow` become typed `date_picker` and `time_picker` service calls, and that all legacy TimePicker setter blocks become typed widget service calls with validated action arguments. The Android compilation gate additionally verifies the widget service and instrumentation test compile against the configured SDK.
 
 ## Fallback policy
 
