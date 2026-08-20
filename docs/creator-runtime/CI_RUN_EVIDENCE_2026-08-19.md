@@ -203,3 +203,7 @@ The Text-to-Speech batch adds `CreatorRuntimeNativeWidgetTest.textToSpeechReject
 ## Speech-to-Text validation batch — next checkpoint
 
 The Speech-to-Text batch adds `CreatorRuntimeNativeWidgetTest.speechToTextRejectsInvalidActionAndSupportsLifecycleOnNativeRuntime` for unsupported action and stop/shutdown before recognizer access. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual microphone permission UX, recognizer availability, listening/result/partial/error callbacks, language/audio routing, lifecycle timing, and device/engine parity remain open integration/device gates.
+
+## File validation batch — next checkpoint
+
+The File batch adds `CreatorRuntimeNativeWidgetTest.fileRejectsInvalidInputsOnNativeRuntime` through the production Activity environment for missing action/path, unsupported public directory, and missing-source read cases. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual private-file operations, root/traversal edge cases, storage permission UX, scoped-storage differences, and filesystem/device parity remain open integration/device gates.
