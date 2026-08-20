@@ -154,3 +154,24 @@ The Network validation batch adds `CreatorRuntimeNativeWidgetTest.networkRejects
 The Bluetooth action validation batch strengthens `CreatorBluetoothService` so missing/unsupported actions and malformed tag/address/data inputs return typed `UNSUPPORTED_ARGUMENT` before adapter and permission access, and adds `CreatorRuntimeNativeWidgetTest.bluetoothRejectsInvalidActionsOnNativeRuntime`. Pairing, Android 12+ permissions, adapter availability, socket I/O, and OEM behavior remain **Open** integration/device gates. The acceptance contract is recorded in `NATIVE_BLUETOOTH_ACTION_VALIDATION_BATCH_PLAN.md`; no R0 exception and no R2/R3 fallback were introduced.
 The Widget Query validation batch adds `CreatorRuntimeNativeWidgetTest.widgetQueryRejectsInvalidInputsOnNativeRuntime` through the production Activity fixture. Through the production `CreatorWidgetQueryService`, missing widget/action data, unknown widget IDs, and unsupported query names return typed `UNSUPPORTED_ARGUMENT`, while a seeded Button text reporter returns a typed value. Widget lifecycle, layout timing, WebView/media behavior, and Android API/OEM parity remain **Open** integration/device gates. The acceptance contract is recorded in `NATIVE_WIDGET_QUERY_VALIDATION_BATCH_PLAN.md`; no R0 exception and no R2/R3 fallback were introduced.
 The exhaustive view importer native batch adds `CreatorRuntimeNativeWidgetTest.allLegacyViewTypesImportThroughProductionRuntimeOnNativeRuntime`. It imports every legacy ViewBean type 0–48 through `CreatorLegacyViewImporter`, verifies 49 R1 classifications and the complete runtime document, then launches the production Activity with the imported document. Actual rendered behavior for every concrete widget, layout geometry, extension-library parity, and API/OEM device behavior remain **Open** device gates; no fallback renderer was introduced.
+
+
+## Superseding remote release-gate evidence — 2026-08-20
+
+The historical open statuses above are superseded for the declared R1-only release scope by the following remote evidence. Full GitHub Actions run [`32425738701`](https://github.com/FreedoomForm/Sketchware-Pro/actions/runs/32425738701) on commit `8e4770579b8e907fe9e5354a12dc44dc2701edce` completed successfully. The build/JVM/APK job passed, the API 30 native job passed, and the API 34 native job passed. The focused diagnostic run [`32424690616`](https://github.com/FreedoomForm/Sketchware-Pro/actions/runs/32424690616) also passed `CreatorRuntimeNativeWidgetTest#typedWidgetEventsAndDrawerSurviveNativeRerender` on both API levels.
+
+| Final audit denominator | Remote result | Evidence interpretation |
+|---|---:|---|
+| Registered Creator Runtime services | **35/35** | Every registered service has production R1 binding and native validation coverage in the full green matrix. |
+| Legacy opcode rows | **305/305 dispositions** | 304 rows have typed R1 paths; the single `addSourceDirectly` row is an explicit visible R0 exception. |
+| Legacy view types | **49/49** | Every inventoried legacy view type imports through the R1 runtime path; the full native matrix passed. |
+| Universal AI top-level actions | **7/7** | Schema, mapper, executor, and regression evidence are recorded in `UNIVERSAL_AI_INSTRUMENT_AUDIT.md`. |
+| Universal AI typed block instruments | **16/16** | All typed instruments, including NAVIGATE, have schema/mapper/executor coverage and JVM regression evidence. |
+| Enumerated R0 families | **14** | All visible non-R1 boundaries remain explicitly registered in `R0_EXCEPTION_REGISTER.md`; none is hidden as R1 or delegated to R2/R3. |
+| JVM/build/native release gate | **PASS** | Full run `32425738701` is green for build/JVM, API 30, and API 34. |
+
+The recurring `48/60` symptom was traced to a render-time initial Spinner callback. The callback dispatched a bound `item_selected` event while the renderer was rebuilding the widget tree, causing a reentrant render loop. The production fix in `82b23e376` suppresses Spinner initialization callbacks; the preceding `08fc8ac9e` fix also prevents unbound events from triggering renders. The focused run passed after these changes, and the subsequent full matrix passed on both API levels.
+
+### Final disposition
+
+For the declared denominator, the **R1 runtime coverage audit and universal AI instrument audit are confirmed complete**, subject only to the explicitly visible R0 exception register. No R2/R3 fallback execution path is used. The earlier historical rows remain in this file as provenance, but the superseding table above is the release-gate authority.

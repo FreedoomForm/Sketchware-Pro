@@ -38,15 +38,22 @@ The AI tool does not write Java, mutate legacy files directly, or invoke a paral
 
 ## Evidence
 
-Local evidence currently passes:
+Historical local evidence also passes:
 
 ```text
 ./gradlew testDebugUnitTest test --no-daemon
 ./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon
 ```
 
-The native API 30/API 34 evidence remains governed by the active GitHub Actions matrix. The current follow-up commit contains this audit's schema/test changes locally and must receive CI confirmation before universal AI coverage is marked release-green.
+The superseding remote API 30/API 34 evidence is recorded below in the release-green addendum.
 
 ## Verdict
 
-Within the defined universal AI instrument surface, coverage is **100% at schema, mapper, and executor-dispatch levels: 7/7 top-level actions and 16/16 block instruments**. Release sign-off still requires the corrective GitHub Actions matrix to finish successfully and the separate exhaustive Sketchware-to-R1 capability audit to remain gap-free.
+Within the defined universal AI instrument surface, coverage is **100% at schema, mapper, and executor-dispatch levels: 7/7 top-level actions and 16/16 block instruments**. The superseding remote evidence below closes the CI sign-off for this surface.
+
+
+## Superseding remote release-gate evidence
+
+The earlier local-only status is superseded by remote GitHub Actions evidence. Focused run [`32424690616`](https://github.com/FreedoomForm/Sketchware-Pro/actions/runs/32424690616) passed `CreatorRuntimeNativeWidgetTest#typedWidgetEventsAndDrawerSurviveNativeRerender` on API 30 and API 34 after the renderer callback fixes. Full release-gate run [`32425738701`](https://github.com/FreedoomForm/Sketchware-Pro/actions/runs/32425738701) on commit `8e4770579b8e907fe9e5354a12dc44dc2701edce` completed successfully for build/JVM, API 30 native tests, and API 34 native tests.
+
+Accordingly, the universal AI instrument audit is **release-green** within the defined surface: **7/7 top-level actions** and **16/16 typed runtime block instruments**, with schema, mapper, executor, and native pipeline evidence. The AI path remains the same typed R1 pipeline as the visual editor and contains no R2/R3 fallback or Java source-generation path.
