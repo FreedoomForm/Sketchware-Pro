@@ -42,3 +42,15 @@ Run `32302496900` built the APK/JVM reports and executed native API 30 tests. Th
 ## Second native matrix diagnosis
 
 The rerun reached the native matrix and API 30 reduced from two failures to one: `AISettingsActivityTest.defaultFragmentIsProvidersList` passed after the lifecycle-safe assertion and debug activity declaration. The remaining API 30 failure was `ChatFragmentE2ETest.chatInputSendAddsUserMessage`, caused by Espresso's focused-root picker while `FragmentScenario` was settling. The test now sets the input text and invokes the send button directly from `scenario.onFragment`, preserving the local user-row assertion without relying on window focus. Local Android test Java compilation and debug manifest processing pass again.
+
+## Fully successful remote creator-runtime run
+
+Run `32307303663` for commit `c9e4f90a7` completed successfully on `FreedoomForm/Sketchware-Pro` branch `creator-runtime`.
+
+| Job | Job ID | Result | Evidence |
+|---|---:|---|---|
+| Build debug APK and JVM tests | `96243897383` | success | Debug APK and JVM reports uploaded |
+| Native Android tests (API 30) | `96245581884` | success | `connectedDebugAndroidTest` and native reports uploaded |
+| Native Android tests (API 34) | `96245581899` | success | `connectedDebugAndroidTest` and native reports uploaded |
+
+The workflow therefore satisfies the required push-triggered pipeline: debug APK assembly, JVM unit tests, and full native emulator testing on both API 30 and API 34.

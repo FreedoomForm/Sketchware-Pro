@@ -84,4 +84,4 @@
 - [x] Preserve legacy LayoutBean padding, margins, dimensions, gravity, weight, and background references in typed runtime widgets, then apply them in the live renderer without a compiled project resource path.
 - [x] Import and execute typed More Block return values through scoped frames; keep arbitrary direct-source execution visibly blocked as R0.
 - [x] Add GitHub Actions for every push to creator-runtime: debug APK assembly, JVM tests, and API 30/API 34 native emulator tests with artifacts.
-- [ ] Confirm the first remote creator-runtime workflow run passes on GitHub-hosted Android emulators.
+- [x] Confirm the first remote creator-runtime workflow run passes on GitHub-hosted Android emulators (`32307303663`, APK/JVM plus native API 30/API 34 success).
