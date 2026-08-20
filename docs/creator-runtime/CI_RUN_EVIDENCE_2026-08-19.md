@@ -115,3 +115,7 @@ The Firebase Auth Phone batch adds `CreatorRuntimeNativeWidgetTest.firebaseAuthP
 ## Firebase Google Login validation batch — next checkpoint
 
 The Firebase Google Login batch adds `CreatorRuntimeNativeWidgetTest.firebaseGoogleLoginRejectsInvalidInputsOnNativeRuntime` for unsupported action and missing `webClientId`. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; the currently running workflows for `31ce5bff9` remain independent. Valid OAuth/Firebase configuration, account, Play services, network, and device behavior remain open integration gates.
+
+## Rewarded Ad validation batch — next checkpoint
+
+The Rewarded Ad batch adds `CreatorRuntimeNativeWidgetTest.rewardedAdRejectsInvalidInputsOnNativeRuntime` for unsupported action, missing `adUnitId`, and showing before an ad is loaded. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid ad SDK initialization, consent/policy, configuration, network, timing, and display behavior remain open integration gates.
