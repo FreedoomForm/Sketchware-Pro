@@ -219,3 +219,7 @@ The Drawer batch adds `CreatorRuntimeNativeWidgetTest.drawerRejectsInvalidInputs
 ## UI validation batch — next checkpoint
 
 The UI batch adds `CreatorRuntimeNativeWidgetTest.uiRejectsInvalidInputsOnNativeRuntime` for unsupported action and missing title/text before Activity or clipboard access. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual Activity title behavior, clipboard availability, primary-clip semantics, privacy/OEM policy, lifecycle, and device parity remain open integration/device gates.
+
+## Intent validation batch — local-only checkpoint
+
+The Intent batch adds `CreatorRuntimeNativeWidgetTest.intentRejectsInvalidInputsOnNativeRuntime` for unsupported action, missing configure/extra inputs, invalid URL scheme, missing share text, and missing dial number before Activity intent launch. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. Remote push is intentionally withheld by the current requirement until the complete capability inventory and all audit gates confirm 100% R1 coverage. Actual intent configuration/start, Activity resolver availability, navigation/finish lifecycle, chooser/dialer behavior, URL handling, and device/OEM parity remain open integration/device gates.
