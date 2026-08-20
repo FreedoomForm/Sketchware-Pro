@@ -126,8 +126,8 @@ jobs:
 
       - name: Run connected Android tests on emulator
         env:
-          TEST_CLASS: ${{ inputs.test-class }}
-          TEST_METHOD: ${{ inputs.test-method }}
+          TEST_CLASS_ARG: ${{ inputs.test-class != '' && format('-Pandroid.testInstrumentationRunnerArguments.class={0}', inputs.test-class) || '' }}
+          TEST_METHOD_ARG: ${{ inputs.test-method != '' && format('-Pandroid.testInstrumentationRunnerArguments.method={0}', inputs.test-method) || '' }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
@@ -137,15 +137,7 @@ jobs:
           emulator-boot-timeout: 600
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -no-metrics
-          script: |
-            gradle_args=":app:connectedDebugAndroidTest --no-daemon --stacktrace"
-            if [ -n "${TEST_CLASS}" ]; then
-              gradle_args="${gradle_args} -Pandroid.testInstrumentationRunnerArguments.class=${TEST_CLASS}"
-            fi
-            if [ -n "${TEST_METHOD}" ]; then
-              gradle_args="${gradle_args} -Pandroid.testInstrumentationRunnerArguments.method=${TEST_METHOD}"
-            fi
-            ./gradlew ${gradle_args}
+          script: ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${TEST_CLASS_ARG} ${TEST_METHOD_ARG}
 
       - name: Upload connected Android test reports
         if: always()
