@@ -318,6 +318,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
 
     private void render() {
         CreatorProjectDocument document = session.getDocument();
+        boolean drawerWasOpen = liveDrawerLayout != null
+                && liveDrawerLayout.isDrawerOpen(GravityCompat.START);
         runtimeEnvironment.clearWidgets();
         disposeMapViews();
         disposeDrawerLayout();
@@ -331,7 +333,13 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 ? activeScreenId : document.getEntryScreenId();
         String rootId = document.getScreens().get(screenId).getRootWidgetId();
         View root = renderWidget(document, document.getWidgets().get(rootId));
-        if (root != null) previewCanvas.addView(renderScreenShell(document, screenId, root));
+        if (root != null) {
+            View shell = renderScreenShell(document, screenId, root);
+            previewCanvas.addView(shell);
+            if (drawerWasOpen && liveDrawerLayout != null) {
+                liveDrawerLayout.openDrawer(GravityCompat.START);
+            }
+        }
     }
 
     private View renderScreenShell(CreatorProjectDocument document, String screenId, View mainContent) {
