@@ -46,6 +46,7 @@ import pro.sketchware.creator.runtime.CreatorFirebaseAuthPhoneService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
+import pro.sketchware.creator.runtime.CreatorFragmentAdapterService;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectDocumentCodec;
 import pro.sketchware.creator.runtime.CreatorNotificationService;
@@ -114,6 +115,16 @@ public class CreatorRuntimeNativeWidgetTest {
                 .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
         assertThat(service.execute(map("action", "show")).getStatus())
                 .isEqualTo(CreatorRuntimeService.Status.FAILED);
+    }
+
+    @Test public void fragmentAdapterRejectsInvalidInputsOnNativeRuntime() {
+        CreatorFragmentAdapterService service = new CreatorFragmentAdapterService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "page_count")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "select_page", "page", 0L)).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {

@@ -119,3 +119,7 @@ The Firebase Google Login batch adds `CreatorRuntimeNativeWidgetTest.firebaseGoo
 ## Rewarded Ad validation batch — next checkpoint
 
 The Rewarded Ad batch adds `CreatorRuntimeNativeWidgetTest.rewardedAdRejectsInvalidInputsOnNativeRuntime` for unsupported action, missing `adUnitId`, and showing before an ad is loaded. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid ad SDK initialization, consent/policy, configuration, network, timing, and display behavior remain open integration gates.
+
+## Fragment Adapter validation batch — next checkpoint
+
+The Fragment Adapter batch adds `CreatorRuntimeNativeWidgetTest.fragmentAdapterRejectsInvalidInputsOnNativeRuntime` for missing pager `widgetId` and unsupported action paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Live pager rendering, adapter population, fragment lifecycle, animation, and device UI behavior remain open integration gates.
