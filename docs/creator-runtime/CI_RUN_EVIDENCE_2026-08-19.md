@@ -131,3 +131,7 @@ The Gyroscope batch adds `CreatorRuntimeNativeWidgetTest.gyroscopeStartStopContr
 ## Location invalid-provider validation batch — next checkpoint
 
 The Location batch adds `CreatorRuntimeNativeWidgetTest.locationRejectsInvalidProviderOnNativeRuntime` with `GrantPermissionRule`, a production Activity host, invalid-provider failure validation, and deterministic stop validation. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Provider enablement, permission UX, GPS/network fixes, last-known semantics, interval/distance behavior, and device parity remain open gates.
+
+## Interstitial Ad validation batch — next checkpoint
+
+The Interstitial Ad batch adds `CreatorRuntimeNativeWidgetTest.interstitialAdRejectsInvalidInputsOnNativeRuntime` for unsupported action, missing `adUnitId`, show-before-load failure, and typed component creation. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Valid ad SDK initialization, consent/policy, configuration, network, timing, activity lifecycle, and display behavior remain open integration gates.

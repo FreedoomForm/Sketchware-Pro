@@ -51,6 +51,7 @@ import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
 import pro.sketchware.creator.runtime.CreatorFragmentAdapterService;
 import pro.sketchware.creator.runtime.CreatorGyroscopeService;
+import pro.sketchware.creator.runtime.CreatorInterstitialAdService;
 import pro.sketchware.creator.runtime.CreatorLocationService;
 import pro.sketchware.creator.runtime.CreatorRuntimeEnvironment;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
@@ -168,6 +169,18 @@ public class CreatorRuntimeNativeWidgetTest {
                         .isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
             });
         }
+    }
+
+    @Test public void interstitialAdRejectsInvalidInputsOnNativeRuntime() {
+        CreatorInterstitialAdService service = new CreatorInterstitialAdService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "load", "componentId", "banner"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "show", "componentId", "banner"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.FAILED);
+        assertThat(service.execute(map("action", "create", "componentId", "banner"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {
