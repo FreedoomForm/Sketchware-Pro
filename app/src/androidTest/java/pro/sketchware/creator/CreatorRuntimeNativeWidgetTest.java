@@ -67,6 +67,11 @@ import pro.sketchware.creator.runtime.CreatorCalendarService;
 import pro.sketchware.creator.runtime.CreatorDrawerService;
 import pro.sketchware.creator.runtime.CreatorUiService;
 import pro.sketchware.creator.runtime.CreatorIntentService;
+import pro.sketchware.creator.runtime.CreatorTimerService;
+import pro.sketchware.creator.runtime.CreatorStorageService;
+import pro.sketchware.creator.runtime.CreatorNetworkService;
+import pro.sketchware.creator.runtime.CreatorBluetoothService;
+import pro.sketchware.creator.runtime.CreatorWidgetQueryService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -490,6 +495,103 @@ public class CreatorRuntimeNativeWidgetTest {
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
         assertThat(service.execute(map("action", "dial"))
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+    }
+
+    @Test public void timerRejectsInvalidInputsOnNativeRuntime() {
+        CreatorTimerService service = new CreatorTimerService(null);
+        assertThat(service.execute(map()).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("timerId", "timer")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("timerId", "timer", "action", "after", "delayMs", "bad"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("timerId", "timer", "action", "after", "delayMs", 1L, "periodMs", 1L))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("timerId", "timer", "action", "every", "delayMs", 1L))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("timerId", "timer", "action", "cancel"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+    }
+
+    @Test public void storageRejectsInvalidInputsAndSupportsTypedPathsOnNativeRuntime() {
+        CreatorStorageService service = new CreatorStorageService(context, "validation");
+        assertThat(service.execute(map()).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "configure", "componentId", "storage"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "set")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "invalid", "key", "key"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "configure", "componentId", "storage", "storeName", "prefs"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+        assertThat(service.execute(map("action", "set", "componentId", "storage", "key", "key", "value", "value"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+        assertThat(service.execute(map("action", "get", "componentId", "storage", "key", "key"))
+                .getOutput().get("value")).isEqualTo("value");
+        assertThat(service.execute(map("action", "remove", "componentId", "storage", "key", "key"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+    }
+
+    @Test public void networkRejectsInvalidInputsBeforeRequestOnNativeRuntime() {
+        try (ActivityScenario<CreatorProjectActivity> scenario =
+                     ActivityScenario.launch(CreatorProjectActivity.class)) {
+            scenario.onActivity(activity -> {
+                CreatorNetworkService service = new CreatorNetworkService(
+                        new CreatorRuntimeEnvironment(activity, null));
+                assertThat(service.execute(map()).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "set_params"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "start", "componentId", "request"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("url", "not-a-url"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+            });
+        }
+    }
+
+    @Test public void bluetoothRejectsInvalidActionsOnNativeRuntime() {
+        try (ActivityScenario<CreatorProjectActivity> scenario =
+                     ActivityScenario.launch(CreatorProjectActivity.class)) {
+            scenario.onActivity(activity -> {
+                CreatorBluetoothService service = new CreatorBluetoothService(
+                        new CreatorRuntimeEnvironment(activity, null));
+                assertThat(service.execute(map()).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "invalid")).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "ready_connection"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "start_connection", "tag", "socket"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "stop_connection"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("action", "send_data", "tag", "socket"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+            });
+        }
+    }
+
+    @Test public void widgetQueryRejectsInvalidInputsOnNativeRuntime() {
+        seedRuntimeDocument();
+        try (ActivityScenario<CreatorProjectActivity> scenario =
+                     ActivityScenario.launch(CreatorProjectActivity.class)) {
+            scenario.onActivity(activity -> {
+                CreatorWidgetQueryService service = new CreatorWidgetQueryService(
+                        new CreatorRuntimeEnvironment(activity, null));
+                assertThat(service.execute(map()).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("widgetId", "button"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("widgetId", "missing", "action", "get_text"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("widgetId", "button", "action", "unsupported_query"))
+                        .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                assertThat(service.execute(map("widgetId", "button", "action", "get_text"))
+                        .getOutput().get("value")).isEqualTo("Increment");
+            });
+        }
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {

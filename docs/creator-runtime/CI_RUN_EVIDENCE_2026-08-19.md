@@ -223,3 +223,9 @@ The UI batch adds `CreatorRuntimeNativeWidgetTest.uiRejectsInvalidInputsOnNative
 ## Intent validation batch — local-only checkpoint
 
 The Intent batch adds `CreatorRuntimeNativeWidgetTest.intentRejectsInvalidInputsOnNativeRuntime` for unsupported action, missing configure/extra inputs, invalid URL scheme, missing share text, and missing dial number before Activity intent launch. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. Remote push is intentionally withheld by the current requirement until the complete capability inventory and all audit gates confirm 100% R1 coverage. Actual intent configuration/start, Activity resolver availability, navigation/finish lifecycle, chooser/dialer behavior, URL handling, and device/OEM parity remain open integration/device gates.
+
+## Remaining service validation batches — local-only checkpoint
+
+The Timer, local storage, HTTP/network, Bluetooth action, and Widget Query batches now have production-path native tests. The local command `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully after the production Bluetooth preflight validation and test additions. API 30/API 34 emulator execution is intentionally deferred until the complete capability matrix is reviewed; no remote push has been made for these changes. Timer scheduling timing, SharedPreferences persistence, live network callbacks, Bluetooth hardware/permissions, widget lifecycle, and device/OEM parity remain open integration/device gates.
+
+The matching acceptance plans are `NATIVE_TIMER_VALIDATION_BATCH_PLAN.md`, `NATIVE_LOCAL_STORAGE_VALIDATION_BATCH_PLAN.md`, `NATIVE_NETWORK_VALIDATION_BATCH_PLAN.md`, `NATIVE_BLUETOOTH_ACTION_VALIDATION_BATCH_PLAN.md`, and `NATIVE_WIDGET_QUERY_VALIDATION_BATCH_PLAN.md`. The current remote branch remains frozen by user requirement until 100% R1 coverage is confirmed.

@@ -30,7 +30,28 @@ public final class CreatorBluetoothService implements CreatorRuntimeService {
 
     @Override public Result execute(Map<String, Object> arguments) {
         String action = CreatorRuntimeServiceArguments.string(arguments, "action");
+        if (action == null) return CreatorRuntimeServiceArguments.invalid("Bluetooth action is required.");
         if ("random_uuid".equals(action)) return CreatorRuntimeServiceArguments.succeeded("uuid", UUID.randomUUID().toString());
+        if (!("status".equals(action) || "request_enable".equals(action) || "paired_devices".equals(action)
+                || "ready_connection".equals(action) || "start_connection".equals(action)
+                || "stop_connection".equals(action) || "send_data".equals(action))) {
+            return CreatorRuntimeServiceArguments.invalid("Unsupported Bluetooth action: " + action);
+        }
+        String tag = CreatorRuntimeServiceArguments.string(arguments, "tag");
+        if ("ready_connection".equals(action) && tag == null) {
+            return CreatorRuntimeServiceArguments.invalid("ready_connection requires tag.");
+        }
+        if ("start_connection".equals(action)
+                && (tag == null || CreatorRuntimeServiceArguments.string(arguments, "address") == null)) {
+            return CreatorRuntimeServiceArguments.invalid("start_connection requires address and tag.");
+        }
+        if ("stop_connection".equals(action) && tag == null) {
+            return CreatorRuntimeServiceArguments.invalid("stop_connection requires tag.");
+        }
+        if ("send_data".equals(action)
+                && (tag == null || CreatorRuntimeServiceArguments.string(arguments, "data") == null)) {
+            return CreatorRuntimeServiceArguments.invalid("send_data requires data and tag.");
+        }
         if ("status".equals(action) && adapter == null) {
             return CreatorRuntimeServiceArguments.succeeded("activated", false, "enabled", false, "name", "");
         }
@@ -58,28 +79,23 @@ public final class CreatorBluetoothService implements CreatorRuntimeService {
             }
             return CreatorRuntimeServiceArguments.succeeded("devices", devices);
         }
-        String tag = CreatorRuntimeServiceArguments.string(arguments, "tag");
         if ("ready_connection".equals(action)) {
-            if (tag == null) return CreatorRuntimeServiceArguments.invalid("ready_connection requires tag.");
             UUID uuid = uuid(arguments);
             startServer(tag, uuid);
             return CreatorRuntimeServiceArguments.succeeded("tag", tag, "listening", true);
         }
         if ("start_connection".equals(action)) {
             String address = CreatorRuntimeServiceArguments.string(arguments, "address");
-            if (tag == null || address == null) return CreatorRuntimeServiceArguments.invalid("start_connection requires address and tag.");
             UUID uuid = uuid(arguments);
             startClient(tag, address, uuid);
             return CreatorRuntimeServiceArguments.succeeded("tag", tag, "connecting", true);
         }
         if ("stop_connection".equals(action)) {
-            if (tag == null) return CreatorRuntimeServiceArguments.invalid("stop_connection requires tag.");
             stop(tag, true);
             return CreatorRuntimeServiceArguments.succeeded("tag", tag, "stopped", true);
         }
         if ("send_data".equals(action)) {
             String data = CreatorRuntimeServiceArguments.string(arguments, "data");
-            if (tag == null || data == null) return CreatorRuntimeServiceArguments.invalid("send_data requires data and tag.");
             BluetoothSocket socket = sockets.get(tag);
             if (socket == null || !socket.isConnected()) {
                 publish("error", tag, "not_connected", "Bluetooth is not connected yet.");
