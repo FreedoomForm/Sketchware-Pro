@@ -72,6 +72,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private String activeScreenId;
     private final Map<String, MapView> liveMapViews = new LinkedHashMap<>();
     private DrawerLayout liveDrawerLayout;
+    private boolean rendering;
+    private boolean renderPending;
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(this::render);
     private static final String[] ENTRY_PLACEMENTS = {
             "bottom_end", "bottom_start", "top_end", "top_start", "center"
@@ -317,6 +319,23 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     }
 
     private void render() {
+        if (rendering) {
+            renderPending = true;
+            return;
+        }
+        rendering = true;
+        try {
+            renderNow();
+        } finally {
+            rendering = false;
+            if (renderPending) {
+                renderPending = false;
+                render();
+            }
+        }
+    }
+
+    private void renderNow() {
         CreatorProjectDocument document = session.getDocument();
         boolean drawerWasOpen = liveDrawerLayout != null
                 && liveDrawerLayout.isDrawerOpen(GravityCompat.START);
