@@ -56,6 +56,7 @@ import pro.sketchware.creator.runtime.CreatorFilePickerService;
 import pro.sketchware.creator.runtime.CreatorDatePickerService;
 import pro.sketchware.creator.runtime.CreatorTimePickerService;
 import pro.sketchware.creator.runtime.CreatorDialogService;
+import pro.sketchware.creator.runtime.CreatorAnimatorService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -313,6 +314,22 @@ public class CreatorRuntimeNativeWidgetTest {
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
         assertThat(service.execute(map("action", "set_positive_button", "dialogId", "dialog"))
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+    }
+
+    @Test public void animatorRejectsInvalidInputsOnNativeRuntime() {
+        CreatorAnimatorService service = new CreatorAnimatorService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "set_target", "componentId", "anim"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "set_duration", "componentId", "anim", "durationMs", 60001L))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "set_repeat_count", "componentId", "anim", "repeatCount", 1001L))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "is_running", "componentId", "anim"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+        assertThat(service.execute(map("action", "cancel", "componentId", "anim"))
+                .getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {

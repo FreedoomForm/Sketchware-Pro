@@ -175,3 +175,7 @@ The Time Picker batch adds `CreatorRuntimeNativeWidgetTest.timePickerRejectsInva
 ## Dialog validation batch — next checkpoint
 
 The Dialog batch strengthens missing dialog configuration handling and adds `CreatorRuntimeNativeWidgetTest.dialogRejectsInvalidInputsOnNativeRuntime` for unsupported action, missing dialog ID/value, and missing button label. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual dialog/progress rendering, button callbacks, UI-thread lifecycle, theme/locale behavior, and device parity remain open integration/device gates.
+
+## Animator validation batch — next checkpoint
+
+The Animator batch adds `CreatorRuntimeNativeWidgetTest.animatorRejectsInvalidInputsOnNativeRuntime` for missing component/target IDs, duration/repeat bounds, and configured status/cancel paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Actual rendered-widget animation, timing, interpolation, repeat behavior, UI-thread lifecycle, and device visual parity remain open integration/device gates.
