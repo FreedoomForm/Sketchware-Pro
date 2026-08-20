@@ -42,11 +42,13 @@ import java.util.Map;
 import pro.sketchware.R;
 import pro.sketchware.creator.runtime.CreatorEntryControl;
 import pro.sketchware.creator.runtime.CreatorEventBinding;
+import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectDocumentCodec;
 import pro.sketchware.creator.runtime.CreatorNotificationService;
 import pro.sketchware.creator.runtime.CreatorRuntimeCapability;
 import pro.sketchware.creator.runtime.CreatorRuntimePermissionBridge;
+import pro.sketchware.creator.runtime.CreatorRuntimeService;
 import pro.sketchware.creator.runtime.CreatorRuntimeBlock;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 import pro.sketchware.creator.runtime.CreatorScreen;
@@ -69,6 +71,16 @@ public class CreatorRuntimeNativeWidgetTest {
         context = ApplicationProvider.getApplicationContext();
         context.getSharedPreferences("creator_runtime", Context.MODE_PRIVATE)
                 .edit().clear().commit();
+    }
+
+    @Test public void firebaseCloudMessageRejectsInvalidInputsOnNativeRuntime() {
+        CreatorFirebaseCloudMessageService service = new CreatorFirebaseCloudMessageService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "subscribe")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+        assertThat(service.execute(map("action", "unsubscribe")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {

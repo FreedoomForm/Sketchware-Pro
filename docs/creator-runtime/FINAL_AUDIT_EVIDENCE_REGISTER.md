@@ -116,3 +116,6 @@ The permission bridge incremental batch adds `CreatorRuntimeNativeWidgetTest.per
 
 
 The notification permission batch adds `CreatorRuntimeNativeWidgetTest.notificationPermissionGateMatchesAndroidSdkOnNativeRuntime` and makes the production `CreatorNotificationService.requiresNotificationPermission` predicate publicly testable. Native coverage verifies the API 32 denied, API 33 denied, and API 36 granted contracts; local JVM, APK, and Android-test compilation checks pass. Real system permission request/result behavior remains **Open** device evidence, and no R2/R3 or generated-code path was introduced.
+
+
+The Firebase Cloud Message validation batch adds `CreatorRuntimeNativeWidgetTest.firebaseCloudMessageRejectsInvalidInputsOnNativeRuntime`. The production `CreatorFirebaseCloudMessageService` now has native-runner evidence for unsupported actions and missing subscribe/unsubscribe topics returning typed `UNSUPPORTED_ARGUMENT` results before Firebase SDK access. Valid token and topic operations remain **Open** component/device evidence because they require Firebase initialization, network, and project credentials; no fallback path was introduced.

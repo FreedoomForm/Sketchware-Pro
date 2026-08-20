@@ -102,3 +102,8 @@ The notification batch adds Android-runner coverage for the production `POST_NOT
 ## Android CI success — notification permission checkpoint bd08207ba
 
 Public workflow status reports `Android CI` run `32358158139` for commit `bd08207ba` as `success`. The specialized `Creator Runtime Android` run `32358158157`, which carries the required debug APK/JVM and API 30/API 34 native matrix, remains `pending`; native device evidence is therefore still open.
+
+
+## Firebase Cloud Message validation batch — next checkpoint
+
+The Firebase Cloud Message batch adds deterministic Android-runner validation for unsupported actions and missing subscribe/unsubscribe topics. Local `testDebugUnitTest`, `assembleDebug`, and `compileDebugAndroidTestJavaWithJavac` pass. Valid FCM token/topic operations remain an open Firebase configuration and device/network gate; this validation batch will be committed and pushed separately.
