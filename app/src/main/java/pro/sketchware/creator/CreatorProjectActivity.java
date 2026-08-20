@@ -335,7 +335,12 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         View root = renderWidget(document, document.getWidgets().get(rootId));
         if (root != null) {
             View shell = renderScreenShell(document, screenId, root);
-            previewCanvas.addView(shell);
+            if (shell instanceof DrawerLayout) {
+                previewCanvas.addView(shell, new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, dp(600)));
+            } else {
+                previewCanvas.addView(shell);
+            }
             if (drawerWasOpen && liveDrawerLayout != null) {
                 liveDrawerLayout.openDrawer(GravityCompat.START);
             }
