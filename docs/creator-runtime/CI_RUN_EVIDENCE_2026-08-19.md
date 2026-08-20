@@ -111,3 +111,7 @@ The Firebase Cloud Message batch adds deterministic Android-runner validation fo
 ## Firebase Auth Phone validation batch — commit 5ffb33c07
 
 The Firebase Auth Phone batch adds `CreatorRuntimeNativeWidgetTest.firebaseAuthPhoneRejectsInvalidInputsOnNativeRuntime` for unsupported action and incomplete `send_code`/`confirm_code` arguments. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. Commit `5ffb33c07` was pushed to `FreedoomForm/Sketchware-Pro:creator-runtime`; Creator Runtime Android run `32359775216` was pending and Android CI run `32359775219` was in progress at the first public poll. API 30/API 34 native evidence remains open until the remote workflow completes. Valid phone verification, Firebase project configuration, SMS/reCAPTCHA, credential, network, and device behavior remain separate open integration gates.
+
+## Firebase Google Login validation batch — next checkpoint
+
+The Firebase Google Login batch adds `CreatorRuntimeNativeWidgetTest.firebaseGoogleLoginRejectsInvalidInputsOnNativeRuntime` for unsupported action and missing `webClientId`. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; the currently running workflows for `31ce5bff9` remain independent. Valid OAuth/Firebase configuration, account, Play services, network, and device behavior remain open integration gates.
