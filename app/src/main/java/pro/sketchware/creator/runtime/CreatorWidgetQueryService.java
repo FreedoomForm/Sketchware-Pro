@@ -8,12 +8,14 @@ import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.CalendarView;
 import android.widget.CompoundButton;
+import android.widget.DatePicker;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import java.util.ArrayList;
@@ -75,6 +77,21 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         }
         if ("calendar_date".equals(action) && widget instanceof CalendarView) {
             return CreatorRuntimeServiceArguments.succeeded("value", ((CalendarView) widget).getDate());
+        }
+        if ("date_picker_year".equals(action) && widget instanceof DatePicker) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((DatePicker) widget).getYear());
+        }
+        if ("date_picker_month".equals(action) && widget instanceof DatePicker) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((DatePicker) widget).getMonth() + 1);
+        }
+        if ("date_picker_day".equals(action) && widget instanceof DatePicker) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((DatePicker) widget).getDayOfMonth());
+        }
+        if ("time_picker_hour".equals(action) && widget instanceof TimePicker) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((TimePicker) widget).getHour());
+        }
+        if ("time_picker_minute".equals(action) && widget instanceof TimePicker) {
+            return CreatorRuntimeServiceArguments.succeeded("value", ((TimePicker) widget).getMinute());
         }
         if ("web_can_go_back".equals(action) && widget instanceof WebView) {
             return CreatorRuntimeServiceArguments.succeeded("value", ((WebView) widget).canGoBack());
@@ -199,6 +216,26 @@ public final class CreatorWidgetQueryService implements CreatorRuntimeService {
         }
         if ("calendar_set_max_date".equals(action) && widget instanceof CalendarView) {
             ((CalendarView) widget).setMaxDate(longValue(arguments.get("timestamp"), 0L));
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("date_picker_set_date".equals(action) && widget instanceof DatePicker) {
+            int year = intValue(arguments.get("year"), -1);
+            int month = intValue(arguments.get("month"), -1) - 1;
+            int day = intValue(arguments.get("day"), -1);
+            if (year < 1 || month < 0 || month > 11 || day < 1 || day > 31) {
+                return CreatorRuntimeServiceArguments.invalid("DatePicker requires valid year, month (1-12), and day values.");
+            }
+            ((DatePicker) widget).updateDate(year, month, day);
+            return CreatorRuntimeServiceArguments.succeeded("updated", true);
+        }
+        if ("time_picker_set_time".equals(action) && widget instanceof TimePicker) {
+            int hour = intValue(arguments.get("hour"), -1);
+            int minute = intValue(arguments.get("minute"), -1);
+            if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+                return CreatorRuntimeServiceArguments.invalid("TimePicker requires hour 0-23 and minute 0-59.");
+            }
+            ((TimePicker) widget).setHour(hour);
+            ((TimePicker) widget).setMinute(minute);
             return CreatorRuntimeServiceArguments.succeeded("updated", true);
         }
         return CreatorRuntimeServiceArguments.invalid("Widget does not support action: " + action);

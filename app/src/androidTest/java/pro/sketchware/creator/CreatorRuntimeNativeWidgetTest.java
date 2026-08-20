@@ -6,8 +6,10 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CalendarView;
+import android.widget.DatePicker;
 import android.widget.ListView;
 import android.widget.Spinner;
+import android.widget.TimePicker;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
@@ -87,6 +89,20 @@ public class CreatorRuntimeNativeWidgetTest {
                         .get("calendarDate")).isEqualTo(fixtureDate());
                 assertThat(calendar.getDate()).isEqualTo(fixtureDate());
 
+                DatePicker datePicker = requireView(canvas, DatePicker.class);
+                datePicker.updateDate(2024, Calendar.FEBRUARY, 14);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("datePickerYear")).isEqualTo(2024L);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("datePickerMonth")).isEqualTo(3L);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("datePickerDay")).isEqualTo(14L);
+
+                TimePicker timePicker = requireView(canvas, TimePicker.class);
+                timePicker.setHour(7);
+                assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
+                        .get("timePickerHour")).isEqualTo(7L);
+
                 requireButton(canvas, "Schedule timer").performClick();
                 requireButton(canvas, "Open drawer").performClick();
                 DrawerLayout openDrawer = requireView(canvas, DrawerLayout.class);
@@ -114,7 +130,7 @@ public class CreatorRuntimeNativeWidgetTest {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         widgets.put("root", new CreatorWidget("root", "column", null,
                 Arrays.asList("button", "drawer_button", "calendar_button", "timer_button",
-                        "list", "spinner", "calendar"), null));
+                        "list", "spinner", "calendar", "date_picker", "time_picker"), null));
         widgets.put("button", new CreatorWidget("button", "button", "root",
                 null, map("text", "Increment")));
         widgets.put("drawer_button", new CreatorWidget("drawer_button", "button", "root",
@@ -128,6 +144,8 @@ public class CreatorRuntimeNativeWidgetTest {
         widgets.put("spinner", new CreatorWidget("spinner", "spinner", "root", null,
                 map("customDataStateId", "spinnerItems")));
         widgets.put("calendar", new CreatorWidget("calendar", "calendar_view", "root", null, null));
+        widgets.put("date_picker", new CreatorWidget("date_picker", "date_picker", "root", null, null));
+        widgets.put("time_picker", new CreatorWidget("time_picker", "time_picker", "root", null, null));
         widgets.put("drawer_root", new CreatorWidget("drawer_root", "column", null,
                 Arrays.asList("drawer_text"), null));
         widgets.put("drawer_text", new CreatorWidget("drawer_text", "text", "drawer_root",
@@ -142,6 +160,10 @@ public class CreatorRuntimeNativeWidgetTest {
         state.put("items", Arrays.asList("A", "B", "C"));
         state.put("spinnerItems", Arrays.asList("One", "Two", "Three"));
         state.put("calendarDate", 0L);
+        state.put("datePickerYear", 0L);
+        state.put("datePickerMonth", 0L);
+        state.put("datePickerDay", 0L);
+        state.put("timePickerHour", 0L);
         state.put("timerTicks", 0L);
         state.put("legacy.projectFileIndex", map("home", map("hasDrawer", true)));
 
@@ -162,6 +184,26 @@ public class CreatorRuntimeNativeWidgetTest {
                                 map("serviceId", "widget", "arguments", map(
                                         "widgetId", "calendar", "action", "calendar_date",
                                         "resultStateId", "calendarDate"))))));
+        events.put("date-picker-selected", new CreatorEventBinding("date-picker-selected", "date_picker", "date_selected",
+                Arrays.asList(
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "date_picker", "action", "date_picker_year",
+                                        "resultStateId", "datePickerYear"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "date_picker", "action", "date_picker_month",
+                                        "resultStateId", "datePickerMonth"))),
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "date_picker", "action", "date_picker_day",
+                                        "resultStateId", "datePickerDay"))))));
+        events.put("time-picker-selected", new CreatorEventBinding("time-picker-selected", "time_picker", "time_selected",
+                Arrays.asList(
+                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                                map("serviceId", "widget", "arguments", map(
+                                        "widgetId", "time_picker", "action", "time_picker_hour",
+                                        "resultStateId", "timePickerHour"))))));
         events.put("timer-button", new CreatorEventBinding("timer-button", "timer_button", "click",
                 Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
                         map("serviceId", "timer", "arguments", map(
