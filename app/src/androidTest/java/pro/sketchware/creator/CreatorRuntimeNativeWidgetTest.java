@@ -52,6 +52,7 @@ import pro.sketchware.creator.runtime.CreatorFirebaseDatabaseService;
 import pro.sketchware.creator.runtime.CreatorVibratorService;
 import pro.sketchware.creator.runtime.CreatorMediaService;
 import pro.sketchware.creator.runtime.CreatorCameraService;
+import pro.sketchware.creator.runtime.CreatorFilePickerService;
 import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
@@ -275,6 +276,12 @@ public class CreatorRuntimeNativeWidgetTest {
                 .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
         assertThat(service.execute(map("action", "capture", "mode", "invalid"))
                 .getStatus()).isEqualTo(CreatorRuntimeService.Status.PERMISSION_REQUIRED);
+    }
+
+    @Test public void filePickerRejectsUnsupportedActionOnNativeRuntime() {
+        CreatorFilePickerService service = new CreatorFilePickerService(null);
+        assertThat(service.execute(map("action", "invalid")).getStatus())
+                .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {
