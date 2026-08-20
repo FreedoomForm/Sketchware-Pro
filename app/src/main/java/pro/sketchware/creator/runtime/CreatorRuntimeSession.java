@@ -21,6 +21,11 @@ public final class CreatorRuntimeSession {
         engine = new CreatorRuntimeEngine(store.loadOrCreate(), 100, new CreatorRuntimeEventLog(300));
     }
 
+    /** Test-only lifecycle hook; production callers should use the application-scoped singleton. */
+    public static synchronized void resetForTests() {
+        instance = null;
+    }
+
     public static CreatorRuntimeSession get(Context context) {
         if (instance == null) {
             synchronized (CreatorRuntimeSession.class) {

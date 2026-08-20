@@ -116,6 +116,7 @@ public class CreatorRuntimeNativeWidgetTest {
         context = ApplicationProvider.getApplicationContext();
         context.getSharedPreferences("creator_runtime", Context.MODE_PRIVATE)
                 .edit().clear().commit();
+        CreatorRuntimeSession.resetForTests();
     }
 
     @Test public void firebaseCloudMessageRejectsInvalidInputsOnNativeRuntime() {
@@ -802,7 +803,7 @@ public class CreatorRuntimeNativeWidgetTest {
         widgets.put("spinner", new CreatorWidget("spinner", "spinner", "root", null,
                 map("customDataStateId", "spinnerItems")));
         widgets.put("progress", new CreatorWidget("progress", "progress", "root", null, null));
-        widgets.put("seek", new CreatorWidget("seek", "seekbar", "root", null,
+        widgets.put("seek", new CreatorWidget("seek", "slider", "root", null,
                 map("max", 100L, "progress", 10L)));
         widgets.put("web", new CreatorWidget("web", "web", "root", null,
                 map("url", "about:blank")));

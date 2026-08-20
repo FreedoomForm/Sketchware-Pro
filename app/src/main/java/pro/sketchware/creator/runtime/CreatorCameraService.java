@@ -15,6 +15,10 @@ public final class CreatorCameraService implements CreatorRuntimeService {
     @Override public Result execute(Map<String, Object> arguments) {
         String action = CreatorRuntimeServiceArguments.string(arguments, "action");
         if (!"capture".equals(action)) return CreatorRuntimeServiceArguments.invalid("Unsupported camera action: " + action);
+        if (environment == null || environment.getActivity() == null) {
+            return new Result(Status.PERMISSION_REQUIRED, Collections.<String, Object>emptyMap(),
+                    "Camera host Activity is unavailable.");
+        }
         if (!environment.hasPermission(Manifest.permission.CAMERA)) {
             environment.requestPermission(getId(), Manifest.permission.CAMERA);
             return new Result(Status.PERMISSION_REQUIRED, Collections.<String, Object>emptyMap(),

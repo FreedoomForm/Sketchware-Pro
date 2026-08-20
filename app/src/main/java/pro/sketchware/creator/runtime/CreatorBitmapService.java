@@ -66,7 +66,7 @@ public final class CreatorBitmapService implements CreatorRuntimeService {
             if (transformed == null) return CreatorRuntimeServiceArguments.invalid("Unsupported bitmap action: " + action);
             save(transformed, target);
             return CreatorRuntimeServiceArguments.succeeded("completed", true, "path", target.getPath());
-        } catch (IOException | IllegalArgumentException error) {
+        } catch (IOException | IllegalArgumentException | SecurityException error) {
             return CreatorRuntimeServiceArguments.failed(error.getMessage() == null ? "Bitmap operation failed." : error.getMessage());
         }
     }
