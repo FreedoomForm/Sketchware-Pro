@@ -123,3 +123,7 @@ The Rewarded Ad batch adds `CreatorRuntimeNativeWidgetTest.rewardedAdRejectsInva
 ## Fragment Adapter validation batch — next checkpoint
 
 The Fragment Adapter batch adds `CreatorRuntimeNativeWidgetTest.fragmentAdapterRejectsInvalidInputsOnNativeRuntime` for missing pager `widgetId` and unsupported action paths. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Live pager rendering, adapter population, fragment lifecycle, animation, and device UI behavior remain open integration gates.
+
+## Gyroscope lifecycle validation batch — next checkpoint
+
+The Gyroscope batch adds `CreatorRuntimeNativeWidgetTest.gyroscopeStartStopContractOnNativeRuntime` through a production Activity host. Local `./gradlew testDebugUnitTest assembleDebug compileDebugAndroidTestJavaWithJavac --no-daemon` completed successfully. The batch is ready for a separate commit and push; remote API 30/API 34 evidence remains open until its workflow completes. Sensor event fidelity, timing, permission/device policy, and hardware parity remain open device gates.

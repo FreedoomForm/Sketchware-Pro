@@ -47,6 +47,8 @@ import pro.sketchware.creator.runtime.CreatorFirebaseGoogleLoginService;
 import pro.sketchware.creator.runtime.CreatorRewardedAdService;
 import pro.sketchware.creator.runtime.CreatorFirebaseCloudMessageService;
 import pro.sketchware.creator.runtime.CreatorFragmentAdapterService;
+import pro.sketchware.creator.runtime.CreatorGyroscopeService;
+import pro.sketchware.creator.runtime.CreatorRuntimeEnvironment;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectDocumentCodec;
 import pro.sketchware.creator.runtime.CreatorNotificationService;
@@ -125,6 +127,24 @@ public class CreatorRuntimeNativeWidgetTest {
                 .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
         assertThat(service.execute(map("action", "select_page", "page", 0L)).getStatus())
                 .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+    }
+
+    @Test public void gyroscopeStartStopContractOnNativeRuntime() {
+        try (ActivityScenario<CreatorProjectActivity> scenario =
+                     ActivityScenario.launch(CreatorProjectActivity.class)) {
+            scenario.onActivity(activity -> {
+                CreatorRuntimeEnvironment environment = new CreatorRuntimeEnvironment(activity, null);
+                CreatorGyroscopeService service = new CreatorGyroscopeService(environment);
+                assertThat(service.execute(map("action", "invalid")).getStatus())
+                        .isEqualTo(CreatorRuntimeService.Status.UNSUPPORTED_ARGUMENT);
+                CreatorRuntimeService.Result start = service.execute(map("action", "start"));
+                assertThat(start.getStatus()).isAnyOf(CreatorRuntimeService.Status.SUCCEEDED,
+                        CreatorRuntimeService.Status.FAILED);
+                CreatorRuntimeService.Result stop = service.execute(map("action", "stop"));
+                assertThat(stop.getStatus()).isEqualTo(CreatorRuntimeService.Status.SUCCEEDED);
+                assertThat(stop.getOutput().get("listening")).isEqualTo(false);
+            });
+        }
     }
 
     @Test public void notificationPermissionGateMatchesAndroidSdkOnNativeRuntime() {
