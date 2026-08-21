@@ -1,0 +1,614 @@
+# Creator Runtime core persistence risk scan
+
+app/src/main/java/pro/sketchware/creator/CreatorHomeActivity.java:47:            startActivity(new Intent(this, CreatorProjectActivity.class)
+app/src/main/java/pro/sketchware/creator/CreatorHomeActivity.java:65:        startActivity(intent);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:57:import pro.sketchware.creator.runtime.CreatorRuntimeExecutor;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:80:    private CreatorRuntimeExecutor runtimeExecutor;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:107:        runtimeExecutor = new CreatorRuntimeExecutor(runtimeServices, session);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:157:            finish();
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:172:            startActivity(intent);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:174:        bindSidebar(R.id.creator_sidebar_info, v -> startActivityForResult(
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:195:        startActivity(new Intent(this, type));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:201:            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getString(urlRes))));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:202:        } catch (android.content.ActivityNotFoundException ignored) {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:216:            finish();
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:219:        startActivity(new android.content.Intent(this, CreatorProjectActivity.class)
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:221:        finish();
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:233:            startActivity(intent);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:236:        startActivity(new Intent(this, CreatorProjectActivity.class));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:424:        CreatorRuntimeService service = runtimeServices == null ? null : runtimeServices.registered().get("drawer");
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:425:        if (service instanceof CreatorDrawerService) ((CreatorDrawerService) service).register(drawer);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:429:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:432:        if (!(rawIndex instanceof Map)) return false;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:434:        if (!(rawDescriptor instanceof Map)) return false;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:441:        CreatorRuntimeService service = runtimeServices == null ? null : runtimeServices.registered().get("drawer");
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:454:        if (widget == null) return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:461:            return registerRuntimeWidget(widget, text);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:473:            return registerRuntimeWidget(widget, button);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:486:            return registerRuntimeWidget(widget, input);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:495:            return registerRuntimeWidget(widget, checkbox);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:504:            return registerRuntimeWidget(widget, toggle);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:511:            return registerRuntimeWidget(widget, image);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:544:            return registerRuntimeWidget(widget, pager);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:555:            return registerRuntimeWidget(widget, scroll);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:566:            return registerRuntimeWidget(widget, scroll);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:573:            return registerRuntimeWidget(widget, progress);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:590:            return registerRuntimeWidget(widget, spinner);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:604:            return registerRuntimeWidget(widget, seekBar);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:609:            return registerRuntimeWidget(widget, calendar);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:616:            return registerRuntimeWidget(widget, fab);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:623:            return registerRuntimeWidget(widget, radio);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:632:            return registerRuntimeWidget(widget, rating);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:640:                @Override public boolean onQueryTextSubmit(String query) { dispatchRuntimeEvent(widget.getId(), "submit"); return false; }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:641:                @Override public boolean onQueryTextChange(String value) { dispatchRuntimeEvent(widget.getId(), "change"); return false; }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:643:            return registerRuntimeWidget(widget, search);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:655:            return registerRuntimeWidget(widget, input);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:678:            return registerRuntimeWidget(widget, list);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:692:            return registerRuntimeWidget(widget, list);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:698:            return registerRuntimeWidget(widget, clock);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:708:            return registerRuntimeWidget(widget, picker);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:713:            return registerRuntimeWidget(widget, picker);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:731:            return registerRuntimeWidget(widget, web);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:738:            CreatorRuntimeService service = runtimeServices == null ? null : runtimeServices.registered().get("map");
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:739:            if (service instanceof CreatorMapService) ((CreatorMapService) service).register(widget.getId(), map);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:740:            return registerRuntimeWidget(widget, map);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:747:            return registerRuntimeWidget(widget, video);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:755:            return registerRuntimeWidget(widget, animation);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:765:            return registerRuntimeWidget(widget, ad);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:778:            return registerRuntimeWidget(widget, tabs);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:790:            return registerRuntimeWidget(widget, navigation);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:798:            return registerRuntimeWidget(widget, badge);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:809:            return registerRuntimeWidget(widget, pattern);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:821:            return registerRuntimeWidget(widget, sidebar);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:832:            return registerRuntimeWidget(widget, card);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:843:            return registerRuntimeWidget(widget, appBar);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:852:            return registerRuntimeWidget(widget, layout);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:864:            return registerRuntimeWidget(widget, refresh);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:874:            return registerRuntimeWidget(widget, group);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:879:            return registerRuntimeWidget(widget, signIn);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:885:            return registerRuntimeWidget(widget, image);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:892:            return registerRuntimeWidget(widget, otp);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:900:            return registerRuntimeWidget(widget, code);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:913:        return registerRuntimeWidget(widget, container);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:916:    private View registerRuntimeWidget(CreatorWidget widget, View view) {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:918:        runtimeEnvironment.registerWidget(widget.getId(), view);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:924:        if (session == null || widgetId == null) return false;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:928:        return false;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:947:            catch (IllegalArgumentException ignored) { }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:961:                catch (IllegalArgumentException ignored) { }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:970:                catch (IllegalArgumentException ignored) { }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1024:        } catch (RuntimeException ignored) {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1056:        catch (NumberFormatException ignored) { return fallback; }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1072:        catch (NumberFormatException ignored) { return fallback; }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1092:        } catch (IllegalArgumentException ignored) {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1129:        if (resourceName == null || resourceName.trim().isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1140:        if (!(rawResources instanceof java.util.List)) return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1149:        return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1153:        if (document == null) return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1155:        if (!(rawFonts instanceof Map)) return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1166:        return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1170:        java.util.List<CreatorRuntimeExecutor.Effect> effects = runtimeExecutor.dispatch(session.getEngine(), widgetId, eventName);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1176:        if (runtimeExecutor == null || session == null) return;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1177:        renderEffects(runtimeExecutor.dispatch(session.getEngine(),
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1190:            renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(payload.get("timerId")), eventName));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1208:                renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(callbackTargetId), "children"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1214:                renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(callbackTargetId), "button"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1223:                renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(entry.getKey()), eventName));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1234:    private void renderEffects(java.util.List<CreatorRuntimeExecutor.Effect> effects) {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1235:        for (CreatorRuntimeExecutor.Effect effect : effects) {
+app/src/main/java/pro/sketchware/creator/CreatorShakeDetector.java:17:        if (!(threshold > 0f) || debounceMs < 0L) throw new IllegalArgumentException("invalid detector configuration");
+app/src/main/java/pro/sketchware/creator/CreatorShakeDetector.java:23:        if (!Float.isFinite(x) || !Float.isFinite(y) || !Float.isFinite(z)) return false;
+app/src/main/java/pro/sketchware/creator/CreatorShakeDetector.java:25:        if (force < threshold) return false;
+app/src/main/java/pro/sketchware/creator/CreatorShakeDetector.java:26:        if (lastShakeAt != Long.MIN_VALUE && nowMs - lastShakeAt < debounceMs) return false;
+app/src/main/java/pro/sketchware/creator/CreatorShakeRecovery.java:26:            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+app/src/main/java/pro/sketchware/creator/CreatorShakeRecovery.java:31:        if (sensorManager != null) sensorManager.unregisterListener(this);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorAnimatorService.java:48:        } catch (NumberFormatException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorAnimatorService.java:53:    private synchronized Result executeConfigured(String action, Map<String, Object> arguments) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorAnimatorService.java:103:                return CreatorRuntimeServiceArguments.invalid("Unsupported animator action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorAnimatorService.java:106:        } catch (NumberFormatException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:18:import java.io.FileOutputStream;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:33:        if (environment == null || files == null) throw new IllegalArgumentException("environment/files");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:66:            if (transformed == null) return CreatorRuntimeServiceArguments.invalid("Unsupported bitmap action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:69:        } catch (IOException | IllegalArgumentException | SecurityException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:113:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:159:        try (FileOutputStream output = new FileOutputStream(target, false)) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:170:        } catch (IOException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:178:        catch (NumberFormatException ignored) { return 0f; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:38:            return CreatorRuntimeServiceArguments.invalid("Unsupported Bluetooth action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:110:            } catch (IOException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:115:        return CreatorRuntimeServiceArguments.invalid("Unsupported Bluetooth action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:122:        catch (IllegalArgumentException error) { throw new IllegalArgumentException("Bluetooth UUID is invalid."); }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:127:        new Thread(() -> {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:135:            } catch (IOException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:143:        new Thread(() -> {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:150:            } catch (IllegalArgumentException | IOException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:161:        new Thread(() -> receive(tag, socket), "creator-bluetooth-read").start();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:174:        } catch (IOException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:198:        try { closeable.close(); } catch (IOException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorCalendarService.java:15:    @Override public synchronized Result execute(Map<String, Object> arguments) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorCalendarService.java:52:                return new Result(Status.UNSUPPORTED_ARGUMENT, Collections.emptyMap(), "Unsupported calendar action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorCalendarService.java:54:        } catch (IllegalArgumentException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorCalendarService.java:67:        if (value == null) throw new IllegalArgumentException("calendar add/set requires field.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorCalendarService.java:79:        throw new IllegalArgumentException("Unsupported calendar field: " + value);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorCameraService.java:17:        if (!"capture".equals(action)) return CreatorRuntimeServiceArguments.invalid("Unsupported camera action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDatePickerService.java:15:        if (action != null && !"show".equals(action)) return CreatorRuntimeServiceArguments.invalid("Unsupported date picker action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDatePickerService.java:25:        } catch (RuntimeException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDeviceMetricsService.java:11:        if (environment == null) throw new IllegalArgumentException("environment");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDeviceMetricsService.java:34:        return CreatorRuntimeServiceArguments.invalid("Unsupported device metrics action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDeviceMetricsService.java:39:        catch (NumberFormatException ignored) { return 0; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDialogService.java:131:        return CreatorRuntimeServiceArguments.invalid("Unsupported dialog action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDialogService.java:136:        if (id == null || id.trim().isEmpty()) throw new IllegalArgumentException("dialogId is required.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDialogService.java:173:        if ("false".equalsIgnoreCase(text)) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDrawerService.java:13:    public void register(DrawerLayout layout) { drawerLayout = layout; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDrawerService.java:36:        return CreatorRuntimeServiceArguments.invalid("Unsupported drawer action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorEntryControl.java:23:        if (label == null || label.trim().isEmpty()) throw new IllegalArgumentException("label");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorEntryControl.java:24:        if (!PLACEMENTS.contains(placement)) throw new IllegalArgumentException("placement");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorEventBinding.java:16:                || eventName == null || eventName.trim().isEmpty()) throw new IllegalArgumentException("binding fields");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFilePickerService.java:14:        if (!"pick".equals(action)) return CreatorRuntimeServiceArguments.invalid("Unsupported file picker action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:7:import java.io.FileInputStream;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:8:import java.io.FileOutputStream;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:33:        if (environment == null || files == null) throw new IllegalArgumentException("environment/files");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:52:            if (directory == null) return CreatorRuntimeServiceArguments.invalid("Unsupported public directory.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:102:            return CreatorRuntimeServiceArguments.invalid("Unsupported file action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:103:        } catch (IOException | SecurityException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:109:        if (rawDirectory == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:124:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:143:            if (permittedRoots == null || permittedRoots.isEmpty()) throw new IllegalArgumentException("permittedRoots");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:149:            if (externalRoot == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:151:            catch (IOException | SecurityException ignored) { return false; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:162:            try (FileOutputStream output = new FileOutputStream(target, false)) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:173:            try (FileInputStream input = new FileInputStream(from); FileOutputStream output = new FileOutputStream(to, false)) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:241:            try (FileInputStream input = new FileInputStream(target); java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream()) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFirebaseAuthPhoneService.java:52:        return CreatorRuntimeServiceArguments.invalid("Unsupported phone-auth action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFirebaseAuthService.java:35:        if ("sign_in".equals(action) || "register".equals(action)) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFirebaseAuthService.java:43:        return CreatorRuntimeServiceArguments.invalid("Unsupported firebase auth action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFirebaseCloudMessageService.java:30:        return CreatorRuntimeServiceArguments.invalid("Unsupported cloud-message action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFirebaseDatabaseService.java:112:        return CreatorRuntimeServiceArguments.invalid("Unsupported firebase action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFirebaseGoogleLoginService.java:17:        if (!"sign_in".equals(action)) return CreatorRuntimeServiceArguments.invalid("Unsupported Google sign-in action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFirebaseStorageService.java:28:            } catch (IllegalArgumentException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFirebaseStorageService.java:53:            } catch (IllegalArgumentException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFirebaseStorageService.java:92:        return CreatorRuntimeServiceArguments.invalid("Unsupported firebase_storage action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFragmentAdapterService.java:32:        return CreatorRuntimeServiceArguments.invalid("Unsupported fragment-adapter action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorGyroscopeService.java:32:            listening = sensorManager.registerListener(this, gyroscope, delay);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorGyroscopeService.java:37:            if (sensorManager != null) sensorManager.unregisterListener(this);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorGyroscopeService.java:41:        return CreatorRuntimeServiceArguments.invalid("Unsupported gyroscope action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:73:                environment.getActivity().startActivity(intent(arguments));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:77:                environment.getActivity().finish();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:85:                environment.getActivity().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:93:                environment.getActivity().startActivity(Intent.createChooser(share,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:100:                environment.getActivity().startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + number)));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:103:            return CreatorRuntimeServiceArguments.invalid("Unsupported intent action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:104:        } catch (ActivityNotFoundException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:106:        } catch (RuntimeException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:123:        if (id == null || id.trim().isEmpty()) throw new IllegalArgumentException("intentId is required.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:128:        if (raw == null) throw new IllegalArgumentException("configure_action requires value.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:133:        } catch (ReflectiveOperationException ignored) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:143:        } catch (ReflectiveOperationException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:144:            throw new IllegalArgumentException("Unsupported intent flag: " + raw);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorInterstitialAdService.java:63:        return CreatorRuntimeServiceArguments.invalid("Unsupported interstitial-ad action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:26: * Runtime document. Unsupported executable blocks stay visible in the report
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:51:        if (base == null) throw new IllegalArgumentException("base");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:64:                        "No Creator Runtime service is registered for component type " + component.type + ".");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:93:                        "Unsupported legacy block opcodes: " + String.join(", ", blocks.unsupported) + ".");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:163:                        "Unsupported legacy More Block opcodes: " + String.join(", ", body.unsupported) + ".");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:184:        if (base == null) throw new IllegalArgumentException("base");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:270:        if (base == null) throw new IllegalArgumentException("base");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:330:        if (base == null) throw new IllegalArgumentException("base");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:348:                        "Unsupported value-resource file; only strings, colors, styles, themes, and arrays are allowed.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:370:            } catch (Exception error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:385:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:411:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:424:            throw new IllegalArgumentException("Root element must be <resources>.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:487:            try { byId.put(Integer.parseInt(block.id), block); } catch (NumberFormatException ignored) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:499:                } catch (NumberFormatException ignored) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:523:            try { id = Integer.parseInt(current.id); } catch (NumberFormatException ignored) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:537:        if (blank(block.opCode)) { unsupported.add("empty"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:543:            if (blank(functionId)) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:547:                if (argument == null) { unsupported.add(block.opCode + " (invalid argument expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:556:                return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:563:                return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:569:            if (values.size() < 2 || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:573:            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:577:                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:585:            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:589:            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:593:                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:599:                if (expression == null) { unsupported.add(block.opCode + " (invalid reporter expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:606:            if (block.subStack1 < 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:608:            if (bodyStart == null) { unsupported.add(block.opCode + " (missing forever substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:615:            if (!values.isEmpty() || block.subStack1 >= 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:619:            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:621:            if (bodyStart == null) { unsupported.add(block.opCode + " (missing repeat substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:627:                if (expression == null) { unsupported.add(block.opCode + " (invalid count expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:640:            unsupported.add(block.opCode + " (control flow)"); return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:642:        if (timerWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:643:        if (firebaseChildrenWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:644:        if (dialogButtonWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:645:        if (viewOnClickWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:648:            if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:651:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing timer substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:663:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:666:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:669:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:690:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:696:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:702:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:708:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:726:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:730:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:734:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:738:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:747:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:750:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:754:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:763:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:772:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:776:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:784:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:790:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:795:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:799:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:803:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:806:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:809:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:813:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:818:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:822:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:826:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:830:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:835:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:839:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:843:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:847:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:863:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:897:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:902:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:907:            if (!values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:951:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:953:                    "componentId", values.get(0), "action", "firebaseauthcreateuser".equals(op) ? "register" : "sign_in",
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:956:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:960:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:964:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:968:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:972:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:976:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:980:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:988:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:997:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1000:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1006:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1012:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1018:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1022:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1025:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1028:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1031:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1034:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1040:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1046:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1049:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1052:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1055:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1059:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1063:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1070:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1080:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1084:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1088:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1092:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1096:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1100:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1103:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1106:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1109:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1112:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1115:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1119:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1122:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1126:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1131:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1137:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1141:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1145:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1149:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1154:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1160:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1165:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1171:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1175:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1179:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1183:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1187:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1191:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1195:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1199:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1203:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1208:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1213:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1217:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1221:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1225:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1229:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1233:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1237:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1241:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1245:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1250:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1258:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1267:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1313:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1324:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1328:                if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1334:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1338:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1343:                unsupported.add(block.opCode); return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1350:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1363:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1369:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1373:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1380:        if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1387:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1394:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1400:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1407:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1414:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1436:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1442:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1449:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1456:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1472:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1479:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1486:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1497:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1519:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1527:        if (values.size() < 2 || blank(values.get(0))) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1535:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1557:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1573:        if (values.size() < required || blank(values.get(0))) { unsupported.add("map " + action); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1622:        catch (NumberFormatException ignored) { return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1623:        if (!path.add(id)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1626:            if (block == null || blank(block.opCode)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1635:                if (nested == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1649:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1667:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1681:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1691:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1697:            if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:4:import android.content.SharedPreferences;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:53:    public static synchronized String ensureLegacyProject(Context context,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:55:        if (context == null) throw new IllegalArgumentException("context");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:56:        if (document == null) throw new IllegalArgumentException("document");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:58:        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:80:        if (context == null || scId == null || scId.trim().isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:81:        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:90:    public static synchronized void syncRuntimeMetadata(Context context,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:107:    public static synchronized void projectRuntimeViews(Context context,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:162:        return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:166:    public static synchronized CreatorProjectDocument importLegacyProject(Context context,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:238:                    values.put(relativePath, new String(Files.readAllBytes(xmlFile.toPath()), StandardCharsets.UTF_8));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:239:                } catch (Exception ignored) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:447:            BlockBean startActivity = new BlockBean("2", "startActivity %s",
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:448:                    "command", "intent", "startActivity");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:449:            startActivity.parameters.add(CreatorRuntimeDefaults.EDITOR_INTENT_ID);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:451:            blocks.add(startActivity);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:16: * Project IR. Unsupported elements are retained in the report instead of being
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:126:            default: return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLocationService.java:56:        return CreatorRuntimeServiceArguments.invalid("Unsupported location action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMapService.java:23:    public void register(String widgetId, MapView view) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMapService.java:43:        if (operation == null) return CreatorRuntimeServiceArguments.invalid("Unsupported map action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMapService.java:69:        if (markerId == null || markerId.trim().isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMapService.java:109:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMapService.java:123:        catch (NumberFormatException ignored) { return GoogleMap.MAP_TYPE_NORMAL; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMapService.java:129:        catch (NumberFormatException ignored) { return 0d; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMediaService.java:111:            return CreatorRuntimeServiceArguments.invalid("Unsupported media action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMediaService.java:112:        } catch (RuntimeException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorNetworkService.java:32:        if (publisher == null || client == null) throw new IllegalArgumentException("publisher/client");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorNetworkService.java:39:    @Override public synchronized Result execute(Map<String, Object> arguments) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorNetworkService.java:131:        } catch (IllegalArgumentException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorNotificationService.java:31:        return CreatorRuntimeServiceArguments.invalid("Unsupported notification action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationReducer.java:10:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationReducer.java:78:                throw new IllegalArgumentException("revision restore is handled by CreatorRuntimeEngine");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationReducer.java:80:                throw new IllegalArgumentException("unsupported operation type");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:189:        if (!(value instanceof String) || ((String) value).trim().isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:41:        if (schemaVersion != SCHEMA_VERSION) throw new IllegalArgumentException("Unsupported schema version");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:42:        if (projectId == null || projectId.trim().isEmpty()) throw new IllegalArgumentException("projectId");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:43:        if (revision < 0) throw new IllegalArgumentException("revision");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:44:        if (name == null || name.trim().isEmpty()) throw new IllegalArgumentException("name");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:20:        if (document == null) throw new IllegalArgumentException("document");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:74:        if (serialized == null || serialized.trim().isEmpty()) throw new IllegalArgumentException("serialized");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:126:            throw new IllegalArgumentException("Missing required document field: " + key);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:167:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:189:        if (value == null || value.isJsonNull()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:34:        if (operationId == null || operationId.trim().isEmpty()) throw new IllegalArgumentException("operationId");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:35:        if (projectId == null || projectId.trim().isEmpty()) throw new IllegalArgumentException("projectId");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:36:        if (baseRevision < 0) throw new IllegalArgumentException("baseRevision");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:37:        if (actorKind == null) throw new IllegalArgumentException("actorKind");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:38:        if (type == null) throw new IllegalArgumentException("type");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:18:        if (initial == null) throw new IllegalArgumentException("initial");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:19:        if (capacity < 2) throw new IllegalArgumentException("capacity");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:25:    public synchronized CreatorProjectDocument getCurrent() { return current; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:27:    public synchronized CreatorApplyResult getOperationResult(String operationId) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:31:    public synchronized CreatorProjectDocument getRevision(long revision) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:36:    public synchronized List<Long> getAvailableRevisions() {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:42:    public synchronized void commit(CreatorProjectOperation operation, CreatorProjectDocument next,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:50:    public synchronized boolean checkpoint(String name) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:51:        if (name == null || name.trim().isEmpty()) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:56:    public synchronized Long getCheckpointRevision(String name) { return checkpoints.get(name); }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:57:    public synchronized Map<String, Long> getCheckpoints() {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRewardedAdService.java:60:        return CreatorRuntimeServiceArguments.invalid("Unsupported rewarded-ad action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeBlock.java:22:        if (type == null) throw new IllegalArgumentException("type");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCompatibilityInspector.java:23:                    : "No Creator Runtime renderer is registered; execution is blocked rather than falling back.";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:11:        if (condition == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:13:        if (operator == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:17:            case "false": return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:35:            default: return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:67:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeDefaults.java:101:        return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEngine.java:20:    public synchronized CreatorApplyResult apply(CreatorProjectOperation operation) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEngine.java:62:    public synchronized boolean checkpoint(String name) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEnvironment.java:38:        if (activity == null) throw new IllegalArgumentException("activity");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEnvironment.java:47:    public void registerWidget(String widgetId, View view) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEnvironment.java:71:        activity.startActivityForResult(intent, requestCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEnvironment.java:76:        if (pending == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEnvironment.java:87:        if (pending == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEventLog.java:17:        if (capacity <= 0) throw new IllegalArgumentException("capacity");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEventLog.java:21:    public synchronized void append(CreatorRuntimeEvent event) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEventLog.java:29:    public synchronized List<CreatorRuntimeEvent> snapshot() {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:13:public final class CreatorRuntimeExecutor {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:30:    public CreatorRuntimeExecutor() { this(null, null); }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:31:    public CreatorRuntimeExecutor(CreatorRuntimeServiceDispatcher runtimeServices) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:34:    public CreatorRuntimeExecutor(CreatorRuntimeServiceDispatcher runtimeServices,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:101:                    } catch (com.google.gson.JsonSyntaxException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:124:                    } catch (com.google.gson.JsonSyntaxException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:148:                    @SuppressWarnings("unchecked") Map<String, Object> arguments = rawArguments instanceof Map
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:217:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:258:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:266:            try { return Double.valueOf(literal); } catch (NumberFormatException ignored) { return literal; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:268:        if (!"reporter".equals(expression.get("kind"))) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:276:        if ("false".equals(op)) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:361:            if (timestamp == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:367:            } catch (IllegalArgumentException ignored) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:368:                return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:459:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:463:        if (runtimeServices == null || id == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:470:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:478:        if (runtimeServices == null || path == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:485:        if (runtimeServices == null || path == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:492:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:500:        if (runtimeServices == null || widgetId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:507:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:516:        if (engine == null || functionId.isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:519:            return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:522:        if (!(rawDefinitions instanceof Map)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:524:        if (!(rawDefinition instanceof Map)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:526:        if (binding == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:527:        @SuppressWarnings("unchecked") Map<String, Object> definition = (Map<String, Object>) rawDefinition;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:548:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:557:        if (customFunctionFrames.isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:563:        if ("boolean".equalsIgnoreCase(type) || "b".equalsIgnoreCase(type)) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:584:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:591:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:598:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:605:        if (runtimeServices == null || componentId == null || key == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:613:        if (runtimeServices == null || intentId == null || key == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:621:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:628:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:634:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:636:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:662:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:685:        if (max < min || span <= 0L || span > Integer.MAX_VALUE) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:695:        try { return Double.parseDouble(String.valueOf(value)); } catch (NumberFormatException ignored) { return 0d; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:702:        catch (NumberFormatException ignored) { return 0L; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExpression.java:14:        if (expression == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExpression.java:63:        catch (NumberFormatException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExpression.java:167:        catch (NumberFormatException ignored) { return 0d; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:18:        if (args == null || document == null) throw new IllegalArgumentException("args and document are required");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:84:                throw new IllegalArgumentException("Unsupported Creator Runtime action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:91:        if (!object.has(key) || object.get(key).isJsonNull()) throw new IllegalArgumentException(key + " is required");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:93:        if (value.trim().isEmpty()) throw new IllegalArgumentException(key + " is required");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:115:            if (!element.isJsonObject()) throw new IllegalArgumentException("each block must be an object");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:133:        if (element == null || element.isJsonNull()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeProjectStore.java:4:import android.content.SharedPreferences;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeProjectStore.java:14:    private final SharedPreferences preferences;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeProjectStore.java:17:        preferences = context.getApplicationContext().getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeProjectStore.java:28:            } catch (RuntimeException ignored) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeProjectStore.java:49:        if (document == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:20:                } catch (Throwable ignored) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:21:                    return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:29:                || resourceFileName.trim().isEmpty() || directories == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:31:        if (root == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:37:            if (!targetPath.equals(rootPath) && !targetPath.startsWith(rootPath + File.separator)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:39:        } catch (IOException ignored) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:40:            return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceValues.java:26:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeService.java:10: * <p>Project documents can invoke only registered services. They never load Java
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServiceArguments.java:13:        if (value == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServiceArguments.java:32:    @SuppressWarnings("unchecked")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServiceDispatcher.java:11:    public CreatorRuntimeServiceDispatcher register(CreatorRuntimeService service) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServiceDispatcher.java:13:            throw new IllegalArgumentException("service");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServiceDispatcher.java:24:                    "No Creator Runtime service is registered for " + id + ".");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServiceDispatcher.java:29:    public Map<String, CreatorRuntimeService> registered() {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:11:                                                           CreatorTimerService.Listener timerListener) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:13:                .register(new CreatorStorageService(context, projectId))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:14:                .register(new CreatorFileService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:15:                .register(new CreatorBitmapService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:16:                .register(new CreatorVibratorService(context))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:17:                .register(new CreatorCalendarService())
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:18:                .register(new CreatorTimerService(timerListener))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:19:                .register(new CreatorIntentService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:20:                .register(new CreatorUiService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:21:                .register(new CreatorDialogService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:22:                .register(new CreatorNetworkService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:23:                .register(new CreatorWidgetQueryService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:24:                .register(new CreatorDrawerService())
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:25:                .register(new CreatorMapService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:26:                .register(new CreatorDeviceMetricsService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:27:                .register(new CreatorAnimatorService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:28:                .register(new CreatorDatePickerService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:29:                .register(new CreatorTimePickerService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:30:                .register(new CreatorMediaService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:31:                .register(new CreatorGyroscopeService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:32:                .register(new CreatorNotificationService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:33:                .register(new CreatorCameraService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:34:                .register(new CreatorFilePickerService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:35:                .register(new CreatorTextToSpeechService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:36:                .register(new CreatorSpeechToTextService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:37:                .register(new CreatorBluetoothService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:38:                .register(new CreatorLocationService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:39:                .register(new CreatorFirebaseDatabaseService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:40:                .register(new CreatorFirebaseAuthService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:41:                .register(new CreatorFirebaseStorageService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:42:                .register(new CreatorFirebaseCloudMessageService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:43:                .register(new CreatorFirebaseAuthPhoneService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:44:                .register(new CreatorFirebaseGoogleLoginService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:45:                .register(new CreatorInterstitialAdService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:46:                .register(new CreatorRewardedAdService(environment))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:47:                .register(new CreatorFragmentAdapterService(environment));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeSession.java:14:    private static volatile CreatorRuntimeSession instance;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeSession.java:25:    public static synchronized void resetForTests() {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeSession.java:31:            synchronized (CreatorRuntimeSession.class) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeSession.java:43:    public synchronized CreatorProjectDocument importLegacySnapshot(CreatorProjectDocument imported) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeSession.java:59:    public synchronized CreatorApplyResult apply(CreatorProjectOperation operation) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorScreen.java:10:        if (id == null || id.trim().isEmpty()) throw new IllegalArgumentException("id");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorScreen.java:11:        if (route == null || route.trim().isEmpty()) throw new IllegalArgumentException("route");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorScreen.java:12:        if (rootWidgetId == null || rootWidgetId.trim().isEmpty()) throw new IllegalArgumentException("rootWidgetId");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorSpeechToTextService.java:36:        if (!"listen".equals(action)) return CreatorRuntimeServiceArguments.invalid("Unsupported speech-to-text action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:4:import android.content.SharedPreferences;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:10:/** Runtime-native implementation of the legacy SharedPreferences component. */
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:12:    private final SharedPreferences preferences;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:18:        if (context == null || projectId == null || projectId.trim().isEmpty()) throw new IllegalArgumentException("context/projectId");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:21:        preferences = this.context.getSharedPreferences("creator_runtime_" + projectId, Context.MODE_PRIVATE);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:24:    CreatorStorageService(SharedPreferences preferences) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:25:        if (preferences == null) throw new IllegalArgumentException("preferences");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:47:        SharedPreferences selected = select(arguments);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:62:        return new Result(Status.UNSUPPORTED_ARGUMENT, Collections.emptyMap(), "Unsupported storage action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:65:    private SharedPreferences select(Map<String, Object> arguments) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:72:        return context.getSharedPreferences("creator_runtime_" + projectId + "_" + sanitize(storeName), Context.MODE_PRIVATE);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTextToSpeechService.java:35:            } catch (NumberFormatException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTextToSpeechService.java:58:        return CreatorRuntimeServiceArguments.invalid("Unsupported text-to-speech action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTimePickerService.java:15:        if (action != null && !"show".equals(action)) return CreatorRuntimeServiceArguments.invalid("Unsupported time picker action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTimePickerService.java:25:        } catch (RuntimeException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTimerService.java:6:import java.util.concurrent.Executors;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTimerService.java:8:import java.util.concurrent.ScheduledExecutorService;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTimerService.java:11:/** Runtime-native scheduler for the legacy TimerTask component. */
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTimerService.java:12:public final class CreatorTimerService implements CreatorRuntimeService {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTimerService.java:14:    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTimerService.java:15:        Thread thread = new Thread(runnable, "creator-runtime-timer");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTimerService.java:21:    public CreatorTimerService(Listener listener) { this.listener = listener; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTimerService.java:34:            return new Result(Status.UNSUPPORTED_ARGUMENT, Collections.emptyMap(), "Unsupported timer action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorTimerService.java:58:        } catch (NumberFormatException error) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorUiService.java:32:        return CreatorRuntimeServiceArguments.invalid("Unsupported UI action: " + action);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorVibratorService.java:15:        if (context == null) throw new IllegalArgumentException("context");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorVibratorService.java:25:        catch (NumberFormatException error) { return new Result(Status.UNSUPPORTED_ARGUMENT, Collections.emptyMap(), "durationMs must be numeric."); }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidget.java:19:        if (id == null || id.trim().isEmpty()) throw new IllegalArgumentException("id");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidget.java:20:        if (type == null || type.trim().isEmpty()) throw new IllegalArgumentException("type");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:39:        if (environment == null) throw new IllegalArgumentException("environment");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:302:            if (cacheMode == null) return CreatorRuntimeServiceArguments.invalid("Unsupported WebView cache mode.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:395:        catch (NumberFormatException ignored) { return fallback; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:401:        catch (NumberFormatException ignored) { return fallback; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:411:        catch (NumberFormatException ignored) { return fallback; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:415:        if (rawCacheMode == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:422:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:427:        if (rawColor == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:432:        } catch (IllegalArgumentException ignored) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:433:            return null;

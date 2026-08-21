@@ -33,20 +33,28 @@ public class CreatorRuntimeWorkflowTest {
                 CreatorProjectOperation.ActorKind.AI);
         CreatorApplyResult aiWidget = engine.apply(aiOperation);
 
-        CreatorApplyResult entryControl = engine.apply(operation("user-entry", 2,
-                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE,
-                map("label", "Open editor", "placement", "top_end")));
+        CreatorRuntimeBlock openEditor = new CreatorRuntimeBlock(
+                CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+                map("serviceId", "intent", "arguments", map(
+                        "intentId", CreatorRuntimeDefaults.EDITOR_INTENT_ID,
+                        "action", "open_creator_editor")));
+        CreatorApplyResult entryBehavior = engine.apply(operation("user-entry", 2,
+                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "continue-click", "targetWidgetId", "continue_button",
+                        "eventName", "click", "blocks", java.util.Collections.singletonList(openEditor))));
         CreatorCompatibilityAnalyzer analyzer = new CreatorCompatibilityAnalyzer(CreatorRuntimeServiceCatalog.defaults());
 
         assertThat(screen.isApplied()).isTrue();
         assertThat(aiWidget.isApplied()).isTrue();
-        assertThat(entryControl.isApplied()).isTrue();
+        assertThat(entryBehavior.isApplied()).isTrue();
         assertThat(engine.getCurrent().getEntryScreenId()).isEqualTo("home");
         assertThat(engine.getCurrent().getWidgets().get("root").getChildren()).containsExactly("continue_button");
-        assertThat(engine.getCurrent().getEntryControl().getPlacement()).isEqualTo("top_end");
+        assertThat(engine.getCurrent().getEvents().get("continue-click").getTargetWidgetId())
+                .isEqualTo("continue_button");
         assertThat(engine.getRevisionStore().getCheckpointRevision("empty-home")).isEqualTo(1L);
         assertThat(analyzer.classify("service:camera")).isEqualTo(CreatorCompatibilityTier.R1_RUNTIME_NATIVE);
         assertThat(analyzer.classify("java:CustomActivity")).isEqualTo(CreatorCompatibilityTier.R0_UNSUPPORTED);
+        assertThat(engine.getCurrent().getEntryControl().getLabel()).isEqualTo("Continue");
         assertThat(engine.getEventLog().snapshot()).isNotEmpty();
     }
 

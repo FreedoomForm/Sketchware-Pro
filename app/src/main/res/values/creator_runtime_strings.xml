@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="creator_runtime">Creator Runtime</string>
-    <string name="creator_home_title">Create in the open</string>
-    <string name="creator_home_empty_project">Your project is ready for its first screen. Every edit is saved and visible.</string>
-    <string name="creator_home_project_detail">Revision %1$d · %2$d screens · %3$d widgets</string>
     <string name="creator_sidebar_description">Original Sketchware tools</string>
     <string name="creator_sidebar_title">Sketchware tools</string>
     <string name="creator_external_link_unavailable">No browser is available for this link</string>
@@ -44,22 +41,6 @@
     <string name="creator_add_button">Add button</string>
     <string name="creator_add_input">Add input</string>
     <string name="creator_add_toggle">Add toggle</string>
-    <string name="creator_entry_control_title">Edit entry control</string>
-    <string name="creator_entry_control_message">The visible label is editable. Shake recovery always remains available.</string>
-    <string name="creator_entry_control_label_hint">Button label</string>
-    <string name="creator_entry_control_position">Position</string>
-    <string name="creator_position_bottom_end">Bottom right</string>
-    <string name="creator_position_bottom_start">Bottom left</string>
-    <string name="creator_position_top_end">Top right</string>
-    <string name="creator_position_top_start">Top left</string>
-    <string name="creator_position_center">Center</string>
-    <string name="creator_apply">Apply</string>
     <string name="creator_preview_action">Runtime actions will appear here as event blocks are added.</string>
     <string name="creator_navigation_effect">Runtime navigation requested: %1$s</string>
-    <string name="creator_recovery_title">Creator recovery</string>
-    <string name="creator_recovery_message">This host-owned safety route opens even when an editable project control is hidden or moved.</string>
-    <string name="creator_recovery_reset">Reset control</string>
-    <string name="creator_recovery_home">Creator Home</string>
-    <string name="creator_recovery_onboarding_title">You always have a way back</string>
-    <string name="creator_recovery_onboarding_message">You can edit or move the visible Continue control. If a project ever hides it or becomes unusable, shake your phone to open Creator recovery.</string>
 </resources>

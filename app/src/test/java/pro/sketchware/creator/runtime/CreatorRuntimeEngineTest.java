@@ -174,6 +174,29 @@ public class CreatorRuntimeEngineTest {
         assertThat(engine.getRevisionStore().getAvailableRevisions()).containsExactly(2L, 1L, 0L).inOrder();
     }
 
+    @Test public void revisionHistoryAndCheckpointsRemainBounded() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(
+                CreatorProjectDocument.empty("project", "Demo"), 2,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(operation("screen", 0, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.checkpoint("one");
+        engine.apply(operation("widget", 1, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.checkpoint("two");
+        engine.apply(operation("property", 2, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.WIDGET_SET_PROPERTY,
+                map("widgetId", "button", "property", "text", "value", "Continue")));
+        engine.checkpoint("three");
+
+        assertThat(engine.getRevisionStore().getAvailableRevisions()).containsExactly(3L, 2L).inOrder();
+        assertThat(engine.getRevisionStore().getCheckpoints()).hasSize(2);
+        assertThat(engine.getRevisionStore().getCheckpointRevision("one")).isNull();
+        assertThat(engine.getRevisionStore().getCheckpointRevision("three")).isEqualTo(3L);
+    }
+
     @Test public void diagnosticLogRedactsSensitiveContentBeforeItIsStored() {
         CreatorRuntimeEventLog log = new CreatorRuntimeEventLog(2);
         log.append(new CreatorRuntimeEvent(1, "project", 0, "ai", "ai.operation_requested",

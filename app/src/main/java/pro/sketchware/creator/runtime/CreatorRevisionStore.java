@@ -45,11 +45,17 @@ public final class CreatorRevisionStore {
         revisions.put(next.getRevision(), next);
         operationResults.put(operation.getOperationId(), result);
         while (revisions.size() > capacity) revisions.remove(revisions.keySet().iterator().next());
+        while (operationResults.size() > capacity) {
+            operationResults.remove(operationResults.keySet().iterator().next());
+        }
     }
 
     public synchronized boolean checkpoint(String name) {
         if (name == null || name.trim().isEmpty()) return false;
         checkpoints.put(name, current.getRevision());
+        while (checkpoints.size() > capacity) {
+            checkpoints.remove(checkpoints.keySet().iterator().next());
+        }
         return true;
     }
 

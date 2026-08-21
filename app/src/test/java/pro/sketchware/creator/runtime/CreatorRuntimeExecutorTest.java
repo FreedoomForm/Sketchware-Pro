@@ -1246,6 +1246,46 @@ public class CreatorRuntimeExecutorTest {
         assertThat(effects.get(0).getValue()).isEqualTo("Text tapped");
     }
 
+    @Test public void replaceEventBlockReassignsBindingAndPreservesNewBlocks() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        engine.apply(op("other", 2, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "other", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeBlock replace = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.REPLACE_EVENT,
+                map("bindingId", "binding", "targetWidgetId", "other", "eventName", "click"),
+                Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE,
+                        map("message", "reassigned"))), Collections.<CreatorRuntimeBlock>emptyList());
+        engine.apply(op("binding", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "binding", "targetWidgetId", "button", "eventName", "click",
+                        "blocks", Collections.singletonList(replace))));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+        assertThat(engine.getCurrent().getEvents().get("binding").getTargetWidgetId()).isEqualTo("other");
+        assertThat(new CreatorRuntimeExecutor().dispatch(engine, "other", "click").get(0).getValue())
+                .isEqualTo("reassigned");
+    }
+
+    @Test public void detachEventBlockRemovesBindingFromRuntimeDocument() {
+        CreatorRuntimeEngine engine = new CreatorRuntimeEngine(CreatorProjectDocument.empty("p", "Demo"), 20,
+                new CreatorRuntimeEventLog(20));
+        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "button", "widgetType", "button", "parentId", "root")));
+        CreatorRuntimeBlock detach = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.DETACH_EVENT,
+                map("bindingId", "binding"));
+        engine.apply(op("binding", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "binding", "targetWidgetId", "button", "eventName", "click",
+                        "blocks", Collections.singletonList(detach))));
+
+        new CreatorRuntimeExecutor().dispatch(engine, "button", "click");
+        assertThat(engine.getCurrent().getEvents()).doesNotContainKey("binding");
+    }
+
     private static CreatorProjectOperation op(String id, long revision, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         return new CreatorProjectOperation(id, "p", revision, CreatorProjectOperation.ActorKind.USER, type, payload, 0);
     }

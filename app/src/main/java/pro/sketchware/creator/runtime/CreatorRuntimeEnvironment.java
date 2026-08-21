@@ -85,9 +85,11 @@ public final class CreatorRuntimeEnvironment {
     public boolean handlePermissionResult(int requestCode, String[] permissions, int[] grantResults) {
         PendingAction pending = pendingActions.remove(requestCode);
         if (pending == null) return false;
-        boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        boolean granted = grantResults != null && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED;
         publish(pending.serviceId, pending.eventName, CreatorRuntimeServiceArguments.output(
-                "permission", permissions.length == 0 ? null : permissions[0], "granted", granted));
+                "permission", permissions == null || permissions.length == 0 ? null : permissions[0],
+                "granted", granted));
         return true;
     }
 }
