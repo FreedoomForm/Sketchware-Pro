@@ -37,7 +37,7 @@
         <item name="textAppearanceBodyLargeEmphasized">@style/TextAppearance.SketchwarePro.BodyLargeEmphasized</item>
     </style>
 
-    <style name="Theme.SketchwarePro.Main">
+    <style name="Theme.SketchwarePro.Main" parent="Theme.SketchwarePro">
         <item name="navigationViewStyle">@style/Widget.SketchwarePro.NavigationView.Main</item>
     </style>
 

@@ -18,6 +18,7 @@ import com.google.android.gms.maps.MapView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.view.GravityCompat;
@@ -90,6 +91,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     };
 
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_creator_project);
         liveOnly = getIntent().getBooleanExtra(EXTRA_LIVE_ONLY, false);

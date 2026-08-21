@@ -7,6 +7,7 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -27,6 +28,7 @@ public final class CreatorHomeActivity extends AppCompatActivity {
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(() -> renderDocument(document));
 
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_creator_home);
         session = CreatorRuntimeSession.get(this);

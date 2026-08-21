@@ -42,6 +42,15 @@ public class CreatorRuntimeNavigationTest {
         assertThat(appId).contains("~");
     }
 
+    @Test public void creatorActivitiesLaunchWithAppCompatPostSplashTheme() {
+        try (ActivityScenario<CreatorHomeActivity> home = ActivityScenario.launch(CreatorHomeActivity.class)) {
+            home.onActivity(activity -> assertThat(activity.hasWindowFocus() || !activity.isFinishing()).isTrue());
+        }
+        try (ActivityScenario<CreatorProjectActivity> project = ActivityScenario.launch(CreatorProjectActivity.class)) {
+            project.onActivity(activity -> assertThat(activity.hasWindowFocus() || !activity.isFinishing()).isTrue());
+        }
+    }
+
     @Test public void installedLauncherIsCreatorHomeWithSidebar() {
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         assertThat(launchIntent).isNotNull();
