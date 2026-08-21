@@ -204,6 +204,7 @@ public class CreatorRuntimeNavigationTest {
                 assertThat(view.type).isEqualTo(ViewBean.VIEW_TYPE_WIDGET_BUTTON);
                 assertThat(view.text).isNotNull();
                 assertThat(view.text.text).isEqualTo("Runtime button");
+                assertThat(view.parent).isEqualTo("root");
             }
         }
         assertThat(found).isTrue();

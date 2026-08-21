@@ -131,8 +131,11 @@ public final class CreatorLegacyProjectBridge {
             view.id = widget.getId();
             view.name = widget.getId();
             view.type = legacyType;
+            // The binary eC view store assumes parent is non-null and calls
+            // parent.equals(...) while rebuilding the hierarchy. The original
+            // importer already treats the literal "root" as the screen root.
             view.parent = widget.getParentId() == null || widget.getParentId().startsWith("root_")
-                    ? null : widget.getParentId();
+                    ? "root" : widget.getParentId();
             view.parentType = -1;
             List<String> children = widget.getParentId() == null
                     ? java.util.Collections.<String>emptyList()
