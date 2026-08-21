@@ -836,15 +836,22 @@ public final class ChatFragment extends Fragment {
             if (isRunning) showActionFeedback("Stop the current run first");
             return;
         }
-        if (reducer.removeTurn(message)) {
-            if (agent != null) {
-                agent.abort();
-                agent = null;
-            }
-            if (adapter != null) adapter.submitList(reducer.getMessages());
-            autoSaveTask();
-            showActionFeedback(R.string.ai_chat_action_deleted);
-        }
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.ai_chat_action_delete)
+                .setMessage(R.string.ai_chat_action_delete_confirm)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.ai_chat_action_delete, (dialog, which) -> {
+                    if (reducer.removeTurn(message)) {
+                        if (agent != null) {
+                            agent.abort();
+                            agent = null;
+                        }
+                        if (adapter != null) adapter.submitList(reducer.getMessages());
+                        autoSaveTask();
+                        showActionFeedback(R.string.ai_chat_action_deleted);
+                    }
+                })
+                .show();
     }
 
     private void showMessageActions(ChatMessage message, View anchor) {
