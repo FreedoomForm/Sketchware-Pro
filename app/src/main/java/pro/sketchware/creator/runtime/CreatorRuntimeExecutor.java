@@ -22,12 +22,20 @@ public final class CreatorRuntimeExecutor {
     }
 
     private final CreatorRuntimeServiceDispatcher runtimeServices;
+    private final CreatorRuntimeSession session;
     private static final String RETURN_VALUE_KEY = "__creator_return_value__";
     private final Deque<Map<String, Object>> customFunctionFrames = new ArrayDeque<>();
     private int customFunctionDepth;
 
-    public CreatorRuntimeExecutor() { this(null); }
-    public CreatorRuntimeExecutor(CreatorRuntimeServiceDispatcher runtimeServices) { this.runtimeServices = runtimeServices; }
+    public CreatorRuntimeExecutor() { this(null, null); }
+    public CreatorRuntimeExecutor(CreatorRuntimeServiceDispatcher runtimeServices) {
+        this(runtimeServices, null);
+    }
+    public CreatorRuntimeExecutor(CreatorRuntimeServiceDispatcher runtimeServices,
+                                  CreatorRuntimeSession session) {
+        this.runtimeServices = runtimeServices;
+        this.session = session;
+    }
 
     public List<Effect> dispatch(CreatorRuntimeEngine engine, String targetWidgetId, String eventName) {
         if (engine == null) return Collections.emptyList();
@@ -205,8 +213,11 @@ public final class CreatorRuntimeExecutor {
 
     private void apply(CreatorRuntimeEngine engine, CreatorProjectOperation.Type type, Map<String, Object> payload) {
         CreatorProjectDocument document = engine.getCurrent();
-        engine.apply(new CreatorProjectOperation("runtime-" + UUID.randomUUID(), document.getProjectId(),
-                document.getRevision(), CreatorProjectOperation.ActorKind.SYSTEM, type, payload, System.currentTimeMillis()));
+        CreatorProjectOperation operation = new CreatorProjectOperation("runtime-" + UUID.randomUUID(),
+                document.getProjectId(), document.getRevision(), CreatorProjectOperation.ActorKind.SYSTEM,
+                type, payload, System.currentTimeMillis());
+        if (session != null && session.getEngine() == engine) session.apply(operation);
+        else engine.apply(operation);
     }
 
     private static Map<String, Object> map(Object... values) {

@@ -110,7 +110,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 session.getDocument().getProjectId(), runtimeEnvironment,
                 timerId -> runtimeEnvironment.publish("timer", "tick",
                         java.util.Collections.<String, Object>singletonMap("timerId", timerId)));
-        runtimeExecutor = new CreatorRuntimeExecutor(runtimeServices);
+        runtimeExecutor = new CreatorRuntimeExecutor(runtimeServices, session);
         findViewById(R.id.creator_back).setOnClickListener(v -> leaveEditorToLiveSurface());
         findViewById(R.id.creator_add_text).setOnClickListener(v -> addWidget("text", "New text"));
         findViewById(R.id.creator_add_button).setOnClickListener(v -> addWidget("button", "Button"));
@@ -1266,8 +1266,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
 
     private void dispatchRuntimeEvent(String widgetId, String eventName) {
         java.util.List<CreatorRuntimeExecutor.Effect> effects = runtimeExecutor.dispatch(session.getEngine(), widgetId, eventName);
-        if (effects == null || effects.isEmpty()) return;
-        renderEffects(effects);
+        if (effects != null && !effects.isEmpty()) renderEffects(effects);
         render();
     }
 

@@ -528,7 +528,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             if (currentTabNumber > 0) {
                 currentTabNumber--;
                 viewPager.setCurrentItem(currentTabNumber);
-            } else if (t.c("P12I2")) {
+            } else if (isCreatorRuntimeMode() || t.c("P12I2")) {
                 k();
                 saveChangesAndCloseProject();
             } else {

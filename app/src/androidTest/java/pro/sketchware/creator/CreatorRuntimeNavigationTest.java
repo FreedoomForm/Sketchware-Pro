@@ -12,6 +12,9 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import androidx.test.core.app.ActivityScenario;
@@ -38,6 +41,8 @@ import pro.sketchware.creator.runtime.CreatorApplyResult;
 import pro.sketchware.creator.runtime.CreatorLegacyProjectBridge;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectOperation;
+import pro.sketchware.creator.runtime.CreatorRuntimeBlock;
+import pro.sketchware.creator.runtime.CreatorRuntimeExecutor;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 
 @RunWith(AndroidJUnit4.class)
@@ -257,6 +262,49 @@ public class CreatorRuntimeNavigationTest {
         assertThat(found).isTrue();
     }
 
+    @Test public void blockClickMutationPersistsThroughSessionAndNotifiesLiveObservers() {
+        CreatorRuntimeSession runtime = CreatorRuntimeSession.get(context);
+        CreatorProjectDocument initial = runtime.getDocument();
+        Map<String, Object> widgetPayload = new LinkedHashMap<>();
+        widgetPayload.put("widgetId", "behavior_button");
+        widgetPayload.put("widgetType", "button");
+        widgetPayload.put("parentId", "root_main");
+        widgetPayload.put("index", 0L);
+        Map<String, Object> widgetProperties = new LinkedHashMap<>();
+        widgetProperties.put("text", "Before");
+        widgetPayload.put("properties", widgetProperties);
+        CreatorApplyResult widgetResult = runtime.apply(new CreatorProjectOperation(
+                "instrumentation-behavior-widget", initial.getProjectId(), initial.getRevision(),
+                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.WIDGET_ADD,
+                widgetPayload, System.currentTimeMillis()));
+        assertThat(widgetResult.isApplied()).isTrue();
+
+        Map<String, Object> blockPayload = new LinkedHashMap<>();
+        blockPayload.put("widgetId", "behavior_button");
+        blockPayload.put("property", "text");
+        blockPayload.put("value", "After");
+        CreatorRuntimeBlock block = new CreatorRuntimeBlock(
+                CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, blockPayload);
+        Map<String, Object> eventPayload = new LinkedHashMap<>();
+        eventPayload.put("bindingId", "behavior_button_click");
+        eventPayload.put("targetWidgetId", "behavior_button");
+        eventPayload.put("eventName", "click");
+        eventPayload.put("blocks", Collections.singletonList(block));
+        CreatorProjectDocument beforeEvent = runtime.getDocument();
+        CreatorApplyResult eventResult = runtime.apply(new CreatorProjectOperation(
+                "instrumentation-behavior-event", beforeEvent.getProjectId(), beforeEvent.getRevision(),
+                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.EVENT_ATTACH,
+                eventPayload, System.currentTimeMillis()));
+        assertThat(eventResult.isApplied()).isTrue();
+
+        AtomicInteger notifications = new AtomicInteger();
+        runtime.addListener(document -> notifications.incrementAndGet());
+        new CreatorRuntimeExecutor(null, runtime).dispatch(runtime.getEngine(), "behavior_button", "click");
+        Object text = runtime.getDocument().getWidgets().get("behavior_button").getProperties().get("text");
+        assertThat(text).isEqualTo("After");
+        assertThat(notifications.get()).isGreaterThan(0);
+    }
+
     @Test public void originalEditorExposesAllTabsAndDrawerActionsInsideRuntimeHost() {
         CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
         String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
@@ -315,6 +363,21 @@ public class CreatorRuntimeNavigationTest {
                             .forEach(resumed::set));
             assertThat(resumed.get()).isInstanceOf(DesignActivity.class);
             assertThat((Object) resumed.get().findViewById(R.id.tab_layout)).isNotNull();
+        }
+    }
+
+    @Test public void liveOnlySurfaceRendersScreenAndProtectedEntryControl() {
+        Intent intent = new Intent(context, CreatorProjectActivity.class)
+                .putExtra(CreatorProjectActivity.EXTRA_LIVE_ONLY, true);
+        try (ActivityScenario<CreatorProjectActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertThat(((android.widget.LinearLayout) activity.findViewById(R.id.creator_preview_canvas))
+                        .getChildCount()).isGreaterThan(0);
+                assertThat(activity.findViewById(R.id.creator_project_entry_control).getVisibility())
+                        .isEqualTo(View.VISIBLE);
+                assertThat(((com.google.android.material.button.MaterialButton)
+                        activity.findViewById(R.id.creator_project_entry_control)).getText().toString()).isNotEmpty();
+            });
         }
     }
 

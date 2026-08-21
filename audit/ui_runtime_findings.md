@@ -42,3 +42,12 @@ The bottom Run button was wired directly in `DesignActivity.onCreate()` and muta
 ## Follow-up child-screen audit
 
 The Components tab had a separate `openEvent()` path that launched LogicEditorActivity without the runtime project ID. That path is now covered. More importantly, original PropertyActivity, ManageImageActivity, ManageViewActivity, MakeBlockActivity, library/resource managers, and other child screens inherit BaseAppCompatActivity; the base class now recognizes `creator_runtime_project_id` as a runtime launch, bypasses the obsolete Android 13 storage check, and propagates the same extra through `startActivity` and `startActivityForResult`. This keeps the original child screens while preserving the runtime boundary through nested navigation.
+
+
+## Autosave and white-screen audit pass
+
+The manual save prompt was confirmed to originate in DesignActivity.onBackPressed(): runtime launches still followed the ordinary legacy quit-dialog branch. Creator Runtime mode now routes Back through SaveChangesProjectCloser automatically, while the ordinary Sketchware path retains the confirmation dialog.
+
+The block behavior path had a second boundary defect. CreatorRuntimeExecutor applied SET_WIDGET_PROPERTY, STATE_SET, EVENT_ATTACH and related mutations directly to CreatorRuntimeEngine, bypassing CreatorRuntimeSession persistence and listener notifications. CreatorProjectActivity now constructs a session-aware executor, so block mutations are persisted and broadcast to the live surface. The renderer also now repaints after every dispatched event even when no visual Effect object is returned. A live-only surface regression asserts that the canvas is non-empty and the protected entry control is visible, while an instrumentation test asserts button-click block mutation changes the session document and notifies observers.
+
+This pass also retains the earlier full child-screen runtime propagation and 49-type widget mapping fixes. These are the audited boundaries currently covered by code and tests; unsupported legacy block opcodes remain explicitly surfaced in compatibility/deferred state rather than silently treated as implemented.
