@@ -1,0 +1,164 @@
+== triangle/down resources ==
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:647:                    android.R.layout.simple_spinner_dropdown_item, entries));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:718:                    android.R.layout.simple_dropdown_item_1line, suggestions));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:420:        factory.setExpandEntityReferences(false);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:176:                    android.R.layout.simple_spinner_dropdown_item, items));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:222:                    android.R.layout.simple_dropdown_item_1line, items));
+app/src/main/res/drawable/selector_ic_expand_less_24.xml:2:    <item android:drawable="@drawable/ic_expand_less_white_24dp" android:state_enabled="false" />
+app/src/main/res/drawable/selector_ic_expand_less_24.xml:3:    <item android:drawable="@drawable/ic_expand_less_white_24dp" android:state_pressed="true" />
+app/src/main/res/drawable/selector_ic_expand_less_24.xml:4:    <item android:drawable="@drawable/ic_expand_less_white_24dp" android:state_focused="true" android:state_pressed="false" />
+app/src/main/res/drawable/selector_ic_expand_less_24.xml:5:    <item android:drawable="@drawable/ic_expand_less_grey600_24dp" />
+app/src/main/res/drawable/selector_ic_expand_more_24.xml:2:    <item android:drawable="@drawable/ic_expand_more_white_24dp" android:state_enabled="false" />
+app/src/main/res/drawable/selector_ic_expand_more_24.xml:3:    <item android:drawable="@drawable/ic_expand_more_white_24dp" android:state_pressed="true" />
+app/src/main/res/drawable/selector_ic_expand_more_24.xml:4:    <item android:drawable="@drawable/ic_expand_more_white_24dp" android:state_focused="true" android:state_pressed="false" />
+app/src/main/res/drawable/selector_ic_expand_more_24.xml:5:    <item android:drawable="@drawable/ic_expand_more_grey600_24dp" />
+app/src/main/res/values/arrays.xml:20:        <item>ExpandableListView</item>
+app/src/main/res/values/strings.xml:1543:    <string name="manage_export_url_list_menu_extend">Expand Expiration Date</string>
+app/src/main/res/values/strings.xml:1546:    <string name="manage_export_url_message_complete_extend">Expand Expiration Date Success.</string>
+app/src/main/res/values/strings.xml:1547:    <string name="manage_export_url_message_fail_extend">Expand Expiration Date Failed.</string>
+app/src/main/res/values/strings.xml:1550:    <string name="manage_export_url_popup_desc_extend_expire">The expiration date of URL will be expanded to %s days. Do you want to continue?</string>
+app/src/main/res/values/strings.xml:1552:    <string name="manage_export_url_popup_title_extend_expire">Expand URL Expiration Date</string>
+app/src/main/res/values/strings.xml:1555:    <string name="manage_export_url_word_extend">Expand</string>
+app/src/main/res/values/styles.xml:15:    <style name="CustomCollapsingCollapsed">
+app/src/main/res/values/styles.xml:19:    <style name="CustomCollapsingExpanded">
+app/src/main/res/values/styles_new.xml:19:        <item name="collapsedTitleTextAppearance">
+app/src/main/res/values/styles_new.xml:20:            @style/TextAppearance.SketchwarePro.CollapsingToolbar.Collapsed
+app/src/main/res/values/styles_new.xml:22:        <item name="expandedTitleTextAppearance">
+app/src/main/res/values/styles_new.xml:23:            @style/TextAppearance.SketchwarePro.CollapsingToolbar.Expanded
+app/src/main/res/values/styles_new.xml:25:        <item name="titleCollapseMode">scale</item>
+app/src/main/res/values/styles_new.xml:28:    <style name="TextAppearance.SketchwarePro.CollapsingToolbar.Collapsed" parent="TextAppearance.SketchwarePro.TitleLarge" />
+app/src/main/res/values/styles_new.xml:29:    <style name="TextAppearance.SketchwarePro.CollapsingToolbar.Expanded" parent="TextAppearance.SketchwarePro.HeadlineMedium" />
+app/src/main/res/values/styles_new.xml:51:    <style name="Widget.SketchwarePro.TextInputLayout.ExposedDropdownMenu" parent="Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+== bottom panel ids/listeners ==
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:68: * <p>All controls submit typed operations to {@link CreatorRuntimeSession}; no
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:69: * UI control writes project data directly and no Save or Compile button exists
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:91:            "bottom_end", "bottom_start", "top_end", "top_start", "center"
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:105:        entryControl = findViewById(R.id.creator_project_entry_control);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:113:        findViewById(R.id.creator_back).setOnClickListener(v -> leaveEditorToLiveSurface());
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:114:        findViewById(R.id.creator_add_text).setOnClickListener(v -> addWidget("text", "New text"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:115:        findViewById(R.id.creator_add_button).setOnClickListener(v -> addWidget("button", "Button"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:116:        findViewById(R.id.creator_add_input).setOnClickListener(v -> addWidget("input", ""));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:117:        findViewById(R.id.creator_add_toggle).setOnClickListener(v -> addWidget("switch", "Toggle"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:118:        findViewById(R.id.creator_checkpoint).setOnClickListener(v -> createCheckpoint());
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:119:        findViewById(R.id.creator_history).setOnClickListener(v -> showHistoryInspector());
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:120:        findViewById(R.id.creator_compatibility).setOnClickListener(v -> showCompatibilityInspector());
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:121:        entryControl.setOnClickListener(v -> {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:173:        if (menu != null) menu.setOnClickListener(v -> {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:194:        if (view != null) view.setOnClickListener(listener);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:217:        View controls = findViewById(R.id.creator_editor_controls);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:219:        if (controls != null) controls.setVisibility(liveOnly ? View.GONE : View.VISIBLE);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:292:        input.setHint(R.string.creator_entry_control_label_hint);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:295:        placementTitle.setText(R.string.creator_entry_control_position);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:311:                .setTitle(R.string.creator_entry_control_title)
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:312:                .setMessage(R.string.creator_entry_control_message)
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:407:        payload.put("placement", "bottom_end");
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:534:            button.setOnClickListener(v -> dispatchRuntimeEvent(widget.getId(), "click"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:681:            fab.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "click"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:755:                row.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "item_click"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:846:        if ("bottom_navigation".equals(widget.getType())) {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:847:            com.google.android.material.bottomnavigation.BottomNavigationView navigation =
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:848:                    new com.google.android.material.bottomnavigation.BottomNavigationView(this);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:872:                dot.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "pattern_changed"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:884:                index.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "letter_selected"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:944:            signIn.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "click"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:985:        if (hasRuntimeClickBinding(widget.getId())) view.setOnClickListener(v -> dispatchRuntimeEvent(widget.getId(), "click"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1307:        if ("bottom_start".equals(placement)) params.gravity = Gravity.BOTTOM | Gravity.START;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1324:            case 1: return getString(R.string.creator_position_bottom_start);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1328:            default: return getString(R.string.creator_position_bottom_end);
+app/src/main/res/layout/activity_creator_project.xml:28:                    android:id="@+id/creator_back"
+app/src/main/res/layout/activity_creator_project.xml:32:                    android:contentDescription="@string/creator_back"
+app/src/main/res/layout/activity_creator_project.xml:90:                android:id="@+id/creator_editor_controls"
+app/src/main/res/layout/activity_creator_project.xml:156:            android:id="@+id/creator_project_entry_control"
+app/src/main/res/layout/activity_creator_project.xml:159:            android:layout_gravity="bottom|end"
+app/src/main/res/layout/activity_creator_project.xml:161:            android:contentDescription="@string/creator_entry_control_title"
+== vector/menu candidates ==
+app/src/main/res/drawable/ic_mtrl_back.xml:2:<!-- Material back arrow (left chevron). 24dp single-tone vector. -->
+app/src/main/res/drawable/selector_ic_chevron_left_grey_48.xml:2:    <item android:drawable="@drawable/ic_chevron_left_white_48dp" android:state_enabled="false" />
+app/src/main/res/drawable/selector_ic_chevron_left_grey_48.xml:3:    <item android:drawable="@drawable/ic_chevron_left_white_48dp" android:state_pressed="true" />
+app/src/main/res/drawable/selector_ic_chevron_left_grey_48.xml:4:    <item android:drawable="@drawable/ic_chevron_left_white_48dp" android:state_focused="true" android:state_pressed="false" />
+app/src/main/res/drawable/selector_ic_chevron_left_grey_48.xml:5:    <item android:drawable="@drawable/ic_chevron_left_grey600_48dp" />
+app/src/main/res/drawable/selector_ic_chevron_left_white_48.xml:2:    <item android:drawable="@drawable/ic_chevron_left_grey600_48dp" android:state_enabled="false" />
+app/src/main/res/drawable/selector_ic_chevron_left_white_48.xml:3:    <item android:drawable="@drawable/ic_chevron_left_grey600_48dp" android:state_pressed="true" />
+app/src/main/res/drawable/selector_ic_chevron_left_white_48.xml:4:    <item android:drawable="@drawable/ic_chevron_left_grey600_48dp" android:state_focused="true" android:state_pressed="false" />
+app/src/main/res/drawable/selector_ic_chevron_left_white_48.xml:5:    <item android:drawable="@drawable/ic_chevron_left_white_48dp" />
+app/src/main/res/drawable/selector_ic_chevron_right_24.xml:2:    <item android:drawable="@drawable/ic_chevron_right_white_24dp" android:state_enabled="false" />
+app/src/main/res/drawable/selector_ic_chevron_right_24.xml:3:    <item android:drawable="@drawable/ic_chevron_right_white_24dp" android:state_pressed="true" />
+app/src/main/res/drawable/selector_ic_chevron_right_24.xml:4:    <item android:drawable="@drawable/ic_chevron_right_white_24dp" android:state_focused="true" android:state_pressed="false" />
+app/src/main/res/drawable/selector_ic_chevron_right_24.xml:5:    <item android:drawable="@drawable/ic_chevron_right_grey600_24dp" />
+app/src/main/res/drawable/selector_ic_chevron_right_36.xml:2:    <item android:drawable="@drawable/ic_chevron_right_white_36dp" android:state_enabled="false" />
+app/src/main/res/drawable/selector_ic_chevron_right_36.xml:3:    <item android:drawable="@drawable/ic_chevron_right_white_36dp" android:state_pressed="true" />
+app/src/main/res/drawable/selector_ic_chevron_right_36.xml:4:    <item android:drawable="@drawable/ic_chevron_right_white_36dp" android:state_focused="true" android:state_pressed="false" />
+app/src/main/res/drawable/selector_ic_chevron_right_36.xml:5:    <item android:drawable="@drawable/ic_chevron_right_grey600_36dp" />
+app/src/main/res/drawable/selector_ic_chevron_right_grey_48.xml:2:    <item android:drawable="@drawable/ic_chevron_right_white_48dp" android:state_enabled="false" />
+app/src/main/res/drawable/selector_ic_chevron_right_grey_48.xml:3:    <item android:drawable="@drawable/ic_chevron_right_white_48dp" android:state_pressed="true" />
+app/src/main/res/drawable/selector_ic_chevron_right_grey_48.xml:4:    <item android:drawable="@drawable/ic_chevron_right_white_48dp" android:state_focused="true" android:state_pressed="false" />
+app/src/main/res/drawable/selector_ic_chevron_right_grey_48.xml:5:    <item android:drawable="@drawable/ic_chevron_right_grey600_48dp" />
+app/src/main/res/drawable/selector_ic_chevron_right_white_48.xml:2:    <item android:drawable="@drawable/ic_chevron_right_grey600_48dp" android:state_enabled="false" />
+app/src/main/res/drawable/selector_ic_chevron_right_white_48.xml:3:    <item android:drawable="@drawable/ic_chevron_right_grey600_48dp" android:state_pressed="true" />
+app/src/main/res/drawable/selector_ic_chevron_right_white_48.xml:4:    <item android:drawable="@drawable/ic_chevron_right_grey600_48dp" android:state_focused="true" android:state_pressed="false" />
+app/src/main/res/drawable/selector_ic_chevron_right_white_48.xml:5:    <item android:drawable="@drawable/ic_chevron_right_white_48dp" />
+app/src/main/res/drawable/selector_ic_expand_more_24.xml:2:    <item android:drawable="@drawable/ic_expand_more_white_24dp" android:state_enabled="false" />
+app/src/main/res/drawable/selector_ic_expand_more_24.xml:3:    <item android:drawable="@drawable/ic_expand_more_white_24dp" android:state_pressed="true" />
+app/src/main/res/drawable/selector_ic_expand_more_24.xml:4:    <item android:drawable="@drawable/ic_expand_more_white_24dp" android:state_focused="true" android:state_pressed="false" />
+app/src/main/res/drawable/selector_ic_expand_more_24.xml:5:    <item android:drawable="@drawable/ic_expand_more_grey600_24dp" />
+app/src/main/res/layout/activity_blocks_manager_creator.xml:108:                            android:src="@drawable/ic_arrow_drop_down_24px" />
+app/src/main/res/layout/activity_icon_creator.xml:744:                            android:background="@drawable/ic_mtrl_arrow_down"
+app/src/main/res/layout/activity_icon_creator.xml:920:                            android:background="@drawable/ic_mtrl_arrow_down"
+app/src/main/res/layout/ai_model_sheet_row.xml:118:                    android:src="@drawable/ic_chevron_right_small"
+app/src/main/res/layout/ai_provider_detail.xml:186:                    app:endIconDrawable="@drawable/ic_mtrl_chevron_right_24"
+app/src/main/res/layout/ai_provider_row.xml:5:     badge on the right, chevron at the end, hairline divider at the bottom.
+app/src/main/res/layout/ai_provider_row.xml:90:            android:src="@drawable/ic_mtrl_chevron_right_24"
+app/src/main/res/layout/ai_row_tool.xml:88:            android:src="@drawable/ic_mtrl_arrow_down"
+app/src/main/res/layout/block_customview.xml:87:                                android:src="@drawable/selector_ic_chevron_left_grey_48" />
+app/src/main/res/layout/block_customview.xml:116:                                android:src="@drawable/selector_ic_chevron_left_grey_48" />
+app/src/main/res/layout/common_category_triangle_item.xml:41:        android:background="@drawable/triangle_point_left" />
+app/src/main/res/layout/design.xml:134:                            android:src="@drawable/ic_arrow_drop_down_24px"
+app/src/main/res/layout/design.xml:149:                    app:icon="@drawable/m3_split_button_chevron_avd"
+app/src/main/res/layout/design_drawer_item.xml:68:                android:src="@drawable/ic_mtrl_chevron_right_24"
+app/src/main/res/layout/fr_logic_list_item.xml:110:                android:src="@drawable/ic_arrow_drop_down_24px"
+app/src/main/res/layout/fr_logic_list_item_component.xml:71:                android:src="@drawable/ic_arrow_drop_down_24px" />
+app/src/main/res/layout/fragment_events_manager_creator.xml:100:                            tools:src="@drawable/ic_arrow_drop_down_24px" />
+app/src/main/res/layout/logic_add_component_dialog.xml:170:        app:endIconDrawable="@drawable/ic_expand_more_grey600_24dp"
+app/src/main/res/layout/manage_custom_component_list_item.xml:71:                android:src="@drawable/ic_arrow_drop_down_24px" />
+app/src/main/res/layout/myprojects_item.xml:103:        android:src="@drawable/selector_ic_expand_more_24"
+app/src/main/res/layout/myprojects_item_special.xml:63:            android:src="@drawable/ic_chevron_right_white_24dp"
+app/src/main/res/layout/var_type_spinner.xml:19:        android:src="@drawable/ic_arrow_drop_down_24px" />
+== bottom controls in original design ==
+app/src/main/res/layout/design.xml:31:                    tools:menu="@menu/design_menu"
+app/src/main/res/layout/design.xml:86:                android:id="@+id/bottom_bar"
+app/src/main/res/layout/design.xml:141:                    android:id="@+id/btn_options"
+app/src/main/res/layout/design.xml:149:                    app:icon="@drawable/m3_split_button_chevron_avd"
+app/src/main/res/layout/design.xml:150:                    app:iconSize="24dp" />
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:145:    private Menu bottomMenu;
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:146:    private PopupMenu bottomPopupMenu;
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:591:        // Run is intentionally not part of the original editor bottom bar in
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:607:        btnOptions = findViewById(R.id.btn_options);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:608:        btnOptions.setOnClickListener(v -> bottomPopupMenu.show());
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:610:        bottomPopupMenu = new PopupMenu(this, btnOptions);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:611:        bottomMenu = bottomPopupMenu.getMenu();
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:612:        bottomMenu.add(Menu.NONE, 1, Menu.NONE, "Build Settings").setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:617:        bottomMenu.add(Menu.NONE, 2, Menu.NONE, "Clean temporary files").setVisible(false).setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:625:        bottomMenu.add(Menu.NONE, 3, Menu.NONE, "Show last compile error").setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:629:        bottomMenu.add(Menu.NONE, 5, Menu.NONE, "Show source code").setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:633:        bottomMenu.add(Menu.NONE, 4, Menu.NONE, "Install last built APK").setVisible(false).setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:639:        bottomMenu.add(Menu.NONE, 6, Menu.NONE, "Show Apk signatures").setVisible(false).setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:644:        bottomMenu.add(Menu.NONE, 7, Menu.NONE, "Direct XML editor").setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:648:        bottomPopupMenu.setOnDismissListener(menu -> btnOptions.setChecked(false));
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:674:                    bottomMenu.findItem(7).setVisible(true);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:680:                    bottomMenu.findItem(7).setVisible(false);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:689:                    bottomMenu.findItem(7).setVisible(false);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:727:        if (bottomMenu != null) {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:729:                bottomMenu.findItem(2).setVisible(q != null && FileUtil.isExistFile(q.projectMyscPath));
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:731:                bottomMenu.findItem(4).setVisible(isDebugApkExists);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:732:                bottomMenu.findItem(6).setVisible(isDebugApkExists);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:751:    public boolean onCreateOptionsMenu(Menu menu) {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:752:        getMenuInflater().inflate(R.menu.design_menu, menu);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:753:        MenuItem searchItem = menu.findItem(R.id.design_option_menu_search);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:767:        } else if (itemId == R.id.design_option_menu_title_save_project) {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:769:        } else if (itemId == R.id.design_option_menu_search) {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1120:            var bottomSheet = new ManageStringFogFragment();
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1121:            bottomSheet.show(fragmentManager, "stringFogFragment");
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1258:                if (yB.a(lC.b(sc_id), "custom_icon")) {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1263:                                <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android" >
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1267:                                </adaptive-icon>""");
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1269:                        q.a(wq.e() + File.separator + sc_id + File.separator + "icon.png");

@@ -1,0 +1,69 @@
+== Creator Runtime project switching refs ==
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:45:import pro.sketchware.activities.main.activities.MainActivity;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:202:    private void createNewProjectFromSidebar() {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:209:                .setTitle(R.string.creator_sidebar_new_project)
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:213:                    session.createNewProject(name.getText().toString());
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:223:    private void openLegacyMain(boolean sketchub) {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:225:        Intent intent = new Intent(this, MainActivity.class);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:226:        if (sketchub) intent.putExtra(MainActivity.EXTRA_OPEN_SKETCHUB, true);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeSession.java:73:    public synchronized CreatorProjectDocument createNewProject(String name) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:100:     * Projects the runtime widget tree into the original ViewBean store. The
+app/src/main/res/values/creator_runtime_strings.xml:11:    <string name="creator_sidebar_new_project">New project</string>
+app/src/main/res/values/creator_runtime_strings.xml:15:    <string name="creator_sidebar_projects">Projects</string>
+app/src/main/res/values/creator_runtime_strings.xml:16:    <string name="creator_sidebar_sketchub">Sketchub</string>
+== session/store project creation refs ==
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:258:        switch (fileType) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:33:    public Result importLayout(String projectId, String projectName, String screenId,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:71:                projectId, 0, projectName, screenId, screens, widgets, CreatorEntryControl.defaultControl());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:76:        switch (legacyType) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:86:            case ViewBean.VIEW_TYPE_WIDGET_SWITCH: return "switch";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:22:        switch (action) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:9:    public static CreatorRuntimeServiceDispatcher defaults(Context context, String projectId,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServices.java:13:                .register(new CreatorStorageService(context, projectId))
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:14:    private final String projectId;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:17:    public CreatorStorageService(Context context, String projectId) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:18:        if (context == null || projectId == null || projectId.trim().isEmpty()) throw new IllegalArgumentException("context/projectId");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:20:        this.projectId = projectId;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:21:        preferences = this.context.getSharedPreferences("creator_runtime_" + projectId, Context.MODE_PRIVATE);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:28:        this.projectId = null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorStorageService.java:72:        return context.getSharedPreferences("creator_runtime_" + projectId + "_" + sanitize(storeName), Context.MODE_PRIVATE);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationReducer.java:22:        switch (operation.getType()) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:17:                    "operation projectId does not match the active document");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:24:        switch (operation.getType()) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:15:    private final String projectId;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:25:    public CreatorProjectDocument(int schemaVersion, String projectId, long revision,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:30:        this(schemaVersion, projectId, revision, name, entryScreenId, screens, widgets, entryControl,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:34:    public CreatorProjectDocument(int schemaVersion, String projectId, long revision,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:42:        if (projectId == null || projectId.trim().isEmpty()) throw new IllegalArgumentException("projectId");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:46:        this.projectId = projectId;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:61:    public static CreatorProjectDocument empty(String projectId, String name) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:62:        return new CreatorProjectDocument(SCHEMA_VERSION, projectId, 0, name, null,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:68:    public String getProjectId() { return projectId; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:82:        return new CreatorProjectDocument(schemaVersion, projectId, nextRevision, name,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:88:        return new CreatorProjectDocument(schemaVersion, projectId, nextRevision, name, entryScreenId,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:23:        root.addProperty("projectId", document.getProjectId());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:77:        String projectId = required(root, "projectId").getAsString();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:120:        return new CreatorProjectDocument(schemaVersion, projectId, revision, name, entryScreenId,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:21:    private final String projectId;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:28:    public CreatorProjectOperation(String operationId, String projectId, long baseRevision,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:32:        if (projectId == null || projectId.trim().isEmpty()) throw new IllegalArgumentException("projectId");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:37:        this.projectId = projectId;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:47:    public String getProjectId() { return projectId; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:15:        switch (operator) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEvent.java:12:    private final String projectId;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEvent.java:20:    public CreatorRuntimeEvent(long timestampEpochMs, String projectId, long revision,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEvent.java:24:        this.projectId = projectId;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEvent.java:35:    public String getProjectId() { return projectId; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeProjectStore.java:20:    public CreatorProjectDocument loadOrCreate() {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:9:    interface ProjectImageDirectory { File get(String projectId); }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:13:    public static File resolveProjectImage(String projectId, String resourceFileName) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:14:        return resolve(projectId, resourceFileName, new ProjectImageDirectory() {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:27:    static File resolve(String projectId, String resourceFileName, ProjectImageDirectory directories) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:28:        if (projectId == null || projectId.trim().isEmpty() || resourceFileName == null
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:30:        File root = directories.get(projectId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeSession.java:22:        engine = new CreatorRuntimeEngine(store.loadOrCreate(), 100, new CreatorRuntimeEventLog(300));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeSession.java:72:    /** Creates and persists a fresh active project for the editor sidebar. */
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeSession.java:73:    public synchronized CreatorProjectDocument createNewProject(String name) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeWidgetCatalog.java:12:            "checkbox", "switch", "progress", "spinner", "slider", "calendar_view", "fab", "radio",
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:258:        switch (runtimeType) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:274:            case "switch": return ViewBean.VIEW_TYPE_WIDGET_SWITCH;

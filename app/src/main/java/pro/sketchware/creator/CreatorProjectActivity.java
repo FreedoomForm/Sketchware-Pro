@@ -42,7 +42,6 @@ import com.besome.sketch.tools.NewKeyStoreActivity;
 import mod.hilal.saif.activities.tools.AppSettings;
 import pro.sketchware.R;
 import pro.sketchware.activities.about.AboutActivity;
-import pro.sketchware.activities.main.activities.MainActivity;
 import pro.sketchware.creator.runtime.CreatorApplyResult;
 import pro.sketchware.creator.runtime.CreatorCompatibilityReport;
 import pro.sketchware.creator.runtime.CreatorCompatibilityTier;
@@ -197,34 +196,6 @@ public final class CreatorProjectActivity extends AppCompatActivity {
 
     private void closeEditorSidebar() {
         if (editorDrawer != null) editorDrawer.closeDrawer(GravityCompat.END);
-    }
-
-    private void createNewProjectFromSidebar() {
-        EditText name = new EditText(this);
-        name.setHint(R.string.creator_new_project_name_hint);
-        name.setSingleLine(true);
-        int horizontal = dp(24);
-        name.setPadding(horizontal, dp(8), horizontal, dp(8));
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.creator_sidebar_new_project)
-                .setView(name)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.creator_apply, (dialog, which) -> {
-                    session.createNewProject(name.getText().toString());
-                    activeScreenId = null;
-                    ensureStarterScreen();
-                    render();
-                    Toast.makeText(this, R.string.creator_new_project_created, Toast.LENGTH_SHORT).show();
-                })
-                .show();
-        closeEditorSidebar();
-    }
-
-    private void openLegacyMain(boolean sketchub) {
-        closeEditorSidebar();
-        Intent intent = new Intent(this, MainActivity.class);
-        if (sketchub) intent.putExtra(MainActivity.EXTRA_OPEN_SKETCHUB, true);
-        startActivity(intent);
     }
 
     private void openActivity(Class<?> type) {

@@ -4,16 +4,9 @@
     <string name="creator_home_title">Create in the open</string>
     <string name="creator_home_empty_project">Your project is ready for its first screen. Every edit is saved and visible.</string>
     <string name="creator_home_project_detail">Revision %1$d · %2$d screens · %3$d widgets</string>
-    <string name="creator_open_legacy">Open legacy Sketchware projects</string>
-    <string name="creator_sidebar_description">Project management and legacy Sketchware tools</string>
+    <string name="creator_sidebar_description">Original Sketchware tools</string>
     <string name="creator_sidebar_title">Sketchware tools</string>
-    <string name="creator_sidebar_project_section">Project</string>
-    <string name="creator_sidebar_new_project">New project</string>
-    <string name="creator_new_project_name_hint">Project name</string>
-    <string name="creator_new_project_created">New runtime project created</string>
     <string name="creator_external_link_unavailable">No browser is available for this link</string>
-    <string name="creator_sidebar_projects">Projects</string>
-    <string name="creator_sidebar_sketchub">Sketchub</string>
     <string name="creator_sidebar_versions_section">Versions</string>
     <string name="creator_sidebar_app_section">Application</string>
     <string name="creator_sidebar_about">About the team</string>
