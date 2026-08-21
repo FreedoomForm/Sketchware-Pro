@@ -26,7 +26,6 @@ public final class AISettingsActivity extends AppCompatActivity {
     public static final String FRAGMENT_ADVANCED = "advanced";
     public static final String FRAGMENT_AUTO_APPROVE = "auto_approve";
     public static final String FRAGMENT_EXPERIMENTAL = "experimental";
-    public static final String FRAGMENT_VERSIONS = "versions";
 
     public static Intent newIntent(Context ctx, String fragmentTag) {
         Intent i = new Intent(ctx, AISettingsActivity.class);
@@ -64,7 +63,6 @@ public final class AISettingsActivity extends AppCompatActivity {
             else if (id == R.id.nav_ai_advanced) tag = FRAGMENT_ADVANCED;
             else if (id == R.id.nav_ai_auto_approve) tag = FRAGMENT_AUTO_APPROVE;
             else if (id == R.id.nav_ai_experimental) tag = FRAGMENT_EXPERIMENTAL;
-            else if (id == R.id.nav_ai_versions) tag = FRAGMENT_VERSIONS;
             else tag = FRAGMENT_PROVIDER;
             switchTo(tag);
             DrawerLayout drawer = findViewById(R.id.drawer);
@@ -84,7 +82,6 @@ public final class AISettingsActivity extends AppCompatActivity {
             case FRAGMENT_ADVANCED:     f = new AdvancedSettingsFragment(); break;
             case FRAGMENT_AUTO_APPROVE:  f = new AutoApproveFragment(); break;
             case FRAGMENT_EXPERIMENTAL:  f = new ExperimentalFragment(); break;
-            case FRAGMENT_VERSIONS:      f = new VersionsFragment(); break;
             case FRAGMENT_PROVIDER:
             default:
                 // Use the new richer providers list (search + status badges

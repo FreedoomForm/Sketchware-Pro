@@ -50,6 +50,25 @@ public class CreatorRuntimeNavigationTest {
         }
     }
 
+    @Test public void editorSidebarContainsMigratedMainScreenActions() {
+        try (ActivityScenario<CreatorProjectActivity> scenario = ActivityScenario.launch(CreatorProjectActivity.class)) {
+            scenario.onActivity(activity -> {
+                assertThat((Object) activity.findViewById(R.id.creator_project_drawer)).isInstanceOf(DrawerLayout.class);
+                int[] actions = {
+                        R.id.creator_sidebar_new_project, R.id.creator_sidebar_projects,
+                        R.id.creator_sidebar_sketchub, R.id.creator_sidebar_about,
+                        R.id.creator_sidebar_changelog, R.id.creator_sidebar_info,
+                        R.id.creator_sidebar_keystore, R.id.creator_sidebar_settings,
+                        R.id.creator_sidebar_swassist, R.id.creator_sidebar_discord,
+                        R.id.creator_sidebar_telegram, R.id.creator_sidebar_github
+                };
+                for (int id : actions) {
+                    assertThat((Object) activity.findViewById(id)).isNotNull();
+                }
+            });
+        }
+    }
+
     @Test public void liveOnlyModeUsesNativeCanvasAndHidesEditorControls() {
         Intent intent = new Intent(context, CreatorProjectActivity.class)
                 .putExtra(CreatorProjectActivity.EXTRA_LIVE_ONLY, true);

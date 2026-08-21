@@ -1,5 +1,7 @@
 package pro.sketchware.creator;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -33,7 +35,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.besome.sketch.help.ProgramInfoActivity;
+import com.besome.sketch.tools.NewKeyStoreActivity;
+import mod.hilal.saif.activities.tools.AppSettings;
 import pro.sketchware.R;
+import pro.sketchware.activities.about.AboutActivity;
+import pro.sketchware.activities.main.activities.MainActivity;
 import pro.sketchware.creator.runtime.CreatorApplyResult;
 import pro.sketchware.creator.runtime.CreatorCompatibilityReport;
 import pro.sketchware.creator.runtime.CreatorCompatibilityTier;
@@ -73,6 +80,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private CreatorRuntimeServiceDispatcher runtimeServices;
     private String activeScreenId;
     private final Map<String, MapView> liveMapViews = new LinkedHashMap<>();
+    private DrawerLayout editorDrawer;
     private DrawerLayout liveDrawerLayout;
     private boolean rendering;
     private boolean renderPending;
@@ -92,6 +100,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         previewCanvas = findViewById(R.id.creator_preview_canvas);
         revisionLabel = findViewById(R.id.creator_revision_label);
         entryControl = findViewById(R.id.creator_project_entry_control);
+        editorDrawer = findViewById(R.id.creator_project_drawer);
+        wireEditorSidebar();
         runtimeServices = CreatorRuntimeServices.defaults(this,
                 session.getDocument().getProjectId(), runtimeEnvironment,
                 timerId -> runtimeEnvironment.publish("timer", "tick",
@@ -140,6 +150,10 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     }
 
     @Override public void onBackPressed() {
+        if (editorDrawer != null && editorDrawer.isDrawerOpen(GravityCompat.START)) {
+            editorDrawer.closeDrawer(GravityCompat.START);
+            return;
+        }
         if (liveDrawerLayout != null && liveDrawerLayout.isDrawerOpen(GravityCompat.START)) {
             liveDrawerLayout.closeDrawer(GravityCompat.START);
             return;
@@ -148,6 +162,81 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             finish();
         } else {
             leaveEditorToLiveSurface();
+        }
+    }
+
+    private void wireEditorSidebar() {
+        View menu = findViewById(R.id.creator_sidebar_open);
+        if (menu != null) menu.setOnClickListener(v -> {
+            if (editorDrawer != null) editorDrawer.openDrawer(GravityCompat.START);
+        });
+        bindSidebar(R.id.creator_sidebar_new_project, v -> createNewProjectFromSidebar());
+        bindSidebar(R.id.creator_sidebar_projects, v -> openLegacyMain(false));
+        bindSidebar(R.id.creator_sidebar_sketchub, v -> openLegacyMain(true));
+        bindSidebar(R.id.creator_sidebar_about, v -> openActivity(AboutActivity.class));
+        bindSidebar(R.id.creator_sidebar_changelog, v -> {
+            Intent intent = new Intent(this, AboutActivity.class);
+            intent.putExtra("select", "changelog");
+            startActivity(intent);
+        });
+        bindSidebar(R.id.creator_sidebar_info, v -> startActivityForResult(
+                new Intent(this, ProgramInfoActivity.class), 105));
+        bindSidebar(R.id.creator_sidebar_keystore, v -> openActivity(NewKeyStoreActivity.class));
+        bindSidebar(R.id.creator_sidebar_settings, v -> openActivity(AppSettings.class));
+        bindSidebar(R.id.creator_sidebar_swassist, v -> openExternal(R.string.link_sw_assist));
+        bindSidebar(R.id.creator_sidebar_discord, v -> openExternal(R.string.link_discord_invite));
+        bindSidebar(R.id.creator_sidebar_telegram, v -> openExternal(R.string.link_telegram_invite));
+        bindSidebar(R.id.creator_sidebar_github, v -> openExternal(R.string.link_github_url));
+    }
+
+    private void bindSidebar(int id, View.OnClickListener listener) {
+        View view = findViewById(id);
+        if (view != null) view.setOnClickListener(listener);
+    }
+
+    private void closeEditorSidebar() {
+        if (editorDrawer != null) editorDrawer.closeDrawer(GravityCompat.START);
+    }
+
+    private void createNewProjectFromSidebar() {
+        EditText name = new EditText(this);
+        name.setHint(R.string.creator_new_project_name_hint);
+        name.setSingleLine(true);
+        int horizontal = dp(24);
+        name.setPadding(horizontal, dp(8), horizontal, dp(8));
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.creator_sidebar_new_project)
+                .setView(name)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.creator_apply, (dialog, which) -> {
+                    session.createNewProject(name.getText().toString());
+                    activeScreenId = null;
+                    ensureStarterScreen();
+                    render();
+                    Toast.makeText(this, R.string.creator_new_project_created, Toast.LENGTH_SHORT).show();
+                })
+                .show();
+        closeEditorSidebar();
+    }
+
+    private void openLegacyMain(boolean sketchub) {
+        closeEditorSidebar();
+        Intent intent = new Intent(this, MainActivity.class);
+        if (sketchub) intent.putExtra(MainActivity.EXTRA_OPEN_SKETCHUB, true);
+        startActivity(intent);
+    }
+
+    private void openActivity(Class<?> type) {
+        closeEditorSidebar();
+        startActivity(new Intent(this, type));
+    }
+
+    private void openExternal(int urlRes) {
+        closeEditorSidebar();
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getString(urlRes))));
+        } catch (android.content.ActivityNotFoundException ignored) {
+            Toast.makeText(this, R.string.creator_external_link_unavailable, Toast.LENGTH_SHORT).show();
         }
     }
 

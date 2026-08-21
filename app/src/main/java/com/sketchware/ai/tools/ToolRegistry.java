@@ -89,6 +89,27 @@ public final class ToolRegistry {
     }
 
     /**
+     * Build the deduplicated schema payload used by the active AI agent. Legacy
+     * aliases remain in {@link #all()} for old conversations, but are hidden
+     * from new model tool selection by {@link ToolVisibilityPolicy}.
+     */
+    public String toAgentJsonSchemas() {
+        StringBuilder sb = new StringBuilder("[");
+        boolean first = true;
+        for (SketchwareTool t : ToolVisibilityPolicy.canonicalTools(this)) {
+            if (!first) sb.append(",");
+            first = false;
+            JsonObject entry = new JsonObject();
+            entry.addProperty("name", t.name());
+            entry.addProperty("description", t.description());
+            entry.add("inputSchema", t.jsonSchema());
+            sb.append(entry.toString());
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    /**
      * Attempt to infer the intended tool from its arguments when the provider
      * returned an empty or {@code "unknown"} tool name.
      *

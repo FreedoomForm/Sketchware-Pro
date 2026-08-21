@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.ToolRegistry;
+import com.sketchware.ai.tools.ToolVisibilityPolicy;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -66,7 +67,7 @@ public final class AiToolCatalogSheet {
             content.addView(category, categoryParams);
 
             for (SketchwareTool tool : group.getValue()) {
-                TextView row = text(context, tool.name() + "\n" + tool.description(), 14, Typeface.NORMAL);
+                TextView row = text(context, displayToolName(tool.name()) + "\n" + tool.description(), 14, Typeface.NORMAL);
                 row.setTextColor(ContextCompat.getColor(context, R.color.ai_chat_text_primary));
                 row.setBackgroundColor(ContextCompat.getColor(context, R.color.ai_chat_surface));
                 row.setPadding(dp(context, 12), dp(context, 10), dp(context, 12), dp(context, 10));
@@ -105,12 +106,11 @@ public final class AiToolCatalogSheet {
     static Map<String, List<SketchwareTool>> groupByCategory(ToolRegistry registry) {
         Map<String, List<SketchwareTool>> groups = new LinkedHashMap<>();
         if (registry == null) return groups;
-        for (SketchwareTool tool : registry.all()) {
-            // Meta tools (ask_question/submit_and_exit/todo_list) are agent
-            // protocol controls, not capabilities the user can perform in
-            // Sketchware's editor. Keep them available to the loop but do not
-            // advertise them as user-facing Tools.
-            if (tool == null || "meta".equalsIgnoreCase(tool.category())) continue;
+        for (SketchwareTool tool : ToolVisibilityPolicy.catalogTools(registry)) {
+            // Meta tools and backward-compatible aliases are not user-facing
+            // editor capabilities. They remain executable through registry
+            // lookup for old conversations but are hidden from this catalog.
+            if (tool == null || !ToolVisibilityPolicy.isCatalogVisible(tool)) continue;
             String category = tool.category() == null || tool.category().trim().isEmpty()
                     ? "other" : tool.category().trim();
             List<SketchwareTool> tools = groups.get(category);
@@ -147,6 +147,18 @@ public final class AiToolCatalogSheet {
 
     private static int dp(Context context, int value) {
         return Math.round(value * context.getResources().getDisplayMetrics().density);
+    }
+
+    private static String displayToolName(String name) {
+        if (name == null || name.isEmpty()) return "Tool";
+        String[] words = name.replace('_', ' ').trim().split("\\s+");
+        StringBuilder label = new StringBuilder();
+        for (String word : words) {
+            if (word.isEmpty()) continue;
+            if (label.length() > 0) label.append(' ');
+            label.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return label.toString();
     }
 
     private static String displayCategory(String category) {

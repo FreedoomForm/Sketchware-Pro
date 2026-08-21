@@ -3,6 +3,7 @@ package com.sketchware.ai.prompt;
 import com.sketchware.ai.agent.AgentMode;
 import com.sketchware.ai.tools.SketchwareTool;
 import com.sketchware.ai.tools.ToolRegistry;
+import com.sketchware.ai.tools.ToolVisibilityPolicy;
 import com.sketchware.ai.tools.UniversalTool;
 
 import java.text.SimpleDateFormat;
@@ -207,7 +208,7 @@ public final class SystemPromptBuilder {
               .append("the operation; the supported actions are listed in parentheses below.\n\n");
 
             String currentCategory = "";
-            for (SketchwareTool t : tools.all()) {
+            for (SketchwareTool t : ToolVisibilityPolicy.canonicalTools(tools)) {
                 if (!t.category().equals(currentCategory)) {
                     currentCategory = t.category();
                     sb.append("\n## ").append(currentCategory).append("\n\n");

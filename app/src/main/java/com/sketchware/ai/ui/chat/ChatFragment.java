@@ -234,7 +234,6 @@ public final class ChatFragment extends Fragment {
      * first call; subsequent resumes skip the check (the user can still
      * trigger a manual refresh from the Versions screen).
      */
-    private boolean updateCheckDone = false;
 
     /**
      * Cached "signature" of the last profile used to build {@link #agent}.
@@ -698,30 +697,6 @@ public final class ChatFragment extends Fragment {
         // always sees the latest tasks after returning from a run.
         refreshThreads();
         // One-shot in-app update check — fires on the first resume after
-        // the fragment is created. If a newer GitHub Release exists, the
-        // UpdateDialog is shown. We deliberately do NOT auto-download —
-        // the user taps "Download" in the dialog to open the APK URL in
-        // the browser, which is the standard sideload flow on Android.
-        if (!updateCheckDone) {
-            updateCheckDone = true;
-            com.sketchware.ai.release.UpdateChecker.checkAsync(
-                    requireContext().getApplicationContext(),
-                    new com.sketchware.ai.release.UpdateChecker.Callback() {
-                        @Override public void onUpdateAvailable(com.sketchware.ai.release.GitHubRelease latest) {
-                            if (getActivity() == null || !isAdded()) return;
-                            com.sketchware.ai.release.UpdateDialog dialog =
-                                    com.sketchware.ai.release.UpdateDialog.newInstance(
-                                            latest, requireContext().getApplicationContext());
-                            try {
-                                dialog.show(getChildFragmentManager(), "update_dialog");
-                            } catch (IllegalStateException ignored) {
-                                // onSaveInstanceState already called — skip this round.
-                            }
-                        }
-                        @Override public void onUpToDate() { /* silent */ }
-                        @Override public void onError(Exception error) { /* silent */ }
-                    });
-        }
     }
 
     @Override public void onDestroy() {

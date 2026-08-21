@@ -16,6 +16,7 @@ import com.sketchware.ai.tools.build.ProguardManageTool;
 import com.sketchware.ai.tools.component.ComponentAddTool;
 import com.sketchware.ai.tools.component.ComponentManageTool;
 import com.sketchware.ai.tools.component.ComponentSetPropertyTool;
+import com.sketchware.ai.tools.creator.ActivityListTool;
 import com.sketchware.ai.tools.creator.CreatorRuntimeTool;
 import com.sketchware.ai.tools.component.CustomComponentManageTool;
 import com.sketchware.ai.tools.event.CustomEventManageTool;
@@ -89,7 +90,7 @@ import java.util.Map;
  * full functional coverage while shrinking the LLM-visible tool list
  * by ~34%, improving tool-selection accuracy further.
  *
- * <h3>Current tool inventory (46 tools total)</h3>
+ * <h3>Current tool inventory (38 backward-compatible registry entries)</h3>
  * <ul>
  *   <li><b>Specialized tools</b> — bespoke logic that doesn't fit
  *       the action-enum pattern (e.g. ViewAddWidgetTool has 40-value
@@ -137,6 +138,10 @@ import java.util.Map;
  * (vs ~18 000 pre-consolidation, vs ~96 000 in the original stub-per-tool
  * design), leaving ample headroom in Mistral 32K / GPT-4o 128K / Claude
  * 200K for the system prompt, conversation history, and tool results.
+ *
+ * <p>The active model receives the canonical subset from
+ * {@link ToolVisibilityPolicy}; compatibility aliases remain registered only
+ * so old conversations can still be executed safely.
  *
  * <p>When adding a new Sketchware operation, prefer extending an
  * existing universal tool's {@code action} enum over registering a new
@@ -210,7 +215,9 @@ public final class ToolRegistryInitializer {
         r.register(new SubmitAndExitTool());
         r.register(new TodoListTool());
 
-        // ===== Creator Runtime (1) =====
+        // ===== Creator Runtime (2) =====
+        // Discovery is read-only and deliberately has no required activity/name.
+        r.register(new ActivityListTool());
         // This adapter submits exactly the same typed Project IR operations
         // as Creator Home and never writes files outside the shared runtime.
         r.register(new CreatorRuntimeTool());

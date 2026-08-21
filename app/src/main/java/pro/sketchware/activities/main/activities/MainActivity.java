@@ -57,6 +57,7 @@ import pro.sketchware.utility.SketchwareUtil;
 import pro.sketchware.utility.UI;
 
 public class MainActivity extends BasePermissionAppCompatActivity {
+    public static final String EXTRA_OPEN_SKETCHUB = "open_sketchub";
     private static final String PROJECTS_FRAGMENT_TAG = "projects_fragment";
     private static final String PROJECTS_STORE_FRAGMENT_TAG = "projects_store_fragment";
     private ActionBarDrawerToggle drawerToggle;
@@ -294,7 +295,12 @@ public class MainActivity extends BasePermissionAppCompatActivity {
             return;
         }
 
-        navigateToProjectsFragment();
+        if (getIntent().getBooleanExtra(EXTRA_OPEN_SKETCHUB, false)) {
+            binding.bottomNav.setSelectedItemId(R.id.item_sketchub);
+            navigateToSketchubFragment();
+        } else {
+            navigateToProjectsFragment();
+        }
     }
 
     private Fragment getFragmentForNavId(int navItemId) {

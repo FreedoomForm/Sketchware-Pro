@@ -357,7 +357,7 @@ public final class AgentRuntime {
                         model,
                         systemPrompt,
                         conversationHistory,
-                        toolRegistry.toJsonSchemas(),
+                        toolRegistry.toAgentJsonSchemas(),
                         reasoning,
                         profile.maxOutputTokens > 0 ? profile.maxOutputTokens : model.maxOutputTokens,
                         profile.enableStreaming,
@@ -716,7 +716,7 @@ public final class AgentRuntime {
     private LlmRequest rebuildRequest(ModelInfo model, ReasoningRequest reasoning) {
         return new LlmRequest(
                 provider.getProviderId(), profile.baseUrl, profile.apiKey, model,
-                systemPrompt, conversationHistory, toolRegistry.toJsonSchemas(),
+                systemPrompt, conversationHistory, toolRegistry.toAgentJsonSchemas(),
                 reasoning, profile.maxOutputTokens > 0 ? profile.maxOutputTokens : model.maxOutputTokens,
                 profile.enableStreaming, toExtraHeaders(profile.customHeaders),
                 profile.forceFlatToolFormat);

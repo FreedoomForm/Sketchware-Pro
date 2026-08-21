@@ -2,6 +2,7 @@ package pro.sketchware.creator.runtime;
 
 import android.content.Context;
 
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -13,7 +14,7 @@ public final class CreatorRuntimeSession {
 
     private static volatile CreatorRuntimeSession instance;
     private final CreatorRuntimeProjectStore store;
-    private final CreatorRuntimeEngine engine;
+    private CreatorRuntimeEngine engine;
     private final CopyOnWriteArrayList<Listener> listeners = new CopyOnWriteArrayList<>();
 
     private CreatorRuntimeSession(Context context) {
@@ -46,6 +47,17 @@ public final class CreatorRuntimeSession {
 
     public CreatorRuntimeEngine getEngine() { return engine; }
     public CreatorProjectDocument getDocument() { return engine.getCurrent(); }
+
+    /** Creates and persists a fresh active project for the editor sidebar. */
+    public synchronized CreatorProjectDocument createNewProject(String name) {
+        String safeName = name == null || name.trim().isEmpty() ? "Untitled project" : name.trim();
+        CreatorProjectDocument created = CreatorProjectDocument.empty(
+                "creator_" + UUID.randomUUID().toString(), safeName);
+        engine = new CreatorRuntimeEngine(created, 100, new CreatorRuntimeEventLog(300));
+        store.save(created);
+        for (Listener listener : listeners) listener.onDocumentChanged(created);
+        return created;
+    }
     public void addListener(Listener listener) { if (listener != null) listeners.addIfAbsent(listener); }
     public void removeListener(Listener listener) { listeners.remove(listener); }
 }

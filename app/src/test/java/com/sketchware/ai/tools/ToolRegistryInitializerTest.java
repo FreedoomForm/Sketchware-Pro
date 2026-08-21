@@ -27,7 +27,7 @@ public class ToolRegistryInitializerTest {
         //
         // The Creator Runtime adapter is intentionally additive: it exposes
         // the same validated operation pipeline as the visual Creator UI.
-        assertThat(r.size()).isEqualTo(37);
+        assertThat(r.size()).isEqualTo(38);
         assertThat(r.has("creator_runtime")).isTrue();
     }
 
@@ -96,7 +96,7 @@ public class ToolRegistryInitializerTest {
             "block_add",
             "component_add",
             "project_set_app_name", "project_set_package_name",
-            "library_enable",
+            "library_enable", "activity_list",
             "ask_question", "submit_and_exit"
         };
         for (String name : expected) {
@@ -114,6 +114,23 @@ public class ToolRegistryInitializerTest {
         for (String name : removed) {
             assertThat(r.has(name)).isFalse();
         }
+    }
+
+    @Test public void canonicalAgentPayloadHidesDuplicateAliases() {
+        ToolRegistry r = ToolRegistryInitializer.createDefault();
+        String payload = r.toAgentJsonSchemas();
+        assertThat(payload).contains("\"name\":\"view_manage\"");
+        assertThat(payload).contains("\"name\":\"activity_list\"");
+        assertThat(payload).doesNotContain("\"name\":\"view_add_widget\"");
+        assertThat(payload).doesNotContain("\"name\":\"event_list\"");
+        assertThat(payload).doesNotContain("\"name\":\"project_set_app_name\"");
+    }
+
+    @Test public void activityListHasNoRequiredArguments() {
+        SketchwareTool tool = ToolRegistryInitializer.createDefault().get("activity_list");
+        assertThat(tool).isNotNull();
+        assertThat(tool.jsonSchema().has("required")).isFalse();
+        assertThat(tool.isReadOnly()).isTrue();
     }
 
     @Test public void readOnlyToolsAreAutoApproved() {

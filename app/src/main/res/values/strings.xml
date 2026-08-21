@@ -2293,27 +2293,4 @@ Please try again later"</string>
     <string name="attr_already_exist">This attribute already exists</string>
     <string name="link_sw_assist">https://play.google.com/store/apps/details?id=com.w3wide.swassist</string>
 
-    <!-- AI Versions screen -->
-    <string name="ai_versions_title">Versions</string>
-    <string name="ai_versions_retry">Retry</string>
-    <string name="ai_versions_download_apk">Download APK</string>
-    <string name="ai_versions_open_browser">Open in browser</string>
-    <string name="ai_versions_loading">Loading releases…</string>
-    <string name="ai_versions_error">Failed to load releases. Check your network connection.</string>
-    <string name="ai_versions_no_releases">No releases published yet.</string>
-    <string name="ai_versions_installed_badge">INSTALLED</string>
-    <string name="ai_versions_latest_badge">LATEST</string>
-    <string name="ai_versions_nav_title">Versions</string>
-
-    <!-- In-app update dialog -->
-    <string name="ai_update_title">Update available</string>
-    <string name="ai_update_subtitle">A new version of Sketchware Pro is available.</string>
-    <string name="ai_update_download">Download</string>
-    <string name="ai_update_later">Later</string>
-    <string name="ai_update_current_version">Installed: %1$s</string>
-    <string name="ai_update_new_version">Available: %1$s</string>
-
-    <!-- AI Settings menu additions -->
-    <string name="ai_settings_versions_section">Versions</string>
-
 </resources>
