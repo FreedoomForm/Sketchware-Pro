@@ -124,12 +124,18 @@ public final class CreatorRuntimeExecutor {
                     } catch (com.google.gson.JsonSyntaxException ignored) { }
                 }
                 apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", stateId, "value", values));
-            } else if (block.getType() == CreatorRuntimeBlock.Type.ATTACH_EVENT) {
-                apply(engine, CreatorProjectOperation.Type.EVENT_ATTACH, map(
-                        "bindingId", payload.get("bindingId"),
-                        "targetWidgetId", payload.get("targetWidgetId"),
-                        "eventName", payload.get("eventName"),
-                        "blocks", block.getThenBlocks()));
+            } else if (block.getType() == CreatorRuntimeBlock.Type.ATTACH_EVENT
+                    || block.getType() == CreatorRuntimeBlock.Type.REPLACE_EVENT) {
+                apply(engine, block.getType() == CreatorRuntimeBlock.Type.ATTACH_EVENT
+                                ? CreatorProjectOperation.Type.EVENT_ATTACH
+                                : CreatorProjectOperation.Type.EVENT_REPLACE,
+                        map("bindingId", payload.get("bindingId"),
+                                "targetWidgetId", payload.get("targetWidgetId"),
+                                "eventName", payload.get("eventName"),
+                                "blocks", block.getThenBlocks()));
+            } else if (block.getType() == CreatorRuntimeBlock.Type.DETACH_EVENT) {
+                apply(engine, CreatorProjectOperation.Type.EVENT_DETACH,
+                        map("bindingId", payload.get("bindingId")));
             } else if (block.getType() == CreatorRuntimeBlock.Type.SHOW_MESSAGE) {
                 effects.add(new Effect("message", String.valueOf(payload.get("message"))));
             } else if (block.getType() == CreatorRuntimeBlock.Type.NAVIGATE) {

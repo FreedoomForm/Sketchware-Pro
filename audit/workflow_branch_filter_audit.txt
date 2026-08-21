@@ -1,0 +1,28 @@
+--- .github/workflows/DeleteWorkflowRuns.yml
+1:name: 'Delete old workflow runs'
+2:on:
+3:  workflow_dispatch:
+--- .github/workflows/android.yml
+1:name: Android CI
+3:on:
+15:    branches-ignore:
+18:  workflow_dispatch:
+--- .github/workflows/build_ai_apk.yml
+1:name: Build AI APK
+3:on:
+5:    branches:
+21:  workflow_dispatch:
+--- .github/workflows/creator-runtime-android.yml
+1:name: Creator Runtime Android
+3:on:
+5:    branches:
+7:  workflow_dispatch:
+--- .github/workflows/creator-runtime-targeted.yml
+1:name: Creator Runtime Targeted Android
+3:on:
+4:  workflow_dispatch:
+--- .github/workflows/release.yml
+1:name: Release
+3:on:
+5:    branches:
+18:  workflow_dispatch:

@@ -25,7 +25,7 @@ public final class CreatorRuntimeTool implements SketchwareTool {
 
     @Override public String description() {
         return "Apply one transparent Creator Runtime operation to the live, user-editable project. "
-                + "Actions: create_screen, add_widget, set_widget_property, set_state, update_entry_control, attach_event, restore_revision. "
+                + "Actions: create_screen, add_widget, set_widget_property, remove_widget, set_state, update_entry_control, attach_event, replace_event, detach_event, restore_revision. "
                 + "Every accepted call creates a visible revision and audit record; never claim success unless the result says applied.";
     }
 
@@ -39,9 +39,12 @@ public final class CreatorRuntimeTool implements SketchwareTool {
         actions.add("create_screen");
         actions.add("add_widget");
         actions.add("set_widget_property");
+        actions.add("remove_widget");
         actions.add("set_state");
         actions.add("update_entry_control");
         actions.add("attach_event");
+        actions.add("replace_event");
+        actions.add("detach_event");
         actions.add("restore_revision");
         action.add("enum", actions);
         properties.add("action", action);
@@ -87,6 +90,8 @@ public final class CreatorRuntimeTool implements SketchwareTool {
         blockTypes.add("list_mutate");
         blockTypes.add("map_mutate");
         blockTypes.add("attach_event");
+        blockTypes.add("replace_event");
+        blockTypes.add("detach_event");
         blockTypes.add("show_message");
         blockTypes.add("navigate");
         blockTypes.add("runtime_service_call");

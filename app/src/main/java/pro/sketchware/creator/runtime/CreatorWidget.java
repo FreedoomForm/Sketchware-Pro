@@ -45,4 +45,10 @@ public final class CreatorWidget {
         nextProperties.put(key, value);
         return new CreatorWidget(id, type, parentId, children, nextProperties);
     }
+
+    public CreatorWidget withoutChild(String childId) {
+        List<String> nextChildren = new ArrayList<>(children);
+        nextChildren.removeIf(childId::equals);
+        return new CreatorWidget(id, type, parentId, nextChildren, properties);
+    }
 }

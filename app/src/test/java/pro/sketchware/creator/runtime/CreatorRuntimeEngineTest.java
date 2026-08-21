@@ -90,6 +90,60 @@ public class CreatorRuntimeEngineTest {
         assertThat(engine.getCurrent().getRevision()).isEqualTo(1L);
     }
 
+    @Test public void widgetRemovalDeletesSubtreeAndAttachedBehavior() {
+        CreatorRuntimeEngine engine = newEngine();
+        engine.apply(operation("screen", 0, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(operation("button", 1, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "continue", "widgetType", "button", "parentId", "root")));
+        engine.apply(operation("event", 2, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "continue-click", "targetWidgetId", "continue",
+                        "eventName", "click", "blocks", Collections.emptyList())));
+
+        CreatorApplyResult removed = engine.apply(operation("remove", 3,
+                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.WIDGET_REMOVE,
+                map("widgetId", "continue")));
+
+        assertThat(removed.isApplied()).isTrue();
+        assertThat(engine.getCurrent().getWidgets()).doesNotContainKey("continue");
+        assertThat(engine.getCurrent().getWidgets().get("root").getChildren()).isEmpty();
+        assertThat(engine.getCurrent().getEvents()).doesNotContainKey("continue-click");
+    }
+
+    @Test public void eventCanBeReassignedToAnotherButtonAndDetached() {
+        CreatorRuntimeEngine engine = newEngine();
+        engine.apply(operation("screen", 0, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.SCREEN_CREATE,
+                map("screenId", "home", "route", "/", "rootWidgetId", "root")));
+        engine.apply(operation("first", 1, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "first", "widgetType", "button", "parentId", "root")));
+        engine.apply(operation("second", 2, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.WIDGET_ADD,
+                map("widgetId", "second", "widgetType", "button", "parentId", "root")));
+        engine.apply(operation("attach", 3, CreatorProjectOperation.ActorKind.USER,
+                CreatorProjectOperation.Type.EVENT_ATTACH,
+                map("bindingId", "editor-entry", "targetWidgetId", "first",
+                        "eventName", "click", "blocks", Collections.emptyList())));
+
+        CreatorApplyResult replaced = engine.apply(operation("replace", 4,
+                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.EVENT_REPLACE,
+                map("bindingId", "editor-entry", "targetWidgetId", "second",
+                        "eventName", "click", "blocks", Collections.emptyList())));
+        assertThat(replaced.isApplied()).isTrue();
+        assertThat(engine.getCurrent().getEvents().get("editor-entry").getTargetWidgetId())
+                .isEqualTo("second");
+
+        CreatorApplyResult detached = engine.apply(operation("detach", 5,
+                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.EVENT_DETACH,
+                map("bindingId", "editor-entry")));
+        assertThat(detached.isApplied()).isTrue();
+        assertThat(engine.getCurrent().getEvents()).doesNotContainKey("editor-entry");
+    }
+
     @Test public void restoreCreatesANewRevisionFromAnAvailableHistoricalSnapshot() {
         CreatorRuntimeEngine engine = newEngine();
         engine.apply(operation("op-screen", 0, CreatorProjectOperation.ActorKind.USER,

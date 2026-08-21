@@ -49,6 +49,11 @@ public final class CreatorOperationReducer {
                         (String) payload.get("property"), payload.get("value")));
                 break;
             }
+            case WIDGET_REMOVE: {
+                String widgetId = (String) payload.get("widgetId");
+                removeWidgetTree(widgets, events, widgetId);
+                break;
+            }
             case ENTRY_CONTROL_UPDATE: {
                 Boolean visible = payload.get("visible") instanceof Boolean ? (Boolean) payload.get("visible") : null;
                 String label = payload.get("label") instanceof String ? (String) payload.get("label") : null;
@@ -60,10 +65,14 @@ public final class CreatorOperationReducer {
                 state.put((String) payload.get("stateId"), payload.get("value"));
                 break;
             case EVENT_ATTACH:
+            case EVENT_REPLACE:
                 events.put((String) payload.get("bindingId"), new CreatorEventBinding(
                         (String) payload.get("bindingId"), (String) payload.get("targetWidgetId"),
                         (String) payload.get("eventName"),
                         (java.util.List<CreatorRuntimeBlock>) payload.get("blocks")));
+                break;
+            case EVENT_DETACH:
+                events.remove((String) payload.get("bindingId"));
                 break;
             case REVISION_RESTORE:
                 throw new IllegalArgumentException("revision restore is handled by CreatorRuntimeEngine");
@@ -72,5 +81,25 @@ public final class CreatorOperationReducer {
         }
         return new CreatorProjectDocument(document.getSchemaVersion(), document.getProjectId(), nextRevision,
                 document.getName(), entryScreenId, screens, widgets, entryControl, state, events);
+    }
+
+    private static void removeWidgetTree(Map<String, CreatorWidget> widgets,
+                                          Map<String, CreatorEventBinding> events,
+                                          String widgetId) {
+        CreatorWidget widget = widgets.get(widgetId);
+        if (widget == null) return;
+        for (String childId : new java.util.ArrayList<>(widget.getChildren())) {
+            removeWidgetTree(widgets, events, childId);
+        }
+        if (widget.getParentId() != null && widgets.containsKey(widget.getParentId())) {
+            CreatorWidget parent = widgets.get(widget.getParentId());
+            widgets.put(parent.getId(), parent.withoutChild(widgetId));
+        }
+        widgets.remove(widgetId);
+        java.util.Iterator<Map.Entry<String, CreatorEventBinding>> iterator = events.entrySet().iterator();
+        while (iterator.hasNext()) {
+            CreatorEventBinding binding = iterator.next().getValue();
+            if (binding != null && widgetId.equals(binding.getTargetWidgetId())) iterator.remove();
+        }
     }
 }

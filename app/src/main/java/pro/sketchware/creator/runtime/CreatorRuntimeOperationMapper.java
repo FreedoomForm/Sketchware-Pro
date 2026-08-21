@@ -43,6 +43,10 @@ public final class CreatorRuntimeOperationMapper {
                 copy(args, payload, "property", "property");
                 copy(args, payload, "value", "value");
                 break;
+            case "remove_widget":
+                type = CreatorProjectOperation.Type.WIDGET_REMOVE;
+                copy(args, payload, "widget_id", "widgetId");
+                break;
             case "update_entry_control":
                 type = CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE;
                 copy(args, payload, "visible", "visible");
@@ -64,6 +68,17 @@ public final class CreatorRuntimeOperationMapper {
                 copy(args, payload, "target_widget_id", "targetWidgetId");
                 copy(args, payload, "event_name", "eventName");
                 payload.put("blocks", blocks(args));
+                break;
+            case "replace_event":
+                type = CreatorProjectOperation.Type.EVENT_REPLACE;
+                copy(args, payload, "binding_id", "bindingId");
+                copy(args, payload, "target_widget_id", "targetWidgetId");
+                copy(args, payload, "event_name", "eventName");
+                payload.put("blocks", blocks(args));
+                break;
+            case "detach_event":
+                type = CreatorProjectOperation.Type.EVENT_DETACH;
+                copy(args, payload, "binding_id", "bindingId");
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported Creator Runtime action: " + action);

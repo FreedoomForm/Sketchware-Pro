@@ -28,13 +28,19 @@ public final class CreatorOperationValidator {
                 return validateWidgetAdd(document, payload);
             case WIDGET_SET_PROPERTY:
                 return validatePropertySet(document, payload);
+            case WIDGET_REMOVE:
+                return validateWidgetRemove(document, payload);
             case ENTRY_CONTROL_UPDATE:
                 return validateEntryControlUpdate(payload);
             case STATE_SET:
                 return string(payload, "stateId") != null && payload.containsKey("value")
                         ? CreatorValidationResult.ok() : invalid("stateId and value are required");
             case EVENT_ATTACH:
-                return validateEventAttach(document, payload);
+                return validateEventAttach(document, payload, false);
+            case EVENT_REPLACE:
+                return validateEventAttach(document, payload, true);
+            case EVENT_DETACH:
+                return validateEventDetach(document, payload);
             case REVISION_RESTORE:
                 return payload.get("targetRevision") instanceof Number
                         ? CreatorValidationResult.ok()
@@ -103,6 +109,22 @@ public final class CreatorOperationValidator {
         return CreatorValidationResult.ok();
     }
 
+    private static CreatorValidationResult validateWidgetRemove(CreatorProjectDocument document,
+                                                                  Map<String, Object> payload) {
+        String widgetId = string(payload, "widgetId");
+        if (widgetId == null) return invalid("widgetId is required");
+        if (!document.getWidgets().containsKey(widgetId)) {
+            return CreatorValidationResult.error(CreatorValidationResult.Code.MISSING_REFERENCE,
+                    "widgetId does not exist");
+        }
+        for (CreatorScreen screen : document.getScreens().values()) {
+            if (screen != null && widgetId.equals(screen.getRootWidgetId())) {
+                return invalid("screen root cannot be removed");
+            }
+        }
+        return CreatorValidationResult.ok();
+    }
+
     private static CreatorValidationResult validateEntryControlUpdate(Map<String, Object> payload) {
         if (payload.containsKey("recoveryEnabled") || payload.containsKey("shakeRecoveryEnabled")) {
             return CreatorValidationResult.error(CreatorValidationResult.Code.SAFETY_VIOLATION,
@@ -123,20 +145,39 @@ public final class CreatorOperationValidator {
     }
 
     private static CreatorValidationResult validateEventAttach(CreatorProjectDocument document,
-                                                                Map<String, Object> payload) {
+                                                                Map<String, Object> payload,
+                                                                boolean replacing) {
         String bindingId = string(payload, "bindingId");
         String targetWidgetId = string(payload, "targetWidgetId");
         String eventName = string(payload, "eventName");
-        if (bindingId == null || targetWidgetId == null || eventName == null || !(payload.get("blocks") instanceof java.util.List)) {
+        if (bindingId == null || targetWidgetId == null || eventName == null
+                || !(payload.get("blocks") instanceof java.util.List)) {
             return invalid("bindingId, targetWidgetId, eventName and blocks are required");
         }
-        if (document.getEvents().containsKey(bindingId)) {
-            return CreatorValidationResult.error(CreatorValidationResult.Code.DUPLICATE_ID, "bindingId already exists");
+        boolean exists = document.getEvents().containsKey(bindingId);
+        if (!replacing && exists) {
+            return CreatorValidationResult.error(CreatorValidationResult.Code.DUPLICATE_ID,
+                    "bindingId already exists");
+        }
+        if (replacing && !exists) {
+            return CreatorValidationResult.error(CreatorValidationResult.Code.MISSING_REFERENCE,
+                    "bindingId does not exist");
         }
         if (!document.getWidgets().containsKey(targetWidgetId)) {
-            return CreatorValidationResult.error(CreatorValidationResult.Code.MISSING_REFERENCE, "targetWidgetId does not exist");
+            return CreatorValidationResult.error(CreatorValidationResult.Code.MISSING_REFERENCE,
+                    "targetWidgetId does not exist");
         }
         return CreatorValidationResult.ok();
+    }
+
+    private static CreatorValidationResult validateEventDetach(CreatorProjectDocument document,
+                                                                Map<String, Object> payload) {
+        String bindingId = string(payload, "bindingId");
+        if (bindingId == null) return invalid("bindingId is required");
+        return document.getEvents().containsKey(bindingId)
+                ? CreatorValidationResult.ok()
+                : CreatorValidationResult.error(CreatorValidationResult.Code.MISSING_REFERENCE,
+                        "bindingId does not exist");
     }
 
     private static CreatorValidationResult invalid(String message) {

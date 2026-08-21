@@ -23,8 +23,8 @@ public final class CreatorRuntimeToolSchemaTest {
         JsonArray actions = schema.getAsJsonObject("properties")
                 .getAsJsonObject("action").getAsJsonArray("enum");
         assertThat(jsonStrings(actions)).containsExactly(
-                "create_screen", "add_widget", "set_widget_property", "set_state",
-                "update_entry_control", "attach_event", "restore_revision");
+                "create_screen", "add_widget", "set_widget_property", "remove_widget", "set_state",
+                "update_entry_control", "attach_event", "replace_event", "detach_event", "restore_revision");
     }
 
     @Test public void declaresEveryTypedRuntimeBlockInstrumentForAi() {
@@ -37,7 +37,7 @@ public final class CreatorRuntimeToolSchemaTest {
                 .getAsJsonArray("enum");
         assertThat(jsonStrings(blockTypes)).containsExactly(
                 "set_widget_property", "set_state", "increment_state", "list_mutate",
-                "map_mutate", "attach_event", "show_message", "navigate",
+                "map_mutate", "attach_event", "replace_event", "detach_event", "show_message", "navigate",
                 "runtime_service_call", "custom_function_call", "return", "if_state_equals",
                 "if_boolean", "repeat", "forever", "break");
     }
@@ -48,9 +48,12 @@ public final class CreatorRuntimeToolSchemaTest {
         fixtures.put("create_screen", object("screen_id", "settings", "route", "/settings", "root_widget_id", "settings_root"));
         fixtures.put("add_widget", object("widget_id", "title", "widget_type", "text", "parent_id", "root"));
         fixtures.put("set_widget_property", object("widget_id", "title", "property", "text", "value", "Hello"));
+        fixtures.put("remove_widget", object("widget_id", "title"));
         fixtures.put("set_state", object("state_id", "status", "value", "ready"));
         fixtures.put("update_entry_control", object("visible", true));
         fixtures.put("attach_event", object("binding_id", "tap", "target_widget_id", "title", "event_name", "click"));
+        fixtures.put("replace_event", object("binding_id", "tap", "target_widget_id", "title", "event_name", "click"));
+        fixtures.put("detach_event", object("binding_id", "tap"));
         fixtures.put("restore_revision", object("target_revision", 0));
         Set<CreatorProjectOperation.Type> mapped = new HashSet<>();
         for (Map.Entry<String, JsonObject> fixture : fixtures.entrySet()) {
@@ -62,9 +65,12 @@ public final class CreatorRuntimeToolSchemaTest {
                 CreatorProjectOperation.Type.SCREEN_CREATE,
                 CreatorProjectOperation.Type.WIDGET_ADD,
                 CreatorProjectOperation.Type.WIDGET_SET_PROPERTY,
+                CreatorProjectOperation.Type.WIDGET_REMOVE,
                 CreatorProjectOperation.Type.STATE_SET,
                 CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE,
                 CreatorProjectOperation.Type.EVENT_ATTACH,
+                CreatorProjectOperation.Type.EVENT_REPLACE,
+                CreatorProjectOperation.Type.EVENT_DETACH,
                 CreatorProjectOperation.Type.REVISION_RESTORE);
     }
 
@@ -74,7 +80,7 @@ public final class CreatorRuntimeToolSchemaTest {
         JsonArray blocks = new JsonArray();
         String[] types = {
                 "set_widget_property", "set_state", "increment_state", "list_mutate",
-                "map_mutate", "attach_event", "show_message", "navigate",
+                "map_mutate", "attach_event", "replace_event", "detach_event", "show_message", "navigate",
                 "runtime_service_call", "custom_function_call", "return", "if_state_equals",
                 "if_boolean", "repeat", "forever", "break"};
         for (String type : types) blocks.add(object("type", type));

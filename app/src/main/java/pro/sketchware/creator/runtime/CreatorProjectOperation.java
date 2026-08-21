@@ -11,9 +11,12 @@ public final class CreatorProjectOperation {
         SCREEN_CREATE,
         WIDGET_ADD,
         WIDGET_SET_PROPERTY,
+        WIDGET_REMOVE,
         ENTRY_CONTROL_UPDATE,
         STATE_SET,
         EVENT_ATTACH,
+        EVENT_REPLACE,
+        EVENT_DETACH,
         REVISION_RESTORE
     }
 

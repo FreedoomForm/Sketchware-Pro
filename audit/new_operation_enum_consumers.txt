@@ -1,0 +1,502 @@
+app/src/main/java/com/sketchware/ai/tools/component/ComponentManageTool.java:14: * <p>Replaces 8 stubs: component_attach_event, component_clone,
+app/src/main/java/com/sketchware/ai/tools/component/ComponentManageTool.java:55:                "attach_event", "clone", "delete", "export_to_collection",
+app/src/main/java/com/sketchware/ai/tools/component/ComponentManageTool.java:67:        eventName.addProperty("description", "(attach_event/open_event) Event name to attach or open. Component-specific, e.g. 'onTick' for Timer, 'onResponse' for RequestNetwork.");
+app/src/main/java/com/sketchware/ai/tools/component/ComponentManageTool.java:88:            case "attach_event": return doAttachEvent(ctx, scId, args);
+app/src/main/java/com/sketchware/ai/tools/component/ComponentManageTool.java:132:    //  attach_event
+app/src/main/java/com/sketchware/ai/tools/creator/CreatorRuntimeTool.java:28:                + "Actions: create_screen, add_widget, set_widget_property, remove_widget, set_state, update_entry_control, attach_event, replace_event, detach_event, restore_revision. "
+app/src/main/java/com/sketchware/ai/tools/creator/CreatorRuntimeTool.java:45:        actions.add("attach_event");
+app/src/main/java/com/sketchware/ai/tools/creator/CreatorRuntimeTool.java:80:        blocks.addProperty("description", "Ordered visible blocks. Every typed Creator Runtime block instrument is supported: set_widget_property, set_state, increment_state, list_mutate, map_mutate, attach_event, show_message, navigate, runtime_service_call, custom_function_call, return, if_state_equals, if_boolean, repeat, forever, and break. Conditional and loop blocks may contain nested then_blocks and else_blocks arrays.");
+app/src/main/java/com/sketchware/ai/tools/creator/CreatorRuntimeTool.java:92:        blockTypes.add("attach_event");
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:257:        apply(CreatorProjectOperation.Type.SCREEN_CREATE, payload);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:272:        apply(CreatorProjectOperation.Type.WIDGET_ADD, payload);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:312:                    apply(CreatorProjectOperation.Type.REVISION_RESTORE, payload);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1202:                        CreatorProjectOperation.ActorKind.SYSTEM, CreatorProjectOperation.Type.STATE_SET,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:550:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.CUSTOM_FUNCTION_CALL,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:558:            if (values.isEmpty()) return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RETURN, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:566:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RETURN, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:582:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_STATE_EQUALS, payload, thenBlocks, elseBlocks);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:603:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_BOOLEAN, payload, thenBlocks, elseBlocks);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:611:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.FOREVER, payload, body,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:616:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.BREAK, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:631:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.REPEAT, payload, body, Collections.<CreatorRuntimeBlock>emptyList());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:672:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:694:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:700:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:706:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:712:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:779:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.ATTACH_EVENT,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1271:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1331:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1336:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1340:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.NAVIGATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1347:            return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1357:        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1374:        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1388:        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1401:        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1416:        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1443:        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1457:        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1521:        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1528:        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1686:        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1700:        return new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, payload);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeBlock.java:17:    public CreatorRuntimeBlock(Type type, Map<String, Object> payload) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeBlock.java:20:    public CreatorRuntimeBlock(Type type, Map<String, Object> payload,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:59:            if (block.getType() == CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:61:                apply(engine, CreatorProjectOperation.Type.WIDGET_SET_PROPERTY, map(
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:63:            } else if (block.getType() == CreatorRuntimeBlock.Type.SET_STATE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:65:                apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", payload.get("stateId"), "value", value));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:66:            } else if (block.getType() == CreatorRuntimeBlock.Type.INCREMENT_STATE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:71:                apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", stateId, "value", current + delta));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:72:            } else if (block.getType() == CreatorRuntimeBlock.Type.LIST_MUTATE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:108:                apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", stateId, "value", list));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:109:            } else if (block.getType() == CreatorRuntimeBlock.Type.MAP_MUTATE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:126:                apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", stateId, "value", values));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:127:            } else if (block.getType() == CreatorRuntimeBlock.Type.ATTACH_EVENT
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:128:                    || block.getType() == CreatorRuntimeBlock.Type.REPLACE_EVENT) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:129:                apply(engine, block.getType() == CreatorRuntimeBlock.Type.ATTACH_EVENT
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:130:                                ? CreatorProjectOperation.Type.EVENT_ATTACH
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:131:                                : CreatorProjectOperation.Type.EVENT_REPLACE,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:136:            } else if (block.getType() == CreatorRuntimeBlock.Type.DETACH_EVENT) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:137:                apply(engine, CreatorProjectOperation.Type.EVENT_DETACH,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:139:            } else if (block.getType() == CreatorRuntimeBlock.Type.SHOW_MESSAGE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:141:            } else if (block.getType() == CreatorRuntimeBlock.Type.NAVIGATE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:143:            } else if (block.getType() == CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:155:                        apply(engine, CreatorProjectOperation.Type.STATE_SET, map("stateId", resultStateId, "value", value));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:159:            } else if (block.getType() == CreatorRuntimeBlock.Type.CUSTOM_FUNCTION_CALL) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:162:            } else if (block.getType() == CreatorRuntimeBlock.Type.RETURN) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:169:            } else if (block.getType() == CreatorRuntimeBlock.Type.IF_STATE_EQUALS) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:176:            } else if (block.getType() == CreatorRuntimeBlock.Type.IF_BOOLEAN) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:183:            } else if (block.getType() == CreatorRuntimeBlock.Type.REPEAT) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:195:            } else if (block.getType() == CreatorRuntimeBlock.Type.FOREVER) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:206:            } else if (block.getType() == CreatorRuntimeBlock.Type.BREAK) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:24:                type = CreatorProjectOperation.Type.SCREEN_CREATE;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:31:                type = CreatorProjectOperation.Type.WIDGET_ADD;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:41:                type = CreatorProjectOperation.Type.WIDGET_SET_PROPERTY;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:47:                type = CreatorProjectOperation.Type.WIDGET_REMOVE;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:51:                type = CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:57:                type = CreatorProjectOperation.Type.STATE_SET;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:62:                type = CreatorProjectOperation.Type.REVISION_RESTORE;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:65:            case "attach_event":
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:66:                type = CreatorProjectOperation.Type.EVENT_ATTACH;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:73:                type = CreatorProjectOperation.Type.EVENT_REPLACE;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:80:                type = CreatorProjectOperation.Type.EVENT_DETACH;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:126:            result.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.valueOf(
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationReducer.java:46:            case WIDGET_SET_PROPERTY: {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationReducer.java:67:            case EVENT_ATTACH:
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:29:            case WIDGET_SET_PROPERTY:
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:38:            case EVENT_ATTACH:
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:152:            CreatorRuntimeBlock.Type type = CreatorRuntimeBlock.Type.valueOf(required(block, "type").getAsString());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:13:        WIDGET_SET_PROPERTY,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:17:        EVENT_ATTACH,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEngine.java:39:        if (operation.getType() == CreatorProjectOperation.Type.REVISION_RESTORE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeDefaults.java:86:            blocks.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL, payload));
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:27:                "update_entry_control", "attach_event", "replace_event", "detach_event", "restore_revision");
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:40:                "map_mutate", "attach_event", "replace_event", "detach_event", "show_message", "navigate",
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:54:        fixtures.put("attach_event", object("binding_id", "tap", "target_widget_id", "title", "event_name", "click"));
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:65:                CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:66:                CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:67:                CreatorProjectOperation.Type.WIDGET_SET_PROPERTY,
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:68:                CreatorProjectOperation.Type.WIDGET_REMOVE,
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:69:                CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:70:                CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE,
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:71:                CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:72:                CreatorProjectOperation.Type.EVENT_REPLACE,
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:73:                CreatorProjectOperation.Type.EVENT_DETACH,
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:74:                CreatorProjectOperation.Type.REVISION_RESTORE);
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:78:        JsonObject args = object("action", "attach_event", "binding_id", "instrumented",
+app/src/test/java/com/sketchware/ai/tools/creator/CreatorRuntimeToolSchemaTest.java:83:                "map_mutate", "attach_event", "replace_event", "detach_event", "show_message", "navigate",
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:38:        assertThat(binding.getBlocks().get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.SHOW_MESSAGE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:68:        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:89:        assertThat(importedCondition.getType()).isEqualTo(CreatorRuntimeBlock.Type.IF_BOOLEAN);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:119:                .isEqualTo(CreatorRuntimeBlock.Type.CUSTOM_FUNCTION_CALL);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:148:        assertThat(returnRuntimeBlock.getType()).isEqualTo(CreatorRuntimeBlock.Type.RETURN);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:219:                .isEqualTo(CreatorRuntimeBlock.Type.SET_STATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:243:        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.FOREVER);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:245:        assertThat(imported.getThenBlocks().get(1).getType()).isEqualTo(CreatorRuntimeBlock.Type.BREAK);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:263:        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:285:        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:306:        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:325:        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:347:        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.MAP_MUTATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:350:        assertThat(imported.get(1).getType()).isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:374:        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.IF_STATE_EQUALS);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:405:        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:408:        assertThat(imported.get(2).getType()).isEqualTo(CreatorRuntimeBlock.Type.SET_STATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:409:        assertThat(imported.get(3).getType()).isEqualTo(CreatorRuntimeBlock.Type.SHOW_MESSAGE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:478:        assertThat(call.getType()).isEqualTo(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:485:        assertThat(tick.getBlocks().get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.SHOW_MESSAGE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:511:        assertThat(binding.getBlocks().get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.SHOW_MESSAGE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:529:        assertThat(binding.getType()).isEqualTo(CreatorRuntimeBlock.Type.ATTACH_EVENT);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:534:        assertThat(binding.getThenBlocks().get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.SHOW_MESSAGE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:554:        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:748:        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:779:            assertThat(imported.get(index).getType()).isEqualTo(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:881:        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:884:        assertThat(imported.get(1).getType()).isEqualTo(CreatorRuntimeBlock.Type.SET_STATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:902:        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.MAP_MUTATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:1294:        assertThat(callbackBinding.getBlocks().get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.SHOW_MESSAGE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:1527:        assertThat(imported.get(0).getType()).isEqualTo(CreatorRuntimeBlock.Type.IF_BOOLEAN);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:1530:        assertThat(imported.get(1).getType()).isEqualTo(CreatorRuntimeBlock.Type.REPEAT);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:1642:        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.SET_STATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:1662:        assertThat(imported.getType()).isEqualTo(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporterTest.java:1868:        assertThat(block.getType()).isEqualTo(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodecTest.java:16:        engine.apply(operation("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodecTest.java:18:        engine.apply(operation("widget", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodecTest.java:21:        engine.apply(operation("entry", 2, CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodecTest.java:42:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE, map("message", "Live")))));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodecTest.java:51:                .isEqualTo(CreatorRuntimeBlock.Type.SHOW_MESSAGE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodecTest.java:63:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodecTest.java:65:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodecTest.java:73:                .isEqualTo(CreatorRuntimeBlock.Type.LIST_MUTATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodecTest.java:75:                .isEqualTo(CreatorRuntimeBlock.Type.MAP_MUTATE);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:17:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:19:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:21:        engine.apply(op("label", 2, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:24:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "clicked", "value", true)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:25:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, map("widgetId", "label", "property", "text", "value", "Done")),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:26:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE, map("message", "Saved")));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:27:        engine.apply(op("event", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:42:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:44:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:47:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE, map("stateId", "count", "delta", 1L)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:48:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE, map("stateId", "count", "delta", -1L)));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:49:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:60:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:62:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:64:        engine.apply(op("source", 2, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:67:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, map("stateId", "items", "action", "add", "value", "one")),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:68:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, map("stateId", "items", "action", "insert", "index", 0, "value", "zero")),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:69:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, map("stateId", "items", "action", "remove_at", "index", 1)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:70:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE, map("stateId", "items", "action", "add_all", "sourceStateId", "source")));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:71:        engine.apply(op("event", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:83:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:85:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:88:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE, map("stateId", "profile", "action", "create")),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:89:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE, map("stateId", "profile", "action", "put", "key", "name", "value", "Ada")),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:90:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE, map("stateId", "profile", "action", "put", "key", "city", "value", "London")),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:91:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE, map("stateId", "profile", "action", "remove", "key", "city")));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:92:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:105:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:107:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:109:        engine.apply(op("enabled", 2, CreatorProjectOperation.Type.STATE_SET, map("stateId", "enabled", "value", true)));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:110:        engine.apply(op("counter", 3, CreatorProjectOperation.Type.STATE_SET, map("stateId", "counter", "value", 0L)));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:112:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_BOOLEAN, map("stateId", "enabled"),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:113:                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:115:                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:117:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.REPEAT, map("count", "3"),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:118:                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:120:        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:131:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:133:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:136:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE, map("stateId", "count", "delta", 1L)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:137:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.BREAK, Collections.<String, Object>emptyMap()));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:139:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.FOREVER, Collections.<String, Object>emptyMap(),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:141:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE, map("stateId", "count", "delta", 1L)));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:142:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:154:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:156:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:158:        CreatorRuntimeBlock increment = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:160:        CreatorRuntimeBlock forever = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.FOREVER,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:163:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:178:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:180:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:182:        engine.apply(op("name", 2, CreatorProjectOperation.Type.STATE_SET, map("stateId", "name", "value", "Ada")));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:183:        engine.apply(op("counter", 3, CreatorProjectOperation.Type.STATE_SET, map("stateId", "counter", "value", 0L)));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:189:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_BOOLEAN, map("expression", equal),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:190:                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:192:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.REPEAT, map("countExpression", addition),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:193:                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:195:        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:206:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:208:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:210:        engine.apply(op("numbers", 2, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:212:        engine.apply(op("names", 3, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:214:        engine.apply(op("rows", 4, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:216:        engine.apply(op("profile", 5, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:227:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "numberAt", "expression", numberAt)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:228:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "nameAt", "expression", nameAt)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:229:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "mapAt", "expression", mapAt)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:230:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "containsRowKey", "expression", containsRowKey)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:231:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "listSize", "expression", listSize)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:232:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "mapValue", "expression", mapValue)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:233:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "containsMapKey", "expression", containsMapKey)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:234:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "mapSize", "expression", mapSize)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:235:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:237:        engine.apply(op("event", 6, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:261:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:263:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:266:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:268:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:270:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:272:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:286:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:288:        engine.apply(op("widget", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:293:            engine.apply(op("property" + index, index + 2, CreatorProjectOperation.Type.WIDGET_SET_PROPERTY,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:296:        engine.apply(op("answer", 14, CreatorProjectOperation.Type.STATE_SET, map("stateId", "answer", "value", "42")));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:301:            blocks.add(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:304:        engine.apply(op("event", 15, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:327:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:329:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:331:        engine.apply(op("names", 2, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:333:        engine.apply(op("rows", 3, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:335:        engine.apply(op("profile", 4, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:339:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:341:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:343:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:345:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:347:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:349:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:351:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:353:        engine.apply(op("event", 5, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:380:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:382:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:384:        engine.apply(op("components", 2, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:386:        CreatorRuntimeBlock setKey = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:388:        engine.apply(op("event", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:409:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:411:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:413:        CreatorRuntimeBlock setState = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:415:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:427:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:429:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:431:        engine.apply(op("resources", 2, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:433:        CreatorRuntimeBlock setText = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:435:        engine.apply(op("event", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:447:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:449:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:451:        CreatorRuntimeBlock setState = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:453:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:474:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:476:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:478:        CreatorRuntimeBlock setState = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:480:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:492:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:494:        engine.apply(op("widget", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:496:        engine.apply(op("url", 2, CreatorProjectOperation.Type.WIDGET_SET_PROPERTY,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:498:        engine.apply(op("date", 3, CreatorProjectOperation.Type.WIDGET_SET_PROPERTY,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:501:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:503:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:505:        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:517:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:519:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:521:        engine.apply(op("profile", 2, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:523:        engine.apply(op("keys", 3, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:525:        CreatorRuntimeBlock getKeys = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:527:        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:539:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:541:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:543:        engine.apply(op("profile", 2, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:545:        engine.apply(op("rows", 3, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:548:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:550:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:552:        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:564:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:566:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:569:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:571:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:573:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:597:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:599:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:601:        CreatorRuntimeBlock setState = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:603:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:624:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:626:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:628:        CreatorRuntimeBlock setState = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:630:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:649:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:651:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:654:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:656:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:658:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:660:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:673:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:675:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:679:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:681:                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:692:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:694:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:696:        engine.apply(op("label", 2, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:698:        engine.apply(op("name", 3, CreatorProjectOperation.Type.STATE_SET, map("stateId", "name", "value", "Ada")));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:701:        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:703:                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:714:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:716:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:723:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:725:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.MAP_MUTATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:727:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:740:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:742:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:753:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "fragment", "expression", substring)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:754:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "power", "expression", power)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:755:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "replacement", "expression", replacement)));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:756:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:769:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:771:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:778:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:780:                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:791:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:793:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:807:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:809:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "duration", "expression", duration)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:810:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "playing", "expression", playing))))));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:821:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:823:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:841:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:843:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "content", "expression", content)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:844:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "exists", "expression", exists)),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:845:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "length", "expression", length))))));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:857:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:859:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:878:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:880:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:882:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:884:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:897:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:899:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:911:        CreatorRuntimeBlock branch = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_BOOLEAN,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:913:                        CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "drawerState", "value", "open"))),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:915:                        CreatorRuntimeBlock.Type.SET_STATE, map("stateId", "drawerState", "value", "closed"))));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:916:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:929:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:931:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:945:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:947:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:949:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:951:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:953:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:967:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:969:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:971:        engine.apply(op("items", 2, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:981:        engine.apply(op("event", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:983:                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:997:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:999:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1014:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1016:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1018:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1020:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1033:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1035:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1046:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1048:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1050:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1062:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1064:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1079:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1081:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1083:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1085:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1087:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1089:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1104:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1106:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1120:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1122:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1124:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1126:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1139:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1141:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1143:        engine.apply(op("profile", 2, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1153:        engine.apply(op("event", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1155:                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1171:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1173:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1175:        engine.apply(op("rows", 2, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1177:        engine.apply(op("row", 3, CreatorProjectOperation.Type.STATE_SET,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1181:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.LIST_MUTATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1184:                new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1186:        engine.apply(op("event", 4, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1200:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1202:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1212:        engine.apply(op("event", 2, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1214:                        Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SET_STATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1226:        engine.apply(op("screen", 0, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1228:        engine.apply(op("button", 1, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1230:        engine.apply(op("text", 2, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1232:        CreatorRuntimeBlock attach = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.ATTACH_EVENT,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1234:                Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutorTest.java:1236:        engine.apply(op("event", 3, CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapperTest.java:26:        assertThat(operation.getType()).isEqualTo(CreatorProjectOperation.Type.WIDGET_ADD);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapperTest.java:39:        assertThat(state.getType()).isEqualTo(CreatorProjectOperation.Type.STATE_SET);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapperTest.java:43:        eventArgs.addProperty("action", "attach_event");
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapperTest.java:64:        assertThat(branch.getType()).isEqualTo(CreatorRuntimeBlock.Type.IF_STATE_EQUALS);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeControlFlowTest.java:28:        assertThat(branch.getType()).isEqualTo(CreatorRuntimeBlock.Type.IF_STATE_EQUALS);
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeControlFlowTest.java:37:        CreatorRuntimeBlock navigate = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.NAVIGATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeControlFlowTest.java:59:        CreatorRuntimeBlock branch = new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.IF_STATE_EQUALS,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeControlFlowTest.java:61:                Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE, map("message", "Approved"))),
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeControlFlowTest.java:62:                Collections.singletonList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.SHOW_MESSAGE, map("message", "Pending"))));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:18:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:21:                CreatorProjectOperation.ActorKind.AI, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:25:                CreatorProjectOperation.ActorKind.AI, CreatorProjectOperation.Type.WIDGET_SET_PROPERTY,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:40:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:55:                CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:59:                CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE, map("label", "Open editor")));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:71:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:82:                CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:85:                CreatorProjectOperation.ActorKind.AI, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:96:                CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:99:                CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:102:                CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:107:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.WIDGET_REMOVE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:119:                CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:122:                CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:125:                CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:128:                CreatorProjectOperation.Type.EVENT_ATTACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:133:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.EVENT_REPLACE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:141:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.EVENT_DETACH,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:150:                CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:153:                CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:157:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.REVISION_RESTORE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:169:                CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeEngineTest.java:172:                CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE, map("label", "Open")));
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeWorkflowTest.java:20:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.SCREEN_CREATE,
+app/src/test/java/pro/sketchware/creator/runtime/CreatorRuntimeWorkflowTest.java:37:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:862:                Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:865:                Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:869:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:873:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:877:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:880:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:883:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:887:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:891:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:897:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:901:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:904:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:908:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:911:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:914:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:918:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:921:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:924:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:928:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:932:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:936:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:939:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:942:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:945:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:950:                Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:956:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:959:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:962:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:965:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:969:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:973:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:979:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:983:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:989:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:993:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:997:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:1003:                        new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:1008:                Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:1012:                Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.INCREMENT_STATE,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:1015:                Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNativeWidgetTest.java:1020:                Arrays.asList(new CreatorRuntimeBlock(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNavigationTest.java:118:                .isEqualTo(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL);
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNavigationTest.java:230:                        CreatorProjectOperation.Type.WIDGET_ADD, payload,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNavigationTest.java:289:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNavigationTest.java:316:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.WIDGET_ADD,
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNavigationTest.java:325:                CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY, blockPayload);
+app/src/androidTest/java/pro/sketchware/creator/CreatorRuntimeNavigationTest.java:334:                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.EVENT_ATTACH,

@@ -86,9 +86,6 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private boolean rendering;
     private boolean renderPending;
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(this::render);
-    private static final String[] ENTRY_PLACEMENTS = {
-            "bottom_end", "bottom_start", "top_end", "top_start", "center"
-    };
 
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
@@ -275,46 +272,6 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         apply(CreatorProjectOperation.Type.WIDGET_ADD, payload);
     }
 
-    private void editEntryControl() {
-        LinearLayout form = new LinearLayout(this);
-        form.setOrientation(LinearLayout.VERTICAL);
-        int padding = dp(24);
-        form.setPadding(padding, 0, padding, 0);
-        EditText input = new EditText(this);
-        input.setSingleLine(true);
-        input.setText(session.getDocument().getEntryControl().getLabel());
-        input.setSelectAllOnFocus(true);
-        input.setHint(R.string.creator_entry_control_label_hint);
-        form.addView(input);
-        TextView placementTitle = new TextView(this);
-        placementTitle.setText(R.string.creator_entry_control_position);
-        placementTitle.setTextSize(14);
-        placementTitle.setPadding(0, dp(16), 0, dp(4));
-        form.addView(placementTitle);
-        RadioGroup placements = new RadioGroup(this);
-        int selected = placementIndex(session.getDocument().getEntryControl().getPlacement());
-        for (int i = 0; i < ENTRY_PLACEMENTS.length; i++) {
-            RadioButton option = new RadioButton(this);
-            option.setId(View.generateViewId());
-            option.setText(entryPlacementLabel(i));
-            option.setTag(ENTRY_PLACEMENTS[i]);
-            option.setChecked(i == selected);
-            placements.addView(option);
-        }
-        form.addView(placements);
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.creator_entry_control_title)
-                .setMessage(R.string.creator_entry_control_message)
-                .setView(form)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setPositiveButton(R.string.creator_apply, (dialog, which) -> {
-                    Map<String, Object> payload = new LinkedHashMap<>();
-                    payload.put("label", input.getText().toString().trim());
-                    View selectedView = placements.findViewById(placements.getCheckedRadioButtonId());
-                    if (selectedView != null) payload.put("placement", String.valueOf(selectedView.getTag()));
-                    apply(CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE, payload);
-                }).show();
-    }
 
     private void createCheckpoint() {
         String name = "revision-" + session.getDocument().getRevision();
@@ -1283,22 +1240,5 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
     }
 
-
-    private int placementIndex(String placement) {
-        for (int i = 0; i < ENTRY_PLACEMENTS.length; i++) {
-            if (ENTRY_PLACEMENTS[i].equals(placement)) return i;
-        }
-        return 0;
-    }
-
-    private String entryPlacementLabel(int index) {
-        switch (index) {
-            case 1: return getString(R.string.creator_position_bottom_start);
-            case 2: return getString(R.string.creator_position_top_end);
-            case 3: return getString(R.string.creator_position_top_start);
-            case 4: return getString(R.string.creator_position_center);
-            default: return getString(R.string.creator_position_bottom_end);
-        }
-    }
 
 }

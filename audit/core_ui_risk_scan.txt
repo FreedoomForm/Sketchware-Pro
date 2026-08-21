@@ -1,0 +1,639 @@
+## Methods/symbols in CreatorHomeActivity
+24:    private CreatorRuntimeSession session;
+25:    private MaterialButton entryControl;
+26:    private CreatorShakeRecovery shakeRecovery;
+27:    private boolean showLiveSurfaceAfterEditor;
+28:    private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(() -> renderDocument(document));
+30:    @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
+40:    @Override protected void onResume() {
+52:    @Override protected void onPause() {
+58:    private void openProject() {
+68:    private void renderDocument(CreatorProjectDocument document) {
+79:    private static String propertyString(CreatorWidget widget, String key, String fallback) {
+84:    private static boolean propertyBoolean(CreatorWidget widget, String key, boolean fallback) {
+89:    private void applyEntryPlacement(String placement) {
+
+## Methods/symbols in CreatorProjectActivity
+73:    public static final String EXTRA_LIVE_ONLY = "creator_live_only";
+74:    private CreatorRuntimeSession session;
+75:    private boolean liveOnly;
+76:    private LinearLayout previewCanvas;
+77:    private TextView revisionLabel;
+78:    private CreatorShakeRecovery shakeRecovery;
+79:    private CreatorRuntimeEnvironment runtimeEnvironment;
+80:    private CreatorRuntimeExecutor runtimeExecutor;
+81:    private CreatorRuntimeServiceDispatcher runtimeServices;
+82:    private String activeScreenId;
+83:    private final Map<String, MapView> liveMapViews = new LinkedHashMap<>();
+84:    private DrawerLayout editorDrawer;
+85:    private DrawerLayout liveDrawerLayout;
+86:    private boolean rendering;
+87:    private boolean renderPending;
+88:    private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(this::render);
+89:    private static final String[] ENTRY_PLACEMENTS = {
+93:    @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
+127:    @Override protected void onResume() {
+136:    @Override protected void onPause() {
+144:    @Override protected void onDestroy() {
+150:    @Override public void onBackPressed() {
+166:    private void wireEditorSidebar() {
+187:    private void bindSidebar(int id, View.OnClickListener listener) {
+192:    private void closeEditorSidebar() {
+196:    private void openActivity(Class<?> type) {
+201:    private void openExternal(int urlRes) {
+210:    private void configurePresentationMode() {
+217:    private void leaveEditorToLiveSurface() {
+227:    private void openEditor() {
+242:    @Override protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+247:    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+252:    private void ensureStarterScreen() {
+263:    private void addWidget(String widgetType, String defaultText) {
+278:    private void editEntryControl() {
+319:    private void createCheckpoint() {
+325:    private void showHistoryInspector() {
+347:    private void confirmRestoreRevision(long targetRevision) {
+360:    private void showCompatibilityInspector() {
+374:    private void appendCompatibilitySection(StringBuilder target, CreatorCompatibilityReport report,
+390:    private void apply(CreatorProjectOperation.Type type, Map<String, Object> payload) {
+404:    private void render() {
+421:    private void renderNow() {
+449:    private View renderScreenShell(CreatorProjectDocument document, String screenId, View mainContent) {
+473:    private boolean hasDrawer(CreatorProjectDocument document, String screenId) {
+482:    private void disposeDrawerLayout() {
+488:    private void disposeMapViews() {
+496:    private View renderWidget(CreatorProjectDocument document, CreatorWidget widget) {
+959:    private View registerRuntimeWidget(CreatorWidget widget, View view) {
+966:    private boolean hasRuntimeClickBinding(String widgetId) {
+974:    private void applyCommonViewProperties(CreatorWidget widget, View view) {
+1018:    private void applyLegacyLayoutProperties(CreatorWidget widget, View view) {
+1040:    private int runtimeLayoutDimension(int value) {
+1045:    private void applyRuntimeTypeface(CreatorProjectDocument document, TextView text, CreatorWidget widget) {
+1072:    private static int typefaceStyle(String value, int fallback) {
+1081:    private int dp(int value) {
+1085:    private String resourceVariant() {
+1090:    private String propertyString(CreatorWidget widget, String key, String fallback) {
+1095:    private int propertyInt(CreatorWidget widget, String key, int fallback) {
+1102:    private boolean propertyBoolean(CreatorWidget widget, String key, boolean fallback) {
+1111:    private float propertyFloat(CreatorWidget widget, String key, float fallback) {
+1118:    private void applyImageProperties(ImageView image, CreatorProjectDocument document, CreatorWidget widget) {
+1140:    private void applySeekBarResources(android.widget.SeekBar seekBar, CreatorProjectDocument document, CreatorWidget widget) {
+1149:    private java.util.List<?> runtimeItems(CreatorProjectDocument document, CreatorWidget widget) {
+1156:    private String runtimeItemText(Object item) {
+1171:    private android.graphics.drawable.Drawable resolveProjectDrawable(CreatorProjectDocument document, String resourceName) {
+1181:    private java.io.File resolveProjectImage(CreatorProjectDocument document, String resourceName) {
+1195:    private java.io.File resolveProjectFont(CreatorProjectDocument document, String fontName) {
+1212:    private void dispatchRuntimeEvent(String widgetId, String eventName) {
+1218:    private void dispatchLifecycleEvent(String eventName) {
+1224:    private void handleRuntimeServiceEvent(String serviceId, String eventName, Map<String, Object> payload) {
+1277:    private void renderEffects(java.util.List<CreatorRuntimeExecutor.Effect> effects) {
+1287:    private int placementIndex(String placement) {
+1294:    private String entryPlacementLabel(int index) {
+
+## Risk patterns
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:150:    @Override public void onBackPressed() {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:160:            finish();
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:175:            startActivity(intent);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:198:        startActivity(new Intent(this, type));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:204:            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getString(urlRes))));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:219:            finish();
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:222:        startActivity(new android.content.Intent(this, CreatorProjectActivity.class)
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:224:        finish();
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:236:            startActivity(intent);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:239:        startActivity(new Intent(this, CreatorProjectActivity.class));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:475:        if (!(rawIndex instanceof Map)) return false;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:477:        if (!(rawDescriptor instanceof Map)) return false;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:497:        if (widget == null) return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:683:                @Override public boolean onQueryTextSubmit(String query) { dispatchRuntimeEvent(widget.getId(), "submit"); return false; }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:684:                @Override public boolean onQueryTextChange(String value) { dispatchRuntimeEvent(widget.getId(), "change"); return false; }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:967:        if (session == null || widgetId == null) return false;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:971:        return false;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:990:            catch (IllegalArgumentException ignored) { }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1004:                catch (IllegalArgumentException ignored) { }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1013:                catch (IllegalArgumentException ignored) { }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1172:        if (resourceName == null || resourceName.trim().isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1183:        if (!(rawResources instanceof java.util.List)) return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1192:        return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1196:        if (document == null) return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1198:        if (!(rawFonts instanceof Map)) return null;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1209:        return null;
+app/src/main/java/pro/sketchware/creator/CreatorHomeActivity.java:47:            startActivity(new Intent(this, CreatorProjectActivity.class)
+app/src/main/java/pro/sketchware/creator/CreatorHomeActivity.java:65:        startActivity(intent);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:198:        try { closeable.close(); } catch (IOException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:109:        if (rawDirectory == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:124:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:149:            if (externalRoot == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:151:            catch (IOException | SecurityException ignored) { return false; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:113:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:170:        } catch (IOException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDialogService.java:173:        if ("false".equalsIgnoreCase(text)) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:73:                environment.getActivity().startActivity(intent(arguments));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:77:                environment.getActivity().finish();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:85:                environment.getActivity().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:93:                environment.getActivity().startActivity(Intent.createChooser(share,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:100:                environment.getActivity().startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + number)));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:411:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:537:        if (blank(block.opCode)) { unsupported.add("empty"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:543:            if (blank(functionId)) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:547:                if (argument == null) { unsupported.add(block.opCode + " (invalid argument expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:556:                return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:563:                return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:569:            if (values.size() < 2 || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:573:            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:577:                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:585:            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:589:            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:593:                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:599:                if (expression == null) { unsupported.add(block.opCode + " (invalid reporter expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:606:            if (block.subStack1 < 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:608:            if (bodyStart == null) { unsupported.add(block.opCode + " (missing forever substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:615:            if (!values.isEmpty() || block.subStack1 >= 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:619:            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:621:            if (bodyStart == null) { unsupported.add(block.opCode + " (missing repeat substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:627:                if (expression == null) { unsupported.add(block.opCode + " (invalid count expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:640:            unsupported.add(block.opCode + " (control flow)"); return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:642:        if (timerWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:643:        if (firebaseChildrenWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:644:        if (dialogButtonWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:645:        if (viewOnClickWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:648:            if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:651:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing timer substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:663:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:666:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:669:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:690:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:696:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:702:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:708:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:726:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:730:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:734:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:738:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:747:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:750:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:754:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:763:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:772:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:776:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:784:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:790:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:795:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:799:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:803:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:806:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:809:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:813:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:818:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:822:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:826:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:830:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:835:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:839:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:843:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:847:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:863:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:897:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:902:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:907:            if (!values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:951:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:956:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:960:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:964:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:968:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:972:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:976:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:980:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:988:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:997:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1000:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1006:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1012:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1018:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1022:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1025:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1028:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1031:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1034:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1040:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1046:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1049:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1052:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1055:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1059:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1063:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1070:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1080:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1084:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1088:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1092:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1096:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1100:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1103:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1106:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1109:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1112:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1115:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1119:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1122:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1126:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1131:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1137:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1141:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1145:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1149:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1154:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1160:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1165:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1171:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1175:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1179:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1183:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1187:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1191:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1195:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1199:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1203:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1208:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1213:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1217:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1221:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1225:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1229:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1233:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1237:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1241:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1245:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1250:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1258:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1267:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1313:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1324:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1328:                if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1334:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1338:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1343:                unsupported.add(block.opCode); return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1350:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1363:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1369:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1373:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1380:        if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1387:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1394:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1400:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1407:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1414:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1436:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1442:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1449:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1456:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1472:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1479:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1486:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1497:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1519:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1527:        if (values.size() < 2 || blank(values.get(0))) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1535:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1573:        if (values.size() < required || blank(values.get(0))) { unsupported.add("map " + action); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1622:        catch (NumberFormatException ignored) { return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1623:        if (!path.add(id)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1626:            if (block == null || blank(block.opCode)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1635:                if (nested == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1681:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1691:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1697:            if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:126:            default: return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMapService.java:69:        if (markerId == null || markerId.trim().isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMapService.java:109:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:101:                    } catch (com.google.gson.JsonSyntaxException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:124:                    } catch (com.google.gson.JsonSyntaxException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:211:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:262:        if (!"reporter".equals(expression.get("kind"))) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:270:        if ("false".equals(op)) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:355:            if (timestamp == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:362:                return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:453:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:457:        if (runtimeServices == null || id == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:464:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:472:        if (runtimeServices == null || path == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:479:        if (runtimeServices == null || path == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:486:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:494:        if (runtimeServices == null || widgetId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:501:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:510:        if (engine == null || functionId.isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:513:            return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:516:        if (!(rawDefinitions instanceof Map)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:518:        if (!(rawDefinition instanceof Map)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:520:        if (binding == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:551:        if (customFunctionFrames.isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:557:        if ("boolean".equalsIgnoreCase(type) || "b".equalsIgnoreCase(type)) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:578:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:585:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:592:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:599:        if (runtimeServices == null || componentId == null || key == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:607:        if (runtimeServices == null || intentId == null || key == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:615:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:622:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:630:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:679:        if (max < min || span <= 0L || span > Integer.MAX_VALUE) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:118:        if (element == null || element.isJsonNull()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:415:        if (rawCacheMode == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:422:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:427:        if (rawColor == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:433:            return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:148:        if (!(value instanceof String) || ((String) value).trim().isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:189:        if (value == null || value.isJsonNull()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:51:        if (name == null || name.trim().isEmpty()) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:11:        if (condition == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:13:        if (operator == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:17:            case "false": return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:35:            default: return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEnvironment.java:76:        if (pending == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEnvironment.java:87:        if (pending == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExpression.java:14:        if (expression == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExpression.java:63:        catch (NumberFormatException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeProjectStore.java:49:        if (document == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:21:                    return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:29:                || resourceFileName.trim().isEmpty() || directories == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:31:        if (root == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:37:            if (!targetPath.equals(rootPath) && !targetPath.startsWith(rootPath + File.separator)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:40:            return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServiceArguments.java:13:        if (value == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:80:        if (context == null || scId == null || scId.trim().isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:162:        return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeDefaults.java:101:        return false;
+app/src/main/java/pro/sketchware/creator/CreatorShakeDetector.java:23:        if (!Float.isFinite(x) || !Float.isFinite(y) || !Float.isFinite(z)) return false;
+app/src/main/java/pro/sketchware/creator/CreatorShakeDetector.java:25:        if (force < threshold) return false;
+app/src/main/java/pro/sketchware/creator/CreatorShakeDetector.java:26:        if (lastShakeAt != Long.MIN_VALUE && nowMs - lastShakeAt < debounceMs) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBluetoothService.java:198:        try { closeable.close(); } catch (IOException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:109:        if (rawDirectory == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:124:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:149:            if (externalRoot == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFileService.java:151:            catch (IOException | SecurityException ignored) { return false; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:113:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorBitmapService.java:170:        } catch (IOException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorDialogService.java:173:        if ("false".equalsIgnoreCase(text)) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:73:                environment.getActivity().startActivity(intent(arguments));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:77:                environment.getActivity().finish();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:85:                environment.getActivity().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:93:                environment.getActivity().startActivity(Intent.createChooser(share,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:100:                environment.getActivity().startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + number)));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:411:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:537:        if (blank(block.opCode)) { unsupported.add("empty"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:543:            if (blank(functionId)) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:547:                if (argument == null) { unsupported.add(block.opCode + " (invalid argument expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:556:                return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:563:                return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:569:            if (values.size() < 2 || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:573:            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:577:                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:585:            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:589:            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:593:                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:599:                if (expression == null) { unsupported.add(block.opCode + " (invalid reporter expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:606:            if (block.subStack1 < 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:608:            if (bodyStart == null) { unsupported.add(block.opCode + " (missing forever substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:615:            if (!values.isEmpty() || block.subStack1 >= 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:619:            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:621:            if (bodyStart == null) { unsupported.add(block.opCode + " (missing repeat substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:627:                if (expression == null) { unsupported.add(block.opCode + " (invalid count expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:640:            unsupported.add(block.opCode + " (control flow)"); return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:642:        if (timerWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:643:        if (firebaseChildrenWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:644:        if (dialogButtonWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:645:        if (viewOnClickWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:648:            if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:651:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing timer substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:663:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:666:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:669:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:690:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:696:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:702:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:708:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:726:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:730:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:734:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:738:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:747:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:750:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:754:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:763:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:772:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:776:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:784:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:790:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:795:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:799:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:803:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:806:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:809:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:813:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:818:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:822:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:826:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:830:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:835:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:839:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:843:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:847:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:863:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:897:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:902:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:907:            if (!values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:951:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:956:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:960:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:964:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:968:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:972:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:976:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:980:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:988:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:997:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1000:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1006:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1012:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1018:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1022:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1025:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1028:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1031:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1034:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1040:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1046:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1049:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1052:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1055:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1059:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1063:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1070:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1080:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1084:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1088:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1092:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1096:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1100:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1103:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1106:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1109:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1112:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1115:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1119:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1122:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1126:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1131:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1137:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1141:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1145:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1149:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1154:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1160:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1165:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1171:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1175:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1179:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1183:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1187:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1191:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1195:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1199:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1203:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1208:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1213:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1217:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1221:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1225:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1229:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1233:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1237:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1241:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1245:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1250:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1258:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1267:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1313:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1324:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1328:                if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1334:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1338:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1343:                unsupported.add(block.opCode); return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1350:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1363:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1369:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1373:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1380:        if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1387:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1394:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1400:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1407:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1414:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1436:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1442:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1449:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1456:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1472:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1479:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1486:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1497:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1519:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1527:        if (values.size() < 2 || blank(values.get(0))) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1535:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1573:        if (values.size() < required || blank(values.get(0))) { unsupported.add("map " + action); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1622:        catch (NumberFormatException ignored) { return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1623:        if (!path.add(id)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1626:            if (block == null || blank(block.opCode)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1635:                if (nested == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1681:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1691:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1697:            if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:126:            default: return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMapService.java:69:        if (markerId == null || markerId.trim().isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMapService.java:109:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:101:                    } catch (com.google.gson.JsonSyntaxException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:124:                    } catch (com.google.gson.JsonSyntaxException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:211:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:262:        if (!"reporter".equals(expression.get("kind"))) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:270:        if ("false".equals(op)) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:355:            if (timestamp == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:362:                return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:453:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:457:        if (runtimeServices == null || id == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:464:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:472:        if (runtimeServices == null || path == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:479:        if (runtimeServices == null || path == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:486:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:494:        if (runtimeServices == null || widgetId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:501:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:510:        if (engine == null || functionId.isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:513:            return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:516:        if (!(rawDefinitions instanceof Map)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:518:        if (!(rawDefinition instanceof Map)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:520:        if (binding == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:551:        if (customFunctionFrames.isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:557:        if ("boolean".equalsIgnoreCase(type) || "b".equalsIgnoreCase(type)) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:578:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:585:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:592:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:599:        if (runtimeServices == null || componentId == null || key == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:607:        if (runtimeServices == null || intentId == null || key == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:615:        if (runtimeServices == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:622:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:630:        if (runtimeServices == null || componentId == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:679:        if (max < min || span <= 0L || span > Integer.MAX_VALUE) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:118:        if (element == null || element.isJsonNull()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:415:        if (rawCacheMode == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:422:        return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:427:        if (rawColor == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorWidgetQueryService.java:433:            return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:148:        if (!(value instanceof String) || ((String) value).trim().isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:189:        if (value == null || value.isJsonNull()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRevisionStore.java:51:        if (name == null || name.trim().isEmpty()) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:11:        if (condition == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:13:        if (operator == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:17:            case "false": return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCondition.java:35:            default: return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEnvironment.java:76:        if (pending == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEnvironment.java:87:        if (pending == null) return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExpression.java:14:        if (expression == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExpression.java:63:        catch (NumberFormatException ignored) { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeProjectStore.java:49:        if (document == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:21:                    return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:29:                || resourceFileName.trim().isEmpty() || directories == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:31:        if (root == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:37:            if (!targetPath.equals(rootPath) && !targetPath.startsWith(rootPath + File.separator)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeResourceResolver.java:40:            return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServiceArguments.java:13:        if (value == null) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:80:        if (context == null || scId == null || scId.trim().isEmpty()) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:162:        return false;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeDefaults.java:101:        return false;
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:444:                startActivity(intent);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:451:    public void finish() {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:453:        // calling finish(). Import that final snapshot before the legacy caches
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:462:        super.finish();
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:491:                                    startActivity(launcher);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:518:        startActivity(intent);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:522:    public void onBackPressed() {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:562:            finish();
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:579:        toolbar.setNavigationOnClickListener(v -> onBackPressed());
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:723:        return false;
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:805:            finish();
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:840:            finish();
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1039:        startActivity(intent);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1184:            startActivity(intent);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1490:            if (activity == null) return null;
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1573:                    activity.finish();
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1638:                    activity.finish();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1617:    public void finish() {
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1619:        super.finish();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1839:        startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1860:    public void onBackPressed() {
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1907:                finish();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1910:                finish();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1926:            finish();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1948:                onBackPressed();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2047:            finish();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2095:                return false;
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2149:                return false;
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2402:            return false;
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2406:            return false;
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2477:        startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2519:            activity.get().finish();
