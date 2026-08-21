@@ -4,6 +4,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.view.View;
 
@@ -29,6 +30,16 @@ public class CreatorRuntimeNavigationTest {
         context = ApplicationProvider.getApplicationContext();
         context.getSharedPreferences("creator_runtime", Context.MODE_PRIVATE).edit().clear().commit();
         CreatorRuntimeSession.resetForTests();
+    }
+
+    @Test public void hostManifestDeclaresMobileAdsApplicationId() throws Exception {
+        ApplicationInfo info = context.getPackageManager().getApplicationInfo(
+                context.getPackageName(), PackageManager.GET_META_DATA);
+        assertThat(info.metaData).isNotNull();
+        String appId = info.metaData.getString("com.google.android.gms.ads.APPLICATION_ID");
+        assertThat(appId).isEqualTo(context.getString(R.string.google_mobile_ads_app_id));
+        assertThat(appId).startsWith("ca-app-pub-");
+        assertThat(appId).contains("~");
     }
 
     @Test public void installedLauncherIsCreatorHomeWithSidebar() {

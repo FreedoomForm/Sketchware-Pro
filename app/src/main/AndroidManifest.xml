@@ -37,6 +37,12 @@
         android:theme="@style/Theme.SketchwarePro"
         android:usesCleartextTraffic="true"
         tools:targetApi="p">
+        <!-- Google Mobile Ads initializes through its manifest provider before any
+             Activity starts. Keep a valid development App ID in the host runtime;
+             production builds may replace this resource with the publisher ID. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/google_mobile_ads_app_id" />
         <activity
             android:name=".activities.iconcreator.IconCreatorActivity"
             android:exported="false"

@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Sketchware Pro</string>
+    <!-- Google-provided sample App ID; replace in a publisher build with the real ca-app-pub App ID. -->
+    <string name="google_mobile_ads_app_id">ca-app-pub-3940256099942544~3347511713</string>
     <string name="appbar_scrolling_view_behavior">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
     <string name="besome_blog_url">http://medium.com/sketchware</string>
     <string name="block_add_list_int_body_1">to</string>

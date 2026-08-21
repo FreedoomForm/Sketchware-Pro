@@ -9,9 +9,5 @@
             android:name="pro.sketchware.creator.CreatorProjectActivity"
             android:theme="@style/Theme.SketchwarePro.Main"
             tools:replace="android:theme" />
-        <!-- Google-provided test application ID for emulator/instrumentation runs. -->
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
     </application>
 </manifest>
