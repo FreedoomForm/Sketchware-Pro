@@ -211,6 +211,20 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         }
     });
     private BuildTask currentBuildTask;
+
+    /**
+     * Creator Runtime stores its bridged project inside the app-private legacy
+     * project store. Android 13 no longer grants the legacy READ/WRITE_EXTERNAL_STORAGE
+     * permissions used by the original launcher, so that check must not close the
+     * original editor when it is opened from the runtime boundary.
+     */
+    @Override
+    public boolean isStoragePermissionGranted() {
+        String runtimeProjectId = getIntent() == null
+                ? null : getIntent().getStringExtra("creator_runtime_project_id");
+        if (runtimeProjectId != null && !runtimeProjectId.trim().isEmpty()) return true;
+        return super.isStoragePermissionGranted();
+    }
     private final BroadcastReceiver buildCancelReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -535,6 +549,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         setContentView(R.layout.design);
         if (!isStoragePermissionGranted()) {
             finish();
+            return;
         }
 
         if (savedInstanceState == null) {
@@ -769,6 +784,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         importLegacyRuntimeBoundary();
         if (!isStoragePermissionGranted()) {
             finish();
+            return;
         }
 
         long freeMegabytes = GB.c();
@@ -803,6 +819,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         super.onSaveInstanceState(outState);
         if (!isStoragePermissionGranted()) {
             finish();
+            return;
         }
 
         if (!B) {

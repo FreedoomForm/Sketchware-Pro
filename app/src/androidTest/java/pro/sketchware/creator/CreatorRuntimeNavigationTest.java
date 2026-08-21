@@ -2,6 +2,7 @@ package pro.sketchware.creator;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -14,6 +15,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+import androidx.test.runner.lifecycle.Stage;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -99,6 +103,25 @@ public class CreatorRuntimeNavigationTest {
         assertThat(main.fileName).isEqualTo("main");
         assertThat(main.fileType)
                 .isEqualTo(com.besome.sketch.beans.ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY);
+    }
+
+    @Test public void nextFabActuallyNavigatesToOriginalSketchwareEditor() {
+        try (ActivityScenario<CreatorHomeActivity> home = ActivityScenario.launch(CreatorHomeActivity.class)) {
+            home.onActivity(activity -> {
+                View next = activity.findViewById(R.id.creator_entry_control);
+                assertThat(next.getVisibility()).isEqualTo(View.VISIBLE);
+                next.performClick();
+            });
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+            AtomicReference<Activity> resumed = new AtomicReference<>();
+            InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
+                    ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                            .forEach(resumed::set));
+            assertThat(resumed.get()).isInstanceOf(DesignActivity.class);
+            assertThat((Object) resumed.get().findViewById(R.id.tab_layout)).isNotNull();
+            assertThat((Object) resumed.get().findViewById(R.id.viewpager)).isNotNull();
+        }
     }
 
     @Test public void creatorRuntimeOpensOriginalSketchwareEditorSurface() {
