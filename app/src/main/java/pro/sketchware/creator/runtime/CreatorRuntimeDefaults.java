@@ -1,5 +1,7 @@
 package pro.sketchware.creator.runtime;
 
+import android.view.Gravity;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -52,14 +54,21 @@ public final class CreatorRuntimeDefaults {
                     Collections.<String>emptyList(), Collections.<String, Object>emptyMap());
             widgets.put(rootId, root);
         }
+        if (root.getProperties().isEmpty()) {
+            root = root.withProperty("legacyWidth", -1)
+                    .withProperty("legacyHeight", -1)
+                    .withProperty("legacyGravity", Gravity.BOTTOM | Gravity.END);
+            widgets.put(rootId, root);
+        }
         if (!widgets.containsKey(ENTRY_WIDGET_ID)) {
             Map<String, Object> properties = new LinkedHashMap<>();
             properties.put("text", "Continue");
             properties.put("enabled", true);
             properties.put("clickable", true);
             properties.put("visible", true);
-            properties.put("layout_width", "wrap_content");
-            properties.put("layout_height", "wrap_content");
+            properties.put("legacyWidth", -2);
+            properties.put("legacyHeight", -2);
+            properties.put("legacyLayoutGravity", Gravity.END);
             widgets.put(ENTRY_WIDGET_ID, new CreatorWidget(ENTRY_WIDGET_ID, "button", rootId,
                     Collections.<String>emptyList(), properties));
             if (!root.getChildren().contains(ENTRY_WIDGET_ID)) {

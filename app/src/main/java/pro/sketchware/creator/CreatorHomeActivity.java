@@ -23,6 +23,7 @@ import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 public final class CreatorHomeActivity extends AppCompatActivity {
     private CreatorRuntimeSession session;
     private MaterialButton entryControl;
+    private CreatorShakeRecovery shakeRecovery;
     private boolean showLiveSurfaceAfterEditor;
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(() -> renderDocument(document));
 
@@ -33,12 +34,14 @@ public final class CreatorHomeActivity extends AppCompatActivity {
         session = CreatorRuntimeSession.get(this);
         entryControl = findViewById(R.id.creator_entry_control);
         entryControl.setOnClickListener(v -> openProject());
+        shakeRecovery = new CreatorShakeRecovery(this, this::openProject);
     }
 
     @Override protected void onResume() {
         super.onResume();
         session.addListener(documentListener);
         renderDocument(session.getDocument());
+        if (shakeRecovery != null) shakeRecovery.start();
         if (showLiveSurfaceAfterEditor) {
             showLiveSurfaceAfterEditor = false;
             startActivity(new Intent(this, CreatorProjectActivity.class)
@@ -47,6 +50,7 @@ public final class CreatorHomeActivity extends AppCompatActivity {
     }
 
     @Override protected void onPause() {
+        if (shakeRecovery != null) shakeRecovery.stop();
         session.removeListener(documentListener);
         super.onPause();
     }

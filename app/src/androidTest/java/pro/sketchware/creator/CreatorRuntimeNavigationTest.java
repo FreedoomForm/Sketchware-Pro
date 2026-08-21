@@ -191,10 +191,10 @@ public class CreatorRuntimeNavigationTest {
                 .b(com.besome.sketch.beans.ProjectFileBean.DEFAULT_XML_NAME);
         Intent intent = new Intent(context, LogicEditorActivity.class)
                 .putExtra("sc_id", scId)
-                .putExtra("id", "_fab")
+                .putExtra("id", CreatorRuntimeDefaults.ENTRY_WIDGET_ID)
                 .putExtra("event", "onClick")
                 .putExtra("project_file", main)
-                .putExtra("event_text", "Floating action button click")
+                .putExtra("event_text", "Continue button click")
                 .putExtra("creator_runtime_project_id", document.getProjectId());
         try (ActivityScenario<LogicEditorActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {

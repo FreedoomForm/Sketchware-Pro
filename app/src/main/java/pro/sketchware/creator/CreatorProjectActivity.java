@@ -116,11 +116,12 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         findViewById(R.id.creator_checkpoint).setOnClickListener(v -> createCheckpoint());
         findViewById(R.id.creator_history).setOnClickListener(v -> showHistoryInspector());
         findViewById(R.id.creator_compatibility).setOnClickListener(v -> showCompatibilityInspector());
-        shakeRecovery = new CreatorShakeRecovery(this, this::showRecoverySheet);
+        shakeRecovery = new CreatorShakeRecovery(this, () -> {
+            if (liveOnly) openEditor();
+        });
         ensureStarterScreen();
         render();
         dispatchLifecycleEvent("create");
-        showRecoveryOnboardingOnce();
     }
 
     @Override protected void onResume() {
@@ -384,23 +385,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         target.append('\n');
     }
 
-    private void showRecoverySheet() {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.creator_recovery_title)
-                .setMessage(R.string.creator_recovery_message)
-                .setNegativeButton(android.R.string.cancel, null)
-                .setNeutralButton(R.string.creator_recovery_reset, (dialog, which) -> resetEntryControl())
-                .setPositiveButton(R.string.creator_recovery_home, (dialog, which) -> finish())
-                .show();
-    }
 
-    private void resetEntryControl() {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("visible", true);
-        payload.put("label", "Continue");
-        payload.put("placement", "bottom_end");
-        apply(CreatorProjectOperation.Type.ENTRY_CONTROL_UPDATE, payload);
-    }
 
     private void apply(CreatorProjectOperation.Type type, Map<String, Object> payload) {
         CreatorProjectDocument document = session.getDocument();
@@ -1316,13 +1301,4 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
     }
 
-    private void showRecoveryOnboardingOnce() {
-        if (getSharedPreferences("creator_runtime", MODE_PRIVATE).getBoolean("recovery_onboarded", false)) return;
-        getSharedPreferences("creator_runtime", MODE_PRIVATE).edit().putBoolean("recovery_onboarded", true).apply();
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.creator_recovery_onboarding_title)
-                .setMessage(R.string.creator_recovery_onboarding_message)
-                .setPositiveButton(android.R.string.ok, null)
-                .show();
-    }
 }
