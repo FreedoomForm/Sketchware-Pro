@@ -74,7 +74,9 @@ public class ProjectSettings {
 
         if (FileUtil.isExistFile(path)) {
             try {
-                hashmap = new Gson().fromJson(FileUtil.readFile(path).trim(), Helper.TYPE_STRING_MAP);
+                HashMap<String, String> parsed = new Gson().fromJson(
+                        FileUtil.readFile(path).trim(), Helper.TYPE_STRING_MAP);
+                hashmap = parsed == null ? new HashMap<>() : parsed;
             } catch (Exception e) {
                 Log.e("ProjectSettings", "Failed to read project settings for project " + sc_id + "!", e);
                 hashmap = new HashMap<>();
@@ -146,6 +148,7 @@ public class ProjectSettings {
     }
 
     public void setValue(String key, String value) {
+        if (hashmap == null) hashmap = new HashMap<>();
         hashmap.put(key, value);
         save();
     }
