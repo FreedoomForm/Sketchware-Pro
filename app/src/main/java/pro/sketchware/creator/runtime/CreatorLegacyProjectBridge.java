@@ -32,6 +32,7 @@ import com.besome.sketch.beans.ProjectResourceBean;
 import com.besome.sketch.beans.TextBean;
 import com.besome.sketch.beans.ViewBean;
 import mod.hey.studios.project.ProjectSettings;
+import mod.agus.jcoderz.beans.ViewBeans;
 
 /**
  * Compatibility boundary between the Creator Runtime document identity and
@@ -252,10 +253,12 @@ public final class CreatorLegacyProjectBridge {
     private static int toLegacyType(String runtimeType) {
         if (runtimeType == null) return -1;
         switch (runtimeType) {
-            case "column": return ViewBean.VIEW_TYPE_LAYOUT_LINEAR;
+            case "column":
+            case "row": return ViewBean.VIEW_TYPE_LAYOUT_LINEAR;
             case "stack": return ViewBean.VIEW_TYPE_LAYOUT_RELATIVE;
             case "scroll": return ViewBean.VIEW_TYPE_LAYOUT_VSCROLLVIEW;
             case "hscroll": return ViewBean.VIEW_TYPE_LAYOUT_HSCROLLVIEW;
+            case "pager": return ViewBeans.VIEW_TYPE_LAYOUT_VIEWPAGER;
             case "button": return ViewBean.VIEW_TYPE_WIDGET_BUTTON;
             case "text": return ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW;
             case "input": return ViewBean.VIEW_TYPE_WIDGET_EDITTEXT;
@@ -271,6 +274,30 @@ public final class CreatorLegacyProjectBridge {
             case "fab": return ViewBean.VIEW_TYPE_WIDGET_FAB;
             case "ad_banner": return ViewBean.VIEW_TYPE_WIDGET_ADVIEW;
             case "map": return ViewBean.VIEW_TYPE_WIDGET_MAPVIEW;
+            case "radio": return ViewBeans.VIEW_TYPE_WIDGET_RADIOBUTTON;
+            case "rating": return ViewBeans.VIEW_TYPE_WIDGET_RATINGBAR;
+            case "video": return ViewBeans.VIEW_TYPE_WIDGET_VIDEOVIEW;
+            case "search": return ViewBeans.VIEW_TYPE_WIDGET_SEARCHVIEW;
+            case "autocomplete": return ViewBeans.VIEW_TYPE_WIDGET_AUTOCOMPLETETEXTVIEW;
+            case "grid": return ViewBeans.VIEW_TYPE_WIDGET_GRIDVIEW;
+            case "clock": return ViewBeans.VIEW_TYPE_WIDGET_DIGITALCLOCK;
+            case "date_picker": return ViewBeans.VIEW_TYPE_WIDGET_DATEPICKER;
+            case "time_picker": return ViewBeans.VIEW_TYPE_WIDGET_TIMEPICKER;
+            case "tabs": return ViewBeans.VIEW_TYPE_LAYOUT_TABLAYOUT;
+            case "bottom_navigation": return ViewBeans.VIEW_TYPE_LAYOUT_BOTTOMNAVIGATIONVIEW;
+            case "badge": return ViewBeans.VIEW_TYPE_WIDGET_BADGEVIEW;
+            case "pattern": return ViewBeans.VIEW_TYPE_WIDGET_PATTERNLOCKVIEW;
+            case "sidebar": return ViewBeans.VIEW_TYPE_WIDGET_WAVESIDEBAR;
+            case "card": return ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW;
+            case "collapsing": return ViewBeans.VIEW_TYPE_LAYOUT_COLLAPSINGTOOLBARLAYOUT;
+            case "text_input": return ViewBeans.VIEW_TYPE_LAYOUT_TEXTINPUTLAYOUT;
+            case "swipe_refresh": return ViewBeans.VIEW_TYPE_LAYOUT_SWIPEREFRESHLAYOUT;
+            case "radio_group": return ViewBeans.VIEW_TYPE_LAYOUT_RADIOGROUP;
+            case "circle_image": return ViewBeans.VIEW_TYPE_WIDGET_CIRCLEIMAGEVIEW;
+            case "lottie": return ViewBeans.VIEW_TYPE_WIDGET_LOTTIEANIMATIONVIEW;
+            case "otp": return ViewBeans.VIEW_TYPE_WIDGET_OTPVIEW;
+            case "code": return ViewBeans.VIEW_TYPE_WIDGET_CODEVIEW;
+            case "sign_in": return ViewBeans.VIEW_TYPE_WIDGET_SIGNINBUTTON;
             default: return -1;
         }
     }

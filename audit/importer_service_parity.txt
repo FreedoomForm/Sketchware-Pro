@@ -1,0 +1,66 @@
+== importer service IDs ==
+serviceCall("ads_interstitial"
+serviceCall("animator"
+serviceCall("bitmap"
+serviceCall("bluetooth"
+serviceCall("calendar"
+serviceCall("camera"
+serviceCall("date_picker"
+serviceCall("dialog"
+serviceCall("drawer"
+serviceCall("file"
+serviceCall("file_picker"
+serviceCall("firebase"
+serviceCall("firebase_auth"
+serviceCall("firebase_storage"
+serviceCall("gyroscope"
+serviceCall("http"
+serviceCall("intent"
+serviceCall("local_storage"
+serviceCall("location"
+serviceCall("map"
+serviceCall("media"
+serviceCall("speech_to_text"
+serviceCall("text_to_speech"
+serviceCall("time_picker"
+serviceCall("timer"
+serviceCall("ui"
+serviceCall("vibrator"
+serviceCall("widget"
+== registered service IDs ==
+12:        return new CreatorRuntimeServiceDispatcher()
+13:                .register(new CreatorStorageService(context, projectId))
+14:                .register(new CreatorFileService(environment))
+15:                .register(new CreatorBitmapService(environment))
+16:                .register(new CreatorVibratorService(context))
+17:                .register(new CreatorCalendarService())
+18:                .register(new CreatorTimerService(timerListener))
+19:                .register(new CreatorIntentService(environment))
+20:                .register(new CreatorUiService(environment))
+21:                .register(new CreatorDialogService(environment))
+22:                .register(new CreatorNetworkService(environment))
+23:                .register(new CreatorWidgetQueryService(environment))
+24:                .register(new CreatorDrawerService())
+25:                .register(new CreatorMapService(environment))
+26:                .register(new CreatorDeviceMetricsService(environment))
+27:                .register(new CreatorAnimatorService(environment))
+28:                .register(new CreatorDatePickerService(environment))
+29:                .register(new CreatorTimePickerService(environment))
+30:                .register(new CreatorMediaService(environment))
+31:                .register(new CreatorGyroscopeService(environment))
+32:                .register(new CreatorNotificationService(environment))
+33:                .register(new CreatorCameraService(environment))
+34:                .register(new CreatorFilePickerService(environment))
+35:                .register(new CreatorTextToSpeechService(environment))
+36:                .register(new CreatorSpeechToTextService(environment))
+37:                .register(new CreatorBluetoothService(environment))
+38:                .register(new CreatorLocationService(environment))
+39:                .register(new CreatorFirebaseDatabaseService(environment))
+40:                .register(new CreatorFirebaseAuthService(environment))
+41:                .register(new CreatorFirebaseStorageService(environment))
+42:                .register(new CreatorFirebaseCloudMessageService(environment))
+43:                .register(new CreatorFirebaseAuthPhoneService(environment))
+44:                .register(new CreatorFirebaseGoogleLoginService(environment))
+45:                .register(new CreatorInterstitialAdService(environment))
+46:                .register(new CreatorRewardedAdService(environment))
+47:                .register(new CreatorFragmentAdapterService(environment));

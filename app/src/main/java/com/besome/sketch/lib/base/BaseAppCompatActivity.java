@@ -3,6 +3,7 @@ package com.besome.sketch.lib.base;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.DialogInterface.OnCancelListener;
 import android.graphics.Color;
 import android.os.AsyncTask.Status;
@@ -94,7 +95,34 @@ public abstract class BaseAppCompatActivity extends AppCompatActivity {
     }
 
     public boolean isStoragePermissionGranted() {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == 0 && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == 0;
+        if (hasCreatorRuntimeLaunchExtra()) return true;
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == 0
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == 0;
+    }
+
+    private boolean hasCreatorRuntimeLaunchExtra() {
+        String projectId = getIntent() == null ? null
+                : getIntent().getStringExtra("creator_runtime_project_id");
+        return projectId != null && !projectId.trim().isEmpty();
+    }
+
+    private Intent propagateCreatorRuntimeExtra(Intent intent) {
+        if (intent != null && hasCreatorRuntimeLaunchExtra()
+                && !intent.hasExtra("creator_runtime_project_id")) {
+            intent.putExtra("creator_runtime_project_id",
+                    getIntent().getStringExtra("creator_runtime_project_id"));
+        }
+        return intent;
+    }
+
+    @Override
+    public void startActivity(Intent intent) {
+        super.startActivity(propagateCreatorRuntimeExtra(intent));
+    }
+
+    @Override
+    public void startActivityForResult(Intent intent, int requestCode) {
+        super.startActivityForResult(propagateCreatorRuntimeExtra(intent), requestCode);
     }
 
     public boolean j() {

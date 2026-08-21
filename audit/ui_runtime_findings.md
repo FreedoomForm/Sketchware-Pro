@@ -37,3 +37,8 @@ No GitHub Actions should be triggered until the UI coverage audit, runtime wirin
 The bottom Run button was wired directly in `DesignActivity.onCreate()` and mutated by BuildTask progress updates. Removing the button requires a nullable legacy reference and guards around listener/progress updates; otherwise the original editor crashes when the view is absent.
 
 `CreatorProjectActivity` remains a custom runtime preview/editor shell with a bespoke header, add-widget controls, preview canvas and sidebar. CreatorHomeActivity currently launches DesignActivity, so this custom shell is not the intended project editing window, but its renderer is the existing reusable reference for showing the runtime document on the post-editor main surface.
+
+
+## Follow-up child-screen audit
+
+The Components tab had a separate `openEvent()` path that launched LogicEditorActivity without the runtime project ID. That path is now covered. More importantly, original PropertyActivity, ManageImageActivity, ManageViewActivity, MakeBlockActivity, library/resource managers, and other child screens inherit BaseAppCompatActivity; the base class now recognizes `creator_runtime_project_id` as a runtime launch, bypasses the obsolete Android 13 storage check, and propagates the same extra through `startActivity` and `startActivityForResult`. This keeps the original child screens while preserving the runtime boundary through nested navigation.

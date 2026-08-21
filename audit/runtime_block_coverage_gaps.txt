@@ -1,0 +1,206 @@
+== unsupported/deferred markers ==
+57:                report.add("unknown", "ComponentBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+63:                report.add(component.componentId, "ComponentBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+80:        Map<String, Object> deferredEvents = new LinkedHashMap<>();
+83:                report.add("unknown", "EventBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+91:                deferredEvents.put(eventKey, blocks.unsupported);
+92:                report.add(eventKey, "BlockBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+93:                        "Unsupported legacy block opcodes: " + String.join(", ", blocks.unsupported) + ".");
+129:                deferredEvents.put(eventKey, descriptor);
+155:                report.add("unknown", "MoreBlockCollectionBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+162:                report.add("moreblock:" + functionId, "MoreBlockCollectionBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+163:                        "Unsupported legacy More Block opcodes: " + String.join(", ", body.unsupported) + ".");
+178:        state.put("legacy.deferredEvents", deferredEvents);
+191:                report.add("unknown", "ProjectFileBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+238:                report.add("library:" + library.libType, "ProjectLibraryBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+280:                report.add("unknown", "ProjectResourceBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+347:                        CreatorCompatibilityTier.R0_UNSUPPORTED,
+372:                        CreatorCompatibilityTier.R0_UNSUPPORTED,
+411:        return null;
+488:                result.unsupported.add("invalid block id");
+500:                    result.unsupported.add("invalid reporter reference " + parameter);
+511:            if (!visited.contains(entry.getKey())) result.unsupported.add("orphan block " + entry.getKey());
+524:                unsupported.add("invalid block id"); return;
+526:            if (!visited.add(id)) { unsupported.add("cyclic block graph at " + id); return; }
+537:        if (blank(block.opCode)) { unsupported.add("empty"); return null; }
+543:            if (blank(functionId)) { unsupported.add(block.opCode); return null; }
+547:                if (argument == null) { unsupported.add(block.opCode + " (invalid argument expression)"); return null; }
+555:                unsupported.add(block.opCode);
+556:                return null;
+562:                unsupported.add(block.opCode + " (invalid return expression)");
+563:                return null;
+569:            if (values.size() < 2 || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+573:            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+577:                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+585:            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+589:            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+593:                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+599:                if (expression == null) { unsupported.add(block.opCode + " (invalid reporter expression)"); return null; }
+606:            if (block.subStack1 < 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+608:            if (bodyStart == null) { unsupported.add(block.opCode + " (missing forever substack)"); return null; }
+615:            if (!values.isEmpty() || block.subStack1 >= 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+619:            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+621:            if (bodyStart == null) { unsupported.add(block.opCode + " (missing repeat substack)"); return null; }
+627:                if (expression == null) { unsupported.add(block.opCode + " (invalid count expression)"); return null; }
+640:            unsupported.add(block.opCode + " (control flow)"); return null;
+642:        if (timerWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+643:        if (firebaseChildrenWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+644:        if (dialogButtonWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+645:        if (viewOnClickWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+648:            if (values.size() < required) { unsupported.add(block.opCode); return null; }
+651:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing timer substack)"); return null; }
+663:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+666:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+669:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+690:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+696:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+702:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+708:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+726:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+730:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+734:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+738:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+747:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+750:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+754:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+763:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+772:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+776:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+784:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+790:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+795:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+799:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+803:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+806:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+809:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+813:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+818:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+822:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+826:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+830:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+835:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+839:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+843:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+847:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+863:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+897:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+902:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+907:            if (!values.isEmpty()) { unsupported.add(block.opCode); return null; }
+951:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+956:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+960:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+964:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+968:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+972:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+976:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+980:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+988:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+997:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1000:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1006:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1012:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1018:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1022:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1025:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1028:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1031:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1034:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1040:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1046:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1049:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1052:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1055:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1059:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1063:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+1070:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1080:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1084:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1088:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1092:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1096:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1100:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1103:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1106:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1109:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+1112:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1115:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1119:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1122:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1126:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1131:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1137:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1141:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1145:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1149:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1154:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1160:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1165:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1171:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1175:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1179:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1183:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1187:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1191:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1195:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1199:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1203:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1208:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1213:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1217:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1221:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1225:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1229:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1233:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1237:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1241:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1245:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1250:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1258:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1267:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1313:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1324:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1328:                if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+1334:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1338:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+1343:                unsupported.add(block.opCode); return null;
+1349:        unsupported.add(block.opCode);
+1350:        return null;
+1363:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+1369:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1373:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+1380:        if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+1387:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+1394:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1400:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+1407:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1414:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+1425:                unsupported.add(opcode + " (invalid reporter expression)");
+1436:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+1442:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+1449:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+1456:        if (!unsupported.isEmpty() && unsupported.get(unsupported.size() - 1).contains("invalid reporter expression")) return null;
+1465:            if (expression == null) unsupported.add(opcode + " (invalid reporter expression)");
+1472:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1479:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1486:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+1497:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+1519:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1527:        if (values.size() < 2 || blank(values.get(0))) { unsupported.add(block.opCode); return null; }
+1535:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+1573:        if (values.size() < required || blank(values.get(0))) { unsupported.add("map " + action); return null; }
+1622:        catch (NumberFormatException ignored) { return null; }
+1623:        if (!path.add(id)) return null;
+1626:            if (block == null || blank(block.opCode)) return null;
+1635:                if (nested == null) return null;
+1681:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1691:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+1697:            if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+== supported opcode switch anchors ==
+258:        switch (fileType) {
+
+
+## Audit interpretation
+
+The Creator Runtime transaction API currently has seven project-level mutation types: SCREEN_CREATE, WIDGET_ADD, WIDGET_SET_PROPERTY, ENTRY_CONTROL_UPDATE, STATE_SET, EVENT_ATTACH, and REVISION_RESTORE. The legacy artifact importer separately converts many Sketchware block opcodes into service calls. Therefore, an original editor surface can open and save legacy data while live execution still depends on conversion coverage and service registration.
+
+The importer emits service IDs including ads_interstitial, animator, bitmap, bluetooth, calendar, camera, date_picker, dialog, drawer, file, file_picker, firebase, firebase_auth, firebase_storage, gyroscope, http, intent, local_storage, location, map, media, speech_to_text, text_to_speech, time_picker, timer, ui, vibrator, and widget. CreatorRuntimeServices registers corresponding concrete host services plus notification, rewarded ads, Firebase messaging, phone/google auth, and fragment adapter. The remaining implementation gate is a parity regression test asserting every imported service ID is registered and every unsupported/deferred block is surfaced through CreatorCompatibilityReport and legacy.deferredEvents rather than silently disappearing.

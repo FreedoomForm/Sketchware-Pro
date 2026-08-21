@@ -25,6 +25,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.besome.sketch.design.DesignActivity;
 import com.besome.sketch.editor.LogicEditorActivity;
 import com.besome.sketch.beans.ViewBean;
+import mod.agus.jcoderz.beans.ViewBeans;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -228,6 +229,32 @@ public class CreatorRuntimeNavigationTest {
                     .isEqualTo(View.GONE);
             assertThat((Object) live.get().findViewById(R.id.creator_preview_canvas)).isNotNull();
         }
+    }
+
+    @Test public void extendedRuntimeWidgetTypesProjectToOriginalViewStore() {
+        CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
+        String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("widgetId", "runtime_code_widget");
+        payload.put("widgetType", "code");
+        payload.put("parentId", "root_main");
+        payload.put("index", 0L);
+        payload.put("properties", new LinkedHashMap<String, Object>());
+        CreatorApplyResult result = CreatorRuntimeSession.get(context).apply(new CreatorProjectOperation(
+                "instrumentation-runtime-code-widget", document.getProjectId(),
+                CreatorRuntimeSession.get(context).getDocument().getRevision(),
+                CreatorProjectOperation.ActorKind.USER, CreatorProjectOperation.Type.WIDGET_ADD,
+                payload, System.currentTimeMillis()));
+        assertThat(result.isApplied()).isTrue();
+        ArrayList<ViewBean> views = a.a.a.jC.a(scId).d("main.xml");
+        boolean found = false;
+        for (ViewBean view : views) {
+            if (view != null && "runtime_code_widget".equals(view.id)) {
+                found = true;
+                assertThat(view.type).isEqualTo(ViewBeans.VIEW_TYPE_WIDGET_CODEVIEW);
+            }
+        }
+        assertThat(found).isTrue();
     }
 
     @Test public void originalEditorExposesAllTabsAndDrawerActionsInsideRuntimeHost() {

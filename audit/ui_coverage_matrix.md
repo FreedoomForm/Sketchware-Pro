@@ -33,3 +33,15 @@ The repository contains an inventory of 78 original Activity classes, 191 editor
 ## Main remaining verification gates before push
 
 The final local gate must compile all source and instrumentation tests, run all JVM tests, verify the original DesignActivity and LogicEditorActivity launch tests, verify live-only return to DesignActivity, and perform static resource/diff checks. GitHub Actions must remain untouched until these gates and all code changes are complete; then only `Creator Runtime Android` should be triggered by the single push.
+
+
+## Follow-up pass completed
+
+| Additional audit item | Result |
+|---|---|
+| Components tab event-row → LogicEditorActivity | Runtime project ID is now propagated; child visual blocks stay in runtime mode |
+| Property/image/more-block/manager child activities | BaseAppCompatActivity recognizes runtime launch and propagates the boundary through nested starts/results |
+| Runtime → legacy extended widget projection | `CreatorLegacyProjectBridge.toLegacyType()` now maps the complete catalog including pager, radio/rating/search/autocomplete/grid/clocks, tabs/navigation, card/collapsing/text-input/swipe-refresh, sign-in/circle-image/OTP/code and other extended types |
+| Extended projection regression | Instrumentation test projects a runtime `code` widget and asserts the original `ViewBean` type is `CODEVIEW` |
+| Runtime widget catalog regression | JVM test asserts the complete 49-type vocabulary remains runtime-native |
+| Stale CI run | Previous run 101 on the earlier commit was cancelled after discovering these additional gaps; no new workflow is launched until this uncommitted pass is finished |

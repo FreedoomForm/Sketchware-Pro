@@ -108,6 +108,11 @@ public class br extends qA implements View.OnClickListener {
         intent.putExtra("event", eventName);
         intent.putExtra("project_file", projectFile);
         intent.putExtra("event_text", eventText);
+        String runtimeProjectId = requireActivity().getIntent()
+                .getStringExtra("creator_runtime_project_id");
+        if (runtimeProjectId != null) {
+            intent.putExtra("creator_runtime_project_id", runtimeProjectId);
+        }
         startActivity(intent);
     }
 

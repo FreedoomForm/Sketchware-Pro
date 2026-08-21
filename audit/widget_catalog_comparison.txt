@@ -1,0 +1,298 @@
+== legacy view type names ==
+    public static String b() {
+        return getAbsolutePathOf(s);
+    }
+
+    public static String b(int type) {
+        return switch (type) {
+            case 0 -> "linear";
+            case 1 -> "relativelayout";
+            case 2 -> "hscroll";
+            case 3 -> "button";
+            case 4 -> "textview";
+            case 5 -> "edittext";
+            case 6 -> "imageview";
+            case 7 -> "webview";
+            case 8 -> "progressbar";
+            case 9 -> "listview";
+            case 10 -> "spinner";
+            case 11 -> "checkbox";
+            case 12 -> "vscroll";
+            case 13 -> "switch";
+            case 14 -> "seekbar";
+            case 15 -> "calendarview";
+            case 16 -> "fab";
+            case 17 -> "adview";
+            case 18 -> "mapview";
+            case 19 -> "radiobutton";
+            case 20 -> "ratingbar";
+            case 21 -> "videoview";
+            case 22 -> "searchview";
+            case 23 -> "autocomplete";
+            case 24 -> "multiautocomplete";
+            case 25 -> "gridview";
+            case 26 -> "analogclock";
+            case 27 -> "datepicker";
+            case 28 -> "timepicker";
+            case 29 -> "digitalclock";
+            case 30 -> "tablayout";
+            case 31 -> "viewpager";
+            case 32 -> "bottomnavigation";
+            case 33 -> "badgeview";
+            case 34 -> "patternlockview";
+            case 35 -> "wavesidebar";
+            case 36 -> "cardview";
+            case 37 -> "collapsingtoolbar";
+            case 38 -> "textinputlayout";
+            case 39 -> "swiperefreshlayout";
+            case 40 -> "radiogroup";
+            case 41 -> "materialbutton";
+            case 42 -> "signinbutton";
+            case 43 -> "circleimageview";
+            case 44 -> "lottie";
+            case 45 -> "youtube";
+            case 46 -> "otpview";
+            case 47 -> "codeview";
+            case 48 -> "recyclerview";
+            default -> "widget";
+        };
+    }
+== runtime native types ==
+/** Authoritative R1 widget vocabulary for the live Creator Runtime renderer. */
+public final class CreatorRuntimeWidgetCatalog {
+    private static final Set<String> RUNTIME_NATIVE = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
+            "column", "row", "stack", "scroll", "hscroll", "pager", "text", "button", "input", "image",
+            "checkbox", "switch", "progress", "spinner", "slider", "calendar_view", "fab", "radio",
+            "rating", "search", "autocomplete", "list", "grid", "clock", "date_picker", "time_picker",
+            "web", "video", "lottie", "ad_banner", "tabs", "bottom_navigation", "badge", "pattern",
+            "sidebar", "card", "collapsing", "text_input", "swipe_refresh", "radio_group", "circle_image",
+            "otp", "code", "sign_in")));
+
+    private CreatorRuntimeWidgetCatalog() { }
+
+    public static boolean isRuntimeNative(String type) {
+        return type != null && RUNTIME_NATIVE.contains(type);
+    }
+
+    public static Set<String> runtimeNativeTypes() { return RUNTIME_NATIVE; }
+}
+== legacy import mapping references ==
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:51:                report.add(view.id, ViewBean.getViewTypeName(view.type), CreatorCompatibilityTier.R0_UNSUPPORTED,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:58:                report.add(view.id, ViewBean.getViewTypeName(view.type), CreatorCompatibilityTier.R0_UNSUPPORTED,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:66:            report.add(view.id, ViewBean.getViewTypeName(view.type), CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:77:            case ViewBean.VIEW_TYPE_LAYOUT_LINEAR: return "column";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:78:            case ViewBean.VIEW_TYPE_LAYOUT_RELATIVE: return "stack";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:79:            case ViewBean.VIEW_TYPE_LAYOUT_VSCROLLVIEW: return "scroll";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:80:            case ViewBean.VIEW_TYPE_LAYOUT_HSCROLLVIEW: return "hscroll";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:81:            case ViewBean.VIEW_TYPE_WIDGET_BUTTON: return "button";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:82:            case ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW: return "text";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:83:            case ViewBean.VIEW_TYPE_WIDGET_EDITTEXT: return "input";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:84:            case ViewBean.VIEW_TYPE_WIDGET_IMAGEVIEW: return "image";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:85:            case ViewBean.VIEW_TYPE_WIDGET_CHECKBOX: return "checkbox";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:86:            case ViewBean.VIEW_TYPE_WIDGET_SWITCH: return "switch";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:87:            case ViewBean.VIEW_TYPE_WIDGET_PROGRESSBAR: return "progress";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:88:            case ViewBean.VIEW_TYPE_WIDGET_SPINNER: return "spinner";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:89:            case ViewBean.VIEW_TYPE_WIDGET_SEEKBAR: return "slider";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:90:            case ViewBean.VIEW_TYPE_WIDGET_CALENDARVIEW: return "calendar_view";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:91:            case ViewBean.VIEW_TYPE_WIDGET_FAB: return "fab";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:92:            case ViewBean.VIEW_TYPE_WIDGET_WEBVIEW:
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:93:            case ViewBeans.VIEW_TYPE_WIDGET_YOUTUBEPLAYERVIEW: return "web";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:94:            case ViewBean.VIEW_TYPE_WIDGET_MAPVIEW: return "map";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:95:            case ViewBeans.VIEW_TYPE_WIDGET_VIDEOVIEW: return "video";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:96:            case ViewBeans.VIEW_TYPE_WIDGET_LOTTIEANIMATIONVIEW: return "lottie";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:97:            case ViewBean.VIEW_TYPE_WIDGET_ADVIEW: return "ad_banner";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:98:            case ViewBean.VIEW_TYPE_WIDGET_LISTVIEW: return "list";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:99:            case ViewBeans.VIEW_TYPE_WIDGET_RECYCLERVIEW: return "list";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:100:            case ViewBeans.VIEW_TYPE_WIDGET_GRIDVIEW: return "grid";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:101:            case ViewBeans.VIEW_TYPE_WIDGET_RADIOBUTTON: return "radio";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:102:            case ViewBeans.VIEW_TYPE_WIDGET_RATINGBAR: return "rating";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:103:            case ViewBeans.VIEW_TYPE_WIDGET_SEARCHVIEW: return "search";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:104:            case ViewBeans.VIEW_TYPE_WIDGET_AUTOCOMPLETETEXTVIEW:
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:105:            case ViewBeans.VIEW_TYPE_WIDGET_MULTIAUTOCOMPLETETEXTVIEW: return "autocomplete";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:106:            case ViewBeans.VIEW_TYPE_WIDGET_ANALOGCLOCK:
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:107:            case ViewBeans.VIEW_TYPE_WIDGET_DIGITALCLOCK: return "clock";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:108:            case ViewBeans.VIEW_TYPE_WIDGET_DATEPICKER: return "date_picker";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:109:            case ViewBeans.VIEW_TYPE_WIDGET_TIMEPICKER: return "time_picker";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:110:            case ViewBeans.VIEW_TYPE_LAYOUT_TABLAYOUT: return "tabs";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:111:            case ViewBeans.VIEW_TYPE_LAYOUT_VIEWPAGER: return "pager";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:112:            case ViewBeans.VIEW_TYPE_LAYOUT_BOTTOMNAVIGATIONVIEW: return "bottom_navigation";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:113:            case ViewBeans.VIEW_TYPE_WIDGET_BADGEVIEW: return "badge";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:114:            case ViewBeans.VIEW_TYPE_WIDGET_PATTERNLOCKVIEW: return "pattern";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:115:            case ViewBeans.VIEW_TYPE_WIDGET_WAVESIDEBAR: return "sidebar";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:116:            case ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW: return "card";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:117:            case ViewBeans.VIEW_TYPE_LAYOUT_COLLAPSINGTOOLBARLAYOUT: return "collapsing";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:118:            case ViewBeans.VIEW_TYPE_LAYOUT_TEXTINPUTLAYOUT: return "text_input";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:119:            case ViewBeans.VIEW_TYPE_LAYOUT_SWIPEREFRESHLAYOUT: return "swipe_refresh";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:120:            case ViewBeans.VIEW_TYPE_LAYOUT_RADIOGROUP: return "radio_group";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:121:            case ViewBeans.VIEW_TYPE_WIDGET_MATERIALBUTTON: return "button";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:122:            case ViewBeans.VIEW_TYPE_WIDGET_SIGNINBUTTON: return "sign_in";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:123:            case ViewBeans.VIEW_TYPE_WIDGET_CIRCLEIMAGEVIEW: return "circle_image";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:124:            case ViewBeans.VIEW_TYPE_WIDGET_OTPVIEW: return "otp";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:125:            case ViewBeans.VIEW_TYPE_WIDGET_CODEVIEW: return "code";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:168:            if (view.type == ViewBean.VIEW_TYPE_LAYOUT_LINEAR
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:173:        properties.put("legacyType", ViewBean.getViewTypeName(view.type));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:33:                copy(args, payload, "widget_type", "widgetType");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorCompatibilityAnalyzer.java:16:        if (normalized.startsWith("widget:") || normalized.startsWith("block:")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:16:        r1(tiers, ViewBean.VIEW_TYPE_LAYOUT_LINEAR, ViewBean.VIEW_TYPE_LAYOUT_RELATIVE,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:17:                ViewBean.VIEW_TYPE_WIDGET_BUTTON, ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:18:                ViewBean.VIEW_TYPE_WIDGET_EDITTEXT, ViewBean.VIEW_TYPE_WIDGET_IMAGEVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:19:                ViewBean.VIEW_TYPE_WIDGET_CHECKBOX, ViewBean.VIEW_TYPE_WIDGET_SWITCH,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:20:                ViewBean.VIEW_TYPE_LAYOUT_VSCROLLVIEW, ViewBean.VIEW_TYPE_LAYOUT_HSCROLLVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:21:                ViewBean.VIEW_TYPE_WIDGET_PROGRESSBAR, ViewBean.VIEW_TYPE_WIDGET_SPINNER,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:22:                ViewBean.VIEW_TYPE_WIDGET_SEEKBAR, ViewBean.VIEW_TYPE_WIDGET_CALENDARVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:23:                ViewBean.VIEW_TYPE_WIDGET_FAB, ViewBean.VIEW_TYPE_WIDGET_LISTVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:24:                ViewBeans.VIEW_TYPE_WIDGET_RECYCLERVIEW, ViewBeans.VIEW_TYPE_WIDGET_GRIDVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:25:                ViewBeans.VIEW_TYPE_WIDGET_RADIOBUTTON, ViewBeans.VIEW_TYPE_WIDGET_RATINGBAR,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:26:                ViewBeans.VIEW_TYPE_WIDGET_SEARCHVIEW, ViewBeans.VIEW_TYPE_WIDGET_AUTOCOMPLETETEXTVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:27:                ViewBeans.VIEW_TYPE_WIDGET_MULTIAUTOCOMPLETETEXTVIEW, ViewBeans.VIEW_TYPE_WIDGET_ANALOGCLOCK,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:28:                ViewBeans.VIEW_TYPE_WIDGET_DIGITALCLOCK, ViewBeans.VIEW_TYPE_WIDGET_DATEPICKER,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:29:                ViewBeans.VIEW_TYPE_WIDGET_TIMEPICKER, ViewBean.VIEW_TYPE_WIDGET_WEBVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:30:                ViewBean.VIEW_TYPE_WIDGET_MAPVIEW, ViewBean.VIEW_TYPE_WIDGET_ADVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:31:                ViewBeans.VIEW_TYPE_WIDGET_VIDEOVIEW, ViewBeans.VIEW_TYPE_WIDGET_YOUTUBEPLAYERVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:32:                ViewBeans.VIEW_TYPE_WIDGET_LOTTIEANIMATIONVIEW, ViewBeans.VIEW_TYPE_LAYOUT_TABLAYOUT,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:33:                ViewBeans.VIEW_TYPE_LAYOUT_VIEWPAGER, ViewBeans.VIEW_TYPE_LAYOUT_BOTTOMNAVIGATIONVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:34:                ViewBeans.VIEW_TYPE_WIDGET_BADGEVIEW, ViewBeans.VIEW_TYPE_WIDGET_PATTERNLOCKVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:35:                ViewBeans.VIEW_TYPE_WIDGET_WAVESIDEBAR,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:36:                ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW, ViewBeans.VIEW_TYPE_LAYOUT_COLLAPSINGTOOLBARLAYOUT,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:37:                ViewBeans.VIEW_TYPE_LAYOUT_TEXTINPUTLAYOUT, ViewBeans.VIEW_TYPE_LAYOUT_SWIPEREFRESHLAYOUT,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:38:                ViewBeans.VIEW_TYPE_LAYOUT_RADIOGROUP, ViewBeans.VIEW_TYPE_WIDGET_MATERIALBUTTON,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:39:                ViewBeans.VIEW_TYPE_WIDGET_SIGNINBUTTON, ViewBeans.VIEW_TYPE_WIDGET_CIRCLEIMAGEVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:40:                ViewBeans.VIEW_TYPE_WIDGET_OTPVIEW, ViewBeans.VIEW_TYPE_WIDGET_CODEVIEW);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:47:    public static boolean isComplete() { return TIERS.size() == ViewBean.VIEW_TYPE_COUNT + 30; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationReducer.java:37:                String type = (String) payload.get("widgetType");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:74:        String type = string(payload, "widgetType");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:76:        if (widgetId == null || type == null || parentId == null) return invalid("widgetId, widgetType and parentId are required");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:79:                    "widgetType is not available in Creator Runtime: " + type);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:117:        viewStore.n(wq.b(scId) + File.separator + "view");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:222:        File resourceRoot = new File(wq.b(scId), "files" + File.separator + "resource");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:255:            case "column": return ViewBean.VIEW_TYPE_LAYOUT_LINEAR;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:256:            case "stack": return ViewBean.VIEW_TYPE_LAYOUT_RELATIVE;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:257:            case "scroll": return ViewBean.VIEW_TYPE_LAYOUT_VSCROLLVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:258:            case "hscroll": return ViewBean.VIEW_TYPE_LAYOUT_HSCROLLVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:259:            case "button": return ViewBean.VIEW_TYPE_WIDGET_BUTTON;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:260:            case "text": return ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:261:            case "input": return ViewBean.VIEW_TYPE_WIDGET_EDITTEXT;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:262:            case "image": return ViewBean.VIEW_TYPE_WIDGET_IMAGEVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:263:            case "web": return ViewBean.VIEW_TYPE_WIDGET_WEBVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:264:            case "progress": return ViewBean.VIEW_TYPE_WIDGET_PROGRESSBAR;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:265:            case "list": return ViewBean.VIEW_TYPE_WIDGET_LISTVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:266:            case "spinner": return ViewBean.VIEW_TYPE_WIDGET_SPINNER;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:267:            case "checkbox": return ViewBean.VIEW_TYPE_WIDGET_CHECKBOX;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:268:            case "switch": return ViewBean.VIEW_TYPE_WIDGET_SWITCH;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:269:            case "slider": return ViewBean.VIEW_TYPE_WIDGET_SEEKBAR;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:270:            case "calendar_view": return ViewBean.VIEW_TYPE_WIDGET_CALENDARVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:271:            case "fab": return ViewBean.VIEW_TYPE_WIDGET_FAB;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:272:            case "ad_banner": return ViewBean.VIEW_TYPE_WIDGET_ADVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:273:            case "map": return ViewBean.VIEW_TYPE_WIDGET_MAPVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:335:        new oB().b(wq.b(scId));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:300:    private void addWidget(String widgetType, String defaultText) {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:304:        String widgetId = widgetType + "_" + (document.getRevision() + 1);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:309:        payload.put("widgetType", widgetType);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:51:                report.add(view.id, ViewBean.getViewTypeName(view.type), CreatorCompatibilityTier.R0_UNSUPPORTED,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:58:                report.add(view.id, ViewBean.getViewTypeName(view.type), CreatorCompatibilityTier.R0_UNSUPPORTED,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:66:            report.add(view.id, ViewBean.getViewTypeName(view.type), CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:77:            case ViewBean.VIEW_TYPE_LAYOUT_LINEAR: return "column";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:78:            case ViewBean.VIEW_TYPE_LAYOUT_RELATIVE: return "stack";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:79:            case ViewBean.VIEW_TYPE_LAYOUT_VSCROLLVIEW: return "scroll";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:80:            case ViewBean.VIEW_TYPE_LAYOUT_HSCROLLVIEW: return "hscroll";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:81:            case ViewBean.VIEW_TYPE_WIDGET_BUTTON: return "button";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:82:            case ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW: return "text";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:83:            case ViewBean.VIEW_TYPE_WIDGET_EDITTEXT: return "input";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:84:            case ViewBean.VIEW_TYPE_WIDGET_IMAGEVIEW: return "image";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:85:            case ViewBean.VIEW_TYPE_WIDGET_CHECKBOX: return "checkbox";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:86:            case ViewBean.VIEW_TYPE_WIDGET_SWITCH: return "switch";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:87:            case ViewBean.VIEW_TYPE_WIDGET_PROGRESSBAR: return "progress";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:88:            case ViewBean.VIEW_TYPE_WIDGET_SPINNER: return "spinner";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:89:            case ViewBean.VIEW_TYPE_WIDGET_SEEKBAR: return "slider";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:90:            case ViewBean.VIEW_TYPE_WIDGET_CALENDARVIEW: return "calendar_view";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:91:            case ViewBean.VIEW_TYPE_WIDGET_FAB: return "fab";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:92:            case ViewBean.VIEW_TYPE_WIDGET_WEBVIEW:
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:93:            case ViewBeans.VIEW_TYPE_WIDGET_YOUTUBEPLAYERVIEW: return "web";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:94:            case ViewBean.VIEW_TYPE_WIDGET_MAPVIEW: return "map";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:95:            case ViewBeans.VIEW_TYPE_WIDGET_VIDEOVIEW: return "video";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:96:            case ViewBeans.VIEW_TYPE_WIDGET_LOTTIEANIMATIONVIEW: return "lottie";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:97:            case ViewBean.VIEW_TYPE_WIDGET_ADVIEW: return "ad_banner";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:98:            case ViewBean.VIEW_TYPE_WIDGET_LISTVIEW: return "list";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:99:            case ViewBeans.VIEW_TYPE_WIDGET_RECYCLERVIEW: return "list";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:100:            case ViewBeans.VIEW_TYPE_WIDGET_GRIDVIEW: return "grid";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:101:            case ViewBeans.VIEW_TYPE_WIDGET_RADIOBUTTON: return "radio";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:102:            case ViewBeans.VIEW_TYPE_WIDGET_RATINGBAR: return "rating";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:103:            case ViewBeans.VIEW_TYPE_WIDGET_SEARCHVIEW: return "search";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:104:            case ViewBeans.VIEW_TYPE_WIDGET_AUTOCOMPLETETEXTVIEW:
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:105:            case ViewBeans.VIEW_TYPE_WIDGET_MULTIAUTOCOMPLETETEXTVIEW: return "autocomplete";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:106:            case ViewBeans.VIEW_TYPE_WIDGET_ANALOGCLOCK:
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:107:            case ViewBeans.VIEW_TYPE_WIDGET_DIGITALCLOCK: return "clock";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:108:            case ViewBeans.VIEW_TYPE_WIDGET_DATEPICKER: return "date_picker";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:109:            case ViewBeans.VIEW_TYPE_WIDGET_TIMEPICKER: return "time_picker";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:110:            case ViewBeans.VIEW_TYPE_LAYOUT_TABLAYOUT: return "tabs";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:111:            case ViewBeans.VIEW_TYPE_LAYOUT_VIEWPAGER: return "pager";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:112:            case ViewBeans.VIEW_TYPE_LAYOUT_BOTTOMNAVIGATIONVIEW: return "bottom_navigation";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:113:            case ViewBeans.VIEW_TYPE_WIDGET_BADGEVIEW: return "badge";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:114:            case ViewBeans.VIEW_TYPE_WIDGET_PATTERNLOCKVIEW: return "pattern";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:115:            case ViewBeans.VIEW_TYPE_WIDGET_WAVESIDEBAR: return "sidebar";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:116:            case ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW: return "card";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:117:            case ViewBeans.VIEW_TYPE_LAYOUT_COLLAPSINGTOOLBARLAYOUT: return "collapsing";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:118:            case ViewBeans.VIEW_TYPE_LAYOUT_TEXTINPUTLAYOUT: return "text_input";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:119:            case ViewBeans.VIEW_TYPE_LAYOUT_SWIPEREFRESHLAYOUT: return "swipe_refresh";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:120:            case ViewBeans.VIEW_TYPE_LAYOUT_RADIOGROUP: return "radio_group";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:121:            case ViewBeans.VIEW_TYPE_WIDGET_MATERIALBUTTON: return "button";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:122:            case ViewBeans.VIEW_TYPE_WIDGET_SIGNINBUTTON: return "sign_in";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:123:            case ViewBeans.VIEW_TYPE_WIDGET_CIRCLEIMAGEVIEW: return "circle_image";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:124:            case ViewBeans.VIEW_TYPE_WIDGET_OTPVIEW: return "otp";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:125:            case ViewBeans.VIEW_TYPE_WIDGET_CODEVIEW: return "code";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:168:            if (view.type == ViewBean.VIEW_TYPE_LAYOUT_LINEAR
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:173:        properties.put("legacyType", ViewBean.getViewTypeName(view.type));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:33:                copy(args, payload, "widget_type", "widgetType");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorCompatibilityAnalyzer.java:16:        if (normalized.startsWith("widget:") || normalized.startsWith("block:")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:16:        r1(tiers, ViewBean.VIEW_TYPE_LAYOUT_LINEAR, ViewBean.VIEW_TYPE_LAYOUT_RELATIVE,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:17:                ViewBean.VIEW_TYPE_WIDGET_BUTTON, ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:18:                ViewBean.VIEW_TYPE_WIDGET_EDITTEXT, ViewBean.VIEW_TYPE_WIDGET_IMAGEVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:19:                ViewBean.VIEW_TYPE_WIDGET_CHECKBOX, ViewBean.VIEW_TYPE_WIDGET_SWITCH,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:20:                ViewBean.VIEW_TYPE_LAYOUT_VSCROLLVIEW, ViewBean.VIEW_TYPE_LAYOUT_HSCROLLVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:21:                ViewBean.VIEW_TYPE_WIDGET_PROGRESSBAR, ViewBean.VIEW_TYPE_WIDGET_SPINNER,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:22:                ViewBean.VIEW_TYPE_WIDGET_SEEKBAR, ViewBean.VIEW_TYPE_WIDGET_CALENDARVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:23:                ViewBean.VIEW_TYPE_WIDGET_FAB, ViewBean.VIEW_TYPE_WIDGET_LISTVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:24:                ViewBeans.VIEW_TYPE_WIDGET_RECYCLERVIEW, ViewBeans.VIEW_TYPE_WIDGET_GRIDVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:25:                ViewBeans.VIEW_TYPE_WIDGET_RADIOBUTTON, ViewBeans.VIEW_TYPE_WIDGET_RATINGBAR,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:26:                ViewBeans.VIEW_TYPE_WIDGET_SEARCHVIEW, ViewBeans.VIEW_TYPE_WIDGET_AUTOCOMPLETETEXTVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:27:                ViewBeans.VIEW_TYPE_WIDGET_MULTIAUTOCOMPLETETEXTVIEW, ViewBeans.VIEW_TYPE_WIDGET_ANALOGCLOCK,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:28:                ViewBeans.VIEW_TYPE_WIDGET_DIGITALCLOCK, ViewBeans.VIEW_TYPE_WIDGET_DATEPICKER,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:29:                ViewBeans.VIEW_TYPE_WIDGET_TIMEPICKER, ViewBean.VIEW_TYPE_WIDGET_WEBVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:30:                ViewBean.VIEW_TYPE_WIDGET_MAPVIEW, ViewBean.VIEW_TYPE_WIDGET_ADVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:31:                ViewBeans.VIEW_TYPE_WIDGET_VIDEOVIEW, ViewBeans.VIEW_TYPE_WIDGET_YOUTUBEPLAYERVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:32:                ViewBeans.VIEW_TYPE_WIDGET_LOTTIEANIMATIONVIEW, ViewBeans.VIEW_TYPE_LAYOUT_TABLAYOUT,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:33:                ViewBeans.VIEW_TYPE_LAYOUT_VIEWPAGER, ViewBeans.VIEW_TYPE_LAYOUT_BOTTOMNAVIGATIONVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:34:                ViewBeans.VIEW_TYPE_WIDGET_BADGEVIEW, ViewBeans.VIEW_TYPE_WIDGET_PATTERNLOCKVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:35:                ViewBeans.VIEW_TYPE_WIDGET_WAVESIDEBAR,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:36:                ViewBeans.VIEW_TYPE_LAYOUT_CARDVIEW, ViewBeans.VIEW_TYPE_LAYOUT_COLLAPSINGTOOLBARLAYOUT,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:37:                ViewBeans.VIEW_TYPE_LAYOUT_TEXTINPUTLAYOUT, ViewBeans.VIEW_TYPE_LAYOUT_SWIPEREFRESHLAYOUT,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:38:                ViewBeans.VIEW_TYPE_LAYOUT_RADIOGROUP, ViewBeans.VIEW_TYPE_WIDGET_MATERIALBUTTON,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:39:                ViewBeans.VIEW_TYPE_WIDGET_SIGNINBUTTON, ViewBeans.VIEW_TYPE_WIDGET_CIRCLEIMAGEVIEW,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:40:                ViewBeans.VIEW_TYPE_WIDGET_OTPVIEW, ViewBeans.VIEW_TYPE_WIDGET_CODEVIEW);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewCapabilityMatrix.java:47:    public static boolean isComplete() { return TIERS.size() == ViewBean.VIEW_TYPE_COUNT + 30; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationReducer.java:37:                String type = (String) payload.get("widgetType");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:74:        String type = string(payload, "widgetType");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:76:        if (widgetId == null || type == null || parentId == null) return invalid("widgetId, widgetType and parentId are required");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:79:                    "widgetType is not available in Creator Runtime: " + type);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:117:        viewStore.n(wq.b(scId) + File.separator + "view");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:222:        File resourceRoot = new File(wq.b(scId), "files" + File.separator + "resource");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:255:            case "column": return ViewBean.VIEW_TYPE_LAYOUT_LINEAR;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:256:            case "stack": return ViewBean.VIEW_TYPE_LAYOUT_RELATIVE;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:257:            case "scroll": return ViewBean.VIEW_TYPE_LAYOUT_VSCROLLVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:258:            case "hscroll": return ViewBean.VIEW_TYPE_LAYOUT_HSCROLLVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:259:            case "button": return ViewBean.VIEW_TYPE_WIDGET_BUTTON;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:260:            case "text": return ViewBean.VIEW_TYPE_WIDGET_TEXTVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:261:            case "input": return ViewBean.VIEW_TYPE_WIDGET_EDITTEXT;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:262:            case "image": return ViewBean.VIEW_TYPE_WIDGET_IMAGEVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:263:            case "web": return ViewBean.VIEW_TYPE_WIDGET_WEBVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:264:            case "progress": return ViewBean.VIEW_TYPE_WIDGET_PROGRESSBAR;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:265:            case "list": return ViewBean.VIEW_TYPE_WIDGET_LISTVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:266:            case "spinner": return ViewBean.VIEW_TYPE_WIDGET_SPINNER;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:267:            case "checkbox": return ViewBean.VIEW_TYPE_WIDGET_CHECKBOX;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:268:            case "switch": return ViewBean.VIEW_TYPE_WIDGET_SWITCH;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:269:            case "slider": return ViewBean.VIEW_TYPE_WIDGET_SEEKBAR;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:270:            case "calendar_view": return ViewBean.VIEW_TYPE_WIDGET_CALENDARVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:271:            case "fab": return ViewBean.VIEW_TYPE_WIDGET_FAB;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:272:            case "ad_banner": return ViewBean.VIEW_TYPE_WIDGET_ADVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:273:            case "map": return ViewBean.VIEW_TYPE_WIDGET_MAPVIEW;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:335:        new oB().b(wq.b(scId));
