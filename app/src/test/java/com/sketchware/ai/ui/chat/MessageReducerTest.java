@@ -170,6 +170,36 @@ public class MessageReducerTest {
         assertThat(r.getMessages()).isEmpty();
     }
 
+    @Test public void actionOperationsResolvePromptAndMutateRows() {
+        MessageReducer r = new MessageReducer();
+        r.addUserMessage("original prompt");
+        ChatMessage user = r.getMessages().get(0);
+        r.appendText("old answer");
+        ChatMessage answer = r.getMessages().get(1);
+
+        assertThat(r.userPromptFor(answer)).isEqualTo("original prompt");
+        assertThat(r.editMessage(user.ts, "edited prompt")).isTrue();
+        assertThat(r.getMessages().get(0).text).isEqualTo("edited prompt");
+        assertThat(r.deleteMessage(answer.ts)).isTrue();
+        assertThat(r.getMessages()).hasSize(1);
+        assertThat(r.deleteMessage(answer.ts)).isFalse();
+    }
+
+    @Test public void removeTurnRemovesRowsUntilNextUserMessage() {
+        MessageReducer r = new MessageReducer();
+        r.addUserMessage("first");
+        r.appendText("first answer");
+        r.addToolCall("view_list_widgets", "{}");
+        r.addUserMessage("second");
+        r.appendText("second answer");
+
+        ChatMessage firstAnswer = r.getMessages().get(1);
+        assertThat(r.removeTurn(firstAnswer)).isTrue();
+        assertThat(r.getMessages()).hasSize(2);
+        assertThat(r.getMessages().get(0).text).isEqualTo("second");
+        assertThat(r.getMessages().get(1).text).isEqualTo("second answer");
+    }
+
     @Test public void fullConversationFlow() {
         MessageReducer r = new MessageReducer();
         r.addUserMessage("Add a button");

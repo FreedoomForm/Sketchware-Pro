@@ -523,7 +523,7 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@string/ai_chat_input_tools"
                         android:padding="8dp"
-                        android:src="@drawable/kelivo_icon_codex"
+                        android:src="@drawable/ic_tool"
                         app:tint="@color/ai_chat_text_primary" />
 
                     <View

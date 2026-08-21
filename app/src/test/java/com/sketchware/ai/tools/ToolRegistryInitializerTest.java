@@ -7,8 +7,9 @@ import org.junit.Test;
 /**
  * Unit tests for {@link ToolRegistryInitializer}.
  *
- * <p>Verifies that the default registry contains exactly 46 tools with
- * unique names and valid JSON schemas, after the 2026-08-12 umbrella
+ * <p>Verifies that the default registry contains exactly 37 user-action
+ * and agent-control tools with unique names and valid JSON schemas, after the
+ * 2026-08-12 umbrella consolidation and removal of backend-only tools.
  * consolidation that collapsed 68 tools into 45 via {@link CategoryUmbrellaTool}.
  */
 public class ToolRegistryInitializerTest {
@@ -26,7 +27,7 @@ public class ToolRegistryInitializerTest {
         //
         // The Creator Runtime adapter is intentionally additive: it exposes
         // the same validated operation pipeline as the visual Creator UI.
-        assertThat(r.size()).isEqualTo(46);
+        assertThat(r.size()).isEqualTo(37);
         assertThat(r.has("creator_runtime")).isTrue();
     }
 
@@ -96,11 +97,22 @@ public class ToolRegistryInitializerTest {
             "component_add",
             "project_set_app_name", "project_set_package_name",
             "library_enable",
-            "java_edit_file", "java_read_file",
             "ask_question", "submit_and_exit"
         };
         for (String name : expected) {
             assertThat(r.has(name)).isTrue();
+        }
+    }
+
+    @Test public void backendOnlyToolsAreNotRegistered() {
+        ToolRegistry r = ToolRegistryInitializer.createDefault();
+        String[] removed = {
+            "java_edit_file", "java_read_file", "java_modify_class",
+            "diff_edit_file", "apply_patch", "list_files", "search_files",
+            "web_search", "web_fetch"
+        };
+        for (String name : removed) {
+            assertThat(r.has(name)).isFalse();
         }
     }
 

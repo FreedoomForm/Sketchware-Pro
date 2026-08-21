@@ -131,6 +131,17 @@
             app:tint="@color/ai_chat_text_secondary" />
 
         <ImageView
+            android:id="@+id/action_delete"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/ai_chat_action_delete"
+            android:padding="5dp"
+            android:src="@drawable/kelivo_lucide_trash_2"
+            app:tint="@color/ai_chat_text_secondary" />
+
+        <ImageView
             android:id="@+id/action_more"
             android:layout_width="28dp"
             android:layout_height="28dp"

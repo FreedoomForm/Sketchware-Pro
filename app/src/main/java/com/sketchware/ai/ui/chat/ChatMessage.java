@@ -1,11 +1,15 @@
 package com.sketchware.ai.ui.chat;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * One row in the chat RecyclerView. Mirrors Cline's {@code ClineMessage}.
  *
  * <p>Each row has a {@code type} that determines which ViewHolder renders it.
  */
 public final class ChatMessage {
+
+    private static final AtomicLong LAST_TIMESTAMP = new AtomicLong();
 
     public static final String TYPE_USER = "user";
     public static final String TYPE_TEXT = "text";
@@ -35,7 +39,8 @@ public final class ChatMessage {
 
     public ChatMessage(String type) {
         this.type = type;
-        this.ts = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
+        this.ts = LAST_TIMESTAMP.updateAndGet(previous -> Math.max(now, previous + 1L));
     }
 
     public static ChatMessage user(String text) {

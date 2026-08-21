@@ -58,6 +58,21 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
      * resume / profile change.
      */
     private String providerId = "";
+    private MessageActionListener actionListener;
+
+    /** Callbacks for actions rendered in each message row. */
+    public interface MessageActionListener {
+        void onCopy(ChatMessage message);
+        void onRetry(ChatMessage message);
+        void onEdit(ChatMessage message);
+        void onDelete(ChatMessage message);
+        void onMore(ChatMessage message, View anchor);
+    }
+
+    public void setMessageActionListener(MessageActionListener listener) {
+        this.actionListener = listener;
+        notifyDataSetChanged();
+    }
 
     public void setProviderId(String providerId) {
         this.providerId = providerId == null ? "" : providerId;
@@ -113,9 +128,9 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
     @Override public void onBindViewHolder(@NonNull RecyclerView.ViewHolder h, int position) {
         ChatMessage m = getItem(position);
         if (h instanceof UserHolder) {
-            ((UserHolder) h).bind(m);
+            ((UserHolder) h).bind(m, actionListener);
         } else if (h instanceof TextHolder) {
-            ((TextHolder) h).bind(m, providerId);
+            ((TextHolder) h).bind(m, providerId, actionListener);
         } else if (h instanceof ReasoningHolder) {
             ((ReasoningHolder) h).bind(m);
         } else if (h instanceof ToolHolder) {
@@ -127,6 +142,17 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
         }
     }
 
+    private static void copyToClipboard(Context context, String value, String label) {
+        if (context == null) return;
+        try {
+            ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm != null) {
+                cm.setPrimaryClip(ClipData.newPlainText(label, value == null ? "" : value));
+                Toast.makeText(context, R.string.ai_chat_action_copy_done, Toast.LENGTH_SHORT).show();
+            }
+        } catch (Throwable ignored) { }
+    }
+
     // --- ViewHolders ---
 
     static final class UserHolder extends RecyclerView.ViewHolder {
@@ -135,6 +161,10 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
         final TextView time;
         final LinearLayout messageActions;
         final View actionCopy;
+        final View actionRefresh;
+        final View actionEdit;
+        final View actionDelete;
+        final View actionMore;
         UserHolder(@NonNull View v) {
             super(v);
             text = v.findViewById(R.id.text);
@@ -142,8 +172,12 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
             time = v.findViewById(R.id.time);
             messageActions = v.findViewById(R.id.message_actions);
             actionCopy = v.findViewById(R.id.action_copy);
+            actionRefresh = v.findViewById(R.id.action_refresh);
+            actionEdit = v.findViewById(R.id.action_edit);
+            actionDelete = v.findViewById(R.id.action_delete);
+            actionMore = v.findViewById(R.id.action_more);
         }
-        void bind(ChatMessage m) {
+        void bind(ChatMessage m, MessageActionListener listener) {
             text.setText(m.text == null ? "" : m.text);
             // Optional fields — null-safe
             if (senderName != null) senderName.setText("You");
@@ -154,16 +188,22 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
             }
             if (actionCopy != null) {
                 actionCopy.setOnClickListener(v -> {
-                    Context ctx = v.getContext();
-                    try {
-                        ClipboardManager cm = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
-                        if (cm != null) {
-                            cm.setPrimaryClip(ClipData.newPlainText("AI prompt", m.text));
-                            Toast.makeText(ctx, R.string.ai_chat_action_copy_done, Toast.LENGTH_SHORT).show();
-                        }
-                    } catch (Throwable ignored) { }
+                    if (listener != null) listener.onCopy(m);
+                    else copyToClipboard(v.getContext(), m.text, "AI prompt");
                 });
             }
+            if (actionRefresh != null) actionRefresh.setOnClickListener(v -> {
+                if (listener != null) listener.onRetry(m);
+            });
+            if (actionEdit != null) actionEdit.setOnClickListener(v -> {
+                if (listener != null) listener.onEdit(m);
+            });
+            if (actionDelete != null) actionDelete.setOnClickListener(v -> {
+                if (listener != null) listener.onDelete(m);
+            });
+            if (actionMore != null) actionMore.setOnClickListener(v -> {
+                if (listener != null) listener.onMore(m, v);
+            });
         }
     }
 
@@ -177,6 +217,10 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
         final TextView statusChip;
         final LinearLayout messageActions;
         final View actionCopy;
+        final View actionRefresh;
+        final View actionEdit;
+        final View actionDelete;
+        final View actionMore;
         final TextView tokenCount;
         final com.sketchware.ai.ui.chat.TypingDotsView streamingDots;
         TextHolder(@NonNull View v) {
@@ -190,10 +234,14 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
             statusChip = v.findViewById(R.id.status_chip);
             messageActions = v.findViewById(R.id.message_actions);
             actionCopy = v.findViewById(R.id.action_copy);
+            actionRefresh = v.findViewById(R.id.action_refresh);
+            actionEdit = v.findViewById(R.id.action_edit);
+            actionDelete = v.findViewById(R.id.action_delete);
+            actionMore = v.findViewById(R.id.action_more);
             tokenCount = v.findViewById(R.id.token_count);
             streamingDots = v.findViewById(R.id.streaming_dots);
         }
-        void bind(ChatMessage m, String providerId) {
+        void bind(ChatMessage m, String providerId, MessageActionListener listener) {
             // API req info row takes precedence over generic text rendering.
             if (ChatMessage.TYPE_API_REQ_DONE.equals(m.type)) {
                 text.setText("API: in=" + m.inputTokens + " out=" + m.outputTokens + " cost=$" + String.format("%.4f", m.cost));
@@ -270,16 +318,22 @@ public final class ChatAdapter extends ListAdapter<ChatMessage, RecyclerView.Vie
             }
             if (actionCopy != null) {
                 actionCopy.setOnClickListener(v -> {
-                    Context ctx = v.getContext();
-                    try {
-                        ClipboardManager cm = (ClipboardManager) ctx.getSystemService(Context.CLIPBOARD_SERVICE);
-                        if (cm != null) {
-                            cm.setPrimaryClip(ClipData.newPlainText("AI response", m.text));
-                            Toast.makeText(ctx, R.string.ai_chat_action_copy_done, Toast.LENGTH_SHORT).show();
-                        }
-                    } catch (Throwable ignored) { }
+                    if (listener != null) listener.onCopy(m);
+                    else copyToClipboard(v.getContext(), m.text, "AI response");
                 });
             }
+            if (actionRefresh != null) actionRefresh.setOnClickListener(v -> {
+                if (listener != null) listener.onRetry(m);
+            });
+            if (actionEdit != null) actionEdit.setOnClickListener(v -> {
+                if (listener != null) listener.onEdit(m);
+            });
+            if (actionDelete != null) actionDelete.setOnClickListener(v -> {
+                if (listener != null) listener.onDelete(m);
+            });
+            if (actionMore != null) actionMore.setOnClickListener(v -> {
+                if (listener != null) listener.onMore(m, v);
+            });
             if (tokenCount != null) {
                 if (m.inputTokens > 0 || m.outputTokens > 0) {
                     tokenCount.setVisibility(View.VISIBLE);

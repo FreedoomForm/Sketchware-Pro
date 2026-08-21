@@ -89,13 +89,15 @@ public final class AiToolCatalogSheet {
     /** Builds the concise, grouped status text used by the {@code /tools} command. */
     public static String summary(ToolRegistry registry) {
         if (registry == null) return "No AI tools are available.";
-        StringBuilder summary = new StringBuilder("AI tools (")
-                .append(registry.size()).append("):\n");
+        int visibleCount = 0;
+        for (List<SketchwareTool> tools : groupByCategory(registry).values()) visibleCount += tools.size();
+        StringBuilder summary = new StringBuilder("Editor tools (")
+                .append(visibleCount).append("):\n");
         for (Map.Entry<String, List<SketchwareTool>> group : groupByCategory(registry).entrySet()) {
             summary.append("• ").append(displayCategory(group.getKey()))
                     .append(": ").append(group.getValue().size()).append("\n");
         }
-        summary.append("\nTap the tools button beside Attach to browse every tool. ")
+        summary.append("\nTap the tools button beside Attach to browse the capabilities available in the Sketchware editor. ")
                 .append("Read-only tools run automatically; changes request approval unless Auto-approve is enabled.");
         return summary.toString();
     }
@@ -104,6 +106,11 @@ public final class AiToolCatalogSheet {
         Map<String, List<SketchwareTool>> groups = new LinkedHashMap<>();
         if (registry == null) return groups;
         for (SketchwareTool tool : registry.all()) {
+            // Meta tools (ask_question/submit_and_exit/todo_list) are agent
+            // protocol controls, not capabilities the user can perform in
+            // Sketchware's editor. Keep them available to the loop but do not
+            // advertise them as user-facing Tools.
+            if (tool == null || "meta".equalsIgnoreCase(tool.category())) continue;
             String category = tool.category() == null || tool.category().trim().isEmpty()
                     ? "other" : tool.category().trim();
             List<SketchwareTool> tools = groups.get(category);

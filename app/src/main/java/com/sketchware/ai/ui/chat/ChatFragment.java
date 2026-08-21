@@ -1,6 +1,8 @@
 package com.sketchware.ai.ui.chat;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -13,6 +15,7 @@ import android.text.TextWatcher;
 import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.PopupMenu;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -293,6 +296,13 @@ public final class ChatFragment extends Fragment {
         contextProgressBar = root.findViewById(R.id.context_progress_bar);
 
         adapter = new ChatAdapter();
+        adapter.setMessageActionListener(new ChatAdapter.MessageActionListener() {
+            @Override public void onCopy(ChatMessage message) { copyMessage(message); }
+            @Override public void onRetry(ChatMessage message) { retryMessage(message); }
+            @Override public void onEdit(ChatMessage message) { editMessage(message); }
+            @Override public void onDelete(ChatMessage message) { deleteMessage(message); }
+            @Override public void onMore(ChatMessage message, View anchor) { showMessageActions(message, anchor); }
+        });
         recycler.setLayoutManager(new LinearLayoutManager(getContext()));
         recycler.setAdapter(adapter);
 
@@ -758,6 +768,116 @@ public final class ChatFragment extends Fragment {
             attachedImages.clear();
             renderThumbnails();
         }
+    }
+
+    private void copyMessage(ChatMessage message) {
+        if (message == null || getContext() == null) return;
+        try {
+            ClipboardManager clipboard = (ClipboardManager) requireContext()
+                    .getSystemService(Context.CLIPBOARD_SERVICE);
+            String value = message.text;
+            if (value == null || value.isEmpty()) value = message.toolResult;
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("AI message", value == null ? "" : value));
+                showActionFeedback(R.string.ai_chat_action_copy_done);
+            }
+        } catch (Throwable error) {
+            showActionFeedback("Copy failed");
+        }
+    }
+
+    private void retryMessage(ChatMessage message) {
+        String prompt = reducer.userPromptFor(message);
+        if (prompt == null || prompt.trim().isEmpty()) return;
+        if (isRunning) {
+            showActionFeedback("Stop the current run first");
+            return;
+        }
+        reducer.removeTurn(message);
+        if (adapter != null) adapter.submitList(reducer.getMessages());
+        if (agent != null) {
+            agent.abort();
+            agent = null;
+        }
+        input.setText(prompt);
+        input.setSelection(input.length());
+        showActionFeedback(R.string.ai_chat_action_retry_done);
+        send();
+    }
+
+    private void editMessage(ChatMessage message) {
+        String prompt = reducer.userPromptFor(message);
+        if (prompt == null) return;
+        if (isRunning) {
+            showActionFeedback("Stop the current run first");
+            return;
+        }
+        reducer.removeTurn(message);
+        if (adapter != null) adapter.submitList(reducer.getMessages());
+        if (agent != null) {
+            agent.abort();
+            agent = null;
+        }
+        input.setText(prompt);
+        input.setSelection(input.length());
+        input.requestFocus();
+        input.postDelayed(() -> {
+            Context context = getContext();
+            if (context != null) {
+                InputMethodManager imm = (InputMethodManager) context
+                        .getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+            }
+        }, 120L);
+    }
+
+    private void deleteMessage(ChatMessage message) {
+        if (message == null || isRunning) {
+            if (isRunning) showActionFeedback("Stop the current run first");
+            return;
+        }
+        if (reducer.removeTurn(message)) {
+            if (agent != null) {
+                agent.abort();
+                agent = null;
+            }
+            if (adapter != null) adapter.submitList(reducer.getMessages());
+            autoSaveTask();
+            showActionFeedback(R.string.ai_chat_action_deleted);
+        }
+    }
+
+    private void showMessageActions(ChatMessage message, View anchor) {
+        if (message == null || anchor == null) return;
+        PopupMenu popup = new PopupMenu(requireContext(), anchor);
+        final int copyId = 1;
+        final int retryId = 2;
+        final int editId = 3;
+        final int deleteId = 4;
+        popup.getMenu().add(0, copyId, 0, R.string.ai_chat_action_copy);
+        popup.getMenu().add(0, retryId, 1, R.string.ai_chat_action_refresh);
+        popup.getMenu().add(0, editId, 2, R.string.ai_chat_action_edit);
+        popup.getMenu().add(0, deleteId, 3, R.string.ai_chat_action_delete);
+        popup.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case copyId: copyMessage(message); return true;
+                case retryId: retryMessage(message); return true;
+                case editId: editMessage(message); return true;
+                case deleteId: deleteMessage(message); return true;
+                default: return false;
+            }
+        });
+        popup.show();
+    }
+
+    private void showActionFeedback(String text) {
+        View view = getView();
+        if (view != null && text != null) Snackbar.make(view, text, Snackbar.LENGTH_SHORT).show();
+    }
+
+    private void showActionFeedback(int stringRes) {
+        View view = getView();
+        if (view != null) Snackbar.make(view, stringRes, Snackbar.LENGTH_SHORT).show();
     }
 
     /**

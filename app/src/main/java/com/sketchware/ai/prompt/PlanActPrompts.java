@@ -80,12 +80,9 @@ public final class PlanActPrompts {
      * and {@link #PLAN_MODE_INSTRUCTIONS_MANUAL_SWITCH}.
      *
      * <p>Sketchware Pro does not expose Cline's {@code run_commands} tool.
-     * In Plan mode, use only registered read-only tools such as
-     * {@code list_files}, {@code search_files}, {@code java_read_file},
-     * {@code view_list_widgets},
-     * {@code view_manage(subcategory="layout", action="list")},
-     * {@code web_search}, and {@code web_fetch}. All mutating tools are
-     * blocked by {@link ToolPermissionGate} in PLAN mode.
+     * In Plan mode, use only tools currently registered as read-only editor
+     * capabilities. Backend filesystem, Java patching, and web-search tools
+     * are intentionally not part of the Sketchware agent surface.
      */
     static final String PLAN_MODE_INSTRUCTIONS_BASE =
         "# Plan Mode\n\n" +
@@ -96,7 +93,7 @@ public final class PlanActPrompts {
         "- Explain tradeoffs between different approaches when they exist\n" +
         "- Do NOT edit files, write code, run destructive commands, or make any changes\n" +
         "- Do NOT implement anything -- focus on understanding and alignment first\n\n" +
-        "Use only tools marked read-only in their schema while researching: list_files, search_files, java_read_file, view_list_widgets, view_manage with subcategory=\"layout\" and action=\"list\", web_search, and web_fetch. Never attempt a mutating tool in Plan mode. If the task requires a change, include it in the plan and wait until the user switches to Act mode.";
+        "Use only tools marked read-only in their schema while researching. Backend filesystem, Java patching, and web-search tools are not available. Never attempt a mutating tool in Plan mode. If the task requires a change, include it in the plan and wait until the user switches to Act mode.";
 
     /**
      * Plan-mode contract with the {@code switch_to_act_mode} tool tail.

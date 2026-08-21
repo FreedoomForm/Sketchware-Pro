@@ -22,13 +22,6 @@ import com.sketchware.ai.tools.event.CustomEventManageTool;
 import com.sketchware.ai.tools.event.EventAttachTool;
 import com.sketchware.ai.tools.event.EventListTool;
 import com.sketchware.ai.tools.event.EventManageTool;
-import com.sketchware.ai.tools.diff.ApplyPatchTool;
-import com.sketchware.ai.tools.diff.DiffEditFileTool;
-import com.sketchware.ai.tools.filesystem.ListFilesTool;
-import com.sketchware.ai.tools.filesystem.SearchFilesTool;
-import com.sketchware.ai.tools.java.JavaEditFileTool;
-import com.sketchware.ai.tools.java.JavaModifyClassTool;
-import com.sketchware.ai.tools.java.JavaReadFileTool;
 import com.sketchware.ai.tools.meta.TodoListTool;
 import com.sketchware.ai.tools.library.LibraryConfigureTool;
 import com.sketchware.ai.tools.library.LibraryEnableTool;
@@ -64,8 +57,6 @@ import com.sketchware.ai.tools.view.ViewPaletteCommitTool;
 import com.sketchware.ai.tools.view.ViewSetPropertyTool;
 import com.sketchware.ai.tools.view.ViewUndoRedoTool;
 import com.sketchware.ai.tools.view.ViewfuncInvokeTool;
-import com.sketchware.ai.tools.web.WebFetchTool;
-import com.sketchware.ai.tools.web.WebSearchTool;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -100,7 +91,7 @@ import java.util.Map;
  *
  * <h3>Current tool inventory (46 tools total)</h3>
  * <ul>
- *   <li><b>Specialized tools (25)</b> — bespoke logic that doesn't fit
+ *   <li><b>Specialized tools</b> — bespoke logic that doesn't fit
  *       the action-enum pattern (e.g. ViewAddWidgetTool has 40-value
  *       type enum + library gating; BlockAddTool assembles block beans
  *       with complex param schemas; JavaEditFileTool does diff-based
@@ -137,10 +128,7 @@ import java.util.Map;
  *           kept separate because they have unique image-binary params
  *           (base64 image data) that don't fit the umbrella's flat
  *           args-forwarding pattern.</li>
- *       <li>Java (3): JavaModifyClassTool, DiffEditFileTool, ApplyPatchTool.</li>
  *       <li>Meta (3): AskQuestionTool, SubmitAndExitTool, TodoListTool.</li>
- *       <li>Filesystem (2): ListFilesTool, SearchFilesTool.</li>
- *       <li>Web (2): WebSearchTool, WebFetchTool.</li>
  *     </ul>
  *   </li>
  * </ul>
@@ -205,13 +193,6 @@ public final class ToolRegistryInitializer {
         // ===== Build category (1 umbrella) =====
         r.register(buildManageUmbrella());            // umbrella: 3 subtools
 
-        // ===== Java category (5 tools: 2 specialized + 1 universal + 2 diff) =====
-        r.register(new JavaEditFileTool());           // specialized
-        r.register(new JavaReadFileTool());           // specialized
-        r.register(new JavaModifyClassTool());        // universal: 11 actions
-        r.register(new DiffEditFileTool());           // SEARCH/REPLACE diff editing (Cline port)
-        r.register(new ApplyPatchTool());             // multi-file unified diff (Cline port)
-
         // ===== Library/Permission category (2 tools: 1 specialized + 1 umbrella) =====
         r.register(new LibraryEnableTool());          // specialized (backward compat — test-required name)
         r.register(libraryManageUmbrella());          // umbrella: 4 subtools
@@ -233,14 +214,6 @@ public final class ToolRegistryInitializer {
         // This adapter submits exactly the same typed Project IR operations
         // as Creator Home and never writes files outside the shared runtime.
         r.register(new CreatorRuntimeTool());
-
-        // ===== Filesystem tools (2) =====
-        r.register(new ListFilesTool());
-        r.register(new SearchFilesTool());
-
-        // ===== Web tools (2) =====
-        r.register(new WebSearchTool());
-        r.register(new WebFetchTool());
 
         return r;
     }

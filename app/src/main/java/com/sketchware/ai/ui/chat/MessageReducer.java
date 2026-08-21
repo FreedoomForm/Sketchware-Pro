@@ -41,6 +41,75 @@ public final class MessageReducer {
         messages.clear();
     }
 
+    /** Returns the user prompt belonging to a message/assistant turn. */
+    public synchronized String userPromptFor(ChatMessage message) {
+        if (message == null) return null;
+        int index = messages.indexOf(message);
+        if (index < 0) return null;
+        for (int i = index; i >= 0; i--) {
+            ChatMessage candidate = messages.get(i);
+            if (ChatMessage.TYPE_USER.equals(candidate.type)) {
+                return candidate.text;
+            }
+        }
+        return null;
+    }
+
+    /** Removes the complete turn containing the supplied message. */
+    public synchronized boolean removeTurn(ChatMessage message) {
+        if (message == null) return false;
+        int index = messages.indexOf(message);
+        if (index < 0) return false;
+        int start = index;
+        for (int i = index; i >= 0; i--) {
+            if (ChatMessage.TYPE_USER.equals(messages.get(i).type)) {
+                start = i;
+                break;
+            }
+        }
+        int end = messages.size();
+        for (int i = start + 1; i < messages.size(); i++) {
+            if (ChatMessage.TYPE_USER.equals(messages.get(i).type)) {
+                end = i;
+                break;
+            }
+        }
+        messages.subList(start, end).clear();
+        return true;
+    }
+
+    /** Removes exactly one row by its stable timestamp. */
+    public synchronized boolean deleteMessage(long ts) {
+        for (int i = 0; i < messages.size(); i++) {
+            if (messages.get(i).ts == ts) {
+                messages.remove(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Replaces the text of a row by its stable timestamp. */
+    public synchronized boolean editMessage(long ts, String newText) {
+        for (ChatMessage message : messages) {
+            if (message.ts == ts) {
+                message.text = newText == null ? "" : newText;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Removes exactly one row, used for non-user status/result rows. */
+    public synchronized boolean removeMessage(ChatMessage message) {
+        return message != null && deleteMessage(message.ts);
+    }
+
+    /** Returns whether the reducer currently contains the supplied row. */
+    public synchronized boolean contains(ChatMessage message) {
+        return message != null && messages.contains(message);
+    }
+
     public synchronized void addUserMessage(String text) {
         messages.add(ChatMessage.user(text));
     }

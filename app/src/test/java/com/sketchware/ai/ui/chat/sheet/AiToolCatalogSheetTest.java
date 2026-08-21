@@ -20,16 +20,18 @@ public class AiToolCatalogSheetTest {
         int groupedCount = 0;
         for (List<SketchwareTool> tools : groups.values()) groupedCount += tools.size();
 
-        assertThat(groupedCount).isEqualTo(registry.size());
+        assertThat(groupedCount).isLessThan(registry.size());
         assertThat(groups.keySet()).contains("view");
         assertThat(groups.keySet()).contains("project");
+        assertThat(groups.keySet()).doesNotContain("meta");
     }
 
     @Test public void summaryExplainsToolCountAndApprovalBoundary() {
         ToolRegistry registry = ToolRegistryInitializer.createDefault();
         String summary = AiToolCatalogSheet.summary(registry);
 
-        assertThat(summary).contains("AI tools (" + registry.size() + ")");
+        assertThat(summary).contains("Editor tools (");
+        assertThat(summary).doesNotContain("java_edit_file");
         assertThat(summary).contains("Read-only tools run automatically");
         assertThat(summary).contains("Tap the tools button");
     }

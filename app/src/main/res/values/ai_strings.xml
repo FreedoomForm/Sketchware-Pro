@@ -102,8 +102,13 @@
     <string name="ai_chat_action_copy_done">Copied</string>
     <string name="ai_chat_action_refresh">Regenerate</string>
     <string name="ai_chat_action_edit">Edit</string>
+    <string name="ai_chat_action_delete">Delete</string>
     <string name="ai_chat_action_speak">Speak</string>
     <string name="ai_chat_action_more">More</string>
+    <string name="ai_chat_action_retry_done">Regenerating</string>
+    <string name="ai_chat_action_edit_hint">Edit message</string>
+    <string name="ai_chat_action_delete_confirm">Delete this message?</string>
+    <string name="ai_chat_action_deleted">Message deleted</string>
     <string name="ai_chat_token_count">%1$s tokens</string>
     <string name="ai_chat_token_meter_empty">0 tokens</string>
     <string name="ai_chat_reasoning_label">Reasoning</string>
