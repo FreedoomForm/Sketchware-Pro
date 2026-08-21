@@ -2,7 +2,7 @@
 
 **Repository:** `FreedoomForm/Sketchware-Pro`  
 **Branch:** `creator-runtime`  
-**Audit baseline:** `0ac0cefd0` plus the uncommitted corrections listed below.  
+**Audit baseline:** `f81b1288b` (`audit: harden runtime source of truth and coverage`).
 **Purpose:** Compare the implementation with the agreed Creator Runtime product idea: one active project, a white first/live screen, a widget-owned Continue/Intent entry into the original Sketchware editor, autosave, live runtime updates, shake fallback, and user/AI operations constrained to visible runtime capabilities.
 
 ## Scope and honesty of completion
@@ -26,7 +26,7 @@ A literal human reading and semantic verification of every line in the entire Sk
 | AI can discover screens without a required name | Implemented | `activity_list` has a no-argument schema and registry/catalog tests pass. |
 | Only user-capable runtime tools are exposed | Partially verified | Registry/schema and capability matrices pass; each service implementation still requires ongoing behavior review beyond this audit slice. |
 | Lossless runtime-to-original-editor event round-trip | **Residual limitation** | Legacy-to-runtime import and starter event provisioning exist. A safe inverse deletion/replacement API for obfuscated `eC` event storage was not available in source/build artifacts, so stale legacy events after arbitrary reassign/delete are not claimed as fully solved. |
-| Exactly one Creator Runtime workflow | Prepared | Stale prior runs were cancelled; the final push must be followed by one push-triggered Creator Runtime Android workflow only. |
+| Exactly one Creator Runtime workflow | Implemented and verified | The `creator-runtime` branch has one push-triggered Creator Runtime Android workflow; run 110 completed successfully for Build/JVM, Native API 34, and Native API 30. |
 
 ## Confirmed corrections in this audit
 
@@ -40,11 +40,11 @@ The resource audit removed obsolete Home title/detail, host EntryControl dialog,
 
 The test audit added coverage for expression/condition evaluation, starter migration and deletion persistence, bounded revisions/checkpoints, executor event replacement/detachment, and the updated widget-owned live-edit workflow. The stale workflow test no longer treats `ENTRY_CONTROL_UPDATE` as the canonical visible entry behavior.
 
-## Test evidence completed before final push
+## Test evidence
 
-The following local checks passed during the audit: targeted Creator Runtime engine tests, expression/condition tests, shake detector tests, capability/service matrix tests, storage/file service tests, AI tool registry/catalog/schema tests, the updated Creator Runtime workflow test, the executor suite including replacement/detachment, repeated compile and androidTest Java compilation, and the full `testDebugUnitTest` suite.
+The following local checks passed during the audit: targeted Creator Runtime engine tests, expression/condition tests, shake detector tests, capability/service matrix tests, storage/file service tests, AI tool registry/catalog/schema tests, the updated Creator Runtime workflow test, the executor suite including replacement/detachment, repeated compile and androidTest Java compilation, and the full `testDebugUnitTest` suite. The local gates also passed for `assembleDebug` and `assembleDebugAndroidTest`.
 
-The final pre-push gate must still run after this report is added and should include JVM tests, debug APK assembly, debug androidTest APK assembly, and androidTest Java compilation. Native emulator validation belongs to the single final Creator Runtime Android workflow and must not be inferred from local JVM success.
+The final push-triggered workflow was run once for commit `f81b1288b` as run 110. All three jobs completed successfully: `Build debug APK and JVM tests`, `Native Android tests (API 34)`, and `Native Android tests (API 30)`. Native emulator success is therefore directly evidenced for this commit, rather than inferred from JVM success.
 
 ## Files supporting the audit
 
@@ -52,4 +52,4 @@ The following files are generated or maintained as audit evidence: `full_audit_i
 
 ## Release decision
 
-The audited Creator Runtime slice is materially closer to the product idea and has green local JVM/compile evidence. It is **not honest to label the entire Sketchware Pro repository 100% line-audited or the runtime-to-legacy event round-trip lossless**. The final CI result must be reported together with this residual limitation.
+The audited Creator Runtime slice is materially closer to the product idea and has green local plus final native CI evidence on commit `f81b1288b`. It is **not honest to label the entire Sketchware Pro repository 100% line-audited or the runtime-to-legacy event round-trip lossless**. The two residual limitations above remain part of the release decision.
