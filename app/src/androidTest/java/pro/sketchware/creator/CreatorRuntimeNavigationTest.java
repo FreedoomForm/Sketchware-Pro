@@ -74,7 +74,7 @@ public class CreatorRuntimeNavigationTest {
         }
     }
 
-    @Test public void installedLauncherIsCreatorHomeWithSidebar() {
+    @Test public void installedLauncherIsCreatorHomeWithFabOnly() {
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         assertThat(launchIntent).isNotNull();
         assertThat(launchIntent.getComponent()).isNotNull();
@@ -88,7 +88,6 @@ public class CreatorRuntimeNavigationTest {
                         .isInstanceOf(FloatingActionButton.class);
                 assertThat(activity.findViewById(R.id.creator_entry_control).getVisibility())
                         .isEqualTo(View.VISIBLE);
-                assertThat((Object) activity.findViewById(R.id.creator_open_legacy)).isNotNull();
             });
         }
     }
@@ -336,17 +335,18 @@ public class CreatorRuntimeNavigationTest {
         try (ActivityScenario<CreatorProjectActivity> scenario = ActivityScenario.launch(CreatorProjectActivity.class)) {
             scenario.onActivity(activity -> {
                 assertThat((Object) activity.findViewById(R.id.creator_project_drawer)).isInstanceOf(DrawerLayout.class);
+                View sidebar = activity.findViewById(R.id.creator_project_sidebar);
+                assertThat((Object) sidebar).isNotNull();
+                assertThat(((DrawerLayout.LayoutParams) sidebar.getLayoutParams()).gravity)
+                        .isEqualTo(android.view.Gravity.END);
                 int[] actions = {
-                        R.id.creator_sidebar_new_project, R.id.creator_sidebar_projects,
-                        R.id.creator_sidebar_sketchub, R.id.creator_sidebar_about,
-                        R.id.creator_sidebar_changelog, R.id.creator_sidebar_info,
-                        R.id.creator_sidebar_keystore, R.id.creator_sidebar_settings,
-                        R.id.creator_sidebar_swassist, R.id.creator_sidebar_discord,
-                        R.id.creator_sidebar_telegram, R.id.creator_sidebar_github
+                        R.id.creator_sidebar_about, R.id.creator_sidebar_changelog,
+                        R.id.creator_sidebar_info, R.id.creator_sidebar_keystore,
+                        R.id.creator_sidebar_settings, R.id.creator_sidebar_swassist,
+                        R.id.creator_sidebar_discord, R.id.creator_sidebar_telegram,
+                        R.id.creator_sidebar_github
                 };
-                for (int id : actions) {
-                    assertThat((Object) activity.findViewById(id)).isNotNull();
-                }
+                for (int id : actions) assertThat((Object) activity.findViewById(id)).isNotNull();
             });
         }
     }

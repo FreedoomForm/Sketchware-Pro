@@ -12,17 +12,6 @@
         android:layout_height="match_parent"
         android:background="@android:color/white">
 
-        <ImageButton
-            android:id="@+id/creator_home_menu"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_gravity="top|start"
-            android:layout_margin="12dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/creator_open_legacy"
-            android:padding="12dp"
-            android:src="@drawable/kelivo_icon_list2" />
-
         <LinearLayout
             android:id="@+id/creator_home_body"
             android:layout_width="match_parent"
@@ -69,41 +58,5 @@
             app:tint="@android:color/white" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-    <LinearLayout
-        android:id="@+id/creator_home_sidebar"
-        android:layout_width="300dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:background="@android:color/white"
-        android:elevation="8dp"
-        android:orientation="vertical"
-        android:padding="24dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/creator_home_title"
-            android:textColor="@android:color/black"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/creator_sidebar_description"
-            android:textColor="#5F6368"
-            android:textSize="14sp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/creator_open_legacy"
-            style="@style/Widget.Material3.Button.TextButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:gravity="start|center_vertical"
-            android:text="@string/creator_open_legacy" />
-    </LinearLayout>
 
 </androidx.drawerlayout.widget.DrawerLayout>

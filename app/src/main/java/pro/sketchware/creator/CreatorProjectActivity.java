@@ -172,11 +172,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private void wireEditorSidebar() {
         View menu = findViewById(R.id.creator_sidebar_open);
         if (menu != null) menu.setOnClickListener(v -> {
-            if (editorDrawer != null) editorDrawer.openDrawer(GravityCompat.START);
+            if (editorDrawer != null) editorDrawer.openDrawer(GravityCompat.END);
         });
-        bindSidebar(R.id.creator_sidebar_new_project, v -> createNewProjectFromSidebar());
-        bindSidebar(R.id.creator_sidebar_projects, v -> openLegacyMain(false));
-        bindSidebar(R.id.creator_sidebar_sketchub, v -> openLegacyMain(true));
         bindSidebar(R.id.creator_sidebar_about, v -> openActivity(AboutActivity.class));
         bindSidebar(R.id.creator_sidebar_changelog, v -> {
             Intent intent = new Intent(this, AboutActivity.class);
@@ -199,7 +196,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     }
 
     private void closeEditorSidebar() {
-        if (editorDrawer != null) editorDrawer.closeDrawer(GravityCompat.START);
+        if (editorDrawer != null) editorDrawer.closeDrawer(GravityCompat.END);
     }
 
     private void createNewProjectFromSidebar() {

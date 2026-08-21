@@ -9,13 +9,11 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import pro.sketchware.R;
 import com.besome.sketch.design.DesignActivity;
-import pro.sketchware.activities.main.activities.MainActivity;
 import pro.sketchware.creator.runtime.CreatorLegacyProjectBridge;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
@@ -26,7 +24,6 @@ public final class CreatorHomeActivity extends AppCompatActivity {
     private TextView previewTitle;
     private TextView previewDetail;
     private FloatingActionButton entryControl;
-    private DrawerLayout drawer;
     private boolean showLiveSurfaceAfterEditor;
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(() -> renderDocument(document));
 
@@ -38,13 +35,7 @@ public final class CreatorHomeActivity extends AppCompatActivity {
         previewTitle = findViewById(R.id.creator_preview_title);
         previewDetail = findViewById(R.id.creator_preview_detail);
         entryControl = findViewById(R.id.creator_entry_control);
-        drawer = findViewById(R.id.creator_home_drawer);
         entryControl.setOnClickListener(v -> openProject());
-        findViewById(R.id.creator_home_menu).setOnClickListener(v -> drawer.openDrawer(androidx.core.view.GravityCompat.START));
-        findViewById(R.id.creator_open_legacy).setOnClickListener(v -> {
-            drawer.closeDrawer(androidx.core.view.GravityCompat.START);
-            startActivity(new Intent(this, MainActivity.class));
-        });
         findViewById(R.id.creator_home_body).setOnClickListener(v -> openProject());
     }
 

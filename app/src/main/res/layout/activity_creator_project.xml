@@ -171,7 +171,7 @@
         android:id="@+id/creator_project_sidebar"
         android:layout_width="320dp"
         android:layout_height="match_parent"
-        android:layout_gravity="start"
+        android:layout_gravity="end"
         android:background="@android:color/white"
         android:elevation="8dp">
 
@@ -202,34 +202,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
-                android:text="@string/creator_sidebar_project_section"
+                android:text="@string/creator_sidebar_versions_section"
                 android:textColor="#5F6368"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/creator_sidebar_new_project"
+                android:id="@+id/creator_sidebar_changelog"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="start|center_vertical"
-                android:text="@string/creator_sidebar_new_project" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/creator_sidebar_projects"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="start|center_vertical"
-                android:text="@string/creator_sidebar_projects" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/creator_sidebar_sketchub"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="start|center_vertical"
-                android:text="@string/creator_sidebar_sketchub" />
+                android:text="@string/creator_sidebar_changelog" />
 
             <TextView
                 android:layout_width="match_parent"
@@ -247,14 +231,6 @@
                 android:layout_height="wrap_content"
                 android:gravity="start|center_vertical"
                 android:text="@string/creator_sidebar_about" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/creator_sidebar_changelog"
-                style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="start|center_vertical"
-                android:text="@string/creator_sidebar_changelog" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/creator_sidebar_info"

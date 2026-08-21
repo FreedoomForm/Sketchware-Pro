@@ -14,6 +14,7 @@
     <string name="creator_external_link_unavailable">No browser is available for this link</string>
     <string name="creator_sidebar_projects">Projects</string>
     <string name="creator_sidebar_sketchub">Sketchub</string>
+    <string name="creator_sidebar_versions_section">Versions</string>
     <string name="creator_sidebar_app_section">Application</string>
     <string name="creator_sidebar_about">About the team</string>
     <string name="creator_sidebar_changelog">Changelog</string>
