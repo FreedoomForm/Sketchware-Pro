@@ -108,15 +108,24 @@ public class WidgetsCreatorManager {
 
     private void loadCustomWidgets() {
         try {
-            widgetConfigurationsList = getGson().fromJson(
+            ArrayList<HashMap<String, Object>> loaded = getGson().fromJson(
                     FileUtil.readFile(widgetsJsonFilePath),
                     Helper.TYPE_MAP_LIST
             );
+            // Gson legitimately returns null for an empty JSON document or the
+            // literal `null`; the editor must still expose its built-in palette.
+            widgetConfigurationsList = normalizeWidgetConfigurations(loaded);
             widgetConfigurationsList.removeIf(this::isInvalidWidget);
         } catch (Exception e) {
             SketchwareUtil.toastError("Error loading widgets: " + e.getMessage());
+            widgetConfigurationsList = new ArrayList<>();
             createWidgetsFile();
         }
+    }
+
+    static ArrayList<HashMap<String, Object>> normalizeWidgetConfigurations(
+            ArrayList<HashMap<String, Object>> loaded) {
+        return loaded == null ? new ArrayList<>() : loaded;
     }
 
     private boolean isInvalidWidget(HashMap<String, Object> widgetData) {
@@ -149,8 +158,10 @@ public class WidgetsCreatorManager {
 
     private void initializeCategoriesList() {
         allCategories.clear();
-        Objects.requireNonNull(allCategories).addAll(mainCategories);
+        allCategories.addAll(mainCategories);
+        if (widgetConfigurationsList == null) widgetConfigurationsList = new ArrayList<>();
         for (HashMap<String, Object> map : widgetConfigurationsList) {
+            if (map == null || map.get("Class") == null) continue;
             String Class = map.get("Class").toString();
             if (!allCategories.contains(Class)) {
                 allCategories.add(Class);
@@ -159,7 +170,8 @@ public class WidgetsCreatorManager {
     }
 
     private void createWidgetsFile() {
-        if (widgetConfigurationsList != null) widgetConfigurationsList.clear();
+        widgetConfigurationsList = normalizeWidgetConfigurations(widgetConfigurationsList);
+        widgetConfigurationsList.clear();
         FileUtil.writeFile(widgetsJsonFilePath, getGson().toJson(widgetConfigurationsList));
     }
 
