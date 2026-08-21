@@ -134,7 +134,8 @@ jobs:
           emulator-boot-timeout: 600
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -no-metrics
-          script: timeout ${{ inputs.test-class != '' && '120' || '1800' }} ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${{ inputs.test-class != '' && format('-Pandroid.testInstrumentationRunnerArguments.class={0}', inputs.test-class) || '' }}; adb logcat -d > /tmp/creator-runtime-logcat.txt || true
+          # The full suite grew from 60 to 64 native tests; Run 90 needed about 31 minutes, so keep 45 minutes for the default run. Focused diagnostics remain short.
+          script: timeout ${{ inputs.test-class != '' && '120' || '2700' }} ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${{ inputs.test-class != '' && format('-Pandroid.testInstrumentationRunnerArguments.class={0}', inputs.test-class) || '' }}; adb logcat -d > /tmp/creator-runtime-logcat.txt || true
 
       - name: Upload connected Android test reports
         if: always()
