@@ -75,7 +75,6 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private boolean liveOnly;
     private LinearLayout previewCanvas;
     private TextView revisionLabel;
-    private MaterialButton entryControl;
     private CreatorShakeRecovery shakeRecovery;
     private CreatorRuntimeEnvironment runtimeEnvironment;
     private CreatorRuntimeExecutor runtimeExecutor;
@@ -102,7 +101,6 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 runOnUiThread(() -> handleRuntimeServiceEvent(serviceId, eventName, payload)));
         previewCanvas = findViewById(R.id.creator_preview_canvas);
         revisionLabel = findViewById(R.id.creator_revision_label);
-        entryControl = findViewById(R.id.creator_project_entry_control);
         editorDrawer = findViewById(R.id.creator_project_drawer);
         wireEditorSidebar();
         runtimeServices = CreatorRuntimeServices.defaults(this,
@@ -118,10 +116,6 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         findViewById(R.id.creator_checkpoint).setOnClickListener(v -> createCheckpoint());
         findViewById(R.id.creator_history).setOnClickListener(v -> showHistoryInspector());
         findViewById(R.id.creator_compatibility).setOnClickListener(v -> showCompatibilityInspector());
-        entryControl.setOnClickListener(v -> {
-            if (liveOnly) openEditor();
-            else editEntryControl();
-        });
         shakeRecovery = new CreatorShakeRecovery(this, this::showRecoverySheet);
         ensureStarterScreen();
         render();
@@ -447,9 +441,6 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         disposeMapViews();
         disposeDrawerLayout();
         revisionLabel.setText(getString(R.string.creator_revision_label, document.getRevision()));
-        entryControl.setText(document.getEntryControl().getLabel());
-        entryControl.setVisibility(document.getEntryControl().isVisible() ? View.VISIBLE : View.INVISIBLE);
-        applyEntryPlacement(document.getEntryControl().getPlacement());
         previewCanvas.removeAllViews();
         if (document.getScreens().isEmpty()) return;
         String screenId = activeScreenId != null && document.getScreens().containsKey(activeScreenId)
@@ -529,6 +520,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
         if ("button".equals(widget.getType())) {
             MaterialButton button = new MaterialButton(this);
+            button.setTag(widget.getId());
             button.setText(pro.sketchware.creator.runtime.CreatorRuntimeResourceValues.resolveString(document,
                     propertyString(widget, "text", "Button"), resourceVariant()));
             button.setOnClickListener(v -> dispatchRuntimeEvent(widget.getId(), "click"));
@@ -1245,6 +1237,10 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     }
 
     private void handleRuntimeServiceEvent(String serviceId, String eventName, Map<String, Object> payload) {
+        if ("creator_runtime".equals(serviceId) && "open_editor".equals(eventName)) {
+            openEditor();
+            return;
+        }
         if ("intent".equals(serviceId) && "navigate".equals(eventName) && payload.get("screenId") != null) {
             activeScreenId = String.valueOf(payload.get("screenId"));
         }
@@ -1302,15 +1298,6 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         }
     }
 
-    private void applyEntryPlacement(String placement) {
-        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams) entryControl.getLayoutParams();
-        if ("bottom_start".equals(placement)) params.gravity = Gravity.BOTTOM | Gravity.START;
-        else if ("top_start".equals(placement)) params.gravity = Gravity.TOP | Gravity.START;
-        else if ("top_end".equals(placement)) params.gravity = Gravity.TOP | Gravity.END;
-        else if ("center".equals(placement)) params.gravity = Gravity.CENTER;
-        else params.gravity = Gravity.BOTTOM | Gravity.END;
-        entryControl.setLayoutParams(params);
-    }
 
     private int placementIndex(String placement) {
         for (int i = 0; i < ENTRY_PLACEMENTS.length; i++) {

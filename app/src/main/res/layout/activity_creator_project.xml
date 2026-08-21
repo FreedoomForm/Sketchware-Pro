@@ -152,18 +152,6 @@
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/creator_project_entry_control"
-            android:layout_width="wrap_content"
-            android:layout_height="56dp"
-            android:layout_gravity="bottom|end"
-            android:layout_margin="24dp"
-            android:contentDescription="@string/creator_entry_control_title"
-            android:minWidth="56dp"
-            android:text="@string/creator_continue"
-            app:cornerRadius="28dp"
-            app:icon="@drawable/ic_mtrl_arrow_right"
-            app:iconGravity="textEnd" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

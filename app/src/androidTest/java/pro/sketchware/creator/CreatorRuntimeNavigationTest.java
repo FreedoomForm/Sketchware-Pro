@@ -30,7 +30,6 @@ import com.besome.sketch.editor.LogicEditorActivity;
 import com.besome.sketch.beans.ViewBean;
 import mod.agus.jcoderz.beans.ViewBeans;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +41,7 @@ import pro.sketchware.creator.runtime.CreatorLegacyProjectBridge;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectOperation;
 import pro.sketchware.creator.runtime.CreatorRuntimeBlock;
+import pro.sketchware.creator.runtime.CreatorRuntimeDefaults;
 import pro.sketchware.creator.runtime.CreatorRuntimeExecutor;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 
@@ -74,7 +74,7 @@ public class CreatorRuntimeNavigationTest {
         }
     }
 
-    @Test public void installedLauncherIsCreatorHomeWithFabOnly() {
+    @Test public void installedLauncherIsCreatorHomeWithContinueOnly() {
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         assertThat(launchIntent).isNotNull();
         assertThat(launchIntent.getComponent()).isNotNull();
@@ -83,9 +83,10 @@ public class CreatorRuntimeNavigationTest {
 
         try (ActivityScenario<CreatorHomeActivity> scenario = ActivityScenario.launch(CreatorHomeActivity.class)) {
             scenario.onActivity(activity -> {
-                assertThat((Object) activity.findViewById(R.id.creator_home_drawer)).isInstanceOf(DrawerLayout.class);
+                assertThat(((android.view.ViewGroup) activity.findViewById(R.id.creator_home_content))
+                        .getChildCount()).isEqualTo(1);
                 assertThat((Object) activity.findViewById(R.id.creator_entry_control))
-                        .isInstanceOf(FloatingActionButton.class);
+                        .isInstanceOf(com.google.android.material.button.MaterialButton.class);
                 assertThat(activity.findViewById(R.id.creator_entry_control).getVisibility())
                         .isEqualTo(View.VISIBLE);
             });
@@ -100,6 +101,25 @@ public class CreatorRuntimeNavigationTest {
         assertThat(document.getWidgets()).containsKey("root_main");
     }
 
+    @Test public void starterSurfacePersistsContinueButtonAndEditorIntentBinding() {
+        CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
+        assertThat(document.getWidgets()).containsKey(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
+        assertThat(document.getWidgets().get(CreatorRuntimeDefaults.ENTRY_WIDGET_ID).getType())
+                .isEqualTo("button");
+        assertThat(document.getWidgets().get("root_main").getChildren())
+                .contains(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
+        pro.sketchware.creator.runtime.CreatorEventBinding binding = document.getEvents()
+                .get(CreatorRuntimeDefaults.ENTRY_CLICK_BINDING_ID);
+        assertThat(binding).isNotNull();
+        assertThat(binding.getTargetWidgetId()).isEqualTo(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
+        assertThat(binding.getEventName()).isEqualTo("click");
+        assertThat(binding.getBlocks()).hasSize(1);
+        assertThat(binding.getBlocks().get(0).getType())
+                .isEqualTo(CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL);
+        assertThat(binding.getBlocks().get(0).getPayload().get("serviceId"))
+                .isEqualTo("intent");
+    }
+
     @Test public void legacyProvisioningPersistsDefaultMainProjectFile() {
         CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
         String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
@@ -109,6 +129,24 @@ public class CreatorRuntimeNavigationTest {
         assertThat(main.fileName).isEqualTo("main");
         assertThat(main.fileType)
                 .isEqualTo(com.besome.sketch.beans.ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY);
+        ArrayList<com.besome.sketch.beans.ComponentBean> components = a.a.a.jC.a(scId).e("main.xml");
+        boolean intentFound = false;
+        for (com.besome.sketch.beans.ComponentBean component : components) {
+            if (component != null && CreatorRuntimeDefaults.EDITOR_INTENT_ID.equals(component.componentId)) {
+                intentFound = true;
+            }
+        }
+        assertThat(intentFound).isTrue();
+        ArrayList<com.besome.sketch.beans.EventBean> events = a.a.a.jC.a(scId).g("main.xml");
+        boolean continueEventFound = false;
+        for (com.besome.sketch.beans.EventBean event : events) {
+            if (event != null && CreatorRuntimeDefaults.ENTRY_WIDGET_ID.equals(event.targetId)
+                    && "onClick".equals(event.eventName)) {
+                continueEventFound = true;
+                assertThat(a.a.a.jC.a(scId).a("main.xml", event.getEventKey())).hasSize(2);
+            }
+        }
+        assertThat(continueEventFound).isTrue();
     }
 
     @Test public void nextFabActuallyNavigatesToOriginalSketchwareEditor() {
@@ -356,7 +394,12 @@ public class CreatorRuntimeNavigationTest {
         try (ActivityScenario<CreatorProjectActivity> live = ActivityScenario.launch(
                 new Intent(context, CreatorProjectActivity.class)
                         .putExtra(CreatorProjectActivity.EXTRA_LIVE_ONLY, true))) {
-            live.onActivity(activity -> activity.findViewById(R.id.creator_project_entry_control).performClick());
+            live.onActivity(activity -> {
+                View continueButton = activity.findViewById(R.id.creator_preview_canvas)
+                        .findViewWithTag(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
+                assertThat((Object) continueButton).isNotNull();
+                continueButton.performClick();
+            });
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
             AtomicReference<Activity> resumed = new AtomicReference<>();
             InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
@@ -367,17 +410,19 @@ public class CreatorRuntimeNavigationTest {
         }
     }
 
-    @Test public void liveOnlySurfaceRendersScreenAndProtectedEntryControl() {
+    @Test public void liveOnlySurfaceRendersBlankScreenAndContinueWidget() {
         Intent intent = new Intent(context, CreatorProjectActivity.class)
                 .putExtra(CreatorProjectActivity.EXTRA_LIVE_ONLY, true);
         try (ActivityScenario<CreatorProjectActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 assertThat(((android.widget.LinearLayout) activity.findViewById(R.id.creator_preview_canvas))
                         .getChildCount()).isGreaterThan(0);
-                assertThat(activity.findViewById(R.id.creator_project_entry_control).getVisibility())
-                        .isEqualTo(View.VISIBLE);
-                assertThat(((com.google.android.material.button.MaterialButton)
-                        activity.findViewById(R.id.creator_project_entry_control)).getText().toString()).isNotEmpty();
+                View continueButton = activity.findViewById(R.id.creator_preview_canvas)
+                        .findViewWithTag(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
+                assertThat((Object) continueButton).isNotNull();
+                assertThat(continueButton.getVisibility()).isEqualTo(View.VISIBLE);
+                assertThat(((com.google.android.material.button.MaterialButton) continueButton)
+                        .getText().toString()).isEqualTo("Continue");
             });
         }
     }
@@ -392,9 +437,10 @@ public class CreatorRuntimeNavigationTest {
                 assertThat(activity.findViewById(R.id.creator_editor_controls).getVisibility())
                         .isEqualTo(View.GONE);
                 assertThat((Object) activity.findViewById(R.id.creator_preview_canvas)).isNotNull();
-                assertThat((Object) activity.findViewById(R.id.creator_project_entry_control)).isNotNull();
-                assertThat(activity.findViewById(R.id.creator_project_entry_control).getVisibility())
-                        .isEqualTo(View.VISIBLE);
+                View continueButton = activity.findViewById(R.id.creator_preview_canvas)
+                        .findViewWithTag(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
+                assertThat((Object) continueButton).isNotNull();
+                assertThat(continueButton.getVisibility()).isEqualTo(View.VISIBLE);
             });
         }
     }

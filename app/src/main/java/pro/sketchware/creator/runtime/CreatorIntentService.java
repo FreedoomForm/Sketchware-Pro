@@ -52,8 +52,19 @@ public final class CreatorIntentService implements CreatorRuntimeService {
                 intent(arguments).setFlags(resolveIntentFlag(flag));
                 return CreatorRuntimeServiceArguments.succeeded("action", action);
             }
+            if ("open_creator_editor".equals(action)) {
+                environment.publish("creator_runtime", "open_editor",
+                        java.util.Collections.<String, Object>emptyMap());
+                return CreatorRuntimeServiceArguments.succeeded("action", action);
+            }
             if ("start".equals(action)) {
                 String intentId = id(arguments);
+                if (CreatorRuntimeDefaults.EDITOR_INTENT_ID.equals(intentId)) {
+                    environment.publish("creator_runtime", "open_editor",
+                            java.util.Collections.<String, Object>emptyMap());
+                    return CreatorRuntimeServiceArguments.succeeded("action", action,
+                            "intentId", intentId);
+                }
                 String screenId = targetScreens.get(intentId);
                 if (screenId != null) {
                     environment.publish(getId(), "navigate", CreatorRuntimeServiceArguments.output("screenId", screenId));

@@ -3,27 +3,26 @@ package pro.sketchware.creator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.button.MaterialButton;
 
 import pro.sketchware.R;
 import com.besome.sketch.design.DesignActivity;
 import pro.sketchware.creator.runtime.CreatorLegacyProjectBridge;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
+import pro.sketchware.creator.runtime.CreatorRuntimeDefaults;
+import pro.sketchware.creator.runtime.CreatorWidget;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 
 /** White, runtime-first home for an editable Creator project. */
 public final class CreatorHomeActivity extends AppCompatActivity {
     private CreatorRuntimeSession session;
-    private TextView previewTitle;
-    private TextView previewDetail;
-    private FloatingActionButton entryControl;
+    private MaterialButton entryControl;
     private boolean showLiveSurfaceAfterEditor;
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(() -> renderDocument(document));
 
@@ -32,11 +31,8 @@ public final class CreatorHomeActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_creator_home);
         session = CreatorRuntimeSession.get(this);
-        previewTitle = findViewById(R.id.creator_preview_title);
-        previewDetail = findViewById(R.id.creator_preview_detail);
         entryControl = findViewById(R.id.creator_entry_control);
         entryControl.setOnClickListener(v -> openProject());
-        findViewById(R.id.creator_home_body).setOnClickListener(v -> openProject());
     }
 
     @Override protected void onResume() {
@@ -66,16 +62,24 @@ public final class CreatorHomeActivity extends AppCompatActivity {
     }
 
     private void renderDocument(CreatorProjectDocument document) {
-        previewTitle.setText(document.getName());
-        if (document.getScreens().isEmpty()) {
-            previewDetail.setText(R.string.creator_home_empty_project);
-        } else {
-            previewDetail.setText(getString(R.string.creator_home_project_detail,
-                    document.getRevision(), document.getScreens().size(), document.getWidgets().size()));
-        }
-        entryControl.setContentDescription(document.getEntryControl().getLabel());
-        entryControl.setVisibility(document.getEntryControl().isVisible() ? View.VISIBLE : View.INVISIBLE);
+        CreatorWidget continueWidget = document.getWidgets().get(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
+        boolean visible = continueWidget != null && propertyBoolean(continueWidget, "visible", true);
+        String label = continueWidget == null ? document.getEntryControl().getLabel()
+                : propertyString(continueWidget, "text", document.getEntryControl().getLabel());
+        entryControl.setText(label);
+        entryControl.setContentDescription(label);
+        entryControl.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         applyEntryPlacement(document.getEntryControl().getPlacement());
+    }
+
+    private static String propertyString(CreatorWidget widget, String key, String fallback) {
+        Object value = widget.getProperties().get(key);
+        return value == null ? fallback : String.valueOf(value);
+    }
+
+    private static boolean propertyBoolean(CreatorWidget widget, String key, boolean fallback) {
+        Object value = widget.getProperties().get(key);
+        return value instanceof Boolean ? (Boolean) value : fallback;
     }
 
     private void applyEntryPlacement(String placement) {

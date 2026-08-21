@@ -60,12 +60,14 @@ public final class CreatorLegacyProjectBridge {
         String existingScId = preferences.getString(key, null);
         if (existingScId != null && lC.b(existingScId) != null) {
             ensureLegacyStores(context, existingScId);
+            ensureLegacyStarterIntent(context, document, existingScId);
             return existingScId;
         }
 
         String scId = lC.b();
         provisionLegacyProject(context, scId, document.getName());
         ensureLegacyStores(context, scId);
+        ensureLegacyStarterIntent(context, document, scId);
         preferences.edit()
                 .putString(key, scId)
                 .putString("runtime_project_id_" + scId, document.getProjectId())
@@ -395,6 +397,61 @@ public final class CreatorLegacyProjectBridge {
         // requests main.xml. Its normal eC initializer creates the empty view
         // list when no serialized layout exists yet.
         jC.a(scId, false);
+    }
+
+    /**
+     * Seeds the original editor with the same Intent component and click blocks
+     * represented by the runtime starter binding. Existing user records win.
+     */
+    private static void ensureLegacyStarterIntent(Context context, CreatorProjectDocument document, String scId) {
+        if (context == null || document == null || scId == null || scId.trim().isEmpty()
+                || !document.getWidgets().containsKey(CreatorRuntimeDefaults.ENTRY_WIDGET_ID)) return;
+        eC viewStore = jC.a(scId);
+        String xmlName = ProjectFileBean.DEFAULT_XML_NAME;
+        boolean hasIntent = false;
+        ArrayList<ComponentBean> components = viewStore.e(xmlName);
+        if (components != null) {
+            for (ComponentBean component : components) {
+                if (component != null && CreatorRuntimeDefaults.EDITOR_INTENT_ID.equals(component.componentId)) {
+                    hasIntent = true;
+                    break;
+                }
+            }
+        }
+        if (!hasIntent) {
+            viewStore.b(xmlName, new ComponentBean(ComponentBean.COMPONENT_TYPE_INTENT,
+                    CreatorRuntimeDefaults.EDITOR_INTENT_ID));
+        }
+
+        boolean hasBinding = false;
+        ArrayList<EventBean> events = viewStore.g(xmlName);
+        if (events != null) {
+            for (EventBean event : events) {
+                if (event != null && CreatorRuntimeDefaults.ENTRY_WIDGET_ID.equals(event.targetId)
+                        && "onClick".equals(event.eventName)) {
+                    hasBinding = true;
+                    break;
+                }
+            }
+        }
+        if (!hasBinding) {
+            EventBean event = new EventBean(EventBean.EVENT_TYPE_VIEW,
+                    ViewBean.VIEW_TYPE_WIDGET_BUTTON, CreatorRuntimeDefaults.ENTRY_WIDGET_ID, "onClick");
+            viewStore.a(xmlName, event);
+            ArrayList<BlockBean> blocks = new ArrayList<>();
+            BlockBean setScreen = new BlockBean("1", "set screen of %s to %s",
+                    "command", "intent", "intentSetScreen");
+            setScreen.parameters.add(CreatorRuntimeDefaults.EDITOR_INTENT_ID);
+            setScreen.parameters.add("DesignActivity");
+            setScreen.nextBlock = 2;
+            BlockBean startActivity = new BlockBean("2", "startActivity %s",
+                    "command", "intent", "startActivity");
+            startActivity.parameters.add(CreatorRuntimeDefaults.EDITOR_INTENT_ID);
+            blocks.add(setScreen);
+            blocks.add(startActivity);
+            viewStore.a(xmlName, event.getEventKey(), blocks);
+        }
+        viewStore.n(wq.b(scId) + File.separator + "view");
     }
 
     private static void createLegacyDirectories(String scId) {

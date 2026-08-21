@@ -40,12 +40,16 @@ public final class CreatorRuntimeProjectStore {
                 CreatorProjectDocument.SCHEMA_VERSION, "creator_default", 0,
                 "Untitled project", "main", screens, widgets,
                 CreatorEntryControl.defaultControl());
-        save(created);
-        return created;
+        CreatorProjectDocument seeded = CreatorRuntimeDefaults.ensureStarterContent(created);
+        save(seeded);
+        return seeded;
     }
 
     private static CreatorProjectDocument ensureMainScreen(CreatorProjectDocument document) {
-        if (document == null || !document.getScreens().isEmpty()) return document;
+        if (document == null) return null;
+        if (!document.getScreens().isEmpty()) {
+            return CreatorRuntimeDefaults.ensureStarterContent(document);
+        }
         Map<String, CreatorScreen> screens = new LinkedHashMap<>();
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>(document.getWidgets());
         String rootId = "root_main";
@@ -54,7 +58,9 @@ public final class CreatorRuntimeProjectStore {
             widgets.put(rootId, new CreatorWidget(rootId, "column", null,
                     Collections.<String>emptyList(), Collections.<String, Object>emptyMap()));
         }
-        return document.withState(document.getRevision(), "main", screens, widgets, document.getEntryControl());
+        CreatorProjectDocument normalized = document.withState(document.getRevision(), "main", screens, widgets,
+                document.getEntryControl());
+        return CreatorRuntimeDefaults.ensureStarterContent(normalized);
     }
 
     public boolean save(CreatorProjectDocument document) {
