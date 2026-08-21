@@ -751,6 +751,14 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                     : choiceMode == android.widget.ListView.CHOICE_MODE_SINGLE
                     ? android.R.layout.simple_list_item_single_choice : android.R.layout.simple_list_item_1;
             list.setAdapter(new android.widget.ArrayAdapter<>(this, rowLayout, entries));
+            // ListView does not have a stable WRAP_CONTENT measurement inside the
+            // live preview ScrollView. Bound it to the visible rows so measurement
+            // cannot request a second layout pass forever on the emulator.
+            int rowHeight = dp(48);
+            int visibleRows = Math.max(1, Math.min(entries.size(), 6));
+            list.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, rowHeight * visibleRows));
+            list.setNestedScrollingEnabled(false);
             list.setOnItemClickListener((parent, view, position, id) -> dispatchRuntimeEvent(widget.getId(), "item_click"));
             return registerRuntimeWidget(widget, list);
         }

@@ -667,6 +667,9 @@ public class CreatorRuntimeNativeWidgetTest {
 
                 ListView list = requireView(canvas, ListView.class);
                 assertThat(list.getAdapter().getCount()).isEqualTo(3);
+                assertThat(list.getLayoutParams()).isNotNull();
+                assertThat(list.getLayoutParams().height).isGreaterThan(0);
+                assertThat(list.isNestedScrollingEnabled()).isFalse();
                 list.performItemClick(list.getChildAt(1), 1, list.getAdapter().getItemId(1));
                 assertThat(CreatorRuntimeSession.get(activity).getDocument().getState()
                         .get("listSelection")).isEqualTo(1L);
