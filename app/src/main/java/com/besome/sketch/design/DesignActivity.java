@@ -766,6 +766,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     public void onResume() {
         super.onResume();
         syncCreatorRuntimeBoundary();
+        importLegacyRuntimeBoundary();
         if (!isStoragePermissionGranted()) {
             finish();
         }
@@ -784,6 +785,16 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             CreatorLegacyProjectBridge.syncRuntimeMetadata(this, document, sc_id);
             CreatorLegacyProjectBridge.projectRuntimeViews(this, document, sc_id);
         }
+    }
+
+    private void importLegacyRuntimeBoundary() {
+        String runtimeProjectId = getIntent().getStringExtra("creator_runtime_project_id");
+        if (runtimeProjectId == null || sc_id == null) return;
+        CreatorRuntimeSession session = CreatorRuntimeSession.get(this);
+        CreatorProjectDocument current = session.getDocument();
+        if (!runtimeProjectId.equals(current.getProjectId())) return;
+        CreatorProjectDocument imported = CreatorLegacyProjectBridge.importLegacyProject(this, current, sc_id);
+        session.importLegacySnapshot(imported);
     }
 
     @Override

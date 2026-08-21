@@ -82,10 +82,20 @@ public class CreatorRuntimeNavigationTest {
         }
     }
 
+    @Test public void freshRuntimeProjectMatchesOriginalMainScreenContract() {
+        CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
+        assertThat(document.getEntryScreenId()).isEqualTo("main");
+        assertThat(document.getScreens()).containsKey("main");
+        assertThat(document.getScreens().get("main").getRootWidgetId()).isEqualTo("root_main");
+        assertThat(document.getWidgets()).containsKey("root_main");
+    }
+
     @Test public void creatorRuntimeOpensOriginalSketchwareEditorSurface() {
         CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
         String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
-        Intent intent = new Intent(context, DesignActivity.class).putExtra("sc_id", scId);
+        Intent intent = new Intent(context, DesignActivity.class)
+                .putExtra("sc_id", scId)
+                .putExtra("creator_runtime_project_id", document.getProjectId());
         try (ActivityScenario<DesignActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 assertThat((Object) activity.findViewById(R.id.toolbar)).isNotNull();
@@ -109,7 +119,7 @@ public class CreatorRuntimeNavigationTest {
                 Map<String, Object> payload = new LinkedHashMap<>();
                 payload.put("widgetId", "runtime_button");
                 payload.put("widgetType", "button");
-                payload.put("parentId", null);
+                payload.put("parentId", "root_main");
                 payload.put("index", 0L);
                 Map<String, Object> properties = new LinkedHashMap<>();
                 properties.put("text", "Runtime button");
@@ -136,6 +146,33 @@ public class CreatorRuntimeNavigationTest {
             }
         }
         assertThat(found).isTrue();
+    }
+
+    @Test public void originalEditorExposesAllTabsAndDrawerActionsInsideRuntimeHost() {
+        CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
+        String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
+        Intent intent = new Intent(context, DesignActivity.class)
+                .putExtra("sc_id", scId)
+                .putExtra("creator_runtime_project_id", document.getProjectId());
+        try (ActivityScenario<DesignActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertThat(((com.google.android.material.tabs.TabLayout) activity.findViewById(R.id.tab_layout)).getTabCount())
+                        .isEqualTo(4);
+                int[] actions = {
+                        R.id.item_library_manager, R.id.item_view_manager,
+                        R.id.item_image_manager, R.id.item_sound_manager,
+                        R.id.item_font_manager, R.id.item_java_manager,
+                        R.id.item_resource_manager, R.id.item_resource_editor,
+                        R.id.item_assets_manager, R.id.item_permission_manager,
+                        R.id.item_appcompat_manager, R.id.item_manifest_manager,
+                        R.id.item_used_custom_blocks, R.id.item_code_shrinking_manager,
+                        R.id.item_stringfog_manager, R.id.item_show_src,
+                        R.id.item_xml_command_manager, R.id.item_logcat_reader,
+                        R.id.item_collection_manager
+                };
+                for (int id : actions) assertThat((Object) activity.findViewById(id)).isNotNull();
+            });
+        }
     }
 
     @Test public void editorSidebarContainsMigratedMainScreenActions() {

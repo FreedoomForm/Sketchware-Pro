@@ -36,6 +36,27 @@ public final class CreatorRuntimeSession {
         return instance;
     }
 
+    /**
+     * Imports a complete snapshot produced by an original Sketchware editor
+     * surface. The import is persisted as a new runtime revision and is
+     * broadcast through the same listener boundary as AI/user operations.
+     */
+    public synchronized CreatorProjectDocument importLegacySnapshot(CreatorProjectDocument imported) {
+        if (imported == null) return getDocument();
+        CreatorProjectDocument current = getDocument();
+        CreatorProjectDocument next = new CreatorProjectDocument(
+                current.getSchemaVersion(), current.getProjectId(), current.getRevision() + 1,
+                current.getName(), imported.getEntryScreenId(), imported.getScreens(), imported.getWidgets(),
+                imported.getEntryControl(), imported.getState(), imported.getEvents());
+        String currentComparable = CreatorProjectDocumentCodec.encode(current.withRevision(current.getRevision()));
+        String nextComparable = CreatorProjectDocumentCodec.encode(next.withRevision(current.getRevision()));
+        if (currentComparable.equals(nextComparable)) return current;
+        engine = new CreatorRuntimeEngine(next, 100, new CreatorRuntimeEventLog(300));
+        store.save(next);
+        for (Listener listener : listeners) listener.onDocumentChanged(next);
+        return next;
+    }
+
     public synchronized CreatorApplyResult apply(CreatorProjectOperation operation) {
         CreatorApplyResult result = engine.apply(operation);
         if (result.isApplied() && !result.isReplayed()) {

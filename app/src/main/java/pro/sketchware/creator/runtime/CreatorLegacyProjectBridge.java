@@ -11,12 +11,19 @@ import java.util.Map;
 
 import a.a.a.GB;
 import a.a.a.eC;
+import a.a.a.hC;
+import a.a.a.iC;
 import a.a.a.jC;
 import a.a.a.lC;
 import a.a.a.nB;
 import a.a.a.oB;
 import a.a.a.wq;
+import com.besome.sketch.beans.BlockBean;
+import com.besome.sketch.beans.ComponentBean;
+import com.besome.sketch.beans.EventBean;
 import com.besome.sketch.beans.LayoutBean;
+import com.besome.sketch.beans.ProjectFileBean;
+import com.besome.sketch.beans.ProjectLibraryBean;
 import com.besome.sketch.beans.TextBean;
 import com.besome.sketch.beans.ViewBean;
 import mod.hey.studios.project.ProjectSettings;
@@ -92,20 +99,27 @@ public final class CreatorLegacyProjectBridge {
                                                          String scId) {
         if (context == null || document == null || scId == null || lC.b(scId) == null) return;
         eC viewStore = jC.a(scId);
-        String xmlName = "main.xml";
-        ArrayList<ViewBean> existing = viewStore.d(xmlName);
-        Map<String, ViewBean> byId = new HashMap<>();
-        for (ViewBean view : existing) {
-            if (view != null && view.id != null) byId.put(view.id, view);
+        if (document.getScreens().isEmpty()) {
+            projectScreen(viewStore, document, null, "main.xml");
+        } else {
+            for (CreatorScreen screen : document.getScreens().values()) {
+                if (screen == null) continue;
+                projectScreen(viewStore, document, screen, screen.getId() + ".xml");
+            }
         }
+        viewStore.n(wq.b(scId) + File.separator + "view");
+    }
 
+    private static void projectScreen(eC viewStore, CreatorProjectDocument document,
+                                      CreatorScreen screen, String xmlName) {
+        ArrayList<ViewBean> projected = new ArrayList<>();
+        String rootId = screen == null ? null : screen.getRootWidgetId();
         for (CreatorWidget widget : document.getWidgets().values()) {
             if (widget == null || widget.getId() == null || widget.getId().startsWith("root_")) continue;
+            if (rootId != null && !belongsToRoot(document, widget, rootId)) continue;
             int legacyType = toLegacyType(widget.getType());
             if (legacyType < 0) continue;
-            ViewBean view = byId.get(widget.getId());
-            boolean added = view == null;
-            if (added) view = new ViewBean(widget.getId(), legacyType);
+            ViewBean view = new ViewBean(widget.getId(), legacyType);
             view.id = widget.getId();
             view.name = widget.getId();
             view.type = legacyType;
@@ -119,12 +133,78 @@ public final class CreatorLegacyProjectBridge {
                     : java.util.Collections.<String>emptyList();
             view.index = Math.max(0, children.indexOf(widget.getId()));
             applyWidgetProperties(view, widget.getProperties());
-            if (added) {
-                viewStore.a(xmlName, view);
-                byId.put(view.id, view);
+            projected.add(view);
+        }
+        viewStore.c.put(xmlName, projected);
+    }
+
+    private static boolean belongsToRoot(CreatorProjectDocument document, CreatorWidget widget, String rootId) {
+        String current = widget.getParentId();
+        int guard = document.getWidgets().size() + 1;
+        while (current != null && guard-- > 0) {
+            if (rootId.equals(current)) return true;
+            CreatorWidget parent = document.getWidgets().get(current);
+            current = parent == null ? null : parent.getParentId();
+        }
+        return false;
+    }
+
+    /** Imports all legacy editor state back into the runtime document after an original editor surface returns. */
+    public static synchronized CreatorProjectDocument importLegacyProject(Context context,
+                                                                           CreatorProjectDocument current,
+                                                                           String scId) {
+        if (context == null || current == null || scId == null || lC.b(scId) == null) return current;
+        eC viewStore = jC.a(scId);
+        hC fileStore = jC.b(scId);
+        ArrayList<ProjectFileBean> files = fileStore == null ? new ArrayList<>() : fileStore.b();
+        if (files == null || files.isEmpty()) files = new ArrayList<>();
+        if (files.isEmpty()) files.add(new ProjectFileBean(ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY, "main"));
+
+        Map<String, CreatorScreen> screens = new java.util.LinkedHashMap<>();
+        Map<String, CreatorWidget> widgets = new java.util.LinkedHashMap<>();
+        ArrayList<ComponentBean> components = new ArrayList<>();
+        ArrayList<EventBean> events = new ArrayList<>();
+        Map<String, List<BlockBean>> blocksByEvent = new java.util.LinkedHashMap<>();
+        for (ProjectFileBean file : files) {
+            if (file == null || file.fileName == null) continue;
+            String screenId = file.fileName;
+            String rootId = "root_" + screenId;
+            CreatorLegacyViewImporter.Result imported = new CreatorLegacyViewImporter().importLayout(
+                    current.getProjectId(), current.getName(), screenId, "/" + screenId,
+                    viewStore.d(file.getXmlName()));
+            screens.putAll(imported.getDocument().getScreens());
+            widgets.putAll(imported.getDocument().getWidgets());
+            ArrayList<ComponentBean> fileComponents = viewStore.e(file.getXmlName());
+            if (fileComponents != null) components.addAll(fileComponents);
+            ArrayList<EventBean> fileEvents = viewStore.g(file.getXmlName());
+            if (fileEvents != null) {
+                events.addAll(fileEvents);
+                for (EventBean event : fileEvents) {
+                    if (event != null) blocksByEvent.put(event.getEventKey(), viewStore.a(file.getXmlName(), event.getEventKey()));
+                }
             }
         }
-        viewStore.n(wq.b(scId) + File.separator + "view");
+        CreatorProjectDocument importedDocument = new CreatorProjectDocument(
+                current.getSchemaVersion(), current.getProjectId(), current.getRevision(), current.getName(),
+                screens.containsKey(current.getEntryScreenId()) ? current.getEntryScreenId()
+                        : (screens.isEmpty() ? current.getEntryScreenId() : screens.keySet().iterator().next()),
+                screens, widgets, current.getEntryControl(), current.getState(), current.getEvents());
+        CreatorLegacyArtifactImporter.Result artifacts = new CreatorLegacyArtifactImporter().importArtifacts(
+                importedDocument, components, events, blocksByEvent);
+        CreatorLegacyArtifactImporter.Result metadata = new CreatorLegacyArtifactImporter().importProjectMetadata(
+                artifacts.getDocument(), files, collectLibraries(scId));
+        return metadata.getDocument();
+    }
+
+    private static ArrayList<ProjectLibraryBean> collectLibraries(String scId) {
+        ArrayList<ProjectLibraryBean> result = new ArrayList<>();
+        iC libraries = jC.c(scId);
+        if (libraries == null) return result;
+        if (libraries.b() != null) result.add(libraries.b());
+        if (libraries.c() != null) result.add(libraries.c());
+        if (libraries.d() != null) result.add(libraries.d());
+        if (libraries.e() != null) result.add(libraries.e());
+        return result;
     }
 
     private static int toLegacyType(String runtimeType) {
