@@ -53,11 +53,13 @@ public final class CreatorLegacyProjectBridge {
         String key = SC_ID_PREFIX + document.getProjectId();
         String existingScId = preferences.getString(key, null);
         if (existingScId != null && lC.b(existingScId) != null) {
+            ensureLegacyStores(context, existingScId);
             return existingScId;
         }
 
         String scId = lC.b();
         provisionLegacyProject(context, scId, document.getName());
+        ensureLegacyStores(context, scId);
         preferences.edit()
                 .putString(key, scId)
                 .putString("runtime_project_id_" + scId, document.getProjectId())
@@ -297,6 +299,32 @@ public final class CreatorLegacyProjectBridge {
                 ProjectSettings.SETTING_GENERIC_VALUE_TRUE);
         settings.setValue(ProjectSettings.SETTING_ENABLE_VIEWBINDING,
                 ProjectSettings.SETTING_GENERIC_VALUE_TRUE);
+    }
+
+    /**
+     * Ensures the original editor's file manager has a persisted main activity.
+     * Metadata alone is insufficient: DesignActivity immediately asks hC for
+     * main.xml during loadProject(), and a missing bean makes the launch path
+     * abort before the editor surface is shown.
+     */
+    private static void ensureLegacyStores(Context context, String scId) {
+        if (context == null || scId == null || scId.trim().isEmpty()) return;
+        wq.a(context.getApplicationContext(), scId);
+        createLegacyDirectories(scId);
+
+        hC fileStore = jC.b(scId, false);
+        if (fileStore.b(ProjectFileBean.DEFAULT_XML_NAME) == null) {
+            fileStore.a(new ProjectFileBean(ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY, "main"));
+        }
+        // hC.j() rebuilds derived XML/Java name lists; hC.l() persists the
+        // updated ProjectFileBean list to the legacy `file` store.
+        fileStore.j();
+        fileStore.l();
+
+        // Bootstrap the ViewBean manager before DesignActivity's fragment
+        // requests main.xml. Its normal eC initializer creates the empty view
+        // list when no serialized layout exists yet.
+        jC.a(scId, false);
     }
 
     private static void createLegacyDirectories(String scId) {

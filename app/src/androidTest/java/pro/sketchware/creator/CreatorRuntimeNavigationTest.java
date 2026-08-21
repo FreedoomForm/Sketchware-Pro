@@ -90,6 +90,17 @@ public class CreatorRuntimeNavigationTest {
         assertThat(document.getWidgets()).containsKey("root_main");
     }
 
+    @Test public void legacyProvisioningPersistsDefaultMainProjectFile() {
+        CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
+        String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
+        com.besome.sketch.beans.ProjectFileBean main = a.a.a.jC.b(scId)
+                .b(com.besome.sketch.beans.ProjectFileBean.DEFAULT_XML_NAME);
+        assertThat(main).isNotNull();
+        assertThat(main.fileName).isEqualTo("main");
+        assertThat(main.fileType)
+                .isEqualTo(com.besome.sketch.beans.ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY);
+    }
+
     @Test public void creatorRuntimeOpensOriginalSketchwareEditorSurface() {
         CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
         String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
