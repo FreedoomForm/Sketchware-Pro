@@ -10,12 +10,10 @@ import android.hardware.SensorManager;
 final class CreatorShakeRecovery implements SensorEventListener {
     interface Listener { void onShake(); }
 
-    private static final float SHAKE_THRESHOLD = 15f;
-    private static final long DEBOUNCE_MS = 900L;
     private final SensorManager sensorManager;
     private final Sensor accelerometer;
     private final Listener listener;
-    private long lastShakeAt;
+    private final CreatorShakeDetector detector = new CreatorShakeDetector();
 
     CreatorShakeRecovery(Context context, Listener listener) {
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
@@ -35,13 +33,8 @@ final class CreatorShakeRecovery implements SensorEventListener {
 
     @Override public void onSensorChanged(SensorEvent event) {
         if (event == null || event.values == null || event.values.length < 3) return;
-        float force = (float) Math.sqrt(event.values[0] * event.values[0]
-                + event.values[1] * event.values[1] + event.values[2] * event.values[2]);
-        long now = System.currentTimeMillis();
-        if (force >= SHAKE_THRESHOLD && now - lastShakeAt >= DEBOUNCE_MS) {
-            lastShakeAt = now;
-            listener.onShake();
-        }
+        if (detector.onSample(event.values[0], event.values[1], event.values[2],
+                System.currentTimeMillis())) listener.onShake();
     }
 
     @Override public void onAccuracyChanged(Sensor sensor, int accuracy) { }

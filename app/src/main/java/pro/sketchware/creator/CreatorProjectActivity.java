@@ -54,14 +54,16 @@ import pro.sketchware.creator.runtime.CreatorRuntimeServices;
 import pro.sketchware.creator.runtime.CreatorWidget;
 
 /**
- * First functional Creator Runtime editor and preview surface.
+ * Creator Runtime editor and live native application surface.
  *
  * <p>All controls submit typed operations to {@link CreatorRuntimeSession}; no
  * UI control writes project data directly and no Save or Compile button exists
  * in the live edit path.
  */
 public final class CreatorProjectActivity extends AppCompatActivity {
+    public static final String EXTRA_LIVE_ONLY = "creator_live_only";
     private CreatorRuntimeSession session;
+    private boolean liveOnly;
     private LinearLayout previewCanvas;
     private TextView revisionLabel;
     private MaterialButton entryControl;
@@ -82,6 +84,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_creator_project);
+        liveOnly = getIntent().getBooleanExtra(EXTRA_LIVE_ONLY, false);
+        configurePresentationMode();
         session = CreatorRuntimeSession.get(this);
         runtimeEnvironment = new CreatorRuntimeEnvironment(this, (serviceId, eventName, payload) ->
                 runOnUiThread(() -> handleRuntimeServiceEvent(serviceId, eventName, payload)));
@@ -93,7 +97,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 timerId -> runtimeEnvironment.publish("timer", "tick",
                         java.util.Collections.<String, Object>singletonMap("timerId", timerId)));
         runtimeExecutor = new CreatorRuntimeExecutor(runtimeServices);
-        findViewById(R.id.creator_back).setOnClickListener(v -> finish());
+        findViewById(R.id.creator_back).setOnClickListener(v -> leaveEditorToLiveSurface());
         findViewById(R.id.creator_add_text).setOnClickListener(v -> addWidget("text", "New text"));
         findViewById(R.id.creator_add_button).setOnClickListener(v -> addWidget("button", "Button"));
         findViewById(R.id.creator_add_input).setOnClickListener(v -> addWidget("input", ""));
@@ -101,7 +105,10 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         findViewById(R.id.creator_checkpoint).setOnClickListener(v -> createCheckpoint());
         findViewById(R.id.creator_history).setOnClickListener(v -> showHistoryInspector());
         findViewById(R.id.creator_compatibility).setOnClickListener(v -> showCompatibilityInspector());
-        entryControl.setOnClickListener(v -> editEntryControl());
+        entryControl.setOnClickListener(v -> {
+            if (liveOnly) openEditor();
+            else editEntryControl();
+        });
         shakeRecovery = new CreatorShakeRecovery(this, this::showRecoverySheet);
         ensureStarterScreen();
         render();
@@ -137,7 +144,34 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             liveDrawerLayout.closeDrawer(GravityCompat.START);
             return;
         }
-        super.onBackPressed();
+        if (liveOnly) {
+            finish();
+        } else {
+            leaveEditorToLiveSurface();
+        }
+    }
+
+    private void configurePresentationMode() {
+        View header = findViewById(R.id.creator_editor_header);
+        View controls = findViewById(R.id.creator_editor_controls);
+        if (header != null) header.setVisibility(liveOnly ? View.GONE : View.VISIBLE);
+        if (controls != null) controls.setVisibility(liveOnly ? View.GONE : View.VISIBLE);
+    }
+
+    private void leaveEditorToLiveSurface() {
+        if (liveOnly) {
+            finish();
+            return;
+        }
+        startActivity(new android.content.Intent(this, CreatorProjectActivity.class)
+                .putExtra(EXTRA_LIVE_ONLY, true));
+        finish();
+    }
+
+    private void openEditor() {
+        boolean closeLiveSurface = liveOnly;
+        startActivity(new android.content.Intent(this, CreatorProjectActivity.class));
+        if (closeLiveSurface) finish();
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {

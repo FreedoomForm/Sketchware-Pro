@@ -2,9 +2,10 @@
 <resources>
     <string name="creator_runtime">Creator Runtime</string>
     <string name="creator_home_title">Create in the open</string>
-    <string name="creator_home_empty_preview">Your project is ready for its first screen. Every edit is saved and visible.</string>
-    <string name="creator_home_preview_detail">Revision %1$d · %2$d screens · %3$d widgets</string>
+    <string name="creator_home_empty_project">Your project is ready for its first screen. Every edit is saved and visible.</string>
+    <string name="creator_home_project_detail">Revision %1$d · %2$d screens · %3$d widgets</string>
     <string name="creator_open_legacy">Open legacy Sketchware projects</string>
+    <string name="creator_sidebar_description">Project management and legacy Sketchware tools</string>
     <string name="creator_open_project">Open project editor</string>
     <string name="creator_continue">Continue</string>
     <string name="creator_back">Back to Creator Home</string>

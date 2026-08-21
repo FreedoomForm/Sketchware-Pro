@@ -8,8 +8,9 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import pro.sketchware.R;
 import pro.sketchware.activities.main.activities.MainActivity;
@@ -21,7 +22,8 @@ public final class CreatorHomeActivity extends AppCompatActivity {
     private CreatorRuntimeSession session;
     private TextView previewTitle;
     private TextView previewDetail;
-    private MaterialButton entryControl;
+    private FloatingActionButton entryControl;
+    private DrawerLayout drawer;
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(() -> renderDocument(document));
 
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -31,8 +33,11 @@ public final class CreatorHomeActivity extends AppCompatActivity {
         previewTitle = findViewById(R.id.creator_preview_title);
         previewDetail = findViewById(R.id.creator_preview_detail);
         entryControl = findViewById(R.id.creator_entry_control);
+        drawer = findViewById(R.id.creator_home_drawer);
         entryControl.setOnClickListener(v -> openProject());
+        findViewById(R.id.creator_home_menu).setOnClickListener(v -> drawer.openDrawer(androidx.core.view.GravityCompat.START));
         findViewById(R.id.creator_open_legacy).setOnClickListener(v -> {
+            drawer.closeDrawer(androidx.core.view.GravityCompat.START);
             startActivity(new Intent(this, MainActivity.class));
         });
         findViewById(R.id.creator_home_body).setOnClickListener(v -> openProject());
@@ -56,12 +61,12 @@ public final class CreatorHomeActivity extends AppCompatActivity {
     private void renderDocument(CreatorProjectDocument document) {
         previewTitle.setText(document.getName());
         if (document.getScreens().isEmpty()) {
-            previewDetail.setText(R.string.creator_home_empty_preview);
+            previewDetail.setText(R.string.creator_home_empty_project);
         } else {
-            previewDetail.setText(getString(R.string.creator_home_preview_detail,
+            previewDetail.setText(getString(R.string.creator_home_project_detail,
                     document.getRevision(), document.getScreens().size(), document.getWidgets().size()));
         }
-        entryControl.setText(document.getEntryControl().getLabel());
+        entryControl.setContentDescription(document.getEntryControl().getLabel());
         entryControl.setVisibility(document.getEntryControl().isVisible() ? View.VISIBLE : View.INVISIBLE);
         applyEntryPlacement(document.getEntryControl().getPlacement());
     }
