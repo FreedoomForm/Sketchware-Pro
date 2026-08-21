@@ -27,6 +27,7 @@ public final class CreatorHomeActivity extends AppCompatActivity {
     private TextView previewDetail;
     private FloatingActionButton entryControl;
     private DrawerLayout drawer;
+    private boolean showLiveSurfaceAfterEditor;
     private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(() -> renderDocument(document));
 
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -51,6 +52,11 @@ public final class CreatorHomeActivity extends AppCompatActivity {
         super.onResume();
         session.addListener(documentListener);
         renderDocument(session.getDocument());
+        if (showLiveSurfaceAfterEditor) {
+            showLiveSurfaceAfterEditor = false;
+            startActivity(new Intent(this, CreatorProjectActivity.class)
+                    .putExtra(CreatorProjectActivity.EXTRA_LIVE_ONLY, true));
+        }
     }
 
     @Override protected void onPause() {
@@ -59,6 +65,7 @@ public final class CreatorHomeActivity extends AppCompatActivity {
     }
 
     private void openProject() {
+        showLiveSurfaceAfterEditor = true;
         CreatorProjectDocument document = session.getDocument();
         String legacyScId = CreatorLegacyProjectBridge.ensureLegacyProject(this, document);
         Intent intent = new Intent(this, DesignActivity.class)

@@ -1,0 +1,235 @@
+== Design/Logic navigation ==
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:439:                startActivity(intent);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:480:                                    startActivity(launcher);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:507:        startActivity(intent);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1020:        startActivity(intent);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1165:            startActivity(intent);
+app/src/main/java/a/a/a/ViewEditorFragment.java:21:import com.besome.sketch.editor.LogicEditorActivity;
+app/src/main/java/a/a/a/ViewEditorFragment.java:82:        viewProperty.setOnEventClickListener(eventBean -> toLogicEditorActivity(eventBean.targetId, eventBean.eventName, eventBean.eventName));
+app/src/main/java/a/a/a/ViewEditorFragment.java:162:    private void toLogicEditorActivity(String eventId, String eventName, String eventName2) {
+app/src/main/java/a/a/a/ViewEditorFragment.java:163:        Intent intent = new Intent(requireContext(), LogicEditorActivity.class);
+app/src/main/java/a/a/a/ViewEditorFragment.java:170:        requireContext().startActivity(intent);
+app/src/main/java/a/a/a/ViewEditorFragment.java:198:        startActivityForResult(intent, 213);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:135:public class LogicEditorActivity extends BaseAppCompatActivity implements View.OnClickListener, Vs, View.OnTouchListener, MoreblockImporterDialog.CallBack {
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1269:                    LogicEditorActivity.this.a(ss, "Color.TRANSPARENT");
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1271:                    LogicEditorActivity.this.a(ss, String.format("0x%08X", var1 & (Color.WHITE)));
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1277:                LogicEditorActivity.this.a(ss, "R.color." + var1);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1827:        startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1884:                    startActivityForResult(intent, 222);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2463:        startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2494:        private final WeakReference<LogicEditorActivity> activity;
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2496:        public ProjectSaver(LogicEditorActivity logicEditorActivity) {
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2522:        private final WeakReference<LogicEditorActivity> activityRef;
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2525:        public LoadEventBlocksTask(LogicEditorActivity activity) {
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2535:            LogicEditorActivity activity = getActivity();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2542:        private LogicEditorActivity getActivity() {
+app/src/main/java/com/besome/sketch/editor/LogicEditorDrawer.java:57:            getContext().startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/PropertyActivity.java:249:        startActivityForResult(var1, 209);
+app/src/main/java/com/besome/sketch/editor/manage/ManageCollectionActivity.java:97:        startActivityForResult(intent, REQUEST_CODE_ADD_IMAGE_DIALOG);
+app/src/main/java/com/besome/sketch/editor/manage/ManageCollectionActivity.java:105:        startActivityForResult(intent, REQUEST_CODE_ADD_SOUND_DIALOG);
+app/src/main/java/com/besome/sketch/editor/manage/ManageCollectionActivity.java:113:        startActivityForResult(intent, REQUEST_CODE_ADD_FONT_DIALOG);
+app/src/main/java/com/besome/sketch/editor/manage/ManageCollectionActivity.java:161:        startActivityForResult(intent, REQUEST_CODE_SHOW_IMAGE_DETAILS);
+app/src/main/java/com/besome/sketch/editor/manage/ManageCollectionActivity.java:171:        startActivityForResult(intent, REQUEST_CODE_SHOW_SOUND_DETAILS);
+app/src/main/java/com/besome/sketch/editor/manage/ManageCollectionActivity.java:180:        startActivityForResult(intent, REQUEST_CODE_SHOW_FONT_DETAILS);
+app/src/main/java/com/besome/sketch/editor/manage/ManageCollectionActivity.java:188:        startActivityForResult(intent, REQUEST_CODE_SHOW_WIDGET_DETAILS);
+app/src/main/java/com/besome/sketch/editor/manage/ManageCollectionActivity.java:195:        startActivityForResult(intent, REQUEST_CODE_SHOW_BLOCK_DETAILS);
+app/src/main/java/com/besome/sketch/editor/manage/ManageCollectionActivity.java:202:        startActivityForResult(intent, REQUEST_CODE_SHOW_MORE_BLOCK_DETAILS);
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:221:                    startActivityForResult(intent, 264);
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:225:                    startActivityForResult(intent, 266);
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:418:                        startActivityForResult(intent, 265);
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:428:                        startActivityForResult(intent, requestCode);
+app/src/main/java/com/besome/sketch/editor/manage/font/AddFontActivity.java:76:                startActivityForResult(Intent.createChooser(intent1, Helper.getResString(R.string.common_word_choose)), REQUEST_CODE_FONT_PICKER);
+app/src/main/java/com/besome/sketch/editor/manage/font/FontManagerFragment.java:119:            startActivityForResult(intent, 232);
+app/src/main/java/com/besome/sketch/editor/manage/font/ImportFontFragment.java:183:        startActivityForResult(intent, 271);
+app/src/main/java/com/besome/sketch/editor/manage/image/AddImageActivity.java:244:            startActivityForResult(Intent.createChooser(intent, getString(R.string.common_word_choose)), 215);
+app/src/main/java/com/besome/sketch/editor/manage/image/AddImageCollectionActivity.java:200:            startActivityForResult(Intent.createChooser(intent, getString(R.string.common_word_choose)), 215);
+app/src/main/java/com/besome/sketch/editor/manage/library/ManageLibraryActivity.java:119:        startActivityForResult(intent, REQUEST_CODE_APPCOMPAT_ACTIVITY);
+app/src/main/java/com/besome/sketch/editor/manage/library/ManageLibraryActivity.java:157:        startActivityForResult(intent, REQUEST_CODE_ADMOB_ACTIVITY);
+app/src/main/java/com/besome/sketch/editor/manage/library/ManageLibraryActivity.java:165:        startActivityForResult(intent, REQUEST_CODE_FIREBASE_ACTIVITY);
+app/src/main/java/com/besome/sketch/editor/manage/library/ManageLibraryActivity.java:173:        startActivityForResult(intent, REQUEST_CODE_GOOGLE_MAPS_ACTIVITY);
+app/src/main/java/com/besome/sketch/editor/manage/library/ManageLibraryActivity.java:181:        startActivityForResult(intent, REQUEST_CODE_CUSTOM_ITEM_LIBRARY_ACTIVITY);
+app/src/main/java/com/besome/sketch/editor/manage/library/ManageLibraryActivity.java:188:        startActivityForResult(intent, REQUEST_CODE_MATERIAL3_ACTIVITY);
+app/src/main/java/com/besome/sketch/editor/manage/library/ManageLibraryActivity.java:195:        startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/admob/AdmobActivity.java:171:                startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/admob/AdmobActivity.java:243:                    startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/admob/AdmobActivity.java:263:                startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/admob/ManageAdmobActivity.java:106:                startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/admob/ManageAdmobActivity.java:125:            startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/admob/ManageAdmobActivity.java:275:                startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/admob/ManageAdmobActivity.java:288:        startActivityForResult(intent, 236);
+app/src/main/java/com/besome/sketch/editor/manage/library/firebase/FirebaseActivity.java:112:                    startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/firebase/FirebaseActivity.java:132:                startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/firebase/FirebaseActivity.java:272:                startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/firebase/ManageFirebaseActivity.java:73:                startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/firebase/ManageFirebaseActivity.java:92:            startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/firebase/ManageFirebaseActivity.java:106:            startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/library/googlemap/ManageGoogleMapActivity.java:44:                startActivity(openDocIntent);
+app/src/main/java/com/besome/sketch/editor/manage/library/googlemap/ManageGoogleMapActivity.java:63:                startActivity(intent);
+app/src/main/java/com/besome/sketch/editor/manage/sound/AddSoundActivity.java:86:        startActivityForResult(Intent.createChooser(intent, getString(R.string.common_word_choose)), REQUEST_CODE_SOUND_PICKER);
+app/src/main/java/com/besome/sketch/editor/manage/sound/AddSoundCollectionActivity.java:185:        startActivityForResult(Intent.createChooser(intent, getString(R.string.common_word_choose)), 218);
+app/src/main/java/com/besome/sketch/editor/manage/view/AddCustomViewActivity.java:79:            startActivityForResult(intent, REQ_CD_PRESET_ACTIVITY);
+app/src/main/java/com/besome/sketch/editor/manage/view/ManageViewActivity.java:258:                startActivityForResult(intent, isActivitiesTab ? REQUEST_CODE_ADD_ACTIVITY : REQUEST_CODE_ADD_CUSTOM_VIEW);
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:998:            ((Activity) getContext()).startActivityForResult(intent, 209);
+== Manifest activities ==
+46:        <activity
+62:        <activity
+65:        <activity
+69:        <activity android:name="com.besome.sketch.help.LicenseActivity" />
+70:        <activity android:name="com.besome.sketch.help.ProgramInfoActivity" />
+71:        <activity
+74:        <activity android:name="com.besome.sketch.help.SystemInfoActivity" />
+75:        <activity
+81:        <activity
+84:        <activity
+87:        <activity
+91:        <activity android:name="com.besome.sketch.tools.CompileLogActivity" />
+92:        <activity android:name="com.besome.sketch.tools.CollectErrorActivity" />
+93:        <activity
+96:        <activity
+99:        <activity
+104:        <activity
+109:        <activity
+119:        <activity
+140:        <activity
+143:        <activity
+146:        <activity
+149:        <activity
+152:        <activity
+155:        <activity
+158:        <activity
+161:        <activity
+164:        <activity
+167:        <activity
+171:        <activity
+175:        <activity
+180:        <activity
+184:        <activity
+189:        <activity
+194:        <activity
+199:        <activity
+204:        <activity
+210:        <activity
+216:        <activity
+220:        <activity
+225:        <activity
+230:        <activity
+233:        <activity
+236:        <activity
+239:        <activity
+242:        <activity
+245:        <activity
+248:        <activity
+251:        <activity
+255:        <activity
+258:        <activity
+261:        <activity
+264:        <activity
+267:        <activity
+270:        <activity
+273:        <activity
+276:        <activity
+280:        <activity
+283:        <activity
+286:        <activity
+289:        <activity
+292:        <activity
+295:        <activity
+298:        <activity android:name="mod.jbk.editor.manage.library.ExcludeBuiltInLibrariesActivity" />
+299:        <activity
+304:        <activity
+308:        <activity
+313:        <activity android:name="pro.sketchware.activities.settings.SettingsActivity" />
+315:        <activity android:name="com.sketchware.ai.ui.settings.AISettingsActivity"
+319:        <activity android:name="com.sketchware.ai.ui.settings.ProviderDetailActivity"
+323:        <activity android:name="pro.sketchware.activities.resourceseditor.ResourcesEditorActivity" />
+325:        <activity
+329:        <activity
+333:        <activity
+337:        <activity
+342:        <activity
+347:        <activity
+351:        <activity
+355:        <activity
+== Runtime sidebar handlers ==
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:112:        findViewById(R.id.creator_back).setOnClickListener(v -> leaveEditorToLiveSurface());
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:113:        findViewById(R.id.creator_add_text).setOnClickListener(v -> addWidget("text", "New text"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:114:        findViewById(R.id.creator_add_button).setOnClickListener(v -> addWidget("button", "Button"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:115:        findViewById(R.id.creator_add_input).setOnClickListener(v -> addWidget("input", ""));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:116:        findViewById(R.id.creator_add_toggle).setOnClickListener(v -> addWidget("switch", "Toggle"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:117:        findViewById(R.id.creator_checkpoint).setOnClickListener(v -> createCheckpoint());
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:118:        findViewById(R.id.creator_history).setOnClickListener(v -> showHistoryInspector());
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:119:        findViewById(R.id.creator_compatibility).setOnClickListener(v -> showCompatibilityInspector());
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:120:        entryControl.setOnClickListener(v -> {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:171:        View menu = findViewById(R.id.creator_sidebar_open);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:172:        if (menu != null) menu.setOnClickListener(v -> {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:175:        bindSidebar(R.id.creator_sidebar_new_project, v -> createNewProjectFromSidebar());
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:176:        bindSidebar(R.id.creator_sidebar_projects, v -> openLegacyMain(false));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:177:        bindSidebar(R.id.creator_sidebar_sketchub, v -> openLegacyMain(true));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:178:        bindSidebar(R.id.creator_sidebar_about, v -> openActivity(AboutActivity.class));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:179:        bindSidebar(R.id.creator_sidebar_changelog, v -> {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:182:            startActivity(intent);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:184:        bindSidebar(R.id.creator_sidebar_info, v -> startActivityForResult(
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:186:        bindSidebar(R.id.creator_sidebar_keystore, v -> openActivity(NewKeyStoreActivity.class));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:187:        bindSidebar(R.id.creator_sidebar_settings, v -> openActivity(AppSettings.class));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:188:        bindSidebar(R.id.creator_sidebar_swassist, v -> openExternal(R.string.link_sw_assist));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:189:        bindSidebar(R.id.creator_sidebar_discord, v -> openExternal(R.string.link_discord_invite));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:190:        bindSidebar(R.id.creator_sidebar_telegram, v -> openExternal(R.string.link_telegram_invite));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:191:        bindSidebar(R.id.creator_sidebar_github, v -> openExternal(R.string.link_github_url));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:196:        if (view != null) view.setOnClickListener(listener);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:210:                .setTitle(R.string.creator_sidebar_new_project)
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:228:        startActivity(intent);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:233:        startActivity(new Intent(this, type));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:239:            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getString(urlRes))));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:257:        startActivity(new android.content.Intent(this, CreatorProjectActivity.class)
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:264:        startActivity(new android.content.Intent(this, CreatorProjectActivity.class));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:555:            button.setOnClickListener(v -> dispatchRuntimeEvent(widget.getId(), "click"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:702:            fab.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "click"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:776:                row.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "item_click"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:893:                dot.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "pattern_changed"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:905:                index.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "letter_selected"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:965:            signIn.setOnClickListener(view -> dispatchRuntimeEvent(widget.getId(), "click"));
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1006:        if (hasRuntimeClickBinding(widget.getId())) view.setOnClickListener(v -> dispatchRuntimeEvent(widget.getId(), "click"));
+app/src/main/java/pro/sketchware/creator/CreatorHomeActivity.java:41:        entryControl.setOnClickListener(v -> openProject());
+app/src/main/java/pro/sketchware/creator/CreatorHomeActivity.java:42:        findViewById(R.id.creator_home_menu).setOnClickListener(v -> drawer.openDrawer(androidx.core.view.GravityCompat.START));
+app/src/main/java/pro/sketchware/creator/CreatorHomeActivity.java:43:        findViewById(R.id.creator_open_legacy).setOnClickListener(v -> {
+app/src/main/java/pro/sketchware/creator/CreatorHomeActivity.java:45:            startActivity(new Intent(this, MainActivity.class));
+app/src/main/java/pro/sketchware/creator/CreatorHomeActivity.java:47:        findViewById(R.id.creator_home_body).setOnClickListener(v -> openProject());
+app/src/main/java/pro/sketchware/creator/CreatorHomeActivity.java:67:        startActivity(intent);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:62:                environment.getActivity().startActivity(intent(arguments));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:74:                environment.getActivity().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:82:                environment.getActivity().startActivity(Intent.createChooser(share,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorIntentService.java:89:                environment.getActivity().startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + number)));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEnvironment.java:71:        activity.startActivityForResult(intent, requestCode);
+app/src/main/res/layout/activity_creator_home.xml:95:            android:text="@string/creator_sidebar_description"
+app/src/main/res/layout/activity_creator_project.xml:59:                    android:id="@+id/creator_sidebar_open"
+app/src/main/res/layout/activity_creator_project.xml:63:                    android:contentDescription="@string/creator_sidebar_title"
+app/src/main/res/layout/activity_creator_project.xml:185:                android:id="@+id/creator_sidebar_title"
+app/src/main/res/layout/activity_creator_project.xml:188:                android:text="@string/creator_sidebar_title"
+app/src/main/res/layout/activity_creator_project.xml:197:                android:text="@string/creator_sidebar_description"
+app/src/main/res/layout/activity_creator_project.xml:205:                android:text="@string/creator_sidebar_project_section"
+app/src/main/res/layout/activity_creator_project.xml:211:                android:id="@+id/creator_sidebar_new_project"
+app/src/main/res/layout/activity_creator_project.xml:216:                android:text="@string/creator_sidebar_new_project" />
+app/src/main/res/layout/activity_creator_project.xml:219:                android:id="@+id/creator_sidebar_projects"
+app/src/main/res/layout/activity_creator_project.xml:224:                android:text="@string/creator_sidebar_projects" />
+app/src/main/res/layout/activity_creator_project.xml:227:                android:id="@+id/creator_sidebar_sketchub"
+app/src/main/res/layout/activity_creator_project.xml:232:                android:text="@string/creator_sidebar_sketchub" />
+app/src/main/res/layout/activity_creator_project.xml:238:                android:text="@string/creator_sidebar_app_section"
+app/src/main/res/layout/activity_creator_project.xml:244:                android:id="@+id/creator_sidebar_about"
+app/src/main/res/layout/activity_creator_project.xml:249:                android:text="@string/creator_sidebar_about" />
+app/src/main/res/layout/activity_creator_project.xml:252:                android:id="@+id/creator_sidebar_changelog"
+app/src/main/res/layout/activity_creator_project.xml:257:                android:text="@string/creator_sidebar_changelog" />
+app/src/main/res/layout/activity_creator_project.xml:260:                android:id="@+id/creator_sidebar_info"
+app/src/main/res/layout/activity_creator_project.xml:265:                android:text="@string/creator_sidebar_info" />
+app/src/main/res/layout/activity_creator_project.xml:268:                android:id="@+id/creator_sidebar_keystore"
+app/src/main/res/layout/activity_creator_project.xml:273:                android:text="@string/creator_sidebar_keystore" />
+app/src/main/res/layout/activity_creator_project.xml:276:                android:id="@+id/creator_sidebar_settings"
+app/src/main/res/layout/activity_creator_project.xml:281:                android:text="@string/creator_sidebar_settings" />
+app/src/main/res/layout/activity_creator_project.xml:287:                android:text="@string/creator_sidebar_links_section"
+app/src/main/res/layout/activity_creator_project.xml:293:                android:id="@+id/creator_sidebar_swassist"
+app/src/main/res/layout/activity_creator_project.xml:298:                android:text="@string/creator_sidebar_swassist" />
+app/src/main/res/layout/activity_creator_project.xml:301:                android:id="@+id/creator_sidebar_discord"
+app/src/main/res/layout/activity_creator_project.xml:306:                android:text="@string/creator_sidebar_discord" />
+app/src/main/res/layout/activity_creator_project.xml:309:                android:id="@+id/creator_sidebar_telegram"
+app/src/main/res/layout/activity_creator_project.xml:314:                android:text="@string/creator_sidebar_telegram" />
+app/src/main/res/layout/activity_creator_project.xml:317:                android:id="@+id/creator_sidebar_github"
+app/src/main/res/layout/activity_creator_project.xml:322:                android:text="@string/creator_sidebar_github" />

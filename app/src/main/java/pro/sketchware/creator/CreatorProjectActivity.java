@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.besome.sketch.help.ProgramInfoActivity;
+import com.besome.sketch.design.DesignActivity;
 import com.besome.sketch.tools.NewKeyStoreActivity;
 import mod.hilal.saif.activities.tools.AppSettings;
 import pro.sketchware.R;
@@ -48,6 +49,7 @@ import pro.sketchware.creator.runtime.CreatorCompatibilityTier;
 import pro.sketchware.creator.runtime.CreatorDrawerService;
 import pro.sketchware.creator.runtime.CreatorEventBinding;
 import pro.sketchware.creator.runtime.CreatorLegacyArtifactImporter;
+import pro.sketchware.creator.runtime.CreatorLegacyProjectBridge;
 import pro.sketchware.creator.runtime.CreatorMapService;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectOperation;
@@ -260,9 +262,18 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     }
 
     private void openEditor() {
-        boolean closeLiveSurface = liveOnly;
-        startActivity(new android.content.Intent(this, CreatorProjectActivity.class));
-        if (closeLiveSurface) finish();
+        if (liveOnly) {
+            CreatorProjectDocument document = session.getDocument();
+            String legacyScId = CreatorLegacyProjectBridge.ensureLegacyProject(this, document);
+            Intent intent = new Intent(this, DesignActivity.class)
+                    .putExtra("sc_id", legacyScId)
+                    .putExtra("creator_runtime_project_id", document.getProjectId());
+            // Keep the live surface underneath the original editor so Back
+            // returns directly to the updated runtime application.
+            startActivity(intent);
+            return;
+        }
+        startActivity(new Intent(this, CreatorProjectActivity.class));
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {

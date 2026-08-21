@@ -218,13 +218,18 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
      * permissions used by the original launcher, so that check must not close the
      * original editor when it is opened from the runtime boundary.
      */
-    @Override
-    public boolean isStoragePermissionGranted() {
+    private boolean isCreatorRuntimeMode() {
         String runtimeProjectId = getIntent() == null
                 ? null : getIntent().getStringExtra("creator_runtime_project_id");
-        if (runtimeProjectId != null && !runtimeProjectId.trim().isEmpty()) return true;
+        return runtimeProjectId != null && !runtimeProjectId.trim().isEmpty();
+    }
+
+    @Override
+    public boolean isStoragePermissionGranted() {
+        if (isCreatorRuntimeMode()) return true;
         return super.isStoragePermissionGranted();
     }
+    private boolean buildCancelReceiverRegistered;
     private final BroadcastReceiver buildCancelReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -444,6 +449,12 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
     @Override
     public void finish() {
+        // SaveChangesProjectCloser/ProjectSaver persist the legacy stores before
+        // calling finish(). Import that final snapshot before the legacy caches
+        // are released so Creator Home renders the just-edited document.
+        if (isCreatorRuntimeMode() && sc_id != null) {
+            importLegacyRuntimeBoundary();
+        }
         jC.a();
         cC.a();
         bC.a();
@@ -577,17 +588,21 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
         findViewById(R.id.file_name_container).setOnClickListener(this);
 
-        btnRun = findViewById(R.id.btn_run);
-        btnRun.setOnClickListener(v -> {
-            if (currentBuildTask != null && !currentBuildTask.canceled && !currentBuildTask.isBuildFinished) {
-                currentBuildTask.cancelBuild();
-                return;
-            }
+        // Run is intentionally not part of the original editor bottom bar in
+        // runtime mode. BuildTask keeps a nullable reference for legacy code.
+        btnRun = null;
+        if (btnRun != null) {
+            btnRun.setOnClickListener(v -> {
+                if (currentBuildTask != null && !currentBuildTask.canceled && !currentBuildTask.isBuildFinished) {
+                    currentBuildTask.cancelBuild();
+                    return;
+                }
 
-            BuildTask buildTask = new BuildTask(this);
-            currentBuildTask = buildTask;
-            buildTask.execute();
-        });
+                BuildTask buildTask = new BuildTask(this);
+                currentBuildTask = buildTask;
+                buildTask.execute();
+            });
+        }
 
         btnOptions = findViewById(R.id.btn_options);
         btnOptions.setOnClickListener(v -> bottomPopupMenu.show());
@@ -697,6 +712,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         } else {
             registerReceiver(buildCancelReceiver, filter);
         }
+        buildCancelReceiverRegistered = true;
 
     }
 
@@ -725,7 +741,10 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             runtimeSession = null;
         }
         super.onDestroy();
-        unregisterReceiver(buildCancelReceiver);
+        if (buildCancelReceiverRegistered) {
+            unregisterReceiver(buildCancelReceiver);
+            buildCancelReceiverRegistered = false;
+        }
     }
 
     @Override
@@ -1488,11 +1507,13 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
         private void updateRunButton(boolean isRunning) {
             var context = getActivity();
-            btnRun.setBackgroundTintList(ColorStateList.valueOf(ThemeUtils.getColor(context, isRunning ? R.attr.colorErrorContainer : R.attr.colorPrimary)));
-            btnRun.setIcon(ContextCompat.getDrawable(context, isRunning ? R.drawable.ic_mtrl_stop : R.drawable.ic_mtrl_run));
-            btnRun.setIconTint(ColorStateList.valueOf(ThemeUtils.getColor(context, isRunning ? R.attr.colorOnErrorContainer : R.attr.colorSurfaceContainerLowest)));
-            btnRun.setTextColor(ColorStateList.valueOf(ThemeUtils.getColor(context, isRunning ? R.attr.colorOnErrorContainer : R.attr.colorSurfaceContainerLowest)));
-            btnRun.setText(isRunning ? "Stop" : "Run");
+            if (btnRun != null) {
+                btnRun.setBackgroundTintList(ColorStateList.valueOf(ThemeUtils.getColor(context, isRunning ? R.attr.colorErrorContainer : R.attr.colorPrimary)));
+                btnRun.setIcon(ContextCompat.getDrawable(context, isRunning ? R.drawable.ic_mtrl_stop : R.drawable.ic_mtrl_run));
+                btnRun.setIconTint(ColorStateList.valueOf(ThemeUtils.getColor(context, isRunning ? R.attr.colorOnErrorContainer : R.attr.colorSurfaceContainerLowest)));
+                btnRun.setTextColor(ColorStateList.valueOf(ThemeUtils.getColor(context, isRunning ? R.attr.colorOnErrorContainer : R.attr.colorSurfaceContainerLowest)));
+                btnRun.setText(isRunning ? "Stop" : "Run");
+            }
             btnOptions.setEnabled(!isRunning);
             progressContainer.setVisibility(isRunning ? View.VISIBLE : View.GONE);
         }

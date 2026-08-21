@@ -137,30 +137,17 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <com.google.android.material.button.MaterialSplitButton
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_options"
+                    style="?attr/materialSplitButtonIconFilledStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
+                    android:contentDescription="@string/design_options_content_description"
                     android:paddingTop="0dp"
-                    android:paddingBottom="0dp">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_run"
-                        style="?attr/materialSplitButtonLeadingFilledStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Run"
-                        app:icon="@drawable/ic_mtrl_run" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_options"
-                        style="?attr/materialSplitButtonIconFilledStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        app:icon="@drawable/m3_split_button_chevron_avd"
-                        app:iconSize="24dp" />
-
-                </com.google.android.material.button.MaterialSplitButton>
+                    android:paddingBottom="0dp"
+                    app:icon="@drawable/m3_split_button_chevron_avd"
+                    app:iconSize="24dp" />
             </LinearLayout>
         </LinearLayout>
 

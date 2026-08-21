@@ -1,0 +1,86 @@
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:435:                Intent intent = new Intent(getApplicationContext(), CompileLogActivity.class);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:439:                startActivity(intent);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:480:                                    startActivity(launcher);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:500:        Intent intent = new Intent(Intent.ACTION_VIEW);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:507:        startActivity(intent);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:578:        findViewById(R.id.file_name_container).setOnClickListener(this);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:581:        btnRun.setOnClickListener(v -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:593:        btnOptions.setOnClickListener(v -> bottomPopupMenu.show());
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:597:        bottomMenu.add(Menu.NONE, 1, Menu.NONE, "Build Settings").setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:602:        bottomMenu.add(Menu.NONE, 2, Menu.NONE, "Clean temporary files").setVisible(false).setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:610:        bottomMenu.add(Menu.NONE, 3, Menu.NONE, "Show last compile error").setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:614:        bottomMenu.add(Menu.NONE, 5, Menu.NONE, "Show source code").setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:618:        bottomMenu.add(Menu.NONE, 4, Menu.NONE, "Install last built APK").setVisible(false).setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:624:        bottomMenu.add(Menu.NONE, 6, Menu.NONE, "Show Apk signatures").setVisible(false).setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:629:        bottomMenu.add(Menu.NONE, 7, Menu.NONE, "Direct XML editor").setOnMenuItemClickListener(item -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:742:    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:757:        return super.onOptionsItemSelected(item);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:969:        adapter.setOnItemClickListener(projectFileBean -> {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:982:        Intent intent = new Intent(getApplicationContext(), ViewSelectorActivity.class);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1017:        Intent intent = new Intent(getApplicationContext(), LogReaderActivity.class);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1020:        startActivity(intent);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1157:        Intent intent = new Intent(getApplicationContext(), toLaunch);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1165:            startActivity(intent);
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1473:            Intent cancelIntent = new Intent(BuildTask.ACTION_CANCEL_BUILD);
+app/src/main/java/com/besome/sketch/design/DesignDrawer.java:176:        drawerItem.setOnClickListener(id, drawerItemClickListener);
+app/src/main/java/com/besome/sketch/design/DesignDrawer.java:227:        public void setOnClickListener(int id, OnClickListener listener) {
+app/src/main/java/com/besome/sketch/design/DesignDrawer.java:229:            binding.getRoot().setOnClickListener(listener);
+app/src/main/java/a/a/a/Fw.java:300:                binding.viewItem.setOnClickListener(view -> {
+app/src/main/java/a/a/a/Fw.java:312:                            Intent intent = new Intent(getContext(), AddViewActivity.class);
+app/src/main/java/a/a/a/Fw.java:334:                binding.imgPresetSetting.setOnClickListener(view -> {
+app/src/main/java/a/a/a/Fw.java:337:                        Intent intent = new Intent(getContext(), PresetSettingActivity.class);
+app/src/main/java/a/a/a/Fx.java:569:                opcode = String.format("%s.setOnClickListener(new View.OnClickListener() {\n@Override\npublic void onClick(View _view) {\n%s\n}\n});", params.get(0), listener);
+app/src/main/java/a/a/a/Fx.java:668:                opcode = String.format("startActivity(%s);", params.get(0));
+app/src/main/java/a/a/a/Fx.java:1347:                opcode = String.format("Intent _intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);\n_intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());\n_intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);\n_intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());\n%s.startListening(_intent);", params.get(0));
+app/src/main/java/a/a/a/Lx.java:857:     * Example initializer for an Intent component: <code>new Intent()</code>
+app/src/main/java/a/a/a/Lx.java:880:                return "new Intent()";
+app/src/main/java/a/a/a/Lx.java:903:                return "new Intent(MediaStore.ACTION_IMAGE_CAPTURE)";
+app/src/main/java/a/a/a/Lx.java:906:                return "new Intent(Intent.ACTION_GET_CONTENT)";
+app/src/main/java/a/a/a/Lx.java:954:                "Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);\r\n" +
+app/src/main/java/a/a/a/Lx.java:955:                "activity.startActivity(intent);\r\n" +
+app/src/main/java/a/a/a/Lx.java:1648:                    componentName + ".setOnClickListener(new View.OnClickListener() {\r\n" +
+app/src/main/java/a/a/a/Lx.java:1745:                    componentName + ".setOnItemClickListener(new AdapterView.OnItemClickListener() {\r\n"
+app/src/main/java/a/a/a/Lx.java:2935:                            Intent _intent = new Intent("com.android.camera.action.CROP");
+app/src/main/java/a/a/a/ViewEditorFragment.java:163:        Intent intent = new Intent(requireContext(), LogicEditorActivity.class);
+app/src/main/java/a/a/a/ViewEditorFragment.java:170:        requireContext().startActivity(intent);
+app/src/main/java/a/a/a/ViewEditorFragment.java:193:        Intent intent = new Intent(requireContext(), PropertyActivity.class);
+app/src/main/java/a/a/a/ViewEditorFragment.java:502:    public boolean onOptionsItemSelected(MenuItem item) {
+app/src/main/java/a/a/a/Yv.java:88:        actBinding.btnImport.setOnClickListener(view -> {
+app/src/main/java/a/a/a/Yv.java:99:                    Intent intent = new Intent(requireActivity(), ManageSoundImportActivity.class);
+app/src/main/java/a/a/a/Yv.java:221:                binding.imgPlay.setOnClickListener(v -> {
+app/src/main/java/a/a/a/Yv.java:227:                binding.getRoot().setOnClickListener(v -> binding.chkSelect.setChecked(!binding.chkSelect.isChecked()));
+app/src/main/java/a/a/a/aB.java:151:            neutralButton.setOnClickListener(v -> {
+app/src/main/java/a/a/a/aB.java:161:            negativeButton.setOnClickListener(v -> {
+app/src/main/java/a/a/a/aB.java:169:            positiveButton.setOnClickListener(v -> {
+app/src/main/java/a/a/a/br.java:96:        binding.fab.setOnClickListener(this);
+app/src/main/java/a/a/a/br.java:104:        Intent intent = new Intent(requireActivity().getApplicationContext(), LogicEditorActivity.class);
+app/src/main/java/a/a/a/br.java:111:        startActivity(intent);
+app/src/main/java/a/a/a/fu.java:98:            Intent intent = new Intent(requireActivity(), ManageImageImportActivity.class);
+app/src/main/java/a/a/a/fu.java:157:        btnImport.setOnClickListener(this);
+app/src/main/java/a/a/a/fu.java:203:                binding.img.setOnClickListener(v -> {
+app/src/main/java/a/a/a/kv.java:35:        binding.layoutSwitch.setOnClickListener(v -> {
+app/src/main/java/a/a/a/ow.java:63:        Intent intent = new Intent(getContext(), AddSoundActivity.class);
+app/src/main/java/a/a/a/ow.java:71:        Intent intent = new Intent(getContext(), AddSoundActivity.class);
+app/src/main/java/a/a/a/ow.java:141:        actBinding.btnDelete.setOnClickListener(view -> {
+app/src/main/java/a/a/a/ow.java:160:        actBinding.btnCancel.setOnClickListener(view -> setSelecting(false));
+app/src/main/java/a/a/a/ow.java:163:        actBinding.fab.setOnClickListener(v -> {
+app/src/main/java/a/a/a/ow.java:173:    public boolean onOptionsItemSelected(MenuItem item) {
+app/src/main/java/a/a/a/ow.java:181:        return super.onOptionsItemSelected(item);
+app/src/main/java/a/a/a/ow.java:394:                binding.imgPlay.setOnClickListener(v -> {
+app/src/main/java/a/a/a/ow.java:403:                binding.layoutItem.setOnClickListener(v -> {
+app/src/main/java/a/a/a/pu.java:264:        Intent intent = new Intent(requireContext(), AddImageActivity.class);
+app/src/main/java/a/a/a/pu.java:272:        Intent intent = new Intent(requireActivity(), ImportIconActivity.class);
+app/src/main/java/a/a/a/pu.java:324:        delete.setOnClickListener(view -> {
+app/src/main/java/a/a/a/pu.java:333:        cancel.setOnClickListener(view -> {
+app/src/main/java/a/a/a/pu.java:340:        fab.setOnClickListener(view -> {
+app/src/main/java/a/a/a/pu.java:349:    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+app/src/main/java/a/a/a/pu.java:356:        return super.onOptionsItemSelected(item);
+app/src/main/java/a/a/a/pu.java:368:        Intent intent = new Intent(requireContext(), AddImageActivity.class);
+app/src/main/java/a/a/a/pu.java:550:                binding.img.setOnClickListener(v -> {
+app/src/main/java/a/a/a/rs.java:125:            Intent intent = new Intent(requireActivity().getApplicationContext(), AddEventActivity.class);
+app/src/main/java/a/a/a/rs.java:264:        fab.setOnClickListener(this);
+app/src/main/java/a/a/a/rs.java:278:        importMoreBlockFromCollection.setOnClickListener(v -> showImportMoreBlockFromCollectionsDialog());
+app/src/main/java/a/a/a/rs.java:298:        sortMenuIcon.setOnClickListener(v -> {
+app/src/main/java/a/a/a/rs.java:301:            popup.setOnMenuItemClickListener(item -> {
+app/src/main/java/a/a/a/rs.java:395:        Intent intent = new Intent(requireActivity(), LogicEditorActivity.class);
+app/src/main/java/a/a/a/rs.java:696:                root.setOnClickListener(v -> {

@@ -399,6 +399,11 @@ public class rs extends qA implements View.OnClickListener, MoreblockImporterDia
         intent.putExtra("event", eventId);
         intent.putExtra("project_file", currentActivity);
         intent.putExtra("event_text", description);
+        String runtimeProjectId = requireActivity().getIntent()
+                .getStringExtra("creator_runtime_project_id");
+        if (runtimeProjectId != null) {
+            intent.putExtra("creator_runtime_project_id", runtimeProjectId);
+        }
         openEvent.launch(intent);
     }
 

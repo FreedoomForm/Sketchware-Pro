@@ -23,6 +23,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.besome.sketch.design.DesignActivity;
+import com.besome.sketch.editor.LogicEditorActivity;
 import com.besome.sketch.beans.ViewBean;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -135,8 +136,29 @@ public class CreatorRuntimeNavigationTest {
                 assertThat((Object) activity.findViewById(R.id.toolbar)).isNotNull();
                 assertThat((Object) activity.findViewById(R.id.tab_layout)).isNotNull();
                 assertThat((Object) activity.findViewById(R.id.viewpager)).isNotNull();
-                assertThat((Object) activity.findViewById(R.id.btn_run)).isNotNull();
                 assertThat((Object) activity.findViewById(R.id.btn_options)).isNotNull();
+            });
+        }
+    }
+
+    @Test public void creatorRuntimeCanOpenOriginalVisualBlockEditor() {
+        CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
+        String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
+        com.besome.sketch.beans.ProjectFileBean main = a.a.a.jC.b(scId)
+                .b(com.besome.sketch.beans.ProjectFileBean.DEFAULT_XML_NAME);
+        Intent intent = new Intent(context, LogicEditorActivity.class)
+                .putExtra("sc_id", scId)
+                .putExtra("id", "_fab")
+                .putExtra("event", "onClick")
+                .putExtra("project_file", main)
+                .putExtra("event_text", "Floating action button click")
+                .putExtra("creator_runtime_project_id", document.getProjectId());
+        try (ActivityScenario<LogicEditorActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertThat(activity.isFinishing()).isFalse();
+                assertThat((Object) activity.findViewById(R.id.editor)).isNotNull();
+                assertThat((Object) activity.findViewById(R.id.palette_selector)).isNotNull();
+                assertThat((Object) activity.findViewById(R.id.fab_toggle_palette)).isNotNull();
             });
         }
     }
@@ -182,6 +204,32 @@ public class CreatorRuntimeNavigationTest {
         assertThat(found).isTrue();
     }
 
+    @Test public void creatorHomeReturnsToLiveRuntimeSurfaceAfterOriginalEditor() {
+        try (ActivityScenario<CreatorHomeActivity> home = ActivityScenario.launch(CreatorHomeActivity.class)) {
+            home.onActivity(activity -> activity.findViewById(R.id.creator_entry_control).performClick());
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            AtomicReference<Activity> editor = new AtomicReference<>();
+            InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
+                    ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                            .forEach(candidate -> {
+                                if (candidate instanceof DesignActivity) editor.set(candidate);
+                            }));
+            assertThat(editor.get()).isNotNull();
+            editor.get().finish();
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            AtomicReference<Activity> live = new AtomicReference<>();
+            InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
+                    ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                            .forEach(candidate -> {
+                                if (candidate instanceof CreatorProjectActivity) live.set(candidate);
+                            }));
+            assertThat(live.get()).isNotNull();
+            assertThat(live.get().findViewById(R.id.creator_editor_header).getVisibility())
+                    .isEqualTo(View.GONE);
+            assertThat((Object) live.get().findViewById(R.id.creator_preview_canvas)).isNotNull();
+        }
+    }
+
     @Test public void originalEditorExposesAllTabsAndDrawerActionsInsideRuntimeHost() {
         CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
         String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
@@ -225,6 +273,21 @@ public class CreatorRuntimeNavigationTest {
                     assertThat((Object) activity.findViewById(id)).isNotNull();
                 }
             });
+        }
+    }
+
+    @Test public void liveOnlyEntryControlReturnsToOriginalSketchwareEditor() {
+        try (ActivityScenario<CreatorProjectActivity> live = ActivityScenario.launch(
+                new Intent(context, CreatorProjectActivity.class)
+                        .putExtra(CreatorProjectActivity.EXTRA_LIVE_ONLY, true))) {
+            live.onActivity(activity -> activity.findViewById(R.id.creator_project_entry_control).performClick());
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            AtomicReference<Activity> resumed = new AtomicReference<>();
+            InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
+                    ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                            .forEach(resumed::set));
+            assertThat(resumed.get()).isInstanceOf(DesignActivity.class);
+            assertThat((Object) resumed.get().findViewById(R.id.tab_layout)).isNotNull();
         }
     }
 

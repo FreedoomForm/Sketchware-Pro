@@ -4,8 +4,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +17,7 @@ import a.a.a.eC;
 import a.a.a.hC;
 import a.a.a.iC;
 import a.a.a.jC;
+import a.a.a.kC;
 import a.a.a.lC;
 import a.a.a.nB;
 import a.a.a.oB;
@@ -24,6 +28,7 @@ import com.besome.sketch.beans.EventBean;
 import com.besome.sketch.beans.LayoutBean;
 import com.besome.sketch.beans.ProjectFileBean;
 import com.besome.sketch.beans.ProjectLibraryBean;
+import com.besome.sketch.beans.ProjectResourceBean;
 import com.besome.sketch.beans.TextBean;
 import com.besome.sketch.beans.ViewBean;
 import mod.hey.studios.project.ProjectSettings;
@@ -193,9 +198,44 @@ public final class CreatorLegacyProjectBridge {
                 screens, widgets, current.getEntryControl(), current.getState(), current.getEvents());
         CreatorLegacyArtifactImporter.Result artifacts = new CreatorLegacyArtifactImporter().importArtifacts(
                 importedDocument, components, events, blocksByEvent);
-        CreatorLegacyArtifactImporter.Result metadata = new CreatorLegacyArtifactImporter().importProjectMetadata(
+        CreatorLegacyArtifactImporter importer = new CreatorLegacyArtifactImporter();
+        CreatorLegacyArtifactImporter.Result metadata = importer.importProjectMetadata(
                 artifacts.getDocument(), files, collectLibraries(scId));
-        return metadata.getDocument();
+        CreatorLegacyArtifactImporter.Result resources = importer.importResources(
+                metadata.getDocument(), collectResources(scId));
+        CreatorLegacyArtifactImporter.Result values = importer.importValueResources(
+                resources.getDocument(), collectValueResources(scId));
+        return values.getDocument();
+    }
+
+    private static ArrayList<ProjectResourceBean> collectResources(String scId) {
+        ArrayList<ProjectResourceBean> resources = new ArrayList<>();
+        kC resourceStore = jC.d(scId);
+        if (resourceStore != null && resourceStore.b != null) {
+            resources.addAll(resourceStore.b);
+        }
+        return resources;
+    }
+
+    private static Map<String, String> collectValueResources(String scId) {
+        Map<String, String> values = new LinkedHashMap<>();
+        File resourceRoot = new File(wq.b(scId), "files" + File.separator + "resource");
+        File[] variants = resourceRoot.listFiles(File::isDirectory);
+        if (variants == null) return values;
+        for (File variant : variants) {
+            if (!variant.getName().equals("values") && !variant.getName().startsWith("values-")) continue;
+            File[] xmlFiles = variant.listFiles((dir, name) -> name != null && name.endsWith(".xml"));
+            if (xmlFiles == null) continue;
+            for (File xmlFile : xmlFiles) {
+                try {
+                    String relativePath = variant.getName() + File.separator + xmlFile.getName();
+                    values.put(relativePath, new String(Files.readAllBytes(xmlFile.toPath()), StandardCharsets.UTF_8));
+                } catch (Exception ignored) {
+                    // A missing optional value resource must not block the editor.
+                }
+            }
+        }
+        return values;
     }
 
     private static ArrayList<ProjectLibraryBean> collectLibraries(String scId) {

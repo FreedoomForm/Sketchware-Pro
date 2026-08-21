@@ -1,0 +1,669 @@
+== DesignActivity tabs/actions ==
+43:import androidx.fragment.app.FragmentPagerAdapter;
+46:import androidx.viewpager.widget.ViewPager;
+59:import com.besome.sketch.lib.ui.CustomViewPager;
+81:import a.a.a.ViewEditorFragment;
+139:    private CustomViewPager viewPager;
+152:    private ViewEditorFragment viewTabAdapter;
+185:        refreshEventsForAi();
+186:        refreshComponentsForAi();
+299:            if (orientation == ProjectFileBean.ORIENTATION_PORTRAIT) {
+312:     * if no project is loaded. Used by the AI ChatFragment to know which
+313:     * layout the user is currently viewing, so the AI can target it and
+321:     * Public AI-facing refresh hooks. Called by ChatFragment's
+322:     * SketchwareToolContext when an AI tool mutates project state, so the
+323:     * visible View/Event/Component editors re-read from disk and redraw.
+334:     * undo/redo. If the AI is working on a DIFFERENT layout than the one
+337:     * file selector), so the user sees the AI's changes appear live.
+339:     * @param xmlName the layout the AI just modified (e.g. "calculator"),
+345:            // If the AI names a layout that differs from the one the user is
+348:            // the AI was creating/editing 'calculator' but the editor was
+378:    public void refreshEventsForAi() {
+382:    public void refreshComponentsForAi() {
+383:        runOnUiThread(this::refreshComponentTabAdapter);
+395:            eventTabAdapter.refreshEvents();
+399:    private void refreshComponentTabAdapter() {
+412:            refreshComponentTabAdapter();
+519:                viewPager.setCurrentItem(currentTabNumber);
+580:        btnRun = findViewById(R.id.btn_run);
+592:        btnOptions = findViewById(R.id.btn_options);
+637:        viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager()));
+639:        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+642:            public void onPageScrollStateChanged(int state) {
+646:            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+650:            public void onPageSelected(int position) {
+670:                            eventTabAdapter.refreshEvents();
+689:        ((TabLayout) findViewById(R.id.tab_layout)).setupWithViewPager(viewPager);
+973:            refreshComponentTabAdapter();
+1645:    private class ViewPagerAdapter extends FragmentPagerAdapter {
+1648:        public ViewPagerAdapter(FragmentManager fragmentManager) {
+1654:                    "AI"};
+1672:                viewTabAdapter = (ViewEditorFragment) fragment;
+1678:            // position 3 = AI tab (ChatFragment) - no special adapter reference needed.
+1687:                return new ViewEditorFragment();
+== Runtime UI identifiers ==
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:27:import androidx.viewpager.widget.ViewPager;
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:104:        entryControl = findViewById(R.id.creator_project_entry_control);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:247:        View controls = findViewById(R.id.creator_editor_controls);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:313:        input.setHint(R.string.creator_entry_control_label_hint);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:316:        placementTitle.setText(R.string.creator_entry_control_position);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:332:                .setTitle(R.string.creator_entry_control_title)
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:333:                .setMessage(R.string.creator_entry_control_message)
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:601:            ViewPager pager = new ViewPager(this);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:626:            pager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:855:            com.google.android.material.tabs.TabLayout tabs = new com.google.android.material.tabs.TabLayout(this);
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:860:            tabs.addOnTabSelectedListener(new com.google.android.material.tabs.TabLayout.OnTabSelectedListener() {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:861:                @Override public void onTabSelected(com.google.android.material.tabs.TabLayout.Tab tab) { dispatchRuntimeEvent(widget.getId(), "tab_selected"); }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:862:                @Override public void onTabUnselected(com.google.android.material.tabs.TabLayout.Tab tab) { }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:863:                @Override public void onTabReselected(com.google.android.material.tabs.TabLayout.Tab tab) { }
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1012:        for (CreatorEventBinding binding : session.getDocument().getEvents().values()) {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1301:        Object rawComponents = session.getDocument().getState().get("legacy.components");
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1302:        if (rawComponents instanceof Map) {
+app/src/main/java/pro/sketchware/creator/CreatorProjectActivity.java:1303:            for (Map.Entry<?, ?> entry : ((Map<?, ?>) rawComponents).entrySet()) {
+app/src/main/java/pro/sketchware/creator/CreatorHomeActivity.java:39:        entryControl = findViewById(R.id.creator_entry_control);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorCalendarService.java:43:                String otherId = CreatorRuntimeServiceArguments.string(arguments, "otherComponentId");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorCalendarService.java:49:                        CreatorRuntimeServiceArguments.output("componentId", componentId, "otherComponentId", otherId,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:4:import com.besome.sketch.beans.ComponentBean;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:25: * Imports legacy components, events, and block chains into the versioned Creator
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:26: * Runtime document. Unsupported executable blocks stay visible in the report
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:42:    public Result importArtifacts(CreatorProjectDocument base, List<ComponentBean> components,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:43:                                  List<EventBean> events, Map<String, List<BlockBean>> blocksByEvent) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:44:        return importArtifacts(base, components, events, blocksByEvent,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:48:    public Result importArtifacts(CreatorProjectDocument base, List<ComponentBean> components,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:49:                                  List<EventBean> events, Map<String, List<BlockBean>> blocksByEvent,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:55:        for (ComponentBean component : components == null ? Collections.<ComponentBean>emptyList() : components) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:57:                report.add("unknown", "ComponentBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:58:                        "Component has no stable ID and cannot be imported safely.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:61:            String serviceId = CreatorRuntimeComponentServiceMatrix.serviceFor(component.type);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:63:                report.add(component.componentId, "ComponentBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:74:            report.add(component.componentId, "ComponentBean", CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:79:        Map<String, CreatorEventBinding> bindings = new LinkedHashMap<>(base.getEvents());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:80:        Map<String, Object> deferredEvents = new LinkedHashMap<>();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:88:            List<BlockBean> legacyBlocks = blocksByEvent == null ? null : blocksByEvent.get(eventKey);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:89:            BlockConversion blocks = convertBlocks(legacyBlocks, componentState);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:90:            if (!blocks.unsupported.isEmpty()) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:91:                deferredEvents.put(eventKey, blocks.unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:93:                        "Unsupported legacy block opcodes: " + String.join(", ", blocks.unsupported) + ".");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:96:            for (Map.Entry<String, List<CreatorRuntimeBlock>> callback : blocks.timerCallbacks.entrySet()) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:128:                descriptor.put("blockCount", blocks.converted.size());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:129:                deferredEvents.put(eventKey, descriptor);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:133:                            normalizeEventName(event.eventName), blocks.converted));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:137:                            normalizeEventName(event.eventName), blocks.converted));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:147:                    normalizeEventName(event.eventName), blocks.converted));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:160:            BlockConversion body = convertBlocks(definition.blocks, componentState);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:162:                report.add("moreblock:" + functionId, "MoreBlockCollectionBean", CreatorCompatibilityTier.R0_UNSUPPORTED,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:172:            String bindingId = "legacy_moreblock_" + functionId;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:174:            report.add("moreblock:" + functionId, "MoreBlockCollectionBean", CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:178:        state.put("legacy.deferredEvents", deferredEvents);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:239:                        "Arbitrary local or native libraries are blocked; they cannot execute in Creator Runtime.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:254:        return new Result(base.withRuntimeState(base.getRevision(), state, base.getEvents()), report);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:317:        return new Result(base.withRuntimeState(base.getRevision(), state, base.getEvents()), report);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:382:        return new Result(base.withRuntimeState(base.getRevision(), state, base.getEvents()), report);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:480:    private BlockConversion convertBlocks(List<BlockBean> blocks, Map<String, Object> componentDescriptors) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:485:        for (BlockBean block : blocks == null ? Collections.<BlockBean>emptyList() : blocks) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:486:            if (block == null) continue;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:487:            try { byId.put(Integer.parseInt(block.id), block); } catch (NumberFormatException ignored) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:488:                result.unsupported.add("invalid block id");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:490:            if (block.nextBlock >= 0) referenced.add(block.nextBlock);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:491:            if (block.subStack1 >= 0) referenced.add(block.subStack1);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:492:            if (block.subStack2 >= 0) referenced.add(block.subStack2);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:493:            for (String parameter : block.parameters == null ? Collections.<String>emptyList() : block.parameters) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:511:            if (!visited.contains(entry.getKey())) result.unsupported.add("orphan block " + entry.getKey());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:524:                unsupported.add("invalid block id"); return;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:526:            if (!visited.add(id)) { unsupported.add("cyclic block graph at " + id); return; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:533:    private CreatorRuntimeBlock convertBlock(BlockBean block, Map<Integer, BlockBean> byId,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:537:        if (blank(block.opCode)) { unsupported.add("empty"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:538:        String op = block.opCode.trim().toLowerCase(Locale.ROOT);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:539:        List<String> values = block.parameters == null ? Collections.<String>emptyList() : block.parameters;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:542:            String functionId = moreBlockId(block.spec);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:543:            if (blank(functionId)) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:547:                if (argument == null) { unsupported.add(block.opCode + " (invalid argument expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:554:            if (values.size() > 1 || block.subStack1 >= 0 || block.subStack2 >= 0) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:555:                unsupported.add(block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:562:                unsupported.add(block.opCode + " (invalid return expression)");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:569:            if (values.size() < 2 || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:572:            BlockBean thenStart = byId.get(block.subStack1);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:573:            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:575:            if (block.subStack2 >= 0) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:576:                BlockBean elseStart = byId.get(block.subStack2);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:577:                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:585:            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:588:            BlockBean thenStart = byId.get(block.subStack1);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:589:            if (thenStart == null) { unsupported.add(block.opCode + " (missing then substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:591:            if ("ifelse".equals(op) && block.subStack2 >= 0) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:592:                BlockBean elseStart = byId.get(block.subStack2);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:593:                if (elseStart == null) { unsupported.add(block.opCode + " (missing else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:599:                if (expression == null) { unsupported.add(block.opCode + " (invalid reporter expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:606:            if (block.subStack1 < 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:607:            BlockBean bodyStart = byId.get(block.subStack1);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:608:            if (bodyStart == null) { unsupported.add(block.opCode + " (missing forever substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:615:            if (!values.isEmpty() || block.subStack1 >= 0 || block.subStack2 >= 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:619:            if (values.isEmpty() || block.subStack1 < 0) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:620:            BlockBean bodyStart = byId.get(block.subStack1);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:621:            if (bodyStart == null) { unsupported.add(block.opCode + " (missing repeat substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:627:                if (expression == null) { unsupported.add(block.opCode + " (invalid count expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:638:        if ((block.subStack1 >= 0 || block.subStack2 >= 0) && !timerWithCallback && !firebaseChildrenWithCallback
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:640:            unsupported.add(block.opCode + " (control flow)"); return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:642:        if (timerWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:643:        if (firebaseChildrenWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:644:        if (dialogButtonWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:645:        if (viewOnClickWithCallback && block.subStack2 >= 0) { unsupported.add(block.opCode + " (unexpected else substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:648:            if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:649:            if (block.subStack1 >= 0) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:650:                BlockBean callbackStart = byId.get(block.subStack1);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:651:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing timer substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:663:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:666:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:669:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:674:            return listMapPutAt(block, values, unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:676:            return listMapInsert(block, values, unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:678:            return listMapGet(block, values, unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:680:            return listSetAt(block, values, unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:682:            return listMutation(block, values, "add", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:684:            return listMutation(block, values, "insert", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:686:            return listMutation(block, values, "remove_at", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:688:            return listMutation(block, values, "clear", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:690:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:696:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:702:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:705:            putExpressionOrValue(payload, "json", "jsonExpression", values.get(0), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:708:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:711:            putExpressionOrValue(payload, "json", "jsonExpression", values.get(0), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:714:            return mapMutation(block, values, "create", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:716:            return mapMutation(block, values, "put", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:718:            return mapMutation(block, values, "remove", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:720:            return mapMutation(block, values, "clear", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:722:            return intentCall(block, values, "configure_action", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:724:            return intentCall(block, values, "configure_data", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:726:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:730:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:734:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:738:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:743:            return dialogCall(block, values, "set_title", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:745:            return dialogCall(block, values, "set_message", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:747:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:750:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:754:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:761:            if (block.subStack1 >= 0) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:762:                BlockBean callbackStart = byId.get(block.subStack1);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:763:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:764:                String callbackId = block.id + "_" + button;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:772:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:774:            if (block.subStack1 >= 0) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:775:                BlockBean callbackStart = byId.get(block.subStack1);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:776:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:784:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:790:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:795:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:799:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:803:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:806:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:809:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:813:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:818:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:822:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:826:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:830:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:835:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:839:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:843:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:847:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:851:            return fileCall(block, values, "write", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:853:            return fileCall(block, values, "copy", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:855:            return fileCall(block, values, "copy_dir", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:857:            return fileCall(block, values, "move", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:859:            return fileCall(block, values, "delete", 1, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:861:            return fileCall(block, values, "make_dir", 1, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:863:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:867:            return bitmapCall(block, values, "resize_retain_ratio", 3, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:869:            return bitmapCall(block, values, "resize_square", 3, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:871:            return bitmapCall(block, values, "resize_circle", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:873:            return bitmapCall(block, values, "rounded_border", 3, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:875:            return bitmapCall(block, values, "crop_center", 4, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:877:            return bitmapCall(block, values, "rotate", 3, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:879:            return bitmapCall(block, values, "scale", 4, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:881:            return bitmapCall(block, values, "skew", 4, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:883:            return bitmapCall(block, values, "color_filter", 3, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:885:            return bitmapCall(block, values, "brightness", 3, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:887:            return bitmapCall(block, values, "contrast", 3, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:889:            return widgetResourceProperty(block, values, "thumbResource", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:891:            return widgetResourceProperty(block, values, "trackResource", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:895:            return widgetCustomDataProperty(block, values, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:897:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:902:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:907:            if (!values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:933:            return animatorCall(block, values, "set_target", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:935:            return animatorCall(block, values, "set_property", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:937:            return animatorCall(block, values, "set_value", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:939:            return animatorCall(block, values, "set_from_to", 3, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:941:            return animatorCall(block, values, "set_duration", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:943:            return animatorCall(block, values, "set_repeat_mode", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:945:            return animatorCall(block, values, "set_repeat_count", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:947:            return animatorCall(block, values, "set_interpolator", 2, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:949:            return animatorCall(block, values, "objectanimatorstart".equals(op) ? "start" : "cancel", 1, unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:951:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:956:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:960:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:964:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:968:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:972:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:976:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:980:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:986:            if (block.subStack1 >= 0) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:987:                BlockBean callbackStart = byId.get(block.subStack1);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:988:                if (callbackStart == null) { unsupported.add(block.opCode + " (missing callback substack)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:989:                String callbackId = String.valueOf(block.id);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:997:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1000:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1006:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1012:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1018:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1022:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1025:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1028:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1031:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1034:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1040:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1043:            arguments.put("otherComponentId", values.get(1));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1046:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1049:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1052:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1055:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1059:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1063:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1070:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1080:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1084:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1088:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1092:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1096:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1100:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1103:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1106:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1109:            if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1112:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1115:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1119:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1122:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1126:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1131:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1137:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1141:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1145:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1149:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1154:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1160:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1165:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1171:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1175:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1179:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1183:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1187:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1191:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1195:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1199:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1203:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1208:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1213:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1217:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1221:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1225:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1229:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1233:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1237:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1241:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1245:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1250:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1258:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1265:            return widgetProperty(block, values, "text", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1267:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1273:            return widgetProperty(block, values, "checked", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1275:            return widgetProperty(block, values, "enabled", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1277:            return widgetProperty(block, values, "visible", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1279:            return widgetProperty(block, values, "clickable", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1281:            return widgetProperty(block, values, "hint", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1283:            return widgetProperty(block, values, "textColor", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1285:            return widgetProperty(block, values, "textSize", unsupported, byId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1287:            return widgetProperty(block, values, "hintTextColor", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1289:            return widgetProperty(block, values, "backgroundColor", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1291:            return widgetProperty(block, values, "backgroundResource", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1293:            return widgetProperty(block, values, "alpha", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1295:            return widgetProperty(block, values, "rotation", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1297:            return widgetProperty(block, values, "translationX", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1299:            return widgetProperty(block, values, "translationY", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1301:            return widgetProperty(block, values, "scaleX", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1303:            return widgetProperty(block, values, "scaleY", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1305:            return widgetProperty(block, values, "resourceName", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1307:            return widgetProperty(block, values, "filePath", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1309:            return widgetProperty(block, values, "url", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1311:            return widgetProperty(block, values, "selectedIndex", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1313:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1319:            return widgetProperty(block, values, "url", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1321:            return widgetProperty(block, values, "date", unsupported);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1324:            if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1328:                if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1334:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1338:            if (values.isEmpty()) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1343:                unsupported.add(block.opCode); return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1349:        unsupported.add(block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1360:    private static CreatorRuntimeBlock listMutation(BlockBean block, List<String> values, String action,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1363:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1367:        if ("add".equals(action)) putExpressionOrValue(payload, "value", "valueExpression", values.get(1), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1369:            if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1370:            putExpressionOrValue(payload, "index", "indexExpression", values.get(1), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1371:            putExpressionOrValue(payload, "value", "valueExpression", values.get(2), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1372:        } else if ("remove_at".equals(action)) putExpressionOrValue(payload, "index", "indexExpression", values.get(1), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1378:    private static CreatorRuntimeBlock listMapPutAt(BlockBean block, List<String> values,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1380:        if (values.size() < 4) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1384:        putExpressionOrValue(payload, "key", "keyExpression", values.get(0), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1385:        putExpressionOrValue(payload, "value", "valueExpression", values.get(1), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1386:        putExpressionOrValue(payload, "index", "indexExpression", values.get(2), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1392:    private static CreatorRuntimeBlock listMapInsert(BlockBean block, List<String> values,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1394:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1398:        putExpressionOrValue(payload, "value", "valueExpression", values.get(0), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1399:        putExpressionOrValue(payload, "index", "indexExpression", values.get(1), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1405:    private static CreatorRuntimeBlock listMapGet(BlockBean block, List<String> values,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1407:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1412:        arguments.add(literalExpression(values.get(0), byId, unsupported, block.opCode));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1413:        arguments.add(literalExpression(values.get(1), byId, unsupported, block.opCode));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1434:    private static CreatorRuntimeBlock listSetAt(BlockBean block, List<String> values,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1436:        if (values.size() < 3) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1440:        putExpressionOrValue(payload, "value", "valueExpression", values.get(0), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1441:        putExpressionOrValue(payload, "index", "indexExpression", values.get(1), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1446:    private static CreatorRuntimeBlock mapMutation(BlockBean block, List<String> values, String action,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1449:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1454:            putExpressionOrValue(payload, "key", "keyExpression", values.get(1), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1455:        if ("put".equals(action)) putExpressionOrValue(payload, "value", "valueExpression", values.get(2), byId, unsupported, block.opCode);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1470:    private static CreatorRuntimeBlock intentCall(BlockBean block, List<String> values, String action,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1472:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1477:    private static CreatorRuntimeBlock dialogCall(BlockBean block, List<String> values, String action,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1479:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1484:    private static CreatorRuntimeBlock fileCall(BlockBean block, List<String> values, String action, int required,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1486:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1495:    private static CreatorRuntimeBlock bitmapCall(BlockBean block, List<String> values, String action, int required,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1497:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1505:            // Legacy blocks retain height at index 2 and width at index 3; Fx reverses them for FileUtil.
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1517:    private static CreatorRuntimeBlock widgetResourceProperty(BlockBean block, List<String> values, String property,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1519:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1525:    private static CreatorRuntimeBlock widgetCustomDataProperty(BlockBean block, List<String> values,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1527:        if (values.size() < 2 || blank(values.get(0))) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1533:    private static CreatorRuntimeBlock animatorCall(BlockBean block, List<String> values, String action, int required,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1535:        if (values.size() < required) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1625:            BlockBean block = byId.get(id);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1626:            if (block == null || blank(block.opCode)) return null;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1629:            result.put("opCode", block.opCode.trim().toLowerCase(Locale.ROOT));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1630:            result.put("spec", block.spec == null ? "" : block.spec);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1631:            result.put("type", block.type == null ? "" : block.type);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1633:            for (String argument : block.parameters == null ? Collections.<String>emptyList() : block.parameters) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1679:    private static CreatorRuntimeBlock widgetProperty(BlockBean block, List<String> values, String property,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1681:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1689:    private static CreatorRuntimeBlock widgetProperty(BlockBean block, List<String> values, String property,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1691:        if (values.size() < 2) { unsupported.add(block.opCode); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyArtifactImporter.java:1697:            if (expression == null) { unsupported.add(block.opCode + " (invalid value expression)"); return null; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyViewImporter.java:52:                        "No Creator Runtime widget mapping exists; import is blocked rather than using fallback execution.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorMapService.java:119:        if ("MAP_TYPE_TERRAIN".equals(type)) return GoogleMap.MAP_TYPE_TERRAIN;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeBlock.java:9:/** One visible, serializable behavior block in a Creator Runtime event binding. */
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:41:            effects.add(new Effect("return", "ignored_outside_more_block"));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:48:    private Flow executeBlocks(CreatorRuntimeEngine engine, List<CreatorRuntimeBlock> blocks, List<Effect> effects) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:49:        for (CreatorRuntimeBlock block : blocks) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:50:            Map<String, Object> payload = block.getPayload();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:51:            if (block.getType() == CreatorRuntimeBlock.Type.SET_WIDGET_PROPERTY) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:55:            } else if (block.getType() == CreatorRuntimeBlock.Type.SET_STATE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:58:            } else if (block.getType() == CreatorRuntimeBlock.Type.INCREMENT_STATE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:64:            } else if (block.getType() == CreatorRuntimeBlock.Type.LIST_MUTATE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:101:            } else if (block.getType() == CreatorRuntimeBlock.Type.MAP_MUTATE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:119:            } else if (block.getType() == CreatorRuntimeBlock.Type.ATTACH_EVENT) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:124:                        "blocks", block.getThenBlocks()));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:125:            } else if (block.getType() == CreatorRuntimeBlock.Type.SHOW_MESSAGE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:127:            } else if (block.getType() == CreatorRuntimeBlock.Type.NAVIGATE) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:129:            } else if (block.getType() == CreatorRuntimeBlock.Type.RUNTIME_SERVICE_CALL) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:145:            } else if (block.getType() == CreatorRuntimeBlock.Type.CUSTOM_FUNCTION_CALL) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:148:            } else if (block.getType() == CreatorRuntimeBlock.Type.RETURN) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:155:            } else if (block.getType() == CreatorRuntimeBlock.Type.IF_STATE_EQUALS) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:160:                Flow childFlow = executeBlocks(engine, matches ? block.getThenBlocks() : block.getElseBlocks(), effects);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:162:            } else if (block.getType() == CreatorRuntimeBlock.Type.IF_BOOLEAN) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:167:                Flow childFlow = executeBlocks(engine, matches ? block.getThenBlocks() : block.getElseBlocks(), effects);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:169:            } else if (block.getType() == CreatorRuntimeBlock.Type.REPEAT) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:177:                    Flow childFlow = executeBlocks(engine, block.getThenBlocks(), effects);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:181:            } else if (block.getType() == CreatorRuntimeBlock.Type.FOREVER) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:184:                    Flow childFlow = executeBlocks(engine, block.getThenBlocks(), effects);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:192:            } else if (block.getType() == CreatorRuntimeBlock.Type.BREAK) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:200:        for (CreatorEventBinding binding : document.getEvents().values()) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:501:            effects.add(new Effect("more_block", "depth_capped:" + functionId));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:508:        CreatorEventBinding binding = engine.getCurrent().getEvents().get("legacy_moreblock_" + functionId);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:622:        Object rawComponents = engine.getCurrent().getState().get("legacy.components");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:623:        if (rawComponents instanceof Map) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExecutor.java:624:            Object rawDescriptor = ((Map<?, ?>) rawComponents).get(id);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:12:/** Pure mapper from a normalized AI tool-call payload to a typed Creator operation. */
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:66:                payload.put("blocks", blocks(args));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:92:    private static java.util.List<CreatorRuntimeBlock> blocks(JsonObject args) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:93:        return args.has("blocks") && args.get("blocks").isJsonArray()
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:94:                ? blocks(args.getAsJsonArray("blocks")) : new ArrayList<CreatorRuntimeBlock>();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:97:    private static java.util.List<CreatorRuntimeBlock> blocks(com.google.gson.JsonArray source) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:100:            if (!element.isJsonObject()) throw new IllegalArgumentException("each block must be an object");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:101:            JsonObject block = element.getAsJsonObject();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:102:            String type = requiredString(block, "type");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:103:            Map<String, Object> payload = jsonObjectToMap(block);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:105:            payload.remove("then_blocks");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:106:            payload.remove("else_blocks");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:107:            java.util.List<CreatorRuntimeBlock> thenBlocks = block.has("then_blocks") && block.get("then_blocks").isJsonArray()
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:108:                    ? blocks(block.getAsJsonArray("then_blocks")) : new ArrayList<CreatorRuntimeBlock>();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:109:            java.util.List<CreatorRuntimeBlock> elseBlocks = block.has("else_blocks") && block.get("else_blocks").isJsonArray()
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeOperationMapper.java:110:                    ? blocks(block.getAsJsonArray("else_blocks")) : new ArrayList<CreatorRuntimeBlock>();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServiceCatalog.java:16:        Set<String> values = new LinkedHashSet<>(CreatorRuntimeComponentServiceMatrix.all().values());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorUiService.java:8:/** Runtime-native activity title and clipboard operations used by legacy UI blocks. */
+app/src/main/java/pro/sketchware/creator/runtime/CreatorApplyResult.java:3:/** Final outcome returned to both AI and human-editor callers. */
+app/src/main/java/pro/sketchware/creator/runtime/CreatorCompatibilityAnalyzer.java:16:        if (normalized.startsWith("widget:") || normalized.startsWith("block:")
+app/src/main/java/pro/sketchware/creator/runtime/CreatorEventBinding.java:7:/** A user-inspectable widget event and its ordered block list. */
+app/src/main/java/pro/sketchware/creator/runtime/CreatorEventBinding.java:12:    private final List<CreatorRuntimeBlock> blocks;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorEventBinding.java:14:    public CreatorEventBinding(String id, String targetWidgetId, String eventName, List<CreatorRuntimeBlock> blocks) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorEventBinding.java:20:        this.blocks = Collections.unmodifiableList(new ArrayList<>(blocks == null
+app/src/main/java/pro/sketchware/creator/runtime/CreatorEventBinding.java:21:                ? Collections.<CreatorRuntimeBlock>emptyList() : blocks));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorEventBinding.java:26:    public List<CreatorRuntimeBlock> getBlocks() { return blocks; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFragmentAdapterService.java:3:import androidx.viewpager.widget.ViewPager;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFragmentAdapterService.java:17:        if (!(view instanceof ViewPager)) return CreatorRuntimeServiceArguments.invalid("widgetId does not reference a live pager.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorFragmentAdapterService.java:18:        ViewPager pager = (ViewPager) view;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:3:import com.besome.sketch.beans.ComponentBean;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:8:/** Explicit audit matrix for every defined legacy ComponentBean identifier. */
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:9:public final class CreatorLegacyComponentCapabilityMatrix {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:13:        int[] types = {ComponentBean.COMPONENT_TYPE_INTENT, ComponentBean.COMPONENT_TYPE_SHAREDPREF,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:14:                ComponentBean.COMPONENT_TYPE_CALENDAR, ComponentBean.COMPONENT_TYPE_VIBRATOR,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:15:                ComponentBean.COMPONENT_TYPE_TIMERTASK, ComponentBean.COMPONENT_TYPE_FIREBASE,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:16:                ComponentBean.COMPONENT_TYPE_DIALOG, ComponentBean.COMPONENT_TYPE_MEDIAPLAYER,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:17:                ComponentBean.COMPONENT_TYPE_SOUNDPOOL, ComponentBean.COMPONENT_TYPE_OBJECTANIMATOR,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:18:                ComponentBean.COMPONENT_TYPE_GYROSCOPE, ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:19:                ComponentBean.COMPONENT_TYPE_INTERSTITIAL_AD, ComponentBean.COMPONENT_TYPE_FIREBASE_STORAGE,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:20:                ComponentBean.COMPONENT_TYPE_CAMERA, ComponentBean.COMPONENT_TYPE_FILE_PICKER,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:21:                ComponentBean.COMPONENT_TYPE_REQUEST_NETWORK, ComponentBean.COMPONENT_TYPE_TEXT_TO_SPEECH,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:22:                ComponentBean.COMPONENT_TYPE_SPEECH_TO_TEXT, ComponentBean.COMPONENT_TYPE_BLUETOOTH_CONNECT,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:23:                ComponentBean.COMPONENT_TYPE_LOCATION_MANAGER, ComponentBean.COMPONENT_TYPE_REWARDED_VIDEO_AD,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:24:                ComponentBean.COMPONENT_TYPE_PROGRESS_DIALOG, ComponentBean.COMPONENT_TYPE_DATE_PICKER_DIALOG,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:25:                ComponentBean.COMPONENT_TYPE_TIME_PICKER_DIALOG, ComponentBean.COMPONENT_TYPE_NOTIFICATION,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:26:                ComponentBean.COMPONENT_TYPE_FRAGMENT_ADAPTER, ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH_PHONE,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:27:                ComponentBean.COMPONENT_TYPE_FIREBASE_CLOUD_MESSAGE, ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH_GOOGLE_LOGIN};
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyComponentCapabilityMatrix.java:31:    private CreatorLegacyComponentCapabilityMatrix() { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationReducer.java:17:        Map<String, CreatorEventBinding> events = new LinkedHashMap<>(document.getEvents());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationReducer.java:66:                        (java.util.List<CreatorRuntimeBlock>) payload.get("blocks")));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:130:        if (bindingId == null || targetWidgetId == null || eventName == null || !(payload.get("blocks") instanceof java.util.List)) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:131:            return invalid("bindingId, targetWidgetId, eventName and blocks are required");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorOperationValidator.java:133:        if (document.getEvents().containsKey(bindingId)) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:76:    public Map<String, CreatorEventBinding> getEvents() { return events; }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:87:                                                   Map<String, CreatorEventBinding> nextEvents) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocument.java:89:                screens, widgets, entryControl, nextState, nextEvents);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:61:        for (CreatorEventBinding binding : document.getEvents().values()) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:66:            event.add("blocks", encodeBlocks(binding.getBlocks()));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:115:            List<CreatorRuntimeBlock> blocks = decodeBlocks(arrayOrEmpty(event, "blocks"));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:117:                    required(event, "targetWidgetId").getAsString(), required(event, "eventName").getAsString(), blocks);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:135:    private static JsonArray encodeBlocks(List<CreatorRuntimeBlock> blocks) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:137:        for (CreatorRuntimeBlock block : blocks) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:139:            value.addProperty("type", block.getType().name());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:140:            value.add("payload", toJsonObject(block.getPayload()));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:141:            value.add("thenBlocks", encodeBlocks(block.getThenBlocks()));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:142:            value.add("elseBlocks", encodeBlocks(block.getElseBlocks()));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:149:        List<CreatorRuntimeBlock> blocks = new ArrayList<>();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:151:            JsonObject block = item.getAsJsonObject();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:152:            CreatorRuntimeBlock.Type type = CreatorRuntimeBlock.Type.valueOf(required(block, "type").getAsString());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:153:            Map<String, Object> payload = block.has("payload") && block.get("payload").isJsonObject()
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:154:                    ? fromJsonObject(block.getAsJsonObject("payload")) : new LinkedHashMap<String, Object>();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:155:            blocks.add(new CreatorRuntimeBlock(type, payload,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:156:                    decodeBlocks(arrayOrEmpty(block, "thenBlocks")), decodeBlocks(arrayOrEmpty(block, "elseBlocks"))));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectDocumentCodec.java:158:        return blocks;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorProjectOperation.java:9:    public enum ActorKind { USER, AI, SYSTEM }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeCompatibilityInspector.java:23:                    : "No Creator Runtime renderer is registered; execution is blocked rather than falling back.";
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:3:import com.besome.sketch.beans.ComponentBean;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:8:/** Complete, explicit binding from every legacy ComponentBean type to a Creator Runtime service ID. */
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:9:public final class CreatorRuntimeComponentServiceMatrix {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:13:        services.put(ComponentBean.COMPONENT_TYPE_INTENT, "intent");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:14:        services.put(ComponentBean.COMPONENT_TYPE_SHAREDPREF, "local_storage");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:15:        services.put(ComponentBean.COMPONENT_TYPE_CALENDAR, "calendar");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:16:        services.put(ComponentBean.COMPONENT_TYPE_VIBRATOR, "vibrator");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:17:        services.put(ComponentBean.COMPONENT_TYPE_TIMERTASK, "timer");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:18:        services.put(ComponentBean.COMPONENT_TYPE_FIREBASE, "firebase");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:19:        services.put(ComponentBean.COMPONENT_TYPE_DIALOG, "dialog");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:20:        services.put(ComponentBean.COMPONENT_TYPE_MEDIAPLAYER, "media");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:21:        services.put(ComponentBean.COMPONENT_TYPE_SOUNDPOOL, "media");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:22:        services.put(ComponentBean.COMPONENT_TYPE_OBJECTANIMATOR, "animator");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:23:        services.put(ComponentBean.COMPONENT_TYPE_GYROSCOPE, "gyroscope");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:24:        services.put(ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH, "firebase_auth");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:25:        services.put(ComponentBean.COMPONENT_TYPE_INTERSTITIAL_AD, "ads_interstitial");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:26:        services.put(ComponentBean.COMPONENT_TYPE_FIREBASE_STORAGE, "firebase_storage");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:27:        services.put(ComponentBean.COMPONENT_TYPE_CAMERA, "camera");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:28:        services.put(ComponentBean.COMPONENT_TYPE_FILE_PICKER, "file_picker");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:29:        services.put(ComponentBean.COMPONENT_TYPE_REQUEST_NETWORK, "http");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:30:        services.put(ComponentBean.COMPONENT_TYPE_TEXT_TO_SPEECH, "text_to_speech");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:31:        services.put(ComponentBean.COMPONENT_TYPE_SPEECH_TO_TEXT, "speech_to_text");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:32:        services.put(ComponentBean.COMPONENT_TYPE_BLUETOOTH_CONNECT, "bluetooth");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:33:        services.put(ComponentBean.COMPONENT_TYPE_LOCATION_MANAGER, "location");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:34:        services.put(ComponentBean.COMPONENT_TYPE_REWARDED_VIDEO_AD, "ads_rewarded");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:35:        services.put(ComponentBean.COMPONENT_TYPE_PROGRESS_DIALOG, "dialog");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:36:        services.put(ComponentBean.COMPONENT_TYPE_DATE_PICKER_DIALOG, "date_picker");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:37:        services.put(ComponentBean.COMPONENT_TYPE_TIME_PICKER_DIALOG, "time_picker");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:38:        services.put(ComponentBean.COMPONENT_TYPE_NOTIFICATION, "notification");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:39:        services.put(ComponentBean.COMPONENT_TYPE_FRAGMENT_ADAPTER, "fragment_adapter");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:40:        services.put(ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH_PHONE, "firebase_auth_phone");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:41:        services.put(ComponentBean.COMPONENT_TYPE_FIREBASE_CLOUD_MESSAGE, "firebase_cloud_message");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:42:        services.put(ComponentBean.COMPONENT_TYPE_FIREBASE_AUTH_GOOGLE_LOGIN, "firebase_auth_google");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeComponentServiceMatrix.java:45:    private CreatorRuntimeComponentServiceMatrix() { }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeEngine.java:7: * Single authoritative mutation path for manual and AI Creator Runtime edits.
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeExpression.java:8:/** Evaluates a deliberately small, typed expression language used by imported blocks. */
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeProjectStore.java:29:                // A corrupt local draft must not block Creator Home. The next
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeService.java:14:    enum Status { SUCCEEDED, PERMISSION_REQUIRED, DENIED, UNSUPPORTED_ARGUMENT, FAILED }
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeService.java:22:            this.status = status == null ? Status.FAILED : status;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeServiceArguments.java:44:        return new CreatorRuntimeService.Result(CreatorRuntimeService.Status.FAILED,
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeSession.java:42:     * broadcast through the same listener boundary as AI/user operations.
+app/src/main/java/pro/sketchware/creator/runtime/CreatorRuntimeSession.java:50:                imported.getEntryControl(), imported.getState(), imported.getEvents());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorVibratorService.java:28:            return new Result(Status.FAILED, Collections.emptyMap(), "Vibration hardware is unavailable.");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:22:import com.besome.sketch.beans.ComponentBean;
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:167:        ArrayList<ComponentBean> components = new ArrayList<>();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:169:        Map<String, List<BlockBean>> blocksByEvent = new java.util.LinkedHashMap<>();
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:179:            ArrayList<ComponentBean> fileComponents = viewStore.e(file.getXmlName());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:180:            if (fileComponents != null) components.addAll(fileComponents);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:181:            ArrayList<EventBean> fileEvents = viewStore.g(file.getXmlName());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:182:            if (fileEvents != null) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:183:                events.addAll(fileEvents);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:184:                for (EventBean event : fileEvents) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:185:                    if (event != null) blocksByEvent.put(event.getEventKey(), viewStore.a(file.getXmlName(), event.getEventKey()));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:193:                screens, widgets, current.getEntryControl(), current.getState(), current.getEvents());
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:195:                importedDocument, components, events, blocksByEvent);
+app/src/main/res/layout/about.xml:20:        <com.google.android.material.tabs.TabLayout
+app/src/main/res/layout/about.xml:39:        </com.google.android.material.tabs.TabLayout>
+app/src/main/res/layout/activity_about_app.xml:19:        <com.google.android.material.tabs.TabLayout
+app/src/main/res/layout/activity_about_app.xml:39:        </com.google.android.material.tabs.TabLayout>
+app/src/main/res/layout/activity_about_app.xml:47:    <androidx.viewpager2.widget.ViewPager2
+app/src/main/res/layout/activity_ai_settings.xml:2:<!-- AI Settings host — drawer + toolbar + content frame. Uses the Kelivo
+app/src/main/res/layout/activity_blocks_manager_creator.xml:17:            app:title="Edit block" />
+app/src/main/res/layout/activity_blocks_manager_creator.xml:262:                                android:id="@+id/block_area"
+app/src/main/res/layout/activity_blocks_manager_details.xml:13:            android:id="@+id/block_list"
+app/src/main/res/layout/activity_creator_home.xml:61:            android:id="@+id/creator_entry_control"
+app/src/main/res/layout/activity_creator_project.xml:90:                android:id="@+id/creator_editor_controls"
+app/src/main/res/layout/activity_creator_project.xml:156:            android:id="@+id/creator_project_entry_control"
+app/src/main/res/layout/activity_creator_project.xml:161:            android:contentDescription="@string/creator_entry_control_title"
+app/src/main/res/layout/ai_provider_detail_model_row.xml:59:            tools:text="OpenAI" />
+app/src/main/res/layout/ai_provider_row.xml:58:                tools:text="OpenAI" />
+app/src/main/res/layout/ai_row_text.xml:3:     Layout: avatar + sender name + time, status chip, reasoning block (collapsible),
+app/src/main/res/layout/ai_row_text.xml:44:                android:text="AI"
+app/src/main/res/layout/ai_row_text.xml:87:    <!-- Optional reasoning block (collapsible) -->
+app/src/main/res/layout/block_customview.xml:53:                    <include layout="@layout/block_customview_spec" />
+app/src/main/res/layout/block_customview_spec.xml:17:    tools:background="@drawable/block_ori"
+app/src/main/res/layout/design.xml:35:                <com.google.android.material.tabs.TabLayout
+app/src/main/res/layout/design.xml:48:                <com.besome.sketch.lib.ui.CustomViewPager
+app/src/main/res/layout/design.xml:148:                        android:id="@+id/btn_run"
+app/src/main/res/layout/dialog_block_configuration.xml:36:            android:id="@+id/blocksPath"
+app/src/main/res/layout/dialog_block_configuration.xml:39:            android:hint="JSON file with blocks"
+app/src/main/res/layout/dialog_project_settings.xml:102:                        android:text="This will enable ViewBinding in your project. Note: Manual changes may be required for widgets used in ASD block"
+app/src/main/res/layout/dialog_project_settings.xml:184:                        android:text="Use MaterialComponents"
+app/src/main/res/layout/file_selector_popup_select_java.xml:15:        android:splitMotionEvents="false" />
+app/src/main/res/layout/fr_component_list.xml:32:                android:splitMotionEvents="false"
+app/src/main/res/layout/fr_logic_list.xml:35:                android:text="@string/logic_button_import_more_block"
+app/src/main/res/layout/fr_logic_list.xml:94:                android:splitMotionEvents="false"
+app/src/main/res/layout/fr_logic_list_item_addevent.xml:50:        tools:text="initializeLogic" />
+app/src/main/res/layout/fr_logic_list_item_component.xml:101:            <com.besome.sketch.editor.component.CollapsibleComponentLayout
+app/src/main/res/layout/fr_manage_font_list.xml:23:        android:splitMotionEvents="false" />
+app/src/main/res/layout/fr_manage_image_list.xml:28:            android:splitMotionEvents="false"
+app/src/main/res/layout/fr_manage_sound_list.xml:24:        android:splitMotionEvents="false"
+app/src/main/res/layout/fragment_ai_auto_approve.xml:27:            android:id="@+id/sw_aa_block"
+app/src/main/res/layout/fragment_ai_auto_approve.xml:30:            android:text="Block operations (add/move/delete blocks)" />
+app/src/main/res/layout/fragment_ai_auto_approve.xml:35:            android:text="Component operations (add/delete components)" />
+app/src/main/res/layout/fragment_ai_chat.xml:2:<!-- Full AI chat page UI — ported from FabioSilva11/Sketchware-IA activity_chat.xml.
+app/src/main/res/layout/fragment_ai_experimental.xml:21:            android:text="Background editing (agent runs even when AI tab is not focused)" />
+app/src/main/res/layout/fragment_ai_experimental.xml:27:            android:text="Enable AI image generation" />
+app/src/main/res/layout/fragment_ai_provider_settings.xml:151:            android:text="Advanced: uses Responses API flat format {type,name,description,parameters} instead of Chat Completions wrapped format {type,function:{...}}. Leave OFF for all known providers (OpenAI, Z.AI, Mistral, DeepSeek, etc.). Enable only for custom servers that explicitly require flat format."
+app/src/main/res/layout/fragment_block_selector_manager.xml:15:            app:menu="@menu/block_selector_menu"
+app/src/main/res/layout/fragment_block_selector_manager.xml:17:            app:title="@string/settings_block_selector" />
+app/src/main/res/layout/fragment_events_manager.xml:83:                        tools:text="Events: 1" />
+app/src/main/res/layout/fragment_events_manager_creator.xml:66:                            android:hint="Widget/Component name" />
+app/src/main/res/layout/import_icon.xml:33:        android:splitMotionEvents="false"
+app/src/main/res/layout/item_custom_block.xml:29:                android:id="@+id/tv_block_id"
+app/src/main/res/layout/item_custom_block.xml:43:                android:layout_below="@id/tv_block_id"
+app/src/main/res/layout/item_custom_block.xml:44:                android:layout_alignStart="@id/tv_block_id"
+app/src/main/res/layout/item_style.xml:51:            tools:text="ThemeOverlay.MaterialComponents.MaterialAlertDialog" />
+app/src/main/res/layout/library_downloader_dialog.xml:23:        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+app/src/main/res/layout/logic_editor.xml:22:        <com.besome.sketch.editor.view.ViewLogicEditor
+app/src/main/res/layout/logic_editor.xml:31:    <com.besome.sketch.editor.LogicEditorDrawer
+app/src/main/res/layout/logic_editor.xml:50:            android:src="@drawable/block_flled_white"
+app/src/main/res/layout/logic_editor.xml:61:                android:id="@+id/palette_block"
+app/src/main/res/layout/logic_editor.xml:67:    <com.besome.sketch.editor.logic.LogicTopMenu
+app/src/main/res/layout/logic_editor_drawer.xml:41:        android:id="@+id/tv_block_collection"
+app/src/main/res/layout/logic_editor_drawer.xml:46:        android:text="@string/logic_editor_title_block_collection"
+app/src/main/res/layout/logic_editor_top_menu.xml:135:                android:src="@drawable/ic_mtrl_block" />
+app/src/main/res/layout/logic_popup_add_event.xml:20:        android:splitMotionEvents="false"
+app/src/main/res/layout/logic_popup_add_event.xml:60:                android:id="@+id/moreblock_layout"
+app/src/main/res/layout/logic_popup_add_event.xml:71:                android:splitMotionEvents="false"
+app/src/main/res/layout/make_block.xml:9:        android:id="@+id/makeblock_view"
+app/src/main/res/layout/make_block_layout.xml:26:                android:id="@+id/block_area"
+app/src/main/res/layout/make_block_layout.xml:49:                android:text="use (moreblockName[type|typeName] or\nmoreblockName[type|typeName|typeCode]) for custom moreblock type(S)"
+app/src/main/res/layout/make_block_layout.xml:54:                android:id="@+id/tv_title_blockname"
+app/src/main/res/layout/make_block_layout.xml:60:                android:text="@string/block_name"
+app/src/main/res/layout/make_block_layout.xml:93:                android:text="Select Moreblock type"
+app/src/main/res/layout/manage_app_compat.xml:22:        <com.google.android.material.tabs.TabLayout
+app/src/main/res/layout/manage_collection.xml:65:                        android:splitMotionEvents="false" />
+app/src/main/res/layout/manage_collection_block_list_item.xml:46:            android:id="@+id/img_block"
+app/src/main/res/layout/manage_collection_block_list_item.xml:53:            android:id="@+id/tv_block_name"
+app/src/main/res/layout/manage_collection_more_block_list_item.xml:51:                android:id="@+id/tv_block_name"
+app/src/main/res/layout/manage_collection_more_block_list_item.xml:68:                    android:id="@+id/block_area"
+app/src/main/res/layout/manage_collection_popup_import_more_block_list_item.xml:31:                        android:id="@+id/tv_block_name"
+app/src/main/res/layout/manage_collection_popup_import_more_block_list_item.xml:41:                        android:id="@+id/block_area"
+app/src/main/res/layout/manage_custom_component_add.xml:90:                    app:helperText="The actual variable name used in class fields (e.g., 'private VariableName name').\nKeep this consistent with the Component Name to correctly utilize 'Additional Variable' features."
+app/src/main/res/layout/manage_custom_component_list_item.xml:87:            <pro.sketchware.activities.editor.component.CollapsibleCustomComponentLayout
+app/src/main/res/layout/manage_font.xml:20:        <com.google.android.material.tabs.TabLayout
+app/src/main/res/layout/manage_font.xml:34:        <androidx.viewpager.widget.ViewPager
+app/src/main/res/layout/manage_image.xml:22:        <com.google.android.material.tabs.TabLayout
+app/src/main/res/layout/manage_image.xml:36:        <androidx.viewpager.widget.ViewPager
+app/src/main/res/layout/manage_library_base_item.xml:54:        tools:text="Component Manager" />
+app/src/main/res/layout/manage_sound.xml:20:        <com.google.android.material.tabs.TabLayout
+app/src/main/res/layout/manage_sound.xml:34:        <androidx.viewpager.widget.ViewPager
+app/src/main/res/layout/manage_view.xml:24:        <com.google.android.material.tabs.TabLayout
+app/src/main/res/layout/manage_view.xml:38:        <androidx.viewpager.widget.ViewPager
+app/src/main/res/layout/menu_activity.xml:206:                            style="@style/Widget.MaterialComponents.Button"
+app/src/main/res/layout/menu_activity.xml:213:                            android:textAppearance="@style/TextAppearance.MaterialComponents.Button"
+app/src/main/res/layout/menu_activity.xml:219:                            style="@style/Widget.MaterialComponents.Button"
+app/src/main/res/layout/menu_activity.xml:227:                            android:textAppearance="@style/TextAppearance.MaterialComponents.Button"
+app/src/main/res/layout/myprojects.xml:92:                        android:splitMotionEvents="false"
+app/src/main/res/layout/palette_block.xml:33:                    android:id="@+id/block_builder"
+app/src/main/res/layout/property.xml:17:            android:splitMotionEvents="false"
+app/src/main/res/layout/resources_editors_activity.xml:23:        <com.google.android.material.tabs.TabLayout
+app/src/main/res/layout/resources_editors_activity.xml:37:    <androidx.viewpager2.widget.ViewPager2
+app/src/main/res/layout/var_type_selector_dialog.xml:22:        android:splitMotionEvents="false"
+app/src/main/res/layout/view_events.xml:14:        android:splitMotionEvents="false"
+app/src/main/res/layout/view_property.xml:85:    <com.besome.sketch.editor.view.ViewEvents
+app/src/main/res/layout/view_used_custom_blocks.xml:17:        tools:text="You haven't used any custom blocks in this project." />

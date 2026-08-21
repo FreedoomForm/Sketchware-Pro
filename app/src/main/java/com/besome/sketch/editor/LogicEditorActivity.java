@@ -171,6 +171,18 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
     private SvgUtils svgUtils;
     private final FilePathUtil fpu = new FilePathUtil();
 
+    private boolean isCreatorRuntimeMode() {
+        String runtimeProjectId = getIntent() == null
+                ? null : getIntent().getStringExtra("creator_runtime_project_id");
+        return runtimeProjectId != null && !runtimeProjectId.trim().isEmpty();
+    }
+
+    @Override
+    public boolean isStoragePermissionGranted() {
+        if (isCreatorRuntimeMode()) return true;
+        return super.isStoragePermissionGranted();
+    }
+
     public static ArrayList<String> getAllJavaFileNames(String projectScId) {
         ArrayList<String> javaFileNames = new ArrayList<>();
         for (ProjectFileBean projectFile : jC.b(projectScId).b()) {
@@ -1910,8 +1922,9 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.logic_editor);
-        if (!super.isStoragePermissionGranted()) {
+        if (!isStoragePermissionGranted()) {
             finish();
+            return;
         }
         Parcelable parcelable;
         if (savedInstanceState == null) {
@@ -2030,8 +2043,9 @@ public class LogicEditorActivity extends BaseAppCompatActivity implements View.O
     @Override
     public void onResume() {
         super.onResume();
-        if (!super.isStoragePermissionGranted()) {
+        if (!isStoragePermissionGranted()) {
             finish();
+            return;
         }
     }
 
