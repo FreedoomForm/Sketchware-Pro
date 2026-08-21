@@ -14,7 +14,9 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import pro.sketchware.R;
+import com.besome.sketch.design.DesignActivity;
 import pro.sketchware.activities.main.activities.MainActivity;
+import pro.sketchware.creator.runtime.CreatorLegacyProjectBridge;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 
@@ -57,7 +59,12 @@ public final class CreatorHomeActivity extends AppCompatActivity {
     }
 
     private void openProject() {
-        startActivity(new Intent(this, CreatorProjectActivity.class));
+        CreatorProjectDocument document = session.getDocument();
+        String legacyScId = CreatorLegacyProjectBridge.ensureLegacyProject(this, document);
+        Intent intent = new Intent(this, DesignActivity.class)
+                .putExtra("sc_id", legacyScId)
+                .putExtra("creator_runtime_project_id", document.getProjectId());
+        startActivity(intent);
     }
 
     private void renderDocument(CreatorProjectDocument document) {

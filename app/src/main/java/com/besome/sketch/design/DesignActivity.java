@@ -115,6 +115,9 @@ import mod.jbk.diagnostic.MissingFileException;
 import mod.jbk.util.LogUtil;
 import mod.khaled.logcat.LogReaderActivity;
 import pro.sketchware.R;
+import pro.sketchware.creator.runtime.CreatorLegacyProjectBridge;
+import pro.sketchware.creator.runtime.CreatorProjectDocument;
+import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 import pro.sketchware.activities.appcompat.ManageAppCompatActivity;
 import pro.sketchware.activities.editor.command.ManageXMLCommandActivity;
 import pro.sketchware.activities.editor.view.CodeViewerActivity;
@@ -171,6 +174,17 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     });
     private rs eventTabAdapter;
     private br componentTabAdapter;
+    private CreatorRuntimeSession runtimeSession;
+    private final CreatorRuntimeSession.Listener creatorRuntimeListener = document -> runOnUiThread(() -> {
+        String runtimeProjectId = getIntent().getStringExtra("creator_runtime_project_id");
+        if (runtimeProjectId == null || sc_id == null || document == null
+                || !runtimeProjectId.equals(document.getProjectId())) return;
+        CreatorLegacyProjectBridge.syncRuntimeMetadata(this, document, sc_id);
+        CreatorLegacyProjectBridge.projectRuntimeViews(this, document, sc_id);
+        refreshViewForAi("main.xml");
+        refreshEventsForAi();
+        refreshComponentsForAi();
+    });
     private final ActivityResultLauncher<Intent> openImageManager = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
         if (result.getResultCode() == RESULT_OK) {
             refresh();
@@ -528,6 +542,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         } else {
             sc_id = savedInstanceState.getString("sc_id");
         }
+        syncCreatorRuntimeBoundary();
 
         r = new DB(getApplicationContext(), "P1");
         t = new DB(getApplicationContext(), "P12");
@@ -658,6 +673,9 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         viewPager.getAdapter().notifyDataSetChanged();
         ((TabLayout) findViewById(R.id.tab_layout)).setupWithViewPager(viewPager);
 
+        runtimeSession = CreatorRuntimeSession.get(this);
+        runtimeSession.addListener(creatorRuntimeListener);
+
         IntentFilter filter = new IntentFilter(BuildTask.ACTION_CANCEL_BUILD);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(buildCancelReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
@@ -687,6 +705,10 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
 
     @Override
     public void onDestroy() {
+        if (runtimeSession != null) {
+            runtimeSession.removeListener(creatorRuntimeListener);
+            runtimeSession = null;
+        }
         super.onDestroy();
         unregisterReceiver(buildCancelReceiver);
     }
@@ -743,6 +765,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     @Override
     public void onResume() {
         super.onResume();
+        syncCreatorRuntimeBoundary();
         if (!isStoragePermissionGranted()) {
             finish();
         }
@@ -750,6 +773,16 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         long freeMegabytes = GB.c();
         if (freeMegabytes < 100L && freeMegabytes > 0L) {
             warnAboutInsufficientStorageSpace();
+        }
+    }
+
+    private void syncCreatorRuntimeBoundary() {
+        String runtimeProjectId = getIntent().getStringExtra("creator_runtime_project_id");
+        if (runtimeProjectId == null || sc_id == null) return;
+        CreatorProjectDocument document = CreatorRuntimeSession.get(this).getDocument();
+        if (runtimeProjectId.equals(document.getProjectId())) {
+            CreatorLegacyProjectBridge.syncRuntimeMetadata(this, document, sc_id);
+            CreatorLegacyProjectBridge.projectRuntimeViews(this, document, sc_id);
         }
     }
 

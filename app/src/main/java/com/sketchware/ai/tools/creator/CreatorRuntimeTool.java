@@ -7,6 +7,7 @@ import com.sketchware.ai.tools.SketchwareToolContext;
 import com.sketchware.ai.tools.ToolResult;
 
 import pro.sketchware.creator.runtime.CreatorApplyResult;
+import pro.sketchware.creator.runtime.CreatorLegacyProjectBridge;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectOperation;
 import pro.sketchware.creator.runtime.CreatorRuntimeOperationMapper;
@@ -126,6 +127,8 @@ public final class CreatorRuntimeTool implements SketchwareTool {
                         + result.getValidation().getCode().name() + " — " + result.getValidation().getMessage());
             }
             CreatorProjectDocument document = result.getDocument();
+            CreatorLegacyProjectBridge.projectRuntimeViews(context.getContext(), document, context.getScId());
+            context.refreshAllEditors();
             return ToolResult.success("Creator Runtime applied " + operation.getType().name()
                     + " at revision " + document.getRevision()
                     + ". Screens=" + document.getScreens().size()

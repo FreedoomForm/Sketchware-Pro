@@ -8,10 +8,18 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.view.View;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.drawerlayout.widget.DrawerLayout;
+
+import com.besome.sketch.design.DesignActivity;
+import com.besome.sketch.beans.ViewBean;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -20,6 +28,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import pro.sketchware.R;
+import pro.sketchware.creator.runtime.CreatorApplyResult;
+import pro.sketchware.creator.runtime.CreatorLegacyProjectBridge;
+import pro.sketchware.creator.runtime.CreatorProjectDocument;
+import pro.sketchware.creator.runtime.CreatorProjectOperation;
 import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 
 @RunWith(AndroidJUnit4.class)
@@ -68,6 +80,62 @@ public class CreatorRuntimeNavigationTest {
                 assertThat((Object) activity.findViewById(R.id.creator_open_legacy)).isNotNull();
             });
         }
+    }
+
+    @Test public void creatorRuntimeOpensOriginalSketchwareEditorSurface() {
+        CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
+        String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
+        Intent intent = new Intent(context, DesignActivity.class).putExtra("sc_id", scId);
+        try (ActivityScenario<DesignActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertThat((Object) activity.findViewById(R.id.toolbar)).isNotNull();
+                assertThat((Object) activity.findViewById(R.id.tab_layout)).isNotNull();
+                assertThat((Object) activity.findViewById(R.id.viewpager)).isNotNull();
+                assertThat((Object) activity.findViewById(R.id.btn_run)).isNotNull();
+                assertThat((Object) activity.findViewById(R.id.btn_options)).isNotNull();
+            });
+        }
+    }
+
+    @Test public void runtimeWidgetChangesAreProjectedIntoOriginalViewStore() {
+        CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
+        String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
+        Intent intent = new Intent(context, DesignActivity.class)
+                .putExtra("sc_id", scId)
+                .putExtra("creator_runtime_project_id", document.getProjectId());
+        AtomicReference<CreatorApplyResult> result = new AtomicReference<>();
+        try (ActivityScenario<DesignActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                Map<String, Object> payload = new LinkedHashMap<>();
+                payload.put("widgetId", "runtime_button");
+                payload.put("widgetType", "button");
+                payload.put("parentId", null);
+                payload.put("index", 0L);
+                Map<String, Object> properties = new LinkedHashMap<>();
+                properties.put("text", "Runtime button");
+                payload.put("properties", properties);
+                CreatorProjectOperation operation = new CreatorProjectOperation(
+                        "instrumentation-runtime-widget", document.getProjectId(),
+                        CreatorRuntimeSession.get(activity).getDocument().getRevision(),
+                        CreatorProjectOperation.ActorKind.AI,
+                        CreatorProjectOperation.Type.WIDGET_ADD, payload,
+                        System.currentTimeMillis());
+                result.set(CreatorRuntimeSession.get(activity).apply(operation));
+            });
+        }
+        assertThat(result.get()).isNotNull();
+        assertThat(result.get().isApplied()).isTrue();
+        ArrayList<ViewBean> views = a.a.a.jC.a(scId).d("main.xml");
+        boolean found = false;
+        for (ViewBean view : views) {
+            if (view != null && "runtime_button".equals(view.id)) {
+                found = true;
+                assertThat(view.type).isEqualTo(ViewBean.VIEW_TYPE_WIDGET_BUTTON);
+                assertThat(view.text).isNotNull();
+                assertThat(view.text.text).isEqualTo("Runtime button");
+            }
+        }
+        assertThat(found).isTrue();
     }
 
     @Test public void editorSidebarContainsMigratedMainScreenActions() {
