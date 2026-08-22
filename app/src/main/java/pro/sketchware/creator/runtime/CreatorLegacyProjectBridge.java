@@ -436,8 +436,15 @@ public final class CreatorLegacyProjectBridge {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String seededKey = "starter_intent_seeded_" + document.getProjectId();
         String seedVersionKey = "starter_intent_seed_version_" + document.getProjectId();
+        boolean runtimeStillOwnsStarterBinding = document.getEvents().containsKey(
+                CreatorRuntimeDefaults.ENTRY_CLICK_BINDING_ID);
+        // ProjectLoader can recreate the in-memory eC cache after the first
+        // seed. Reconcile missing legacy records while the runtime document
+        // still owns the starter binding; if the user removed that binding,
+        // do not silently resurrect it on the next open.
         if (preferences.getBoolean(seededKey, false)
-                && preferences.getInt(seedVersionKey, 0) >= STARTER_INTENT_SEED_VERSION) return;
+                && preferences.getInt(seedVersionKey, 0) >= STARTER_INTENT_SEED_VERSION
+                && !runtimeStillOwnsStarterBinding) return;
         eC viewStore = jC.a(scId);
         String javaName = ProjectFileBean.DEFAULT_JAVA_NAME;
         ProjectFileBean mainFile = jC.b(scId).b(ProjectFileBean.DEFAULT_XML_NAME);

@@ -94,7 +94,14 @@ public final class CreatorRuntimeSmokeTest {
                     break;
                 }
             }
-            assertThat(hasEditorIntent).isTrue();
+            if (!hasEditorIntent) {
+                throw new AssertionError("Starter Intent missing: scId=" + scId
+                        + " javaName=" + main.getJavaName()
+                        + " components=" + components
+                        + " eCKeys=" + a.a.a.jC.a(scId).c.keySet()
+                        + " viewFile=" + new java.io.File(a.a.a.wq.b(scId)
+                        + java.io.File.separator + "view").exists());
+            }
             ArrayList<EventBean> starterEvents = a.a.a.jC.a(scId).g(main.getJavaName());
             EventBean starterClick = null;
             for (EventBean event : starterEvents == null
