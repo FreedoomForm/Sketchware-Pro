@@ -53,7 +53,9 @@ import pro.sketchware.creator.runtime.CreatorMapService;
 import pro.sketchware.creator.runtime.CreatorProjectDocument;
 import pro.sketchware.creator.runtime.CreatorProjectOperation;
 import pro.sketchware.creator.runtime.CreatorRuntimeCompatibilityInspector;
+import pro.sketchware.creator.runtime.CreatorRuntimeEngine;
 import pro.sketchware.creator.runtime.CreatorRuntimeEnvironment;
+import pro.sketchware.creator.runtime.CreatorRuntimeEventLog;
 import pro.sketchware.creator.runtime.CreatorRuntimeExecutor;
 import pro.sketchware.creator.runtime.CreatorRuntimeService;
 import pro.sketchware.creator.runtime.CreatorRuntimeServiceDispatcher;
@@ -78,14 +80,18 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     private CreatorShakeRecovery shakeRecovery;
     private CreatorRuntimeEnvironment runtimeEnvironment;
     private CreatorRuntimeExecutor runtimeExecutor;
+    private CreatorRuntimeEngine liveEngine;
     private CreatorRuntimeServiceDispatcher runtimeServices;
     private String activeScreenId;
     private final Map<String, MapView> liveMapViews = new LinkedHashMap<>();
+    private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(() -> {
+        liveEngine = new CreatorRuntimeEngine(document, 100, new CreatorRuntimeEventLog(300));
+        render();
+    });
     private DrawerLayout editorDrawer;
     private DrawerLayout liveDrawerLayout;
     private boolean rendering;
     private boolean renderPending;
-    private final CreatorRuntimeSession.Listener documentListener = document -> runOnUiThread(this::render);
 
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
@@ -104,7 +110,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 session.getDocument().getProjectId(), runtimeEnvironment,
                 timerId -> runtimeEnvironment.publish("timer", "tick",
                         java.util.Collections.<String, Object>singletonMap("timerId", timerId)));
-        runtimeExecutor = new CreatorRuntimeExecutor(runtimeServices, session);
+        runtimeExecutor = new CreatorRuntimeExecutor(runtimeServices, null);
         findViewById(R.id.creator_back).setOnClickListener(v -> leaveEditorToLiveSurface());
         findViewById(R.id.creator_add_text).setOnClickListener(v -> addWidget("text", "New text"));
         findViewById(R.id.creator_add_button).setOnClickListener(v -> addWidget("button", "Button"));
@@ -117,6 +123,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             if (liveOnly) openEditor();
         });
         ensureStarterScreen();
+        liveEngine = new CreatorRuntimeEngine(session.getDocument(), 100, new CreatorRuntimeEventLog(300));
         render();
         dispatchLifecycleEvent("create");
     }
@@ -376,7 +383,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     }
 
     private void renderNow() {
-        CreatorProjectDocument document = session.getDocument();
+        CreatorProjectDocument document = liveEngine == null ? session.getDocument() : liveEngine.getCurrent();
         boolean drawerWasOpen = liveDrawerLayout != null
                 && liveDrawerLayout.isDrawerOpen(GravityCompat.START);
         runtimeEnvironment.clearWidgets();
@@ -921,15 +928,16 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     }
 
     private boolean hasRuntimeClickBinding(String widgetId) {
-        if (session == null || widgetId == null) return false;
-        for (CreatorEventBinding binding : session.getDocument().getEvents().values()) {
+        if (liveEngine == null || widgetId == null) return false;
+        for (CreatorEventBinding binding : liveEngine.getCurrent().getEvents().values()) {
             if (widgetId.equals(binding.getTargetWidgetId()) && "click".equals(binding.getEventName())) return true;
         }
         return false;
     }
 
     private void applyCommonViewProperties(CreatorWidget widget, View view) {
-        CreatorProjectDocument document = session == null ? null : session.getDocument();
+        CreatorProjectDocument document = liveEngine == null
+                ? (session == null ? null : session.getDocument()) : liveEngine.getCurrent();
         view.setEnabled(propertyBoolean(widget, "enabled", true));
         view.setClickable(propertyBoolean(widget, "clickable", view.isClickable()));
         view.setVisibility(propertyBoolean(widget, "visible", true) ? View.VISIBLE : View.GONE);
@@ -1167,14 +1175,14 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     }
 
     private void dispatchRuntimeEvent(String widgetId, String eventName) {
-        java.util.List<CreatorRuntimeExecutor.Effect> effects = runtimeExecutor.dispatch(session.getEngine(), widgetId, eventName);
+        java.util.List<CreatorRuntimeExecutor.Effect> effects = runtimeExecutor.dispatch(liveEngine, widgetId, eventName);
         if (effects != null && !effects.isEmpty()) renderEffects(effects);
         render();
     }
 
     private void dispatchLifecycleEvent(String eventName) {
         if (runtimeExecutor == null || session == null) return;
-        renderEffects(runtimeExecutor.dispatch(session.getEngine(),
+        renderEffects(runtimeExecutor.dispatch(liveEngine,
                 CreatorLegacyArtifactImporter.ACTIVITY_EVENT_TARGET, eventName));
     }
 
@@ -1187,7 +1195,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
             activeScreenId = String.valueOf(payload.get("screenId"));
         }
         if ("timer".equals(serviceId) && payload.get("timerId") != null) {
-            renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(payload.get("timerId")), eventName));
+            renderEffects(runtimeExecutor.dispatch(liveEngine, String.valueOf(payload.get("timerId")), eventName));
         }
         if ("firebase".equals(serviceId) && "children".equals(eventName)) {
             Object resultStateId = payload.get("resultStateId");
@@ -1196,31 +1204,31 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 Map<String, Object> statePayload = new LinkedHashMap<>();
                 statePayload.put("stateId", String.valueOf(resultStateId));
                 statePayload.put("value", rows);
-                CreatorProjectDocument document = session.getDocument();
+                CreatorProjectDocument document = liveEngine.getCurrent();
                 CreatorProjectOperation operation = new CreatorProjectOperation("runtime-firebase-children-"
                         + UUID.randomUUID(), document.getProjectId(), document.getRevision(),
                         CreatorProjectOperation.ActorKind.SYSTEM, CreatorProjectOperation.Type.STATE_SET,
                         statePayload, System.currentTimeMillis());
-                session.apply(operation);
+                liveEngine.apply(operation);
             }
             Object callbackTargetId = payload.get("callbackTargetId");
             if (callbackTargetId != null && !String.valueOf(callbackTargetId).trim().isEmpty()) {
-                renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(callbackTargetId), "children"));
+                renderEffects(runtimeExecutor.dispatch(liveEngine, String.valueOf(callbackTargetId), "children"));
             }
         }
         if ("dialog".equals(serviceId) && "button".equals(eventName)) {
             Object callbackTargetId = payload.get("callbackTargetId");
             if (callbackTargetId != null && !String.valueOf(callbackTargetId).trim().isEmpty()) {
-                renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(callbackTargetId), "button"));
+                renderEffects(runtimeExecutor.dispatch(liveEngine, String.valueOf(callbackTargetId), "button"));
             }
         }
-        Object rawComponents = session.getDocument().getState().get("legacy.components");
+        Object rawComponents = liveEngine.getCurrent().getState().get("legacy.components");
         if (rawComponents instanceof Map) {
             for (Map.Entry<?, ?> entry : ((Map<?, ?>) rawComponents).entrySet()) {
                 if (!(entry.getValue() instanceof Map)) continue;
                 Object boundService = ((Map<?, ?>) entry.getValue()).get("serviceId");
                 if (!serviceId.equals(boundService)) continue;
-                renderEffects(runtimeExecutor.dispatch(session.getEngine(), String.valueOf(entry.getKey()), eventName));
+                renderEffects(runtimeExecutor.dispatch(liveEngine, String.valueOf(entry.getKey()), eventName));
             }
         }
         String summary = serviceId + " · " + eventName;
