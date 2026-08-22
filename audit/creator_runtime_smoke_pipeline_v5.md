@@ -25,3 +25,9 @@ The first focused workflow run failed on both API 30 and API 34 before Gradle te
 ## Evidence limits
 
 The smoke test is stronger than the previous count-only and isolated assertions, but it still runs on hosted emulators rather than the user's Redmi M2101K7BG. A successful emulator run proves the tested code path works in that emulator configuration; it does not prove OEM-specific behavior, installed-data migration, permission state, or a physical-device screen layout. Those remain explicitly open until device evidence is available.
+
+## Verified focused run 138
+
+Run `32594746584` for commit `45c6179ef60f9aaf9600555fb69c5c9061105d04` completed successfully on 2026-08-22. The Build/JVM prerequisite completed successfully. API 30 job `97084583306` ran `editorRoundTripPreservesUserButtonAndRunsItsClickBehavior`, logged `Starting 1 tests`, `Finished 1 tests`, and `BUILD SUCCESSFUL in 6m 3s`. API 34 job `97084583278` ran the same single method, logged `Starting 1 tests`, `Finished 1 tests`, and `BUILD SUCCESSFUL in 7m 41s`. The workflow conclusion was `success`; the hosted-emulator housekeeping lines `Unable to connect to adb daemon on port: 5037` and `stop: Not implemented` were outside the test result and did not fail either job.
+
+This run validates the focused editor-to-live-to-reopen smoke path on API 30 and API 34 emulators, including transient live click execution without overwriting the authored editor snapshot. It is not Redmi M2101K7BG/OEM validation and does not establish full Sketchware feature coverage.
