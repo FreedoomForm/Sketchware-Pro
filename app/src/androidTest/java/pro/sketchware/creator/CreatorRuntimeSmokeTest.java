@@ -86,8 +86,14 @@ public final class CreatorRuntimeSmokeTest {
                 assertThat((Object) activity.findViewById(R.id.viewpager)).isNotNull();
                 assertThat(activity.findViewById(R.id.btn_options).getVisibility())
                         .isEqualTo(View.GONE);
-                assertThat(findView(before, CreatorRuntimeDefaults.ENTRY_WIDGET_ID))
-                        .isNotNull();
+                ViewBean continueView = findView(before, CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
+                if (continueView == null) {
+                    throw new AssertionError(String.format(
+                            "Continue missing: scId=%s activityScId=%s runtimeWidgets=%s legacyViews=%s",
+                            scId, activity.getIntent().getStringExtra("sc_id"),
+                            CreatorRuntimeSession.get(activity).getDocument().getWidgets().keySet(),
+                            before == null ? "null" : before.size()));
+                }
 
                 ViewBean added = new ViewBean(addedId, ViewBean.VIEW_TYPE_WIDGET_BUTTON);
                 added.parent = "root";
