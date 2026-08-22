@@ -283,6 +283,7 @@ public class ProjectFileBean extends SelectableBean implements Parcelable {
                     OPTION_ACTIVITY_DRAWER,
                     OPTION_ACTIVITY_MASK,
                     OPTION_ACTIVITY_FULLSCREEN,
+                    OPTION_ACTIVITY_LOCKED,
                     OPTION_ACTIVITY_SHIFT,
                     OPTION_ACTIVITY_TOOLBAR})
     @Retention(RetentionPolicy.SOURCE)

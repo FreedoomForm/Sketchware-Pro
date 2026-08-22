@@ -1,0 +1,223 @@
+=== source accessors ===
+app/src/main/java/com/besome/sketch/adapters/JavaFileAdapter.java:57:            binding.tvFilename.setText(projectFile.getJavaName());
+app/src/main/java/com/besome/sketch/adapters/JavaFileAdapter.java:58:            binding.tvLinkedFilename.setText(projectFile.getXmlName());
+app/src/main/java/com/besome/sketch/beans/EventBean.java:70:        jC.a(sc_id).d(projectFileBean.getJavaName(), event.targetId, event.eventName);
+app/src/main/java/com/besome/sketch/beans/EventBean.java:72:        String javaName = projectFileBean.getJavaName();
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:279:        String javaFileName = projectFile.getJavaName();
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:280:        String xmlFileName = projectFile.getXmlName();
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:337:     * ViewBeans collection via {@code jC.a(sc_id).d(xmlName)} and re-inits
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:358:                    && !xmlName.equals(projectFile.getXmlName())) {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:484:        if (jC.c(sc_id).g() || jC.b(sc_id).g() || jC.d(sc_id).q() || jC.a(sc_id).d() || jC.a(sc_id).c()) {
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:949:                boolean d = jC.a(sc_id).d();
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1032:        intent.putExtra("current_xml", projectFile.getXmlName());
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:1095:        launchActivity(ManageAppCompatActivity.class, null, new Pair<>("file_name", projectFile.getXmlName()));
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:189:            javaFileNames.add(projectFile.getJavaName());
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:197:            String xmlName = projectFile.getXmlName();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:207:        ArrayList<BlockBean> eventBlocks = jC.a(scId).a(M.getJavaName(), id + "_" + eventName);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:323:        String javaName = M.getJavaName();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:402:        for (Pair<Integer, String> list : jC.a(scId).j(M.getJavaName())) {
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:413:                        if (!jC.a(scId).b(M.getJavaName(), Helper.getText(radioButton), id + "_" + eventName)) {
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:433:        for (Pair<Integer, String> next : jC.a(scId).k(M.getJavaName())) {
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:446:                        if (!jC.a(scId).c(M.getJavaName(), Helper.getText(radioButton), id + "_" + eventName)) {
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:681:        jC.a(scId).b(M.getJavaName(), i, str);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:853:                            String javaName = M.getJavaName();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:854:                            String xmlName = M.getXmlName();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1240:            Iterator<Pair<String, String>> it = jC.a(scId).i(M.getJavaName()).iterator();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1267:        jC.a(scId).c(M.getJavaName(), i, str);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1360:        jC.a(scId).a(M.getJavaName(), str, str2);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1550:        String xmlName = M.getXmlName();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1796:        jC.a(scId).o(M.getJavaName(), str);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1810:        jC.a(scId).p(M.getJavaName(), str);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2007:            title = getString(R.string.root_spec_common_define) + " " + ReturnMoreblockManager.getLogicEditorTitle(jC.a(scId).b(M.getJavaName(), id));
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2061:        String javaName = M.getJavaName();
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:2466:        return bC.a(M.getJavaName(), id, eventName);
+app/src/main/java/com/besome/sketch/editor/PropertyActivity.java:89:            for (ViewBean bean : jC.a(sc_id).d(fileName)) {
+app/src/main/java/com/besome/sketch/editor/PropertyActivity.java:120:            viewBean = jC.a(sc_id).h(projectFileBean.getXmlName());
+app/src/main/java/com/besome/sketch/editor/PropertyActivity.java:122:            viewBean = jC.a(sc_id).c(projectFileBean.getXmlName(), this.viewBean.preId);
+app/src/main/java/com/besome/sketch/editor/PropertyActivity.java:125:        cC.c(sc_id).a(projectFileBean.getXmlName(), viewBean.clone(), this.viewBean);
+app/src/main/java/com/besome/sketch/editor/event/AddEventActivity.java:110:            for (var existingEvent : jC.a(sc_id).g(projectFile.getJavaName())) {
+app/src/main/java/com/besome/sketch/editor/event/AddEventActivity.java:122:        ArrayList<ViewBean> views = jC.a(sc_id).d(projectFile.getXmlName());
+app/src/main/java/com/besome/sketch/editor/event/AddEventActivity.java:123:        ArrayList<ComponentBean> components = jC.a(sc_id).e(projectFile.getJavaName());
+app/src/main/java/com/besome/sketch/editor/event/AddEventActivity.java:134:                        for (var existingEvent : jC.a(sc_id).g(projectFile.getJavaName())) {
+app/src/main/java/com/besome/sketch/editor/event/AddEventActivity.java:154:                    for (var existingEvent : jC.a(sc_id).g(projectFile.getJavaName())) {
+app/src/main/java/com/besome/sketch/editor/event/AddEventActivity.java:169:        if (projectFile.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_FAB) && (fab = jC.a(sc_id).h(projectFile.getXmlName())) != null) {
+app/src/main/java/com/besome/sketch/editor/event/AddEventActivity.java:172:                for (var existingFabEvent : jC.a(sc_id).g(projectFile.getJavaName())) {
+app/src/main/java/com/besome/sketch/editor/event/AddEventActivity.java:186:            ArrayList<ViewBean> drawerViews = jC.a(sc_id).d(projectFile.getDrawerXmlName());
+app/src/main/java/com/besome/sketch/editor/event/AddEventActivity.java:192:                        for (var existingEvent : jC.a(sc_id).g(projectFile.getJavaName())) {
+app/src/main/java/com/besome/sketch/editor/event/AddEventActivity.java:246:                            jC.a(sc_id).a(projectFile.getJavaName(), blockInformation.first, blockInformation.second);
+app/src/main/java/com/besome/sketch/editor/event/AddEventActivity.java:251:                            jC.a(sc_id).a(projectFile.getJavaName(), eventBean);
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:263:            view.id = a(view.type, projectFile.getXmlName());
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:264:            jC.a(sc_id).a(projectFile.getXmlName(), view);
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:267:                jC.a(sc_id).a(projectFile.getJavaName(), 1, view.type, view.id, "onClick");
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:273:        ArrayList<ViewBean> d = jC.a(sc_id).d(projectFile.getXmlName());
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:280:            view.id = a(view.type, projectFile.getXmlName());
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:281:            jC.a(sc_id).a(projectFile.getXmlName(), view);
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:284:                jC.a(sc_id).a(projectFile.getJavaName(), 1, view.type, view.id, "onClick");
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:307:        ArrayList<ViewBean> d = jC.a(sc_id).d(xmlName);
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:344:                String xmlName = projectFileBean.getXmlName();
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:352:                String javaName = projectFileBean.getJavaName();
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:368:                if (currentXml.equals(customView.getXmlName())) {
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:380:                    viewHolder.itemBinding.tvFilename.setText(customView.getXmlName());
+app/src/main/java/com/besome/sketch/editor/manage/view/ManageViewActivity.java:76:        ArrayList<ViewBean> var12 = jC.a(sc_id).d(var2);
+app/src/main/java/com/besome/sketch/editor/manage/view/ManageViewActivity.java:122:            viewBean.id = a(viewBean.type, var1.getXmlName());
+app/src/main/java/com/besome/sketch/editor/manage/view/ManageViewActivity.java:123:            jC.a(sc_id).a(var1.getXmlName(), viewBean);
+app/src/main/java/com/besome/sketch/editor/manage/view/ManageViewActivity.java:125:                jC.a(sc_id).a(var1.getJavaName(), EventBean.EVENT_TYPE_VIEW, viewBean.type, viewBean.id, "onClick");
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:257:                cC.c(sc_id).a(e.getXmlName(), cloned, c.clone());
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:521:        ArrayList<ViewBean> viewBeans = jC.a(sc_id).d(e.getXmlName());
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:824:            for (ViewBean viewBean : jC.a(sc_id).d(e.getXmlName())) {
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:831:                for (EventBean eventBean : jC.a(sc_id).g(e.getJavaName())) {
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:837:                HashMap<String, ArrayList<BlockBean>> beanMap = jC.a(sc_id).b(e.getJavaName());
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:860:                for (Pair<String, String> moreblocks : jC.a(sc_id).i(e.getJavaName())) {
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:869:                for (EventBean eventBean : jC.a(sc_id).g(e.getJavaName())) {
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:903:                    for (ViewBean viewBean : jC.a(sc_id).f(projectFileBean.getXmlName())) {
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:905:                            String javaName = projectFileBean.getJavaName();
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:939:            ViewBean viewBean = jC.a(sc_id).c(e.getXmlName(), bean.preId);
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:944:                    ArrayList<EventBean> eventBeans = jC.a(sc_id).g(e.getJavaName());
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:951:                                Iterator<Entry<String, ArrayList<BlockBean>>> blocks = jC.a(sc_id).b(e.getJavaName()).entrySet().iterator();
+app/src/main/java/com/besome/sketch/editor/property/ViewPropertyItems.java:969:                                HashMap<String, ArrayList<BlockBean>> blocks = jC.a(sc_id).b(e.getJavaName());
+app/src/main/java/com/besome/sketch/editor/view/ViewEditor.java:205:        viewPane.updateRootLayout(a, projectFileBean.getXmlName());
+app/src/main/java/com/besome/sketch/editor/view/ViewEditor.java:407:                            if (jC.a(a).h(projectFileBean.getXmlName(), next.id)) {
+app/src/main/java/com/besome/sketch/editor/view/ViewEditor.java:426:                        jC.a(a).a(projectFileBean.getJavaName(), 1, bean.type, bean.id, "onClick");
+app/src/main/java/com/besome/sketch/editor/view/ViewEditor.java:592:            cC.c(a).b(projectFileBean.getXmlName(), arrayList);
+app/src/main/java/com/besome/sketch/editor/view/ViewEditor.java:728:            cC.c(a).b(projectFileBean.getXmlName(), viewBean);
+app/src/main/java/com/besome/sketch/editor/view/ViewEditor.java:830:        b = projectFileBean.getXmlName();
+app/src/main/java/com/besome/sketch/editor/view/ViewEditor.java:834:            fileName.setText(projectFileBean.getXmlName());
+app/src/main/java/com/besome/sketch/editor/view/ViewEditor.java:841:                addFab(jC.a(str).h(projectFileBean.getXmlName()));
+app/src/main/java/com/besome/sketch/editor/view/ViewEditor.java:999:            cC.c(a).a(projectFileBean.getXmlName(), arrayList);
+app/src/main/java/com/besome/sketch/editor/view/ViewEditor.java:1017:            cC.c(a).a(projectFileBean.getXmlName(), viewBean);
+app/src/main/java/com/besome/sketch/editor/view/ViewEvents.java:67:        ArrayList<EventBean> alreadyAddedEvents = jC.a(sc_id).g(projectFileBean.getJavaName());
+app/src/main/java/com/besome/sketch/editor/view/ViewEvents.java:91:            jC.a(sc_id).a(projectFileBean.getJavaName(), eventBean);
+app/src/main/java/com/besome/sketch/editor/view/ViewProperty.java:193:                ArrayList<ViewBean> viewBeans = jC.a(sc_id).b(projectFile.getXmlName(), projectActivityViews.get(idsAdapter.getSelectedItemPosition()));
+app/src/main/java/com/besome/sketch/editor/view/ViewProperty.java:484:                propertyListener.a(projectFile.getXmlName(), viewBean);
+app/src/main/java/a/a/a/Fw.java:51:        ArrayList<ViewBean> viewBeans = jC.a(sc_id).d(xmlName);
+app/src/main/java/a/a/a/Fw.java:116:        ArrayList<ViewBean> fileViewBeans = jC.a(sc_id).d(projectFileBean.getXmlName());
+app/src/main/java/a/a/a/Fw.java:123:            viewBean.id = a(viewBean.type, projectFileBean.getXmlName());
+app/src/main/java/a/a/a/Fw.java:124:            jC.a(sc_id).a(projectFileBean.getXmlName(), viewBean);
+app/src/main/java/a/a/a/Fw.java:126:                jC.a(sc_id).a(projectFileBean.getJavaName(), 1, viewBean.type, viewBean.id, "onClick");
+app/src/main/java/a/a/a/Fw.java:286:            viewHolder.binding.tvScreenName.setText(projectFileBean.getXmlName());
+app/src/main/java/a/a/a/Fw.java:287:            viewHolder.binding.tvActivityName.setText(projectFileBean.getJavaName());
+app/src/main/java/a/a/a/Hx.java:40:        ArrayList<ViewBean> views = new ArrayList<>(eC.d(projectFileBean.getXmlName()));
+app/src/main/java/a/a/a/Hx.java:42:            ViewBean fab = eC.h(projectFileBean.getXmlName());
+app/src/main/java/a/a/a/Hx.java:49:        ArrayList<ComponentBean> components = eC.e(projectFileBean.getJavaName());
+app/src/main/java/a/a/a/Hx.java:66:        a(eC.g(projectFileBean.getJavaName()), eC.b(projectFileBean.getJavaName()));
+app/src/main/java/a/a/a/Ix.java:524:                String javaName = projectFileBean.getJavaName();
+app/src/main/java/a/a/a/Ix.java:527:                if (!AndroidManifestInjector.getActivityAttrs(activityTag, c.sc_id, projectFileBean.getJavaName())) {
+app/src/main/java/a/a/a/Ix.java:532:                if (!AndroidManifestInjector.isActivityThemeUsed(activityTag, c.sc_id, projectFileBean.getJavaName())) {
+app/src/main/java/a/a/a/Ix.java:547:                if (!AndroidManifestInjector.isActivityOrientationUsed(activityTag, c.sc_id, projectFileBean.getJavaName())) {
+app/src/main/java/a/a/a/Ix.java:555:                if (!AndroidManifestInjector.isActivityKeyboardUsed(activityTag, c.sc_id, projectFileBean.getJavaName())) {
+app/src/main/java/a/a/a/Jx.java:96:        permissionManager = new PermissionManager(eCVar.a, projectFileBean.getJavaName());
+app/src/main/java/a/a/a/Jx.java:105:        ArrayList<BlockBean> blocks = jC.a(projectDataManager.a).a(projectFileBean.getJavaName(), "onActivityResult_onActivityResult");
+app/src/main/java/a/a/a/Jx.java:110:        ArrayList<BlockBean> blocks = jC.a(projectDataManager.a).a(projectFileBean.getJavaName(), "initializeLogic_initializeLogic");
+app/src/main/java/a/a/a/Jx.java:115:        for (Map.Entry<String, ArrayList<BlockBean>> blocks : jC.a(projectDataManager.a).b(projectFileBean.getJavaName()).entrySet()) {
+app/src/main/java/a/a/a/Jx.java:526:        ArrayList<ViewBean> beans = projectDataManager.d(projectFileBean.getXmlName());
+app/src/main/java/a/a/a/Jx.java:846:        onCreateEventCode = new Fx(projectFileBean.getActivityName(), buildConfig, projectDataManager.a(projectFileBean.getJavaName(), "onCreate_initializeLogic"), isViewBindingEnabled).a();
+app/src/main/java/a/a/a/Jx.java:858:        for (ViewBean viewBean : projectDataManager.f(projectFileBean.getXmlName())) {
+app/src/main/java/a/a/a/Jx.java:860:            projectFileBean.getJavaName();
+app/src/main/java/a/a/a/Jx.java:862:            String adapterLogic = new Fx(projectFileBean.getActivityName(), buildConfig, projectDataManager.a(projectFileBean.getJavaName(), eventName), isViewBindingEnabled).a();
+app/src/main/java/a/a/a/Jx.java:889:        String javaName = projectFileBean.getJavaName();
+app/src/main/java/a/a/a/Jx.java:913:        for (Map.Entry<String, ArrayList<BlockBean>> entry : projectDataManager.b(projectFileBean.getJavaName()).entrySet()) {
+app/src/main/java/a/a/a/Jx.java:985:        ArrayList<ViewBean> viewBeans = projectDataManager.d(projectFileBean.getXmlName());
+app/src/main/java/a/a/a/Jx.java:1007:        ArrayList<ComponentBean> componentBeans = projectDataManager.e(projectFileBean.getJavaName());
+app/src/main/java/a/a/a/Jx.java:1018:        for (ComponentBean next : projectDataManager.e(projectFileBean.getJavaName())) {
+app/src/main/java/a/a/a/Jx.java:1032:        String javaName = projectFileBean.getJavaName();
+app/src/main/java/a/a/a/Jx.java:1047:        for (ViewBean viewBean : projectDataManager.d(projectFileBean.getXmlName())) {
+app/src/main/java/a/a/a/Ox.java:97:        var root = rootManager.getLayoutByFileName(projectFile.getXmlName());
+app/src/main/java/a/a/a/ViewEditorFragment.java:35:public class ViewEditorFragment extends qA {
+app/src/main/java/a/a/a/ViewEditorFragment.java:154:            viewBean = jC.a(sc_id).h(projectFileBean.getXmlName());
+app/src/main/java/a/a/a/ViewEditorFragment.java:156:            viewBean = jC.a(sc_id).c(projectFileBean.getXmlName(), viewId);
+app/src/main/java/a/a/a/ViewEditorFragment.java:321:            HistoryViewBean historyViewBean = cC.c(sc_id).h(projectFileBean.getXmlName());
+app/src/main/java/a/a/a/ViewEditorFragment.java:326:                        jC.a(sc_id).a(projectFileBean.getXmlName(), viewBean);
+app/src/main/java/a/a/a/ViewEditorFragment.java:337:                        jC.a(sc_id).h(projectFileBean.getXmlName()).copy(currentUpdateData);
+app/src/main/java/a/a/a/ViewEditorFragment.java:339:                        jC.a(sc_id).c(projectFileBean.getXmlName(), prevUpdateData.id).copy(currentUpdateData);
+app/src/main/java/a/a/a/ViewEditorFragment.java:351:                    ViewBean viewBean = jC.a(sc_id).c(projectFileBean.getXmlName(), movedData.id);
+app/src/main/java/a/a/a/ViewEditorFragment.java:355:                    jC.a(sc_id).c.put(projectFileBean.getXmlName(), historyViewBean.getAddedData());
+app/src/main/java/a/a/a/ViewEditorFragment.java:366:            b(jC.a(sc_id).d(projectFileBean.getXmlName()));
+app/src/main/java/a/a/a/ViewEditorFragment.java:367:            a(jC.a(sc_id).h(projectFileBean.getXmlName()));
+app/src/main/java/a/a/a/ViewEditorFragment.java:387:            HistoryViewBean historyViewBean = cC.c(sc_id).i(projectFileBean.getXmlName());
+app/src/main/java/a/a/a/ViewEditorFragment.java:403:                        jC.a(sc_id).h(projectFileBean.getXmlName()).copy(prevUpdateData);
+app/src/main/java/a/a/a/ViewEditorFragment.java:405:                        jC.a(sc_id).c(projectFileBean.getXmlName(), currentUpdateData.id).copy(prevUpdateData);
+app/src/main/java/a/a/a/ViewEditorFragment.java:410:                        jC.a(sc_id).a(projectFileBean.getXmlName(), view);
+app/src/main/java/a/a/a/ViewEditorFragment.java:415:                    ViewBean viewBean = jC.a(sc_id).c(projectFileBean.getXmlName(), movedData.id);
+app/src/main/java/a/a/a/ViewEditorFragment.java:424:                    jC.a(sc_id).c.put(projectFileBean.getXmlName(), historyViewBean.getRemovedData());
+app/src/main/java/a/a/a/ViewEditorFragment.java:433:        ArrayList<ViewBean> viewBeanArrayList = eC.a(jC.a(sc_id).d(projectFileBean.getXmlName()));
+app/src/main/java/a/a/a/ViewEditorFragment.java:436:            viewBean = jC.a(sc_id).h(projectFileBean.getXmlName());
+app/src/main/java/a/a/a/ViewEditorFragment.java:458:                for (ViewBean viewBean : jC.a(sc_id).d(projectFileBean.getXmlName())) {
+app/src/main/java/a/a/a/ViewEditorFragment.java:462:                    c(jC.a(sc_id).h(projectFileBean.getXmlName()));
+app/src/main/java/a/a/a/ViewEditorFragment.java:488:            menu.findItem(R.id.menu_view_redo).setEnabled(cC.c(sc_id).f(projectFileBean.getXmlName()));
+app/src/main/java/a/a/a/ViewEditorFragment.java:489:            menu.findItem(R.id.menu_view_undo).setEnabled(cC.c(sc_id).g(projectFileBean.getXmlName()));
+app/src/main/java/a/a/a/br.java:38:public class br extends qA implements View.OnClickListener {
+app/src/main/java/a/a/a/br.java:49:            components = jC.a(sc_id).e(projectFile.getJavaName());
+app/src/main/java/a/a/a/br.java:82:            for (ComponentBean component : jC.a(sc_id).e(projectFile.getJavaName())) {
+app/src/main/java/a/a/a/br.java:165:                            jC.a(sc_id).a(projectFile.getJavaName(), lastSelectedItem);
+app/src/main/java/a/a/a/br.java:177:                            jC.a(sc_id).b(projectFile.getJavaName(), bean);
+app/src/main/java/a/a/a/br.java:227:                        jC.a(sc_id).a(projectFile.getJavaName(), componentBean);
+app/src/main/java/a/a/a/br.java:436:                            jC.a(sc_id).a(projectFile.getJavaName(), event);
+app/src/main/java/a/a/a/rs.java:56:public class rs extends qA implements View.OnClickListener, MoreblockImporterDialog.CallBack {
+app/src/main/java/a/a/a/rs.java:166:            for (Pair<String, String> moreBlock : jC.a(sc_id).i(currentActivity.getJavaName())) {
+app/src/main/java/a/a/a/rs.java:174:            for (EventBean eventBean : jC.a(sc_id).g(currentActivity.getJavaName())) {
+app/src/main/java/a/a/a/rs.java:218:        if (jC.a(sc_id).f(currentActivity.getJavaName(), moreBlock.targetId)) {
+app/src/main/java/a/a/a/rs.java:221:            jC.a(sc_id).n(currentActivity.getJavaName(), moreBlock.targetId);
+app/src/main/java/a/a/a/rs.java:366:        String javaName = currentActivity.getJavaName();
+app/src/main/java/a/a/a/rs.java:411:        String b2 = jC.a(sc_id).b(currentActivity.getJavaName(), moreBlock.targetId);
+app/src/main/java/a/a/a/rs.java:413:        String javaName = currentActivity.getJavaName();
+app/src/main/java/a/a/a/yq.java:519:            for (ViewBean viewBean : eC.a(projectDataManager.d(customView.getXmlName()))) {
+app/src/main/java/a/a/a/yq.java:538:            for (ComponentBean component : projectDataManager.e(activity.getJavaName())) {
+app/src/main/java/a/a/a/yq.java:592:            for (ViewBean view : eC.a(projectDataManager.d(activity.getXmlName()))) {
+app/src/main/java/a/a/a/yq.java:607:            for (Map.Entry<String, ArrayList<BlockBean>> entry : projectDataManager.b(activity.getJavaName()).entrySet()) {
+app/src/main/java/a/a/a/yq.java:761:            if (!javaFiles.contains(new File(javaDir + activity.getJavaName()))) {
+app/src/main/java/a/a/a/yq.java:762:                srcCodeBeans.add(new SrcCodeBean(activity.getJavaName(),
+app/src/main/java/a/a/a/yq.java:779:            String xmlName = layout.getXmlName();
+app/src/main/java/a/a/a/yq.java:800:            String xmlName = customViewFile.getXmlName();
+app/src/main/java/a/a/a/yq.java:921:            if (filename.equals(isJavaFile ? file.getJavaName() : file.getXmlName())) {
+=== view/events/components calls ===
+app/src/main/java/a/a/a/Fw.java:51:        ArrayList<ViewBean> viewBeans = jC.a(sc_id).d(xmlName);
+app/src/main/java/a/a/a/Jx.java:865:                adapterCode = Lx.pagerAdapter(ox, viewBean.id, viewBean.customView, projectDataManager.d(xmlName), adapterLogic, isViewBindingEnabled);
+app/src/main/java/a/a/a/Jx.java:867:                adapterCode = Lx.recyclerViewAdapter(ox, viewBean.id, viewBean.customView, projectDataManager.d(xmlName), adapterLogic, isViewBindingEnabled);
+app/src/main/java/a/a/a/Jx.java:871:                adapterCode = Lx.getListAdapterCode(ox, viewBean.id, viewBean.customView, projectDataManager.d(xmlName), adapterLogic, isViewBindingEnabled);
+app/src/main/java/a/a/a/Jx.java:1072:        ArrayList<ComponentBean> componentBeans = projectDataManager.e(javaName);
+app/src/main/java/a/a/a/yq.java:781:            ox.a(eC.a(projectDataManager.d(xmlName)), projectDataManager.h(xmlName));
+app/src/main/java/a/a/a/yq.java:802:            ox.a(eC.a(projectDataManager.d(xmlName)));
+app/src/main/java/com/besome/sketch/design/DesignActivity.java:337:     * ViewBeans collection via {@code jC.a(sc_id).d(xmlName)} and re-inits
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:886:                                            eC.e(javaName, ExtraMenuBean.LIST_TYPE_NUMBER, parameter);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:890:                                            eC.e(javaName, ExtraMenuBean.LIST_TYPE_STRING, parameter);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:894:                                            eC.e(javaName, ExtraMenuBean.LIST_TYPE_MAP, parameter);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:898:                                            boolean b = eC.e(javaName, ExtraMenuBean.LIST_TYPE_NUMBER, parameter);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:900:                                                b = eC.e(javaName, ExtraMenuBean.LIST_TYPE_STRING, parameter);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:904:                                                eC.e(javaName, ExtraMenuBean.LIST_TYPE_MAP, parameter);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1065:                                            eC.d(xmlName, ComponentBean.COMPONENT_TYPE_REWARDED_VIDEO_AD, parameter);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1069:                                            eC.d(xmlName, ComponentBean.COMPONENT_TYPE_PROGRESS_DIALOG, parameter);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1073:                                            eC.d(xmlName, ComponentBean.COMPONENT_TYPE_DATE_PICKER_DIALOG, parameter);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1077:                                            eC.d(xmlName, ComponentBean.COMPONENT_TYPE_TIME_PICKER_DIALOG, parameter);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1081:                                            eC.d(xmlName, ComponentBean.COMPONENT_TYPE_NOTIFICATION, parameter);
+app/src/main/java/com/besome/sketch/editor/LogicEditorActivity.java:1564:        ArrayList<ViewBean> views = jC.a(scId).d(xmlName);
+app/src/main/java/com/besome/sketch/editor/manage/ViewSelectorActivity.java:307:        ArrayList<ViewBean> d = jC.a(sc_id).d(xmlName);
+app/src/main/java/com/sketchware/ai/tools/project/ThemeManageTool.java:57: * same pattern (it does NOT call jC.d(scId).y() after writing colors.xml).
+app/src/main/java/com/sketchware/ai/tools/view/ViewManageLayoutTool.java:283:        // access via eC.d(xmlName)).
+app/src/main/java/com/sketchware/ai/tools/view/ViewManageLayoutTool.java:474:            // jC.a(scId).d(xmlName) returns the ArrayList<ViewBean> for that
+app/src/main/java/com/sketchware/ai/tools/view/ViewSetPropertyTool.java:156:            // regular widget list (eC.d(xmlName)).
+app/src/main/java/dev/aldi/sayuti/block/ExtraPaletteBlock.java:158:        ArrayList<String> booleanVariables = jC.a(sc_id).e(javaName, 0);
+app/src/main/java/dev/aldi/sayuti/block/ExtraPaletteBlock.java:165:        ArrayList<String> numberVariables = jC.a(sc_id).e(javaName, 1);
+app/src/main/java/dev/aldi/sayuti/block/ExtraPaletteBlock.java:172:        ArrayList<String> stringVariables = jC.a(sc_id).e(javaName, 2);
+app/src/main/java/dev/aldi/sayuti/block/ExtraPaletteBlock.java:179:        ArrayList<String> mapVariables = jC.a(sc_id).e(javaName, 3);
+app/src/main/java/dev/aldi/sayuti/block/ExtraPaletteBlock.java:186:        ArrayList<String> customVariables = jC.a(sc_id).e(javaName, 5);
+app/src/main/java/dev/aldi/sayuti/block/ExtraPaletteBlock.java:198:        ArrayList<String> customVariables2 = jC.a(sc_id).e(javaName, 6);
+app/src/main/java/dev/aldi/sayuti/block/ExtraPaletteBlock.java:233:        ArrayList<ComponentBean> components = jC.a(sc_id).e(javaName);
+app/src/main/java/dev/aldi/sayuti/block/ExtraPaletteBlock.java:280:        ArrayList<ViewBean> views = jC.a(sc_id).d(xmlName);
+app/src/main/java/mod/bobur/VectorDrawableParser.java:398:        String p2 = wq.d(sc_id) + "/app/src/main/res/values/colors.xml";
+app/src/main/java/pro/sketchware/activities/resourceseditor/components/adapters/StringsAdapter.java:188:            for (ViewBean view : projectDataManager.d(xmlFileName)) {
+app/src/main/java/pro/sketchware/blocks/ExtraBlocks.java:137:        for (String variableName : projectDataManager.e(javaName, 5)) {
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:123:        viewStore.n(wq.b(scId) + File.separator + "view");
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:194:            ArrayList<ComponentBean> fileComponents = viewStore.e(javaName);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:196:            ArrayList<EventBean> fileEvents = viewStore.g(javaName);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:200:                    if (event != null) blocksByEvent.put(event.getEventKey(), viewStore.a(javaName, event.getEventKey()));
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:432:        ArrayList<ComponentBean> components = viewStore.e(javaName);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:447:        ArrayList<EventBean> events = viewStore.g(javaName);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:472:            viewStore.a(javaName, event.getEventKey(), blocks);
+app/src/main/java/pro/sketchware/creator/runtime/CreatorLegacyProjectBridge.java:474:        viewStore.n(wq.b(scId) + File.separator + "view");
+app/src/main/java/pro/sketchware/menu/DefaultExtraMenuBean.java:67:        for (String s : projectDataManager.e(javaName, 5)) {
+app/src/main/java/pro/sketchware/menu/DefaultExtraMenuBean.java:76:        for (String variable : projectDataManager.e(javaName, 6)) {
+app/src/main/java/pro/sketchware/menu/DefaultExtraMenuBean.java:84:        for (ComponentBean componentBean : projectDataManager.e(javaName)) {
+app/src/main/java/pro/sketchware/menu/ExtraMenuBean.java:662:                for (ComponentBean componentBean : projectDataManager.e(javaName)) {
+app/src/main/java/pro/sketchware/menu/ExtraMenuBean.java:669:                for (String s : projectDataManager.e(javaName, 5)) {
+app/src/main/java/pro/sketchware/menu/ExtraMenuBean.java:675:                for (String variable : projectDataManager.e(javaName, 6)) {
+app/src/main/java/pro/sketchware/menu/ExtraMenuBean.java:725:        return projectDataManager.e(javaName, type);

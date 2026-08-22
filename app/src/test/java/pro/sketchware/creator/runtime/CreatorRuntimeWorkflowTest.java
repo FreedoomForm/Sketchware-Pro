@@ -58,6 +58,38 @@ public class CreatorRuntimeWorkflowTest {
         assertThat(engine.getEventLog().snapshot()).isNotEmpty();
     }
 
+    @Test public void validatesActivityAndImportedComponentEventTargets() {
+        Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
+        widgets.put("root", new CreatorWidget("root", "column", null,
+                java.util.Collections.<String>emptyList(), null));
+        Map<String, CreatorScreen> screens = new LinkedHashMap<>();
+        screens.put("main", new CreatorScreen("main", "/", "root"));
+        Map<String, Object> components = new LinkedHashMap<>();
+        components.put("timer1", map("serviceId", "timer"));
+        Map<String, Object> state = new LinkedHashMap<>();
+        state.put("legacy.components", components);
+        CreatorProjectDocument document = new CreatorProjectDocument(
+                CreatorProjectDocument.SCHEMA_VERSION, "project", 0, "Demo", "main",
+                screens, widgets, CreatorEntryControl.defaultControl(), state,
+                java.util.Collections.<String, CreatorEventBinding>emptyMap());
+
+        CreatorRuntimeBlock message = new CreatorRuntimeBlock(
+                CreatorRuntimeBlock.Type.SHOW_MESSAGE, map("message", "ok"));
+        Map<String, Object> activityPayload = map("bindingId", "activity-resume",
+                "targetWidgetId", CreatorLegacyArtifactImporter.ACTIVITY_EVENT_TARGET,
+                "eventName", "resume", "blocks", java.util.Collections.singletonList(message));
+        Map<String, Object> componentPayload = map("bindingId", "timer-tick",
+                "targetWidgetId", "timer1", "eventName", "tick",
+                "blocks", java.util.Collections.singletonList(message));
+
+        assertThat(CreatorOperationValidator.validate(document, operation("activity", 0,
+                CreatorProjectOperation.ActorKind.AI, CreatorProjectOperation.Type.EVENT_ATTACH,
+                activityPayload)).isOk()).isTrue();
+        assertThat(CreatorOperationValidator.validate(document, operation("component", 0,
+                CreatorProjectOperation.ActorKind.AI, CreatorProjectOperation.Type.EVENT_ATTACH,
+                componentPayload)).isOk()).isTrue();
+    }
+
     private static CreatorProjectOperation operation(String id, long revision,
                                                       CreatorProjectOperation.ActorKind actor,
                                                       CreatorProjectOperation.Type type,

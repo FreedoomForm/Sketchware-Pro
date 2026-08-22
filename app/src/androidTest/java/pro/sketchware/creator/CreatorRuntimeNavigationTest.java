@@ -280,6 +280,83 @@ public class CreatorRuntimeNavigationTest {
         assertThat(found).isTrue();
     }
 
+    @Test public void legacyEditorMutationSurvivesBackRendersLiveAndReopensInEditor() {
+        CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
+        String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
+        Intent editorIntent = new Intent(context, DesignActivity.class)
+                .putExtra("sc_id", scId)
+                .putExtra("creator_runtime_project_id", document.getProjectId());
+        String addedId = "device_added_button";
+
+        try (ActivityScenario<DesignActivity> editorScenario = ActivityScenario.launch(editorIntent)) {
+            editorScenario.onActivity(activity -> {
+                com.besome.sketch.beans.ProjectFileBean main = a.a.a.jC.b(scId)
+                        .b(com.besome.sketch.beans.ProjectFileBean.DEFAULT_XML_NAME);
+                ViewBean added = new ViewBean(addedId, ViewBean.VIEW_TYPE_WIDGET_BUTTON);
+                added.parent = "root";
+                added.parentType = ViewBean.VIEW_TYPE_LAYOUT_LINEAR;
+                added.index = 1;
+                added.text.text = "Device added";
+                added.layout.width = com.besome.sketch.beans.LayoutBean.LAYOUT_MATCH_PARENT;
+                added.layout.height = com.besome.sketch.beans.LayoutBean.LAYOUT_WRAP_CONTENT;
+
+                // This is the same eC mutation and serialization boundary used by
+                // the original View editor and by ViewAddWidgetTool.
+                a.a.a.jC.a(scId).a(main.getXmlName(), added);
+                com.besome.sketch.beans.EventBean click = new com.besome.sketch.beans.EventBean(
+                        com.besome.sketch.beans.EventBean.EVENT_TYPE_VIEW,
+                        ViewBean.VIEW_TYPE_WIDGET_BUTTON, addedId, "onClick");
+                com.besome.sketch.beans.BlockBean setText = new com.besome.sketch.beans.BlockBean(
+                        "1", "", "", "setText");
+                setText.parameters.add(addedId);
+                setText.parameters.add("Clicked");
+                a.a.a.jC.a(scId).a(main.getJavaName(), click);
+                a.a.a.jC.a(scId).a(main.getJavaName(), click.getEventKey(),
+                        new ArrayList<>(Collections.singletonList(setText)));
+                a.a.a.jC.a(scId).n(a.a.a.wq.b(scId)
+                        + java.io.File.separator + "view");
+                assertThat(a.a.a.jC.a(scId).d(main.getXmlName())).contains(added);
+
+                // Runtime Back must auto-save and import this legacy snapshot;
+                // it must not restore the stale runtime document over it.
+                activity.onBackPressed();
+            });
+
+            Activity live = awaitResumedActivity(pro.sketchware.creator.CreatorProjectActivity.class);
+            assertThat(live).isNotNull();
+            View liveAdded = live.findViewById(R.id.creator_preview_canvas)
+                    .findViewWithTag(addedId);
+            assertThat((Object) liveAdded).isNotNull();
+            assertThat((Object) liveAdded).isInstanceOf(android.widget.TextView.class);
+            assertThat(((android.widget.TextView) liveAdded).getText().toString())
+                    .isEqualTo("Device added");
+            liveAdded.performClick();
+            assertThat(((android.widget.TextView) liveAdded).getText().toString())
+                    .isEqualTo("Clicked");
+
+            // Reopen the original Sketchware editor against the same single
+            // active project and verify the legacy store still contains the
+            // exact widget after the live projection round-trip.
+            try (ActivityScenario<DesignActivity> reopened = ActivityScenario.launch(editorIntent)) {
+                reopened.onActivity(activity -> {
+                    ArrayList<ViewBean> views = a.a.a.jC.a(scId).d("main.xml");
+                    ViewBean found = null;
+                    for (ViewBean view : views) {
+                        if (view != null && addedId.equals(view.id)) {
+                            found = view;
+                            break;
+                        }
+                    }
+                    assertThat(found).isNotNull();
+                    assertThat(found.text).isNotNull();
+                    assertThat(found.text.text).isEqualTo("Device added");
+                    assertThat(CreatorRuntimeSession.get(activity).getDocument().getWidgets())
+                            .containsKey(addedId);
+                });
+            }
+        }
+    }
+
     @Test public void mainActivityBackReturnsToSamePersistedNativeSurface() {
         try (ActivityScenario<DesignActivity> editorScenario = ActivityScenario.launch(DesignActivity.class)) {
             editorScenario.onActivity(activity -> {
@@ -309,6 +386,26 @@ public class CreatorRuntimeNavigationTest {
             assertThat((Object) live.get().findViewById(R.id.creator_preview_canvas)
                     .findViewWithTag(CreatorRuntimeDefaults.ENTRY_WIDGET_ID)).isNotNull();
         }
+    }
+
+    private static Activity awaitResumedActivity(Class<?> activityClass) {
+        long deadline = System.currentTimeMillis() + 10000L;
+        while (System.currentTimeMillis() < deadline) {
+            AtomicReference<Activity> resumed = new AtomicReference<>();
+            InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
+                    ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                            .forEach(candidate -> {
+                                if (activityClass.isInstance(candidate)) resumed.set(candidate);
+                            }));
+            if (resumed.get() != null) return resumed.get();
+            try {
+                Thread.sleep(50L);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        return null;
     }
 
     @Test public void extendedRuntimeWidgetTypesProjectToOriginalViewStore() {

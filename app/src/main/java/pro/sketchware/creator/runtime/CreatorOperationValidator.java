@@ -163,11 +163,27 @@ public final class CreatorOperationValidator {
             return CreatorValidationResult.error(CreatorValidationResult.Code.MISSING_REFERENCE,
                     "bindingId does not exist");
         }
-        if (!document.getWidgets().containsKey(targetWidgetId)) {
+        if (!hasEventTarget(document, targetWidgetId)) {
             return CreatorValidationResult.error(CreatorValidationResult.Code.MISSING_REFERENCE,
-                    "targetWidgetId does not exist");
+                    "event target does not exist: " + targetWidgetId);
         }
         return CreatorValidationResult.ok();
+    }
+
+    /**
+     * Event bindings can target a rendered widget, the activity lifecycle
+     * sentinel, or an imported runtime component. The old validator only
+     * accepted widgets even though the importer and executor already preserve
+     * the latter two target kinds.
+     */
+    private static boolean hasEventTarget(CreatorProjectDocument document, String targetId) {
+        if (document.getWidgets().containsKey(targetId)) return true;
+        if (CreatorLegacyArtifactImporter.ACTIVITY_EVENT_TARGET.equals(targetId)) return true;
+        Object componentState = document.getState().get("legacy.components");
+        if (componentState instanceof Map) {
+            return ((Map<?, ?>) componentState).containsKey(targetId);
+        }
+        return false;
     }
 
     private static CreatorValidationResult validateEventDetach(CreatorProjectDocument document,

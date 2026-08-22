@@ -163,7 +163,9 @@ public class SketchwareToolContext {
      * serializes the view HashMap to a StringBuffer and writes it to the
      * {@code <project>/view} file. Unlike {@code jC.a(scId).j()} (which saves
      * AND clears), this preserves the in-memory cache so subsequent tool calls
-     * still see the data.
+     * still see the data. A persistence failure is propagated to the caller;
+     * reporting a successful mutation while the editor will later reload stale
+     * data is never acceptable.
      */
     public void persistViewToDisk() {
         try {
@@ -174,8 +176,8 @@ public class SketchwareToolContext {
             // Call n(String path) — saves view data to disk without clearing memory.
             SketchwareApi.invoke(eC, "n", viewPath);
         } catch (Throwable t) {
-            // Best-effort persistence; don't fail the tool call if saving fails.
-            android.util.Log.w("SketchwareToolContext", "persistViewToDisk failed", t);
+            android.util.Log.e("SketchwareToolContext", "persistViewToDisk failed", t);
+            throw new IllegalStateException("Unable to persist Sketchware view data", t);
         }
     }
 }

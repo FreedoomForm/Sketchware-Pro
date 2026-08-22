@@ -39,6 +39,34 @@ public class CreatorLegacyArtifactImporterTest {
         assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
     }
 
+    @Test public void preservesCreatorEditorIntentScreenAndStartBlocks() {
+        EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
+        BlockBean setScreen = new BlockBean("1", "2", "", "intentSetScreen");
+        setScreen.parameters.add(CreatorRuntimeDefaults.EDITOR_INTENT_ID);
+        setScreen.parameters.add("DesignActivity");
+        BlockBean start = new BlockBean("2", "", "", "startActivity");
+        start.parameters.add(CreatorRuntimeDefaults.EDITOR_INTENT_ID);
+        Map<String, java.util.List<BlockBean>> blocks = new LinkedHashMap<>();
+        blocks.put(click.getEventKey(), Arrays.asList(setScreen, start));
+
+        CreatorLegacyArtifactImporter.Result result = new CreatorLegacyArtifactImporter().importArtifacts(
+                documentWithButton(), Collections.emptyList(), Collections.singletonList(click), blocks);
+
+        java.util.List<CreatorRuntimeBlock> imported = result.getDocument().getEvents()
+                .get("legacy_button_onClick").getBlocks();
+        assertThat(imported).hasSize(2);
+        assertServiceCall(imported.get(0), "intent", "configure_screen");
+        @SuppressWarnings("unchecked") Map<String, Object> screenArguments =
+                (Map<String, Object>) imported.get(0).getPayload().get("arguments");
+        assertThat(screenArguments).containsEntry("intentId", CreatorRuntimeDefaults.EDITOR_INTENT_ID);
+        assertThat(screenArguments).containsEntry("screenId", "DesignActivity");
+        assertServiceCall(imported.get(1), "intent", "start");
+        @SuppressWarnings("unchecked") Map<String, Object> startArguments =
+                (Map<String, Object>) imported.get(1).getPayload().get("arguments");
+        assertThat(startArguments).containsEntry("intentId", CreatorRuntimeDefaults.EDITOR_INTENT_ID);
+        assertThat(result.getReport().count(CreatorCompatibilityTier.R0_UNSUPPORTED)).isEqualTo(0);
+    }
+
     @Test public void blocksUnknownLegacyOpcodeWithoutFallbackExecution() {
         EventBean click = new EventBean(EventBean.EVENT_TYPE_VIEW, 3, "button", "onClick");
         BlockBean unsupported = new BlockBean("1", "", "", "executeJava");
