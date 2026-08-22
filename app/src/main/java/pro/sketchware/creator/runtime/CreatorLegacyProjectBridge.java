@@ -462,8 +462,8 @@ public final class CreatorLegacyProjectBridge {
             }
         }
         if (!hasIntent) {
-            viewStore.a(javaName, new ComponentBean(ComponentBean.COMPONENT_TYPE_INTENT,
-                    CreatorRuntimeDefaults.EDITOR_INTENT_ID));
+            viewStore.a(javaName, ComponentBean.COMPONENT_TYPE_INTENT,
+                    CreatorRuntimeDefaults.EDITOR_INTENT_ID);
         }
 
         boolean hasBinding = false;
