@@ -144,7 +144,8 @@ public final class CreatorRuntimeSmokeTest {
                 }
             });
             if (liveAssertion.get() != null) {
-                throw new AssertionError("Live surface assertion failed", liveAssertion.get());
+                throw new AssertionError("Live surface assertion failed: "
+                        + liveAssertion.get(), liveAssertion.get());
             }
 
             try (ActivityScenario<DesignActivity> reopened = ActivityScenario.launch(editorIntent)) {
