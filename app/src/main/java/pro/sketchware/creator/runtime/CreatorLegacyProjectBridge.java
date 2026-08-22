@@ -59,7 +59,11 @@ public final class CreatorLegacyProjectBridge {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String key = SC_ID_PREFIX + document.getProjectId();
         String existingScId = preferences.getString(key, null);
-        if (existingScId != null && lC.b(existingScId) != null) {
+        // lC is an in-memory cache and may be empty immediately after
+        // DesignActivity.loadProject(). The persisted mapping is authoritative;
+        // otherwise startup silently allocates a second sc_id and projects into
+        // a store different from the activity's current editor store.
+        if (existingScId != null && !existingScId.trim().isEmpty()) {
             ensureLegacyStores(context, existingScId);
             ensureLegacyStarterIntent(context, document, existingScId);
             projectRuntimeViews(context, document, existingScId);
