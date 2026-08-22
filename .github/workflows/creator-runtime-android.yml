@@ -28,6 +28,11 @@ env:
   JAVA_VERSION: '17'
   ANDROID_API: '36'
   ANDROID_BUILD_TOOLS: '35.0.0'
+  # Pushes use the one high-value smoke flow. Manual dispatch with empty
+  # filters runs the broad regression suite; explicit filters run diagnostics.
+  NATIVE_TEST_CLASS: ${{ github.event_name == 'push' && 'pro.sketchware.creator.CreatorRuntimeSmokeTest' || inputs.test-class }}
+  NATIVE_TEST_METHOD: ${{ github.event_name == 'push' && 'editorRoundTripPreservesUserButtonAndRunsItsClickBehavior' || inputs.test-method }}
+  NATIVE_TEST_TIMEOUT_SECONDS: ${{ github.event_name == 'push' && '900' || '2700' }}
 
 defaults:
   run:
@@ -131,11 +136,24 @@ jobs:
           target: ${{ matrix.target }}
           arch: ${{ matrix.arch }}
           force-avd-creation: true
-          emulator-boot-timeout: 600
+          emulator-boot-timeout: 300
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -no-metrics
-          # The full suite grew from 60 to 64 native tests; Run 90 needed about 31 minutes, so keep 45 minutes for the default run. Focused diagnostics remain short.
-          script: timeout ${{ inputs.test-class != '' && '120' || '2700' }} ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${{ inputs.test-class != '' && format('-Pandroid.testInstrumentationRunnerArguments.class={0}', inputs.test-class) || '' }}; adb logcat -d > /tmp/creator-runtime-logcat.txt || true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -camera-back none -noaudio -no-boot-anim -camera-front none -no-metrics
+          # Pushes run only the deterministic end-to-end smoke flow. Manual
+          # dispatch with no filter remains available for the broad suite.
+          script: |
+            set -o pipefail
+            TEST_FILTER=""
+            if [ -n "${NATIVE_TEST_CLASS}" ]; then
+              TEST_FILTER="-Pandroid.testInstrumentationRunnerArguments.class=${NATIVE_TEST_CLASS}"
+              if [ -n "${NATIVE_TEST_METHOD}" ]; then
+                TEST_FILTER="${TEST_FILTER}#${NATIVE_TEST_METHOD}"
+              fi
+            fi
+            timeout "${NATIVE_TEST_TIMEOUT_SECONDS}" ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${TEST_FILTER}
+            test_status=$?
+            adb logcat -d > /tmp/creator-runtime-logcat.txt || true
+            exit "${test_status}"
 
       - name: Upload connected Android test reports
         if: always()
