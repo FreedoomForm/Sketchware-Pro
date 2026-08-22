@@ -96,6 +96,8 @@ public class CreatorRuntimeNavigationTest {
         CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
         assertThat(document.getEntryScreenId()).isEqualTo("main");
         assertThat(document.getScreens()).containsKey("main");
+        assertThat(document.getScreens()).containsKey(CreatorRuntimeDefaults.EDITOR_SCREEN_ID);
+        assertThat(document.getScreens().get(CreatorRuntimeDefaults.EDITOR_SCREEN_ID).isLocked()).isTrue();
         assertThat(document.getScreens().get("main").getRootWidgetId()).isEqualTo("root_main");
         assertThat(document.getWidgets()).containsKey("root_main");
     }
@@ -128,6 +130,9 @@ public class CreatorRuntimeNavigationTest {
         assertThat(main.fileName).isEqualTo("main");
         assertThat(main.fileType)
                 .isEqualTo(com.besome.sketch.beans.ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY);
+        com.besome.sketch.beans.ProjectFileBean editor = a.a.a.jC.b(scId).b("editor.xml");
+        assertThat(editor).isNotNull();
+        assertThat(editor.isActivityLocked()).isTrue();
         ArrayList<com.besome.sketch.beans.ComponentBean> components = a.a.a.jC.a(scId).e(main.getJavaName());
         boolean intentFound = false;
         for (com.besome.sketch.beans.ComponentBean component : components) {
@@ -184,6 +189,7 @@ public class CreatorRuntimeNavigationTest {
                 assertThat((Object) activity.findViewById(R.id.viewpager)).isNotNull();
                 assertThat((Object) activity.findViewById(R.id.btn_options)).isNotNull();
                 assertThat(activity.findViewById(R.id.btn_options).getVisibility()).isEqualTo(View.GONE);
+                assertThat((Object) activity.findViewById(R.id.item_versions)).isNotNull();
             });
         }
     }

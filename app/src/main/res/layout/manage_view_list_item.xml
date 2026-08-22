@@ -67,6 +67,14 @@
             </LinearLayout>
 
             <ImageView
+                android:id="@+id/img_lock"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="12dp"
+                android:contentDescription="Activity lock state"
+                android:src="@drawable/ic_mtrl_shield_check" />
+
+            <ImageView
                 android:id="@+id/img_preset_setting"
                 android:layout_width="24dp"
                 android:layout_height="24dp"

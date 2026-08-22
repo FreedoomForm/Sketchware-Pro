@@ -5,17 +5,28 @@ public final class CreatorScreen {
     private final String id;
     private final String route;
     private final String rootWidgetId;
+    private final boolean locked;
 
     public CreatorScreen(String id, String route, String rootWidgetId) {
+        this(id, route, rootWidgetId, false);
+    }
+
+    public CreatorScreen(String id, String route, String rootWidgetId, boolean locked) {
         if (id == null || id.trim().isEmpty()) throw new IllegalArgumentException("id");
         if (route == null || route.trim().isEmpty()) throw new IllegalArgumentException("route");
         if (rootWidgetId == null || rootWidgetId.trim().isEmpty()) throw new IllegalArgumentException("rootWidgetId");
         this.id = id;
         this.route = route;
         this.rootWidgetId = rootWidgetId;
+        this.locked = locked;
     }
 
     public String getId() { return id; }
     public String getRoute() { return route; }
     public String getRootWidgetId() { return rootWidgetId; }
+    public boolean isLocked() { return locked; }
+
+    public CreatorScreen withLocked(boolean nextLocked) {
+        return new CreatorScreen(id, route, rootWidgetId, nextLocked);
+    }
 }

@@ -1093,6 +1093,8 @@ ex)\"*/*\", \"image/*\", \"audio/*\", \"text/*\""</string>
     <string name="design_drawer_menu_title_theme">Theme Manager</string>
     <string name="design_drawer_menu_title_view">View Manager</string>
     <string name="design_drawer_menu_title_xml_command">XML Command Manager</string>
+    <string name="design_drawer_menu_title_versions">Versions</string>
+    <string name="design_drawer_menu_description_versions">View project versions and changelog</string>
     <string name="design_file_selector_title_java">Available Java files</string>
     <string name="design_library_admob_button_goto_console">Open AdMob console</string>
     <string name="design_library_admob_button_goto_setting">Open AdMob setting</string>

@@ -17,6 +17,8 @@ public final class CreatorRuntimeDefaults {
     public static final String ENTRY_WIDGET_ID = "creator_continue_button";
     public static final String EDITOR_INTENT_ID = "creator_editor";
     public static final String ENTRY_CLICK_BINDING_ID = "creator_continue_button_click";
+    public static final String EDITOR_SCREEN_ID = "editor";
+    public static final String EDITOR_ROOT_WIDGET_ID = "root_editor";
 
     private CreatorRuntimeDefaults() { }
 
@@ -29,7 +31,7 @@ public final class CreatorRuntimeDefaults {
         if (document == null) return null;
 
         boolean starterInitialized = Boolean.TRUE.equals(document.getState().get(STARTER_INITIALIZED_STATE));
-        if (starterInitialized && hasRootLayoutDefaults(document)) return document;
+        if (starterInitialized && hasRootLayoutDefaults(document) && hasEditorScreen(document)) return document;
         Map<String, CreatorScreen> screens = new LinkedHashMap<>(document.getScreens());
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>(document.getWidgets());
         Map<String, Object> state = new LinkedHashMap<>(document.getState());
@@ -69,6 +71,29 @@ public final class CreatorRuntimeDefaults {
                     root.getChildren(), rootProperties);
             widgets.put(rootId, root);
         }
+
+        if (!screens.containsKey(EDITOR_SCREEN_ID)) {
+            screens.put(EDITOR_SCREEN_ID, new CreatorScreen(EDITOR_SCREEN_ID, "/editor",
+                    EDITOR_ROOT_WIDGET_ID, true));
+        }
+        CreatorScreen editorScreen = screens.get(EDITOR_SCREEN_ID);
+        CreatorWidget editorRoot = widgets.get(editorScreen.getRootWidgetId());
+        if (editorRoot == null) {
+            editorRoot = new CreatorWidget(editorScreen.getRootWidgetId(), "column", null,
+                    Collections.<String>emptyList(), Collections.<String, Object>emptyMap());
+        }
+        Map<String, Object> editorRootProperties = new LinkedHashMap<>(editorRoot.getProperties());
+        if (!editorRootProperties.containsKey("legacyWidth")) editorRootProperties.put("legacyWidth", -1);
+        if (!editorRootProperties.containsKey("legacyHeight")) editorRootProperties.put("legacyHeight", -1);
+        if (!editorRootProperties.containsKey("legacyGravity")) {
+            editorRootProperties.put("legacyGravity", Gravity.BOTTOM | Gravity.END);
+        }
+        if (!editorRootProperties.equals(editorRoot.getProperties())) {
+            editorRoot = new CreatorWidget(editorRoot.getId(), editorRoot.getType(), editorRoot.getParentId(),
+                    editorRoot.getChildren(), editorRootProperties);
+        }
+        widgets.put(editorRoot.getId(), editorRoot);
+
         if (!starterInitialized) {
         if (!widgets.containsKey(ENTRY_WIDGET_ID)) {
             Map<String, Object> properties = new LinkedHashMap<>();
@@ -105,14 +130,20 @@ public final class CreatorRuntimeDefaults {
     }
 
     private static boolean hasRootLayoutDefaults(CreatorProjectDocument document) {
-        CreatorScreen screen = document.getScreens().get(document.getEntryScreenId());
-        if (screen == null) return false;
-        CreatorWidget root = document.getWidgets().get(screen.getRootWidgetId());
-        if (root == null) return false;
-        Map<String, Object> properties = root.getProperties();
-        return properties.containsKey("legacyWidth")
-                && properties.containsKey("legacyHeight")
-                && properties.containsKey("legacyGravity");
+        for (CreatorScreen screen : document.getScreens().values()) {
+            CreatorWidget root = document.getWidgets().get(screen.getRootWidgetId());
+            if (root == null) return false;
+            Map<String, Object> properties = root.getProperties();
+            if (!properties.containsKey("legacyWidth")
+                    || !properties.containsKey("legacyHeight")
+                    || !properties.containsKey("legacyGravity")) return false;
+        }
+        return true;
+    }
+
+    private static boolean hasEditorScreen(CreatorProjectDocument document) {
+        return document.getScreens().containsKey(EDITOR_SCREEN_ID)
+                && document.getWidgets().containsKey(EDITOR_ROOT_WIDGET_ID);
     }
 
     private static boolean hasClickBinding(Map<String, CreatorEventBinding> events, String widgetId) {

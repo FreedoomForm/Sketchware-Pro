@@ -35,6 +35,11 @@ public final class CreatorLegacyViewImporter {
 
     public Result importLayout(String projectId, String projectName, String screenId,
                                String route, List<ViewBean> legacyViews) {
+        return importLayout(projectId, projectName, screenId, route, legacyViews, false);
+    }
+
+    public Result importLayout(String projectId, String projectName, String screenId,
+                               String route, List<ViewBean> legacyViews, boolean locked) {
         CreatorCompatibilityReport report = new CreatorCompatibilityReport();
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         Map<String, CreatorScreen> screens = new LinkedHashMap<>();
@@ -73,7 +78,7 @@ public final class CreatorLegacyViewImporter {
             report.add(view.id, ViewBean.getViewTypeName(view.type), CreatorCompatibilityTier.R1_RUNTIME_NATIVE,
                     "Imported as Creator Runtime " + runtimeType + ".");
         }
-        screens.put(screenId, new CreatorScreen(screenId, route, rootId));
+        screens.put(screenId, new CreatorScreen(screenId, route, rootId, locked));
         CreatorProjectDocument document = new CreatorProjectDocument(CreatorProjectDocument.SCHEMA_VERSION,
                 projectId, 0, projectName, screenId, screens, widgets, CreatorEntryControl.defaultControl());
         return new Result(document, report);

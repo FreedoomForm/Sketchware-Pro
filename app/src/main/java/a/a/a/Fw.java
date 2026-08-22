@@ -160,6 +160,10 @@ public class Fw extends qA {
             if (i >= 0) {
                 ProjectFileBean projectFileBean = activitiesFiles.get(i);
                 if (projectFileBean.isSelected) {
+                    if (projectFileBean.isActivityLocked()) {
+                        Toast.makeText(getContext(), "Locked activity cannot be deleted", Toast.LENGTH_SHORT).show();
+                        continue;
+                    }
                     activitiesFiles.remove(i);
                     if (projectFileBean.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_DRAWER)) {
                         ((ManageViewActivity) getActivity()).c(ProjectFileBean.getDrawerName(projectFileBean.fileName));
@@ -273,6 +277,10 @@ public class Fw extends qA {
             viewHolder.binding.imgActivity.setVisibility(k && position != 0 ? View.GONE : View.VISIBLE);
 
             viewHolder.binding.imgActivity.setImageResource(getImageResByOptions(projectFileBean.options));
+            viewHolder.binding.imgLock.setImageResource(projectFileBean.isActivityLocked()
+                    ? R.drawable.ic_mtrl_shield_lock : R.drawable.ic_mtrl_shield_check);
+            viewHolder.binding.imgLock.setContentDescription(projectFileBean.isActivityLocked()
+                    ? "Activity locked" : "Activity unlocked");
             viewHolder.binding.tvScreenName.setText(projectFileBean.getXmlName());
             viewHolder.binding.tvActivityName.setText(projectFileBean.getJavaName());
         }
@@ -320,6 +328,10 @@ public class Fw extends qA {
                 binding.viewItem.setOnLongClickListener(view -> {
                     if (getLayoutPosition() == 0) {
                         Toast.makeText(getContext(), "Main activity cannot be deleted", Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                    if (activitiesFiles.get(getLayoutPosition()).isActivityLocked()) {
+                        Toast.makeText(getContext(), "Locked activity cannot be deleted", Toast.LENGTH_SHORT).show();
                         return true;
                     }
                     ((ManageViewActivity) getActivity()).a(true);

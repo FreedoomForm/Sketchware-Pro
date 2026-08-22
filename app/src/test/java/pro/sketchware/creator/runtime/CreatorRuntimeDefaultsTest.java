@@ -14,6 +14,8 @@ public final class CreatorRuntimeDefaultsTest {
         CreatorProjectDocument seeded = CreatorRuntimeDefaults.ensureStarterContent(empty);
 
         assertThat(seeded.getScreens()).containsKey("main");
+        assertThat(seeded.getScreens()).containsKey(CreatorRuntimeDefaults.EDITOR_SCREEN_ID);
+        assertThat(seeded.getScreens().get(CreatorRuntimeDefaults.EDITOR_SCREEN_ID).isLocked()).isTrue();
         assertThat(seeded.getWidgets()).containsKey(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
         assertThat(seeded.getWidgets().get("root_main").getChildren())
                 .containsExactly(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);

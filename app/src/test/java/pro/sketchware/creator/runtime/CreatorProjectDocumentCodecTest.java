@@ -30,6 +30,22 @@ public class CreatorProjectDocumentCodecTest {
         assertThat(decoded.getWidgets().get("button").getProperties().get("text")).isEqualTo("Open");
     }
 
+    @Test public void codecPreservesLockedEditorScreen() {
+        Map<String, CreatorScreen> screens = new LinkedHashMap<>();
+        screens.put("main", new CreatorScreen("main", "/main", "root_main", false));
+        screens.put("editor", new CreatorScreen("editor", "/editor", "root_editor", true));
+        CreatorProjectDocument document = new CreatorProjectDocument(CreatorProjectDocument.SCHEMA_VERSION,
+                "project", 1L, "Demo", "main", screens, new LinkedHashMap<>(),
+                CreatorEntryControl.defaultControl());
+
+        CreatorProjectDocument decoded = CreatorProjectDocumentCodec.decode(
+                CreatorProjectDocumentCodec.encode(document));
+
+        assertThat(decoded.getScreens().get("main").isLocked()).isFalse();
+        assertThat(decoded.getScreens().get("editor").isLocked()).isTrue();
+
+    }
+
     @Test public void codecPreservesImportedRuntimeStateAndTypedEventBlocks() {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         widgets.put("root", new CreatorWidget("root", "column", null, Arrays.asList("button"), null));

@@ -1201,6 +1201,10 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         Intent intent = new Intent(getApplicationContext(), toLaunch);
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.putExtra("sc_id", sc_id);
+        if (isCreatorRuntimeMode()) {
+            intent.putExtra("creator_runtime_project_id",
+                    getIntent().getStringExtra("creator_runtime_project_id"));
+        }
         for (Pair<String, String> extra : extras) {
             intent.putExtra(extra.first, extra.second);
         }

@@ -35,7 +35,8 @@ public class ProjectFileBean extends SelectableBean implements Parcelable {
     public static final int OPTION_ACTIVITY_DRAWER = 4;
     public static final int OPTION_ACTIVITY_FAB = 8;
     public static final int OPTION_ACTIVITY_FULLSCREEN = 2;
-    public static final int OPTION_ACTIVITY_MASK = 15;
+    public static final int OPTION_ACTIVITY_LOCKED = 16;
+    public static final int OPTION_ACTIVITY_MASK = 31;
     public static final int OPTION_ACTIVITY_SHIFT = 0;
     public static final int OPTION_ACTIVITY_TOOLBAR = 1;
 
@@ -246,6 +247,10 @@ public class ProjectFileBean extends SelectableBean implements Parcelable {
 
     public boolean hasActivityOption(@ActivityOption int option) {
         return ((options & OPTION_ACTIVITY_MASK) & option) == option;
+    }
+
+    public boolean isActivityLocked() {
+        return hasActivityOption(OPTION_ACTIVITY_LOCKED);
     }
 
     public void print() {

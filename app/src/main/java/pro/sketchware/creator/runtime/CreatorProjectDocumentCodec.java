@@ -38,6 +38,7 @@ public final class CreatorProjectDocumentCodec {
             json.addProperty("id", screen.getId());
             json.addProperty("route", screen.getRoute());
             json.addProperty("rootWidgetId", screen.getRootWidgetId());
+            json.addProperty("locked", screen.isLocked());
             screens.add(json);
         }
         root.add("screens", screens);
@@ -90,7 +91,8 @@ public final class CreatorProjectDocumentCodec {
         for (JsonElement item : arrayOrEmpty(root, "screens")) {
             JsonObject json = item.getAsJsonObject();
             CreatorScreen screen = new CreatorScreen(required(json, "id").getAsString(),
-                    required(json, "route").getAsString(), required(json, "rootWidgetId").getAsString());
+                    required(json, "route").getAsString(), required(json, "rootWidgetId").getAsString(),
+                    json.has("locked") && json.get("locked").getAsBoolean());
             screens.put(screen.getId(), screen);
         }
 

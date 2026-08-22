@@ -43,8 +43,9 @@ public class AddViewActivity extends BaseAppCompatActivity {
     private static final int FEATURE_TYPE_TOOLBAR = 1;
     private static final int FEATURE_TYPE_DRAWER = 2;
     private static final int FEATURE_TYPE_FAB = 3;
+    private static final int FEATURE_TYPE_LOCKED = 4;
     private YB nameValidator;
-    private boolean featureStatusBar, featureToolbar, featureFab, featureDrawer;
+    private boolean featureStatusBar, featureToolbar, featureFab, featureDrawer, featureLocked;
     private int requestCode;
     private ProjectFileBean projectFileBean;
     private String presetName;
@@ -164,6 +165,7 @@ public class AddViewActivity extends BaseAppCompatActivity {
         featureStatusBar = (featureOptions & ProjectFileBean.OPTION_ACTIVITY_FULLSCREEN) != ProjectFileBean.OPTION_ACTIVITY_FULLSCREEN;
         featureFab = (featureOptions & ProjectFileBean.OPTION_ACTIVITY_FAB) == ProjectFileBean.OPTION_ACTIVITY_FAB;
         featureDrawer = (featureOptions & ProjectFileBean.OPTION_ACTIVITY_DRAWER) == ProjectFileBean.OPTION_ACTIVITY_DRAWER;
+        featureLocked = (featureOptions & ProjectFileBean.OPTION_ACTIVITY_LOCKED) == ProjectFileBean.OPTION_ACTIVITY_LOCKED;
     }
 
     private void initializeItems() {
@@ -171,7 +173,11 @@ public class AddViewActivity extends BaseAppCompatActivity {
         featureItems.add(new FeatureItem(0, R.drawable.ic_statusbar_color_48dp, "StatusBar", featureStatusBar));
         featureItems.add(new FeatureItem(1, R.drawable.ic_toolbar_color_48dp, "Toolbar", featureToolbar));
         featureItems.add(new FeatureItem(2, R.drawable.ic_drawer_color_48dp, "Drawer", featureDrawer));
-        featureItems.add(new FeatureItem(3, R.drawable.fab_color, "FAB", featureFab));
+        featureItems.add(new FeatureItem(FEATURE_TYPE_FAB, R.drawable.fab_color, "FAB", featureFab));
+        if (isCreatorRuntimeMode()) {
+            featureItems.add(new FeatureItem(FEATURE_TYPE_LOCKED, R.drawable.ic_mtrl_shield_lock,
+                    "Locked", featureLocked));
+        }
         featuresAdapter.notifyDataSetChanged();
     }
 
@@ -259,6 +265,9 @@ public class AddViewActivity extends BaseAppCompatActivity {
         if (featureDrawer) {
             options = options | ProjectFileBean.OPTION_ACTIVITY_DRAWER;
         }
+        if (featureLocked) {
+            options = options | ProjectFileBean.OPTION_ACTIVITY_LOCKED;
+        }
         projectFileBean.options = options;
         Intent intent = new Intent();
         intent.putExtra("project_file", projectFileBean);
@@ -299,6 +308,10 @@ public class AddViewActivity extends BaseAppCompatActivity {
                 slideOutVertically(binding.imgKeyboard);
             }
         });
+    }
+
+    private boolean isCreatorRuntimeMode() {
+        return getIntent().hasExtra("creator_runtime_project_id");
     }
 
     private void handleCreateModeInitialization() {
@@ -382,6 +395,7 @@ public class AddViewActivity extends BaseAppCompatActivity {
                 case FEATURE_TYPE_TOOLBAR -> featureToolbar = featureItem.isEnabled;
                 case FEATURE_TYPE_DRAWER -> featureDrawer = featureItem.isEnabled;
                 case FEATURE_TYPE_FAB -> featureFab = featureItem.isEnabled;
+                case FEATURE_TYPE_LOCKED -> featureLocked = featureItem.isEnabled;
             }
 
             if (featureFab || featureDrawer) {

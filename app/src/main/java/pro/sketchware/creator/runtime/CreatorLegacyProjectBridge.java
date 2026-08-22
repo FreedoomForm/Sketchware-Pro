@@ -186,7 +186,7 @@ public final class CreatorLegacyProjectBridge {
             String rootId = "root_" + screenId;
             CreatorLegacyViewImporter.Result imported = new CreatorLegacyViewImporter().importLayout(
                     current.getProjectId(), current.getName(), screenId, "/" + screenId,
-                    viewStore.d(file.getXmlName()));
+                    viewStore.d(file.getXmlName()), file.isActivityLocked());
             screens.putAll(imported.getDocument().getScreens());
             widgets.putAll(imported.getDocument().getWidgets());
             String javaName = file.getJavaName();
@@ -390,6 +390,13 @@ public final class CreatorLegacyProjectBridge {
         hC fileStore = jC.b(scId, false);
         if (fileStore.b(ProjectFileBean.DEFAULT_XML_NAME) == null) {
             fileStore.a(new ProjectFileBean(ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY, "main"));
+        }
+        ProjectFileBean editorFile = fileStore.b("editor.xml");
+        if (editorFile == null) {
+            editorFile = new ProjectFileBean(ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY, "editor");
+            editorFile.setActivityOptions(editorFile.getActivityOptions()
+                    | ProjectFileBean.OPTION_ACTIVITY_LOCKED);
+            fileStore.a(editorFile);
         }
         // hC.j() rebuilds derived XML/Java name lists; hC.l() persists the
         // updated ProjectFileBean list to the legacy `file` store.
