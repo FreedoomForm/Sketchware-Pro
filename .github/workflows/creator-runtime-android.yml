@@ -141,18 +141,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -camera-back none -noaudio -no-boot-anim -camera-front none -no-metrics
           # Pushes run only the deterministic end-to-end smoke flow. Manual
           # dispatch with no filter remains available for the broad suite.
-          script: |
-            TEST_FILTER=""
-            if [ -n "${NATIVE_TEST_CLASS}" ]; then
-              TEST_FILTER="-Pandroid.testInstrumentationRunnerArguments.class=${NATIVE_TEST_CLASS}"
-              if [ -n "${NATIVE_TEST_METHOD}" ]; then
-                TEST_FILTER="${TEST_FILTER}#${NATIVE_TEST_METHOD}"
-              fi
-            fi
-            timeout "${NATIVE_TEST_TIMEOUT_SECONDS}" ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${TEST_FILTER}
-            test_status=$?
-            adb logcat -d > /tmp/creator-runtime-logcat.txt || true
-            exit "${test_status}"
+          script: bash -lc 'TEST_FILTER=""; if [ -n "${NATIVE_TEST_CLASS}" ]; then TEST_FILTER="-Pandroid.testInstrumentationRunnerArguments.class=${NATIVE_TEST_CLASS}"; if [ -n "${NATIVE_TEST_METHOD}" ]; then TEST_FILTER="${TEST_FILTER}#${NATIVE_TEST_METHOD}"; fi; fi; timeout "${NATIVE_TEST_TIMEOUT_SECONDS}" ./gradlew :app:connectedDebugAndroidTest --no-daemon --stacktrace ${TEST_FILTER}; test_status=$?; adb logcat -d > /tmp/creator-runtime-logcat.txt || true; exit "${test_status}"'
 
       - name: Upload connected Android test reports
         if: always()

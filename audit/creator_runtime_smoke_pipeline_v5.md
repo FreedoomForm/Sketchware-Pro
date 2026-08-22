@@ -20,7 +20,7 @@ A manually dispatched workflow with `test-class` and optional `test-method` runs
 
 ## Confirmed first-run failure and correction
 
-The first focused workflow run failed on both API 30 and API 34 before Gradle tests started. The emulator runner executed the multiline `script` through `/bin/sh`; `set -o pipefail` is not supported by that shell and exited with code 2. The workflow now uses only POSIX-compatible shell syntax in that runner script. This was a test-pipeline failure, not evidence that the Creator Runtime smoke flow itself failed.
+The first focused workflow run failed on both API 30 and API 34 before Gradle tests started. The emulator runner executed the multiline `script` through `/bin/sh`; `set -o pipefail` is not supported by that shell and exited with code 2. A second run exposed that the runner invokes multiline entries as separate `/bin/sh -c` commands, so a multiline `if` lost its closing context and failed with `Syntax error: end of file unexpected (expecting "fi")`. The workflow now uses one single-line `bash -lc` command, making the control flow explicit and portable for this action. Both failures were test-pipeline failures, not evidence that the Creator Runtime smoke flow itself failed.
 
 ## Evidence limits
 
