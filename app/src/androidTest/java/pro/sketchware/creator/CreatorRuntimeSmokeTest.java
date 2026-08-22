@@ -81,7 +81,8 @@ public final class CreatorRuntimeSmokeTest {
                 ProjectFileBean main = a.a.a.jC.b(scId)
                         .b(ProjectFileBean.DEFAULT_XML_NAME);
                 assertThat(main).isNotNull();
-                ArrayList<ViewBean> before = a.a.a.jC.a(scId).d(main.getXmlName());
+                ArrayList<ViewBean> before = awaitLegacyViews(scId, main.getXmlName(),
+                        CreatorRuntimeDefaults.ENTRY_WIDGET_ID, 12000L);
                 assertThat(findView(before, CreatorRuntimeDefaults.ENTRY_WIDGET_ID))
                         .isNotNull();
 
@@ -136,6 +137,26 @@ public final class CreatorRuntimeSmokeTest {
                 });
             }
         }
+    }
+
+    private static ArrayList<ViewBean> awaitLegacyViews(String scId, String xmlName,
+                                                         String requiredId, long timeoutMs) {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        ArrayList<ViewBean> latest = null;
+        while (System.currentTimeMillis() < deadline) {
+            final AtomicReference<ArrayList<ViewBean>> snapshot = new AtomicReference<>();
+            InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
+                    snapshot.set(a.a.a.jC.a(scId).d(xmlName)));
+            latest = snapshot.get();
+            if (findView(latest, requiredId) != null) return latest;
+            try {
+                Thread.sleep(50L);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                return latest;
+            }
+        }
+        return latest;
     }
 
     private static ViewBean findView(ArrayList<ViewBean> views, String id) {
