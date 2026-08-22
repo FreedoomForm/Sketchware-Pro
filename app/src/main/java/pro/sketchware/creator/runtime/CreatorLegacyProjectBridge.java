@@ -185,7 +185,7 @@ public final class CreatorLegacyProjectBridge {
     public static synchronized CreatorProjectDocument importLegacyProject(Context context,
                                                                            CreatorProjectDocument current,
                                                                            String scId) {
-        if (context == null || current == null || scId == null || lC.b(scId) == null) return current;
+        if (context == null || current == null || scId == null) return current;
         eC viewStore = jC.a(scId);
         hC fileStore = jC.b(scId);
         ArrayList<ProjectFileBean> files = fileStore == null ? new ArrayList<>() : fileStore.b();
