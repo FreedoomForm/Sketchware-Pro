@@ -120,7 +120,7 @@ public final class CreatorLegacyProjectBridge {
     public static synchronized void projectRuntimeViews(Context context,
                                                          CreatorProjectDocument document,
                                                          String scId) {
-        if (context == null || document == null || scId == null || lC.b(scId) == null) return;
+        if (context == null || document == null || scId == null) return;
         eC viewStore = jC.a(scId);
         if (document.getScreens().isEmpty()) {
             projectScreen(viewStore, document, null, "main.xml");
