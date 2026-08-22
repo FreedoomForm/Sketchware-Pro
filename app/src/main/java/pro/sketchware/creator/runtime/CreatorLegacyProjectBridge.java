@@ -494,7 +494,10 @@ public final class CreatorLegacyProjectBridge {
             blocks.add(startActivity);
             viewStore.a(javaName, event.getEventKey(), blocks);
         }
-        viewStore.n(wq.b(scId) + File.separator + "view");
+        // eC.n(path) persists only ViewBean records. The starter Intent,
+        // EventBean, and BlockBean are in the legacy logic store, so use the
+        // same canonical save path as the original editor.
+        viewStore.j();
         preferences.edit().putBoolean(seededKey, true)
                 .putInt(seedVersionKey, STARTER_INTENT_SEED_VERSION).apply();
     }
