@@ -72,17 +72,16 @@ public final class CreatorRuntimeSmokeTest {
 
         try (ActivityScenario<DesignActivity> editorScenario = ActivityScenario.launch(editorIntent)) {
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            ProjectFileBean main = a.a.a.jC.b(scId)
+                    .b(ProjectFileBean.DEFAULT_XML_NAME);
+            assertThat(main).isNotNull();
+            ArrayList<ViewBean> before = awaitLegacyViews(scId, main.getXmlName(),
+                    CreatorRuntimeDefaults.ENTRY_WIDGET_ID, 12000L);
             editorScenario.onActivity(activity -> {
                 assertThat((Object) activity.findViewById(R.id.tab_layout)).isNotNull();
                 assertThat((Object) activity.findViewById(R.id.viewpager)).isNotNull();
                 assertThat(activity.findViewById(R.id.btn_options).getVisibility())
                         .isEqualTo(View.GONE);
-
-                ProjectFileBean main = a.a.a.jC.b(scId)
-                        .b(ProjectFileBean.DEFAULT_XML_NAME);
-                assertThat(main).isNotNull();
-                ArrayList<ViewBean> before = awaitLegacyViews(scId, main.getXmlName(),
-                        CreatorRuntimeDefaults.ENTRY_WIDGET_ID, 12000L);
                 assertThat(findView(before, CreatorRuntimeDefaults.ENTRY_WIDGET_ID))
                         .isNotNull();
 
