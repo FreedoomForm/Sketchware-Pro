@@ -137,7 +137,9 @@ public final class CreatorRuntimeSmokeTest {
                     assertThat(((MaterialButton) addedLive).getText().toString())
                             .isEqualTo("Smoke button");
                     addedLive.performClick();
-                    assertThat(((MaterialButton) addedLive).getText().toString())
+                    View updatedLive = canvas.findViewWithTag(addedId);
+                    assertThat(updatedLive).isInstanceOf(MaterialButton.class);
+                    assertThat(((MaterialButton) updatedLive).getText().toString())
                             .isEqualTo("Smoke clicked");
                 } catch (Throwable error) {
                     liveAssertion.set(error);
