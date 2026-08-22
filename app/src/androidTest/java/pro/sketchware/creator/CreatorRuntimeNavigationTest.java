@@ -25,6 +25,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.view.GravityCompat;
 
 import com.besome.sketch.design.DesignActivity;
 import com.besome.sketch.editor.LogicEditorActivity;
@@ -189,6 +190,9 @@ public class CreatorRuntimeNavigationTest {
                 assertThat((Object) activity.findViewById(R.id.viewpager)).isNotNull();
                 assertThat((Object) activity.findViewById(R.id.btn_options)).isNotNull();
                 assertThat(activity.findViewById(R.id.btn_options).getVisibility()).isEqualTo(View.GONE);
+                DrawerLayout drawer = activity.findViewById(R.id.drawer_layout);
+                assertThat(drawer.getDrawerLockMode(GravityCompat.END))
+                        .isNotEqualTo(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
                 assertThat((Object) activity.findViewById(R.id.item_versions)).isNotNull();
             });
         }

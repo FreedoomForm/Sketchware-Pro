@@ -598,7 +598,8 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
         drawer = findViewById(R.id.drawer_layout);
-        drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+        drawer.setDrawerLockMode(isCreatorRuntimeMode()
+                ? DrawerLayout.LOCK_MODE_UNLOCKED : DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
 
         Insetter.builder().margin(WindowInsetsCompat.Type.navigationBars()).applyToView(findViewById(R.id.container));
 
