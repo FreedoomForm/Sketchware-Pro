@@ -1,5 +1,8 @@
 package pro.sketchware.creator.runtime;
 
+import android.view.Gravity;
+import android.view.ViewGroup;
+
 import com.besome.sketch.beans.LayoutBean;
 import com.besome.sketch.beans.ViewBean;
 import mod.agus.jcoderz.beans.ViewBeans;
@@ -36,7 +39,11 @@ public final class CreatorLegacyViewImporter {
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
         Map<String, CreatorScreen> screens = new LinkedHashMap<>();
         String rootId = "root_" + screenId;
-        widgets.put(rootId, new CreatorWidget(rootId, "column", null, null, null));
+        Map<String, Object> rootProperties = new LinkedHashMap<>();
+        rootProperties.put("legacyWidth", ViewGroup.LayoutParams.MATCH_PARENT);
+        rootProperties.put("legacyHeight", ViewGroup.LayoutParams.MATCH_PARENT);
+        rootProperties.put("legacyGravity", Gravity.BOTTOM | Gravity.END);
+        widgets.put(rootId, new CreatorWidget(rootId, "column", null, null, rootProperties));
         List<ViewBean> ordered = new ArrayList<>(legacyViews == null ? Collections.<ViewBean>emptyList() : legacyViews);
         Collections.sort(ordered, Comparator.comparingInt(view -> view.index));
 

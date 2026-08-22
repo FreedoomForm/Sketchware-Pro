@@ -36,8 +36,16 @@ public final class CreatorRuntimeDefaultsTest {
                 Collections.emptyMap());
 
         CreatorProjectDocument migrated = CreatorRuntimeDefaults.ensureStarterContent(removed);
-        assertThat(migrated).isSameInstanceAs(removed);
+        assertThat(migrated).isNotSameInstanceAs(removed);
         assertThat(migrated.getWidgets()).doesNotContainKey(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
         assertThat(migrated.getEvents()).isEmpty();
+        assertThat(migrated.getWidgets().get("root_main").getProperties())
+                .containsEntry("legacyGravity", android.view.Gravity.BOTTOM | android.view.Gravity.END);
+    }
+
+    @Test public void initializedDocumentWithRootDefaultsIsNotRewritten() {
+        CreatorProjectDocument seeded = CreatorRuntimeDefaults.ensureStarterContent(
+                CreatorProjectDocument.empty("project", "Demo"));
+        assertThat(CreatorRuntimeDefaults.ensureStarterContent(seeded)).isSameInstanceAs(seeded);
     }
 }

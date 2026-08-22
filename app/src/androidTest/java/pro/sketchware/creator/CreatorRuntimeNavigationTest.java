@@ -24,9 +24,11 @@ import androidx.test.runner.lifecycle.Stage;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import com.besome.sketch.design.DesignActivity;
 import com.besome.sketch.editor.LogicEditorActivity;
+import com.google.android.material.button.MaterialButton;
 import com.besome.sketch.beans.ViewBean;
 import mod.agus.jcoderz.beans.ViewBeans;
 
@@ -89,6 +91,9 @@ public class CreatorRuntimeNavigationTest {
                         .isInstanceOf(com.google.android.material.button.MaterialButton.class);
                 assertThat(activity.findViewById(R.id.creator_entry_control).getVisibility())
                         .isEqualTo(View.VISIBLE);
+                CoordinatorLayout.LayoutParams layoutParams =
+                        (CoordinatorLayout.LayoutParams) activity.findViewById(R.id.creator_entry_control).getLayoutParams();
+                assertThat(layoutParams.gravity).isEqualTo(android.view.Gravity.BOTTOM | android.view.Gravity.END);
             });
         }
     }
@@ -129,7 +134,7 @@ public class CreatorRuntimeNavigationTest {
         assertThat(main.fileName).isEqualTo("main");
         assertThat(main.fileType)
                 .isEqualTo(com.besome.sketch.beans.ProjectFileBean.PROJECT_FILE_TYPE_ACTIVITY);
-        ArrayList<com.besome.sketch.beans.ComponentBean> components = a.a.a.jC.a(scId).e("main.xml");
+        ArrayList<com.besome.sketch.beans.ComponentBean> components = a.a.a.jC.a(scId).e(main.getJavaName());
         boolean intentFound = false;
         for (com.besome.sketch.beans.ComponentBean component : components) {
             if (component != null && CreatorRuntimeDefaults.EDITOR_INTENT_ID.equals(component.componentId)) {
@@ -137,16 +142,26 @@ public class CreatorRuntimeNavigationTest {
             }
         }
         assertThat(intentFound).isTrue();
-        ArrayList<com.besome.sketch.beans.EventBean> events = a.a.a.jC.a(scId).g("main.xml");
+        ArrayList<com.besome.sketch.beans.EventBean> events = a.a.a.jC.a(scId).g(main.getJavaName());
         boolean continueEventFound = false;
         for (com.besome.sketch.beans.EventBean event : events) {
             if (event != null && CreatorRuntimeDefaults.ENTRY_WIDGET_ID.equals(event.targetId)
                     && "onClick".equals(event.eventName)) {
                 continueEventFound = true;
-                assertThat(a.a.a.jC.a(scId).a("main.xml", event.getEventKey())).hasSize(2);
+                assertThat(a.a.a.jC.a(scId).a(main.getJavaName(), event.getEventKey())).hasSize(2);
             }
         }
         assertThat(continueEventFound).isTrue();
+        ArrayList<ViewBean> views = a.a.a.jC.a(scId).d(main.getXmlName());
+        boolean continueViewFound = false;
+        for (ViewBean view : views) {
+            if (view != null && CreatorRuntimeDefaults.ENTRY_WIDGET_ID.equals(view.id)) {
+                continueViewFound = true;
+                assertThat(view.type).isEqualTo(ViewBean.VIEW_TYPE_WIDGET_BUTTON);
+                assertThat(view.parent).isEqualTo("root");
+            }
+        }
+        assertThat(continueViewFound).isTrue();
     }
 
     @Test public void nextFabActuallyNavigatesToOriginalSketchwareEditor() {
@@ -180,6 +195,7 @@ public class CreatorRuntimeNavigationTest {
                 assertThat((Object) activity.findViewById(R.id.tab_layout)).isNotNull();
                 assertThat((Object) activity.findViewById(R.id.viewpager)).isNotNull();
                 assertThat((Object) activity.findViewById(R.id.btn_options)).isNotNull();
+                assertThat(activity.findViewById(R.id.btn_options).getVisibility()).isEqualTo(View.GONE);
             });
         }
     }
@@ -441,6 +457,7 @@ public class CreatorRuntimeNavigationTest {
                         .findViewWithTag(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
                 assertThat((Object) continueButton).isNotNull();
                 assertThat(continueButton.getVisibility()).isEqualTo(View.VISIBLE);
+                assertThat(((MaterialButton) continueButton).getText().toString()).isEqualTo("Continue");
             });
         }
     }

@@ -26,10 +26,10 @@ public final class CreatorRuntimeDefaults {
      * on the next process start.
      */
     public static CreatorProjectDocument ensureStarterContent(CreatorProjectDocument document) {
-        if (document == null || Boolean.TRUE.equals(document.getState().get(STARTER_INITIALIZED_STATE))) {
-            return document;
-        }
+        if (document == null) return null;
 
+        boolean starterInitialized = Boolean.TRUE.equals(document.getState().get(STARTER_INITIALIZED_STATE));
+        if (starterInitialized && hasRootLayoutDefaults(document)) return document;
         Map<String, CreatorScreen> screens = new LinkedHashMap<>(document.getScreens());
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>(document.getWidgets());
         Map<String, Object> state = new LinkedHashMap<>(document.getState());
@@ -54,12 +54,22 @@ public final class CreatorRuntimeDefaults {
                     Collections.<String>emptyList(), Collections.<String, Object>emptyMap());
             widgets.put(rootId, root);
         }
-        if (root.getProperties().isEmpty()) {
-            root = root.withProperty("legacyWidth", -1)
-                    .withProperty("legacyHeight", -1)
-                    .withProperty("legacyGravity", Gravity.BOTTOM | Gravity.END);
+        Map<String, Object> rootProperties = new LinkedHashMap<>(root.getProperties());
+        if (!rootProperties.containsKey("legacyWidth")) {
+            rootProperties.put("legacyWidth", -1);
+        }
+        if (!rootProperties.containsKey("legacyHeight")) {
+            rootProperties.put("legacyHeight", -1);
+        }
+        if (!rootProperties.containsKey("legacyGravity")) {
+            rootProperties.put("legacyGravity", Gravity.BOTTOM | Gravity.END);
+        }
+        if (!rootProperties.equals(root.getProperties())) {
+            root = new CreatorWidget(root.getId(), root.getType(), root.getParentId(),
+                    root.getChildren(), rootProperties);
             widgets.put(rootId, root);
         }
+        if (!starterInitialized) {
         if (!widgets.containsKey(ENTRY_WIDGET_ID)) {
             Map<String, Object> properties = new LinkedHashMap<>();
             properties.put("text", "Continue");
@@ -88,9 +98,21 @@ public final class CreatorRuntimeDefaults {
                     ENTRY_CLICK_BINDING_ID, ENTRY_WIDGET_ID, "click", blocks));
         }
         state.put(STARTER_INITIALIZED_STATE, true);
+        }
         return new CreatorProjectDocument(document.getSchemaVersion(), document.getProjectId(),
                 document.getRevision(), document.getName(), entryScreenId, screens, widgets,
                 document.getEntryControl(), state, events);
+    }
+
+    private static boolean hasRootLayoutDefaults(CreatorProjectDocument document) {
+        CreatorScreen screen = document.getScreens().get(document.getEntryScreenId());
+        if (screen == null) return false;
+        CreatorWidget root = document.getWidgets().get(screen.getRootWidgetId());
+        if (root == null) return false;
+        Map<String, Object> properties = root.getProperties();
+        return properties.containsKey("legacyWidth")
+                && properties.containsKey("legacyHeight")
+                && properties.containsKey("legacyGravity");
     }
 
     private static boolean hasClickBinding(Map<String, CreatorEventBinding> events, String widgetId) {

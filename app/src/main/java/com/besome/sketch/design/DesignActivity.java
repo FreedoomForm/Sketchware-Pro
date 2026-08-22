@@ -605,7 +605,13 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         }
 
         btnOptions = findViewById(R.id.btn_options);
-        btnOptions.setOnClickListener(v -> bottomPopupMenu.show());
+        if (btnOptions != null && isCreatorRuntimeMode()) {
+            // Creator Runtime has no build/run/options control in its editor
+            // bottom bar; keep the original menu available only to legacy projects.
+            btnOptions.setVisibility(View.GONE);
+        } else {
+            btnOptions.setOnClickListener(v -> bottomPopupMenu.show());
+        }
 
         bottomPopupMenu = new PopupMenu(this, btnOptions);
         bottomMenu = bottomPopupMenu.getMenu();

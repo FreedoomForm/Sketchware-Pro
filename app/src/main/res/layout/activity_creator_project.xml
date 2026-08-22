@@ -144,10 +144,10 @@
                     <LinearLayout
                         android:id="@+id/creator_preview_canvas"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:background="@android:color/white"
                         android:minHeight="280dp"
-                        android:gravity="center"
+                        android:gravity="bottom|end"
                         android:orientation="vertical"
                         android:padding="16dp" />
                 </ScrollView>

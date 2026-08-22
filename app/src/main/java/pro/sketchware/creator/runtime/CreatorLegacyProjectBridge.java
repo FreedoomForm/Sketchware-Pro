@@ -61,6 +61,7 @@ public final class CreatorLegacyProjectBridge {
         if (existingScId != null && lC.b(existingScId) != null) {
             ensureLegacyStores(context, existingScId);
             ensureLegacyStarterIntent(context, document, existingScId);
+            projectRuntimeViews(context, document, existingScId);
             return existingScId;
         }
 
@@ -68,6 +69,7 @@ public final class CreatorLegacyProjectBridge {
         provisionLegacyProject(context, scId, document.getName());
         ensureLegacyStores(context, scId);
         ensureLegacyStarterIntent(context, document, scId);
+        projectRuntimeViews(context, document, scId);
         preferences.edit()
                 .putString(key, scId)
                 .putString("runtime_project_id_" + scId, document.getProjectId())
@@ -187,13 +189,14 @@ public final class CreatorLegacyProjectBridge {
                     viewStore.d(file.getXmlName()));
             screens.putAll(imported.getDocument().getScreens());
             widgets.putAll(imported.getDocument().getWidgets());
-            ArrayList<ComponentBean> fileComponents = viewStore.e(file.getXmlName());
+            String javaName = file.getJavaName();
+            ArrayList<ComponentBean> fileComponents = viewStore.e(javaName);
             if (fileComponents != null) components.addAll(fileComponents);
-            ArrayList<EventBean> fileEvents = viewStore.g(file.getXmlName());
+            ArrayList<EventBean> fileEvents = viewStore.g(javaName);
             if (fileEvents != null) {
                 events.addAll(fileEvents);
                 for (EventBean event : fileEvents) {
-                    if (event != null) blocksByEvent.put(event.getEventKey(), viewStore.a(file.getXmlName(), event.getEventKey()));
+                    if (event != null) blocksByEvent.put(event.getEventKey(), viewStore.a(javaName, event.getEventKey()));
                 }
             }
         }
@@ -406,10 +409,17 @@ public final class CreatorLegacyProjectBridge {
     private static void ensureLegacyStarterIntent(Context context, CreatorProjectDocument document, String scId) {
         if (context == null || document == null || scId == null || scId.trim().isEmpty()
                 || !document.getWidgets().containsKey(CreatorRuntimeDefaults.ENTRY_WIDGET_ID)) return;
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String seededKey = "starter_intent_seeded_" + document.getProjectId();
+        if (preferences.getBoolean(seededKey, false)) return;
         eC viewStore = jC.a(scId);
-        String xmlName = ProjectFileBean.DEFAULT_XML_NAME;
+        String javaName = ProjectFileBean.DEFAULT_JAVA_NAME;
+        ProjectFileBean mainFile = jC.b(scId).b(ProjectFileBean.DEFAULT_XML_NAME);
+        if (mainFile != null && mainFile.getJavaName() != null && !mainFile.getJavaName().isEmpty()) {
+            javaName = mainFile.getJavaName();
+        }
         boolean hasIntent = false;
-        ArrayList<ComponentBean> components = viewStore.e(xmlName);
+        ArrayList<ComponentBean> components = viewStore.e(javaName);
         if (components != null) {
             for (ComponentBean component : components) {
                 if (component != null && CreatorRuntimeDefaults.EDITOR_INTENT_ID.equals(component.componentId)) {
@@ -419,12 +429,12 @@ public final class CreatorLegacyProjectBridge {
             }
         }
         if (!hasIntent) {
-            viewStore.b(xmlName, new ComponentBean(ComponentBean.COMPONENT_TYPE_INTENT,
+            viewStore.b(javaName, new ComponentBean(ComponentBean.COMPONENT_TYPE_INTENT,
                     CreatorRuntimeDefaults.EDITOR_INTENT_ID));
         }
 
         boolean hasBinding = false;
-        ArrayList<EventBean> events = viewStore.g(xmlName);
+        ArrayList<EventBean> events = viewStore.g(javaName);
         if (events != null) {
             for (EventBean event : events) {
                 if (event != null && CreatorRuntimeDefaults.ENTRY_WIDGET_ID.equals(event.targetId)
@@ -437,7 +447,7 @@ public final class CreatorLegacyProjectBridge {
         if (!hasBinding) {
             EventBean event = new EventBean(EventBean.EVENT_TYPE_VIEW,
                     ViewBean.VIEW_TYPE_WIDGET_BUTTON, CreatorRuntimeDefaults.ENTRY_WIDGET_ID, "onClick");
-            viewStore.a(xmlName, event);
+            viewStore.a(javaName, event);
             ArrayList<BlockBean> blocks = new ArrayList<>();
             BlockBean setScreen = new BlockBean("1", "set screen of %s to %s",
                     "command", "intent", "intentSetScreen");
@@ -449,9 +459,10 @@ public final class CreatorLegacyProjectBridge {
             startActivity.parameters.add(CreatorRuntimeDefaults.EDITOR_INTENT_ID);
             blocks.add(setScreen);
             blocks.add(startActivity);
-            viewStore.a(xmlName, event.getEventKey(), blocks);
+            viewStore.a(javaName, event.getEventKey(), blocks);
         }
         viewStore.n(wq.b(scId) + File.separator + "view");
+        preferences.edit().putBoolean(seededKey, true).apply();
     }
 
     private static void createLegacyDirectories(String scId) {
