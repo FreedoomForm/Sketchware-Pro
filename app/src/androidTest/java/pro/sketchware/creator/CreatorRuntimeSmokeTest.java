@@ -89,10 +89,14 @@ public final class CreatorRuntimeSmokeTest {
                 ViewBean continueView = findView(before, CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
                 if (continueView == null) {
                     throw new AssertionError(String.format(
-                            "Continue missing: scId=%s activityScId=%s runtimeWidgets=%s legacyViews=%s",
+                            "Continue missing: scId=%s activityScId=%s runtimeWidgets=%s legacyViews=%s eCId=%s cKeys=%s viewFile=%s/%d",
                             scId, activity.getIntent().getStringExtra("sc_id"),
                             CreatorRuntimeSession.get(activity).getDocument().getWidgets().keySet(),
-                            before == null ? "null" : before.size()));
+                            before == null ? "null" : before.size(),
+                            a.a.a.jC.a(scId).a,
+                            a.a.a.jC.a(scId).c.keySet(),
+                            new File(a.a.a.wq.b(scId) + File.separator + "view").exists(),
+                            new File(a.a.a.wq.b(scId) + File.separator + "view").length()));
                 }
 
                 ViewBean added = new ViewBean(addedId, ViewBean.VIEW_TYPE_WIDGET_BUTTON);
