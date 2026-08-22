@@ -64,6 +64,12 @@ public final class CreatorLegacyProjectBridge {
         // otherwise startup silently allocates a second sc_id and projects into
         // a store different from the activity's current editor store.
         if (existingScId != null && !existingScId.trim().isEmpty()) {
+            // The persisted project may be valid on disk while lC's process cache
+            // is empty after ProjectLoader. Rehydrate metadata before methods
+            // guarded by lC.b(scId) attempt to project the runtime document.
+            if (lC.b(existingScId) == null) {
+                provisionLegacyProject(context, existingScId, document.getName());
+            }
             ensureLegacyStores(context, existingScId);
             ensureLegacyStarterIntent(context, document, existingScId);
             projectRuntimeViews(context, document, existingScId);
