@@ -198,6 +198,24 @@ public class CreatorRuntimeNavigationTest {
         }
     }
 
+    @Test public void creatorRuntimeActivityManagerIsReachableAndContainsEditorActivity() {
+        CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
+        String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);
+        Intent intent = new Intent(context, com.besome.sketch.editor.manage.view.ManageViewActivity.class)
+                .putExtra("sc_id", scId)
+                .putExtra("creator_runtime_project_id", document.getProjectId());
+        try (ActivityScenario<com.besome.sketch.editor.manage.view.ManageViewActivity> scenario =
+                     ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                assertThat(activity.isFinishing()).isFalse();
+                assertThat((Object) activity.findViewById(R.id.view_pager)).isNotNull();
+                assertThat(a.a.a.jC.b(scId).b().size()).isAtLeast(2);
+                assertThat(a.a.a.jC.b(scId).b().get(1).fileName).isEqualTo("editor");
+                assertThat(a.a.a.jC.b(scId).b().get(1).isActivityLocked()).isTrue();
+            });
+        }
+    }
+
     @Test public void creatorRuntimeCanOpenOriginalVisualBlockEditor() {
         CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
         String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, document);

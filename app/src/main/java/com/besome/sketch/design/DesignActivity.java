@@ -825,7 +825,10 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     @Override
     public void onResume() {
         super.onResume();
-        syncCreatorRuntimeBoundary();
+        // onCreate() performs the initial runtime -> legacy projection. On later
+        // resumes (for example after View Manager/AddViewActivity), projecting
+        // again would overwrite the user's freshly edited legacy stores with
+        // the previous runtime snapshot. Import the legacy stores instead.
         importLegacyRuntimeBoundary();
         if (!isStoragePermissionGranted()) {
             finish();
@@ -1028,6 +1031,10 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         intent.putExtra("sc_id", sc_id);
         intent.putExtra("current_xml", projectFile.getXmlName());
         intent.putExtra("is_custom_view", projectFile.fileType == 1 || projectFile.fileType == 2);
+        if (isCreatorRuntimeMode()) {
+            intent.putExtra("creator_runtime_project_id",
+                    getIntent().getStringExtra("creator_runtime_project_id"));
+        }
         changeOpenFile.launch(intent);
     }
 
@@ -1571,7 +1578,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
                     activity.updateBottomMenu();
                     activity.refresh();
                     activity.h();
-                    if (savedInstanceState == null) {
+                    if (savedInstanceState == null && !activity.isCreatorRuntimeMode()) {
                         activity.checkForUnsavedProjectData();
                     }
                 });

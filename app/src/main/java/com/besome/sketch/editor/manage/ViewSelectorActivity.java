@@ -40,11 +40,16 @@ public class ViewSelectorActivity extends BaseAppCompatActivity {
     private ProjectFileBean projectFile;
     private String currentXml;
     private int selectedTab;
+    private String creatorRuntimeProjectId;
     private boolean isCustomView = false;
     private FileSelectorPopupSelectXmlBinding binding;
 
     private int getViewIcon(int i) {
-        String replace = String.format("%4s", Integer.toBinaryString(i)).replace(' ', '0');
+        int legacyOptions = i & (ProjectFileBean.OPTION_ACTIVITY_TOOLBAR
+                | ProjectFileBean.OPTION_ACTIVITY_FULLSCREEN
+                | ProjectFileBean.OPTION_ACTIVITY_DRAWER
+                | ProjectFileBean.OPTION_ACTIVITY_FAB);
+        String replace = String.format("%4s", Integer.toBinaryString(legacyOptions)).replace(' ', '0');
         return getApplicationContext().getResources().getIdentifier("activity_" + replace, "drawable", getApplicationContext().getPackageName());
     }
 
@@ -174,10 +179,12 @@ public class ViewSelectorActivity extends BaseAppCompatActivity {
             sc_id = intent.getStringExtra("sc_id");
             currentXml = intent.getStringExtra("current_xml");
             isCustomView = intent.getBooleanExtra("is_custom_view", false);
+            creatorRuntimeProjectId = intent.getStringExtra("creator_runtime_project_id");
         } else {
             sc_id = savedInstanceState.getString("sc_id");
             currentXml = savedInstanceState.getString("current_xml");
             isCustomView = savedInstanceState.getBoolean("is_custom_view");
+            creatorRuntimeProjectId = savedInstanceState.getString("creator_runtime_project_id");
         }
 
         if (isCustomView) {
@@ -218,6 +225,7 @@ public class ViewSelectorActivity extends BaseAppCompatActivity {
                     Intent intent = new Intent(getApplicationContext(), AddViewActivity.class);
                     intent.putStringArrayListExtra("screen_names", getScreenNames());
                     intent.putExtra("request_code", 264);
+                    putRuntimeContext(intent);
                     startActivityForResult(intent, 264);
                 } else if (selectedTab == TAB_CUSTOM_VIEW) {
                     Intent intent = new Intent(getApplicationContext(), AddCustomViewActivity.class);
@@ -239,7 +247,14 @@ public class ViewSelectorActivity extends BaseAppCompatActivity {
         outState.putString("sc_id", sc_id);
         outState.putString("current_xml", currentXml);
         outState.putBoolean("is_custom_view", isCustomView);
+        outState.putString("creator_runtime_project_id", creatorRuntimeProjectId);
         super.onSaveInstanceState(outState);
+    }
+
+    private void putRuntimeContext(Intent intent) {
+        if (creatorRuntimeProjectId != null && !creatorRuntimeProjectId.trim().isEmpty()) {
+            intent.putExtra("creator_runtime_project_id", creatorRuntimeProjectId);
+        }
     }
 
     private void a(ProjectFileBean projectFile, ArrayList<ViewBean> presetViews) {
@@ -336,12 +351,18 @@ public class ViewSelectorActivity extends BaseAppCompatActivity {
                 }
                 String javaName = projectFileBean.getJavaName();
                 viewHolder.itemBinding.imgEdit.setVisibility(View.VISIBLE);
+                viewHolder.itemBinding.imgLock.setVisibility(View.VISIBLE);
+                viewHolder.itemBinding.imgLock.setImageResource(projectFileBean.isActivityLocked()
+                        ? R.drawable.ic_mtrl_shield_lock : R.drawable.ic_mtrl_shield_check);
+                viewHolder.itemBinding.imgLock.setContentDescription(projectFileBean.isActivityLocked()
+                        ? "Activity locked" : "Activity unlocked");
                 viewHolder.itemBinding.imgView.setImageResource(getViewIcon(projectFileBean.options));
                 viewHolder.itemBinding.tvFilename.setText(xmlName);
                 viewHolder.itemBinding.tvLinkedFilename.setVisibility(View.VISIBLE);
                 viewHolder.itemBinding.tvLinkedFilename.setText(javaName);
             } else if (selectedTab == TAB_CUSTOM_VIEW) {
                 viewHolder.itemBinding.imgEdit.setVisibility(View.GONE);
+                viewHolder.itemBinding.imgLock.setVisibility(View.GONE);
                 viewHolder.itemBinding.tvLinkedFilename.setVisibility(View.GONE);
                 ProjectFileBean customView = jC.b(sc_id).c().get(position);
                 if (currentXml.equals(customView.getXmlName())) {
@@ -415,6 +436,7 @@ public class ViewSelectorActivity extends BaseAppCompatActivity {
                         Intent intent = new Intent(getApplicationContext(), AddViewActivity.class);
                         intent.putExtra("project_file", jC.b(sc_id).b().get(getLayoutPosition()));
                         intent.putExtra("request_code", 265);
+                        putRuntimeContext(intent);
                         startActivityForResult(intent, 265);
                     }
                 });

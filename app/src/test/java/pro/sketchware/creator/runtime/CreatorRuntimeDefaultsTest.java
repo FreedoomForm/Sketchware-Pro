@@ -32,6 +32,7 @@ public final class CreatorRuntimeDefaultsTest {
                 Collections.emptyList(), Collections.emptyMap()));
         Map<String, Object> state = new LinkedHashMap<>();
         state.put(CreatorRuntimeDefaults.STARTER_INITIALIZED_STATE, true);
+        state.put(CreatorRuntimeDefaults.STARTER_VERSION_STATE, CreatorRuntimeDefaults.STARTER_VERSION);
         CreatorProjectDocument removed = new CreatorProjectDocument(
                 CreatorProjectDocument.SCHEMA_VERSION, "project", 4, "Demo", "main",
                 screens, widgets, CreatorEntryControl.defaultControl(), state,
@@ -43,6 +44,27 @@ public final class CreatorRuntimeDefaultsTest {
         assertThat(migrated.getEvents()).isEmpty();
         assertThat(migrated.getWidgets().get("root_main").getProperties())
                 .containsEntry("legacyGravity", android.view.Gravity.BOTTOM | android.view.Gravity.END);
+    }
+
+    @Test public void oldStarterMarkerIsMigratedOnce() {
+        Map<String, CreatorScreen> screens = new LinkedHashMap<>();
+        Map<String, CreatorWidget> widgets = new LinkedHashMap<>();
+        screens.put("main", new CreatorScreen("main", "/main", "root_main"));
+        widgets.put("root_main", new CreatorWidget("root_main", "column", null,
+                Collections.emptyList(), Collections.emptyMap()));
+        Map<String, Object> state = new LinkedHashMap<>();
+        state.put(CreatorRuntimeDefaults.STARTER_INITIALIZED_STATE, true);
+        CreatorProjectDocument old = new CreatorProjectDocument(
+                CreatorProjectDocument.SCHEMA_VERSION, "project", 4, "Demo", "main",
+                screens, widgets, CreatorEntryControl.defaultControl(), state,
+                Collections.emptyMap());
+
+        CreatorProjectDocument migrated = CreatorRuntimeDefaults.ensureStarterContent(old);
+
+        assertThat(migrated.getWidgets()).containsKey(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
+        assertThat(migrated.getScreens()).containsKey(CreatorRuntimeDefaults.EDITOR_SCREEN_ID);
+        assertThat(migrated.getState().get(CreatorRuntimeDefaults.STARTER_VERSION_STATE))
+                .isEqualTo(CreatorRuntimeDefaults.STARTER_VERSION);
     }
 
     @Test public void initializedDocumentWithRootDefaultsIsNotRewritten() {

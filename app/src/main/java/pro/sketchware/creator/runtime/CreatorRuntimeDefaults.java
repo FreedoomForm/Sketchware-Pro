@@ -14,6 +14,8 @@ import java.util.Map;
  */
 public final class CreatorRuntimeDefaults {
     public static final String STARTER_INITIALIZED_STATE = "creator.runtime.starter_initialized";
+    public static final String STARTER_VERSION_STATE = "creator.runtime.starter_version";
+    public static final int STARTER_VERSION = 2;
     public static final String ENTRY_WIDGET_ID = "creator_continue_button";
     public static final String EDITOR_INTENT_ID = "creator_editor";
     public static final String ENTRY_CLICK_BINDING_ID = "creator_continue_button_click";
@@ -31,7 +33,10 @@ public final class CreatorRuntimeDefaults {
         if (document == null) return null;
 
         boolean starterInitialized = Boolean.TRUE.equals(document.getState().get(STARTER_INITIALIZED_STATE));
-        if (starterInitialized && hasRootLayoutDefaults(document) && hasEditorScreen(document)) return document;
+        int starterVersion = document.getState().get(STARTER_VERSION_STATE) instanceof Number
+                ? ((Number) document.getState().get(STARTER_VERSION_STATE)).intValue() : 0;
+        if (starterInitialized && starterVersion >= STARTER_VERSION
+                && hasRootLayoutDefaults(document) && hasEditorScreen(document)) return document;
         Map<String, CreatorScreen> screens = new LinkedHashMap<>(document.getScreens());
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>(document.getWidgets());
         Map<String, Object> state = new LinkedHashMap<>(document.getState());
@@ -94,7 +99,7 @@ public final class CreatorRuntimeDefaults {
         }
         widgets.put(editorRoot.getId(), editorRoot);
 
-        if (!starterInitialized) {
+        if (!starterInitialized || starterVersion < STARTER_VERSION) {
         if (!widgets.containsKey(ENTRY_WIDGET_ID)) {
             Map<String, Object> properties = new LinkedHashMap<>();
             properties.put("text", "Continue");
@@ -123,6 +128,7 @@ public final class CreatorRuntimeDefaults {
                     ENTRY_CLICK_BINDING_ID, ENTRY_WIDGET_ID, "click", blocks));
         }
         state.put(STARTER_INITIALIZED_STATE, true);
+        state.put(STARTER_VERSION_STATE, STARTER_VERSION);
         }
         return new CreatorProjectDocument(document.getSchemaVersion(), document.getProjectId(),
                 document.getRevision(), document.getName(), entryScreenId, screens, widgets,

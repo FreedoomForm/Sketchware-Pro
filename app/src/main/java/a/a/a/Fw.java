@@ -36,6 +36,7 @@ public class Fw extends qA {
     private ProjectFilesAdapter projectFilesAdapter = null;
     private String sc_id;
     private String isAppCompatUsed = "N";
+    private String creatorRuntimeProjectId;
     private ArrayList<ProjectFileBean> activitiesFiles;
 
     public final String a(int beanType, String xmlName) {
@@ -130,6 +131,7 @@ public class Fw extends qA {
     public void d() {
         sc_id = getActivity().getIntent().getStringExtra("sc_id");
         isAppCompatUsed = getActivity().getIntent().getStringExtra("compatUseYn");
+        creatorRuntimeProjectId = getActivity().getIntent().getStringExtra("creator_runtime_project_id");
         ArrayList<ProjectFileBean> projectFiles = jC.b(sc_id).b();
         if (projectFiles != null) {
             boolean isMainActivityFile = false;
@@ -293,7 +295,11 @@ public class Fw extends qA {
         }
 
         private int getImageResByOptions(int options) {
-            String option = String.format("%4s", Integer.toBinaryString(options)).replace(' ', '0');
+            int legacyOptions = options & (ProjectFileBean.OPTION_ACTIVITY_TOOLBAR
+                    | ProjectFileBean.OPTION_ACTIVITY_FULLSCREEN
+                    | ProjectFileBean.OPTION_ACTIVITY_DRAWER
+                    | ProjectFileBean.OPTION_ACTIVITY_FAB);
+            String option = String.format("%4s", Integer.toBinaryString(legacyOptions)).replace(' ', '0');
             Resources resources = getContext().getResources();
             return resources.getIdentifier("activity_" + option, "drawable", getContext().getPackageName());
         }
@@ -320,6 +326,9 @@ public class Fw extends qA {
                             Intent intent = new Intent(getContext(), AddViewActivity.class);
                             intent.putExtra("project_file", projectFileBean);
                             intent.putExtra("request_code", REQUEST_CODE_ADD_VIEW_ACTIVITY);
+                            if (creatorRuntimeProjectId != null && !creatorRuntimeProjectId.trim().isEmpty()) {
+                                intent.putExtra("creator_runtime_project_id", creatorRuntimeProjectId);
+                            }
                             startActivityForResult(intent, REQUEST_CODE_ADD_VIEW_ACTIVITY);
                         }
                     }

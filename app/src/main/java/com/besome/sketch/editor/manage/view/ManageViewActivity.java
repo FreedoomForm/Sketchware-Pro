@@ -52,10 +52,17 @@ public class ManageViewActivity extends BaseAppCompatActivity implements OnClick
     private MaterialCardView actionButtonsContainer;
     private boolean selecting = false;
     private String isAppCompatEnabled = "N";
+    private String creatorRuntimeProjectId;
     private Fw activitiesFragment;
     private xw customViewsFragment;
     private ViewPager viewPager;
     private String sc_id;
+
+    @Override
+    public boolean isStoragePermissionGranted() {
+        if (creatorRuntimeProjectId != null && !creatorRuntimeProjectId.trim().isEmpty()) return true;
+        return super.isStoragePermissionGranted();
+    }
 
     public final String a(int var1, String var2) {
         String var3 = wq.b(var1);
@@ -252,6 +259,7 @@ public class ManageViewActivity extends BaseAppCompatActivity implements OnClick
                 boolean isActivitiesTab = viewPager.getCurrentItem() == 0;
                 Intent intent = new Intent(this, isActivitiesTab ? AddViewActivity.class : AddCustomViewActivity.class);
                 intent.putStringArrayListExtra("screen_names", l());
+                putRuntimeContext(intent);
                 if (isActivitiesTab) {
                     intent.putExtra("request_code", REQUEST_CODE_ADD_ACTIVITY);
                 }
@@ -263,8 +271,14 @@ public class ManageViewActivity extends BaseAppCompatActivity implements OnClick
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (!super.isStoragePermissionGranted()) {
+        if (savedInstanceState == null) {
+            creatorRuntimeProjectId = getIntent().getStringExtra("creator_runtime_project_id");
+        } else {
+            creatorRuntimeProjectId = savedInstanceState.getString("creator_runtime_project_id");
+        }
+        if (!isStoragePermissionGranted()) {
             finish();
+            return;
         }
 
         setContentView(R.layout.manage_view);
@@ -282,9 +296,11 @@ public class ManageViewActivity extends BaseAppCompatActivity implements OnClick
         if (savedInstanceState == null) {
             sc_id = getIntent().getStringExtra("sc_id");
             isAppCompatEnabled = getIntent().getStringExtra("compatUseYn");
+            creatorRuntimeProjectId = getIntent().getStringExtra("creator_runtime_project_id");
         } else {
             sc_id = savedInstanceState.getString("sc_id");
             isAppCompatEnabled = savedInstanceState.getString("compatUseYn");
+            creatorRuntimeProjectId = savedInstanceState.getString("creator_runtime_project_id");
         }
 
         TabLayout tabLayout = findViewById(R.id.tab_layout);
@@ -315,8 +331,14 @@ public class ManageViewActivity extends BaseAppCompatActivity implements OnClick
     @Override
     public void onResume() {
         super.onResume();
-        if (!super.isStoragePermissionGranted()) {
+        if (!isStoragePermissionGranted()) {
             finish();
+        }
+    }
+
+    private void putRuntimeContext(Intent intent) {
+        if (creatorRuntimeProjectId != null && !creatorRuntimeProjectId.trim().isEmpty()) {
+            intent.putExtra("creator_runtime_project_id", creatorRuntimeProjectId);
         }
     }
 
@@ -324,6 +346,7 @@ public class ManageViewActivity extends BaseAppCompatActivity implements OnClick
     public void onSaveInstanceState(Bundle newState) {
         newState.putString("sc_id", sc_id);
         newState.putString("compatUseYn", isAppCompatEnabled);
+        newState.putString("creator_runtime_project_id", creatorRuntimeProjectId);
         super.onSaveInstanceState(newState);
     }
 

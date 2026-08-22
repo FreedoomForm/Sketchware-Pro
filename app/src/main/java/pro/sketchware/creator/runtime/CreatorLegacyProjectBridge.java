@@ -46,6 +46,7 @@ import mod.agus.jcoderz.beans.ViewBeans;
 public final class CreatorLegacyProjectBridge {
     private static final String PREFS = "creator_runtime_legacy_bridge";
     private static final String SC_ID_PREFIX = "legacy_sc_id_";
+    private static final int STARTER_INTENT_SEED_VERSION = 2;
 
     private CreatorLegacyProjectBridge() {
     }
@@ -418,7 +419,9 @@ public final class CreatorLegacyProjectBridge {
                 || !document.getWidgets().containsKey(CreatorRuntimeDefaults.ENTRY_WIDGET_ID)) return;
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String seededKey = "starter_intent_seeded_" + document.getProjectId();
-        if (preferences.getBoolean(seededKey, false)) return;
+        String seedVersionKey = "starter_intent_seed_version_" + document.getProjectId();
+        if (preferences.getBoolean(seededKey, false)
+                && preferences.getInt(seedVersionKey, 0) >= STARTER_INTENT_SEED_VERSION) return;
         eC viewStore = jC.a(scId);
         String javaName = ProjectFileBean.DEFAULT_JAVA_NAME;
         ProjectFileBean mainFile = jC.b(scId).b(ProjectFileBean.DEFAULT_XML_NAME);
@@ -469,7 +472,8 @@ public final class CreatorLegacyProjectBridge {
             viewStore.a(javaName, event.getEventKey(), blocks);
         }
         viewStore.n(wq.b(scId) + File.separator + "view");
-        preferences.edit().putBoolean(seededKey, true).apply();
+        preferences.edit().putBoolean(seededKey, true)
+                .putInt(seedVersionKey, STARTER_INTENT_SEED_VERSION).apply();
     }
 
     private static void createLegacyDirectories(String scId) {
