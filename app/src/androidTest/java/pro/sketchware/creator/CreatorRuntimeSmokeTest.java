@@ -15,6 +15,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.besome.sketch.beans.BlockBean;
+import com.besome.sketch.beans.ComponentBean;
 import com.besome.sketch.beans.EventBean;
 import com.besome.sketch.beans.LayoutBean;
 import com.besome.sketch.beans.ProjectFileBean;
@@ -79,6 +80,31 @@ public final class CreatorRuntimeSmokeTest {
             ProjectFileBean main = a.a.a.jC.b(scId)
                     .b(ProjectFileBean.DEFAULT_XML_NAME);
             assertThat(main).isNotNull();
+            ProjectFileBean lockedEditor = a.a.a.jC.b(scId).b("editor.xml");
+            assertThat(lockedEditor).isNotNull();
+            assertThat(lockedEditor.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_LOCKED)).isTrue();
+            ArrayList<ComponentBean> components = a.a.a.jC.a(scId).e(main.getJavaName());
+            boolean hasEditorIntent = false;
+            for (ComponentBean component : components == null
+                    ? new ArrayList<ComponentBean>() : components) {
+                if (component != null && CreatorRuntimeDefaults.EDITOR_INTENT_ID.equals(component.componentId)) {
+                    hasEditorIntent = true;
+                    break;
+                }
+            }
+            assertThat(hasEditorIntent).isTrue();
+            ArrayList<EventBean> starterEvents = a.a.a.jC.a(scId).g(main.getJavaName());
+            EventBean starterClick = null;
+            for (EventBean event : starterEvents == null
+                    ? new ArrayList<EventBean>() : starterEvents) {
+                if (event != null && CreatorRuntimeDefaults.ENTRY_WIDGET_ID.equals(event.targetId)
+                        && "onClick".equals(event.eventName)) {
+                    starterClick = event;
+                    break;
+                }
+            }
+            assertThat(starterClick).isNotNull();
+            assertThat(a.a.a.jC.a(scId).a(main.getJavaName(), starterClick.getEventKey())).isNotEmpty();
             ArrayList<ViewBean> before = awaitLegacyViews(scId, main.getXmlName(),
                     CreatorRuntimeDefaults.ENTRY_WIDGET_ID, 12000L);
             editorScenario.onActivity(activity -> {
