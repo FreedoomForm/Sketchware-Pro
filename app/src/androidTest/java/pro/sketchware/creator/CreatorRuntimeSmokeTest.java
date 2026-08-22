@@ -78,6 +78,10 @@ public final class CreatorRuntimeSmokeTest {
             ArrayList<ViewBean> before = awaitLegacyViews(scId, main.getXmlName(),
                     CreatorRuntimeDefaults.ENTRY_WIDGET_ID, 12000L);
             editorScenario.onActivity(activity -> {
+                System.out.println("SMOKE scId=" + scId
+                        + " activityScId=" + activity.getIntent().getStringExtra("sc_id")
+                        + " runtimeWidgets=" + CreatorRuntimeSession.get(activity).getDocument().getWidgets().keySet()
+                        + " legacyViews=" + (before == null ? "null" : before.size()));
                 assertThat((Object) activity.findViewById(R.id.tab_layout)).isNotNull();
                 assertThat((Object) activity.findViewById(R.id.viewpager)).isNotNull();
                 assertThat(activity.findViewById(R.id.btn_options).getVisibility())
