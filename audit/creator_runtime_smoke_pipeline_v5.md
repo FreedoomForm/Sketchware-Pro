@@ -18,6 +18,10 @@ The push test command has a 900-second Gradle test timeout per emulator job. Emu
 
 A manually dispatched workflow with `test-class` and optional `test-method` runs the requested focused class/method. A manually dispatched workflow with both filters empty runs the broad regression suite with the longer 2700-second test timeout. This keeps broad coverage available without making every push wait for unrelated AI, widget-catalog, and compatibility tests.
 
+## Confirmed first-run failure and correction
+
+The first focused workflow run failed on both API 30 and API 34 before Gradle tests started. The emulator runner executed the multiline `script` through `/bin/sh`; `set -o pipefail` is not supported by that shell and exited with code 2. The workflow now uses only POSIX-compatible shell syntax in that runner script. This was a test-pipeline failure, not evidence that the Creator Runtime smoke flow itself failed.
+
 ## Evidence limits
 
 The smoke test is stronger than the previous count-only and isolated assertions, but it still runs on hosted emulators rather than the user's Redmi M2101K7BG. A successful emulator run proves the tested code path works in that emulator configuration; it does not prove OEM-specific behavior, installed-data migration, permission state, or a physical-device screen layout. Those remain explicitly open until device evidence is available.

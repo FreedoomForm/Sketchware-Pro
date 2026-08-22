@@ -142,7 +142,6 @@ jobs:
           # Pushes run only the deterministic end-to-end smoke flow. Manual
           # dispatch with no filter remains available for the broad suite.
           script: |
-            set -o pipefail
             TEST_FILTER=""
             if [ -n "${NATIVE_TEST_CLASS}" ]; then
               TEST_FILTER="-Pandroid.testInstrumentationRunnerArguments.class=${NATIVE_TEST_CLASS}"
