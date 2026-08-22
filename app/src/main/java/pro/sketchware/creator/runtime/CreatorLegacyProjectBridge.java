@@ -161,7 +161,13 @@ public final class CreatorLegacyProjectBridge {
             applyWidgetProperties(view, widget.getProperties());
             projected.add(view);
         }
-        viewStore.c.put(xmlName, projected);
+        // Use eC's normal insertion API instead of replacing its backing map
+        // directly. d(xmlName) and the editor's hierarchy loader rely on the
+        // indexes maintained by a(...), not just the serialized list.
+        viewStore.c.put(xmlName, new ArrayList<>());
+        for (ViewBean view : projected) {
+            viewStore.a(xmlName, view);
+        }
     }
 
     private static boolean belongsToRoot(CreatorProjectDocument document, CreatorWidget widget, String rootId) {
