@@ -175,6 +175,9 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     private rs eventTabAdapter;
     private br componentTabAdapter;
     private CreatorRuntimeSession runtimeSession;
+    /** True only after ProjectLoader has initialized all legacy stores and the
+     * initial runtime snapshot has been projected into them. */
+    private volatile boolean creatorRuntimeProjectReady;
     private final CreatorRuntimeSession.Listener creatorRuntimeListener = document -> runOnUiThread(() -> {
         String runtimeProjectId = getIntent().getStringExtra("creator_runtime_project_id");
         if (runtimeProjectId == null || sc_id == null || document == null
@@ -587,7 +590,11 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         } else {
             sc_id = savedInstanceState.getString("sc_id");
         }
-        syncCreatorRuntimeBoundary();
+        // The first runtime -> legacy projection is deliberately performed
+        // after ProjectLoader initializes eC/hC. ProjectLoader is asynchronous;
+        // projecting here and importing from onResume could race and import an
+        // empty/stale store over the starter document on real devices.
+        creatorRuntimeProjectReady = false;
 
         r = new DB(getApplicationContext(), "P1");
         t = new DB(getApplicationContext(), "P12");
@@ -825,11 +832,16 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     @Override
     public void onResume() {
         super.onResume();
-        // onCreate() performs the initial runtime -> legacy projection. On later
-        // resumes (for example after View Manager/AddViewActivity), projecting
-        // again would overwrite the user's freshly edited legacy stores with
-        // the previous runtime snapshot. Import the legacy stores instead.
-        importLegacyRuntimeBoundary();
+        // The initial projection/import boundary is completed by ProjectLoader.
+        // Do not import while that asynchronous initialization is still in
+        // flight: on some devices onResume precedes its background load and an
+        // empty eC store would overwrite the runtime starter document.
+        if (creatorRuntimeProjectReady) {
+            // On later resumes (for example after View Manager/AddViewActivity),
+            // import the user's freshly edited legacy stores. Never project the
+            // previous runtime snapshot over those edits here.
+            importLegacyRuntimeBoundary();
+        }
         if (!isStoragePermissionGranted()) {
             finish();
             return;
@@ -1574,6 +1586,13 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             DesignActivity activity = getActivity();
             if (activity != null) {
                 activity.loadProject(savedInstanceState != null);
+                if (activity.isCreatorRuntimeMode()) {
+                    // eC/hC are now initialized and disk-backed. Project the
+                    // authoritative runtime document exactly once for startup,
+                    // before the fragments perform their first refresh.
+                    activity.syncCreatorRuntimeBoundary();
+                    activity.creatorRuntimeProjectReady = true;
+                }
                 activity.runOnUiThread(() -> {
                     activity.updateBottomMenu();
                     activity.refresh();

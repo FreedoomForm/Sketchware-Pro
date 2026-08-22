@@ -20,6 +20,7 @@ This is a working evidence log. It must be rewritten into the final audit after 
 | F-012 | Medium | `ToolVisibilityPolicy` hides legacy aliases from agent schemas, but `ToolExecutor.execute()` dispatches every registered tool by name without checking visibility. Hidden aliases remain executable for old conversations; this is intentional compatibility, but it means tools that should be removed from the user-facing surface are not actually removed from the executable surface. | Requires explicit policy decision and tests distinguishing compatibility aliases from forbidden tools. |
 | F-013 | High | `allLegacyViewTypesImportThroughProductionRuntimeOnNativeRuntime()` asserts only that 49 records import and the canvas is non-null. It does not verify each type's native class, properties, click behavior, or reverse projection. | Coverage is enumeration-level, not full functional coverage; previous “all types” implication is too strong. |
 | F-014 | High | `SketchwareToolContext.persistViewToDisk()` catches every throwable and only logs it; `ViewAddWidgetTool` can therefore return success even when the legacy view cache was not serialized. | Persistence must return/throw a checked failure before reporting a successful AI mutation. |
+| F-015 | Critical | `DesignActivity.onCreate()` previously projected runtime state before the asynchronous `ProjectLoader` initialized `eC/hC`, while `onResume()` could import the not-yet-loaded legacy store. On a real device this could erase the starter Continue projection or make the first editor state empty/stale despite correct runtime JSON. | Initial projection is now deferred until ProjectLoader finishes; startup native assertion was added. Physical-device confirmation remains open. |
 
 ## Evidence grades at this point
 
@@ -37,12 +38,14 @@ This is a working evidence log. It must be rewritten into the final audit after 
 - F-012: C (source proof; policy test pending).
 - F-013: C (native count-only test; per-type behavioral coverage remains open).
 - F-014: B/C (persistence failure now propagates instead of being silently reported as success; failure-path test remains open).
+- F-015: B/C (source race fixed and startup native assertion added; physical-device confirmation remains open).
 
 ## Immediate corrective priorities
 
-1. Run the new native legacy round-trip and dedicated lock-create test on API 30/API 34 emulators.
-2. Add native executor/live-click evidence for imported `intentSetScreen(creator_editor, DesignActivity)` plus `startActivity(creator_editor)`.
-3. Build a complete legacy-widget mapping table and mark unsupported renderer/projection pairs explicitly.
-4. Decide and test whether hidden AI aliases remain executable compatibility routes or must be removed from the runtime registry.
-5. Strengthen all-types coverage from count-only to per-type renderer/projection assertions where the production contract permits.
-6. Inspect all original editor child paths and runtime-only suppression points for lifecycle, permission, and context propagation.
+1. Run the new startup-order, legacy round-trip, and dedicated lock-create tests on API 30/API 34 emulators.
+2. Confirm the startup-order fix on the user's Redmi Android 13 device.
+3. Add native executor/live-click evidence for imported `intentSetScreen(creator_editor, DesignActivity)` plus `startActivity(creator_editor)`.
+4. Build a complete legacy-widget mapping table and mark unsupported renderer/projection pairs explicitly.
+5. Decide and test whether hidden AI aliases remain executable compatibility routes or must be removed from the runtime registry.
+6. Strengthen all-types coverage from count-only to per-type renderer/projection assertions where the production contract permits.
+7. Inspect all original editor child paths and runtime-only suppression points for lifecycle, permission, and context propagation.

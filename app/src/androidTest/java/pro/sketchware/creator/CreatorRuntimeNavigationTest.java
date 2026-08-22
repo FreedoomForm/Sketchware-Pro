@@ -103,6 +103,29 @@ public class CreatorRuntimeNavigationTest {
         assertThat(document.getWidgets()).containsKey("root_main");
     }
 
+    @Test public void projectLoaderLeavesStarterContinueInVisibleLegacyEditorStore() {
+        Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+        assertThat(launch).isNotNull();
+        try (ActivityScenario<DesignActivity> scenario = ActivityScenario.launch(launch)) {
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            scenario.onActivity(activity -> {
+                ArrayList<ViewBean> views = a.a.a.jC.a(
+                        activity.getIntent().getStringExtra("sc_id")).d("main.xml");
+                ViewBean continueView = null;
+                for (ViewBean view : views) {
+                    if (view != null && CreatorRuntimeDefaults.ENTRY_WIDGET_ID.equals(view.id)) {
+                        continueView = view;
+                        break;
+                    }
+                }
+                assertThat(continueView).isNotNull();
+                assertThat(continueView.parent).isEqualTo("root");
+                assertThat(activity.findViewById(R.id.file_name).getVisibility())
+                        .isEqualTo(View.VISIBLE);
+            });
+        }
+    }
+
     @Test public void starterSurfacePersistsContinueButtonAndEditorIntentBinding() {
         CreatorProjectDocument document = CreatorRuntimeSession.get(context).getDocument();
         assertThat(document.getWidgets()).containsKey(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
