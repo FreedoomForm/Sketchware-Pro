@@ -80,6 +80,8 @@ public final class CreatorRuntimeSmokeTest {
             ProjectFileBean main = a.a.a.jC.b(scId)
                     .b(ProjectFileBean.DEFAULT_XML_NAME);
             assertThat(main).isNotNull();
+            ArrayList<ViewBean> before = awaitLegacyViews(scId, main.getXmlName(),
+                    CreatorRuntimeDefaults.ENTRY_WIDGET_ID, 12000L);
             ProjectFileBean lockedEditor = a.a.a.jC.b(scId).b("editor.xml");
             assertThat(lockedEditor).isNotNull();
             assertThat(lockedEditor.hasActivityOption(ProjectFileBean.OPTION_ACTIVITY_LOCKED)).isTrue();
@@ -105,8 +107,6 @@ public final class CreatorRuntimeSmokeTest {
             }
             assertThat(starterClick).isNotNull();
             assertThat(a.a.a.jC.a(scId).a(main.getJavaName(), starterClick.getEventKey())).isNotEmpty();
-            ArrayList<ViewBean> before = awaitLegacyViews(scId, main.getXmlName(),
-                    CreatorRuntimeDefaults.ENTRY_WIDGET_ID, 12000L);
             editorScenario.onActivity(activity -> {
                 System.out.println("SMOKE scId=" + scId
                         + " activityScId=" + activity.getIntent().getStringExtra("sc_id")
