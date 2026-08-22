@@ -100,6 +100,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
         liveOnly = getIntent().getBooleanExtra(EXTRA_LIVE_ONLY, false);
         configurePresentationMode();
         session = CreatorRuntimeSession.get(this);
+        liveEngine = new CreatorRuntimeEngine(session.getDocument(), 100, new CreatorRuntimeEventLog(300));
         runtimeEnvironment = new CreatorRuntimeEnvironment(this, (serviceId, eventName, payload) ->
                 runOnUiThread(() -> handleRuntimeServiceEvent(serviceId, eventName, payload)));
         previewCanvas = findViewById(R.id.creator_preview_canvas);
@@ -1181,7 +1182,7 @@ public final class CreatorProjectActivity extends AppCompatActivity {
     }
 
     private void dispatchLifecycleEvent(String eventName) {
-        if (runtimeExecutor == null || session == null) return;
+        if (runtimeExecutor == null || session == null || liveEngine == null) return;
         renderEffects(runtimeExecutor.dispatch(liveEngine,
                 CreatorLegacyArtifactImporter.ACTIVITY_EVENT_TARGET, eventName));
     }
@@ -1204,12 +1205,13 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 Map<String, Object> statePayload = new LinkedHashMap<>();
                 statePayload.put("stateId", String.valueOf(resultStateId));
                 statePayload.put("value", rows);
-                CreatorProjectDocument document = liveEngine.getCurrent();
+                CreatorProjectDocument document = liveEngine == null ? session.getDocument() : liveEngine.getCurrent();
                 CreatorProjectOperation operation = new CreatorProjectOperation("runtime-firebase-children-"
                         + UUID.randomUUID(), document.getProjectId(), document.getRevision(),
                         CreatorProjectOperation.ActorKind.SYSTEM, CreatorProjectOperation.Type.STATE_SET,
                         statePayload, System.currentTimeMillis());
-                liveEngine.apply(operation);
+                if (liveEngine != null) liveEngine.apply(operation);
+                else session.apply(operation);
             }
             Object callbackTargetId = payload.get("callbackTargetId");
             if (callbackTargetId != null && !String.valueOf(callbackTargetId).trim().isEmpty()) {
@@ -1222,7 +1224,8 @@ public final class CreatorProjectActivity extends AppCompatActivity {
                 renderEffects(runtimeExecutor.dispatch(liveEngine, String.valueOf(callbackTargetId), "button"));
             }
         }
-        Object rawComponents = liveEngine.getCurrent().getState().get("legacy.components");
+        CreatorProjectDocument runtimeDocument = liveEngine == null ? session.getDocument() : liveEngine.getCurrent();
+        Object rawComponents = runtimeDocument.getState().get("legacy.components");
         if (rawComponents instanceof Map) {
             for (Map.Entry<?, ?> entry : ((Map<?, ?>) rawComponents).entrySet()) {
                 if (!(entry.getValue() instanceof Map)) continue;
