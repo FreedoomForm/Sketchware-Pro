@@ -64,14 +64,18 @@ public final class CreatorRuntimeSmokeTest {
                 .isEqualTo(DesignActivity.class.getName());
 
         CreatorProjectDocument initial = CreatorRuntimeSession.get(context).getDocument();
-        String scId = CreatorLegacyProjectBridge.ensureLegacyProject(context, initial);
         String addedId = "smoke_added_button";
-        Intent editorIntent = new Intent(context, DesignActivity.class)
-                .putExtra("sc_id", scId)
-                .putExtra("creator_runtime_project_id", initial.getProjectId());
+        AtomicReference<String> scIdRef = new AtomicReference<>();
 
-        try (ActivityScenario<DesignActivity> editorScenario = ActivityScenario.launch(editorIntent)) {
+        try (ActivityScenario<DesignActivity> editorScenario = ActivityScenario.launch(launch)) {
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            editorScenario.onActivity(activity -> scIdRef.set(
+                    activity.getIntent().getStringExtra("sc_id")));
+            String scId = scIdRef.get();
+            assertThat(scId).isNotNull();
+            Intent editorIntent = new Intent(context, DesignActivity.class)
+                    .putExtra("sc_id", scId)
+                    .putExtra("creator_runtime_project_id", initial.getProjectId());
             ProjectFileBean main = a.a.a.jC.b(scId)
                     .b(ProjectFileBean.DEFAULT_XML_NAME);
             assertThat(main).isNotNull();
@@ -86,6 +90,9 @@ public final class CreatorRuntimeSmokeTest {
                 assertThat((Object) activity.findViewById(R.id.viewpager)).isNotNull();
                 assertThat(activity.findViewById(R.id.btn_options).getVisibility())
                         .isEqualTo(View.GONE);
+                View originalContinue = activity.findViewById(R.id.view_editor)
+                        .findViewWithTag(CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
+                assertThat(originalContinue).isNotNull();
                 ViewBean continueView = findView(before, CreatorRuntimeDefaults.ENTRY_WIDGET_ID);
                 if (continueView == null) {
                     throw new AssertionError(String.format(

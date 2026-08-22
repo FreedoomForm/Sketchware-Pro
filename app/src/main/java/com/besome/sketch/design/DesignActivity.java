@@ -787,6 +787,12 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
         if (searchItem != null) {
             searchItem.setVisible(currentTabNumber == 1);
         }
+        MenuItem saveItem = menu.findItem(R.id.design_option_menu_title_save_project);
+        if (saveItem != null && isCreatorRuntimeMode()) {
+            // Runtime editor saves through the Back boundary; exposing the
+            // legacy manual Save action contradicts the no-save/no-compile UX.
+            saveItem.setVisible(false);
+        }
         return true;
     }
 
