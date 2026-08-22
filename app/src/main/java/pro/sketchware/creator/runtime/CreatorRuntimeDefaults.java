@@ -36,7 +36,8 @@ public final class CreatorRuntimeDefaults {
         int starterVersion = document.getState().get(STARTER_VERSION_STATE) instanceof Number
                 ? ((Number) document.getState().get(STARTER_VERSION_STATE)).intValue() : 0;
         if (starterInitialized && starterVersion >= STARTER_VERSION
-                && hasRootLayoutDefaults(document) && hasEditorScreen(document)) return document;
+                && hasRootLayoutDefaults(document) && hasEditorScreen(document)
+                && hasStarterEntryWidget(document)) return document;
         Map<String, CreatorScreen> screens = new LinkedHashMap<>(document.getScreens());
         Map<String, CreatorWidget> widgets = new LinkedHashMap<>(document.getWidgets());
         Map<String, Object> state = new LinkedHashMap<>(document.getState());
@@ -133,6 +134,14 @@ public final class CreatorRuntimeDefaults {
         return new CreatorProjectDocument(document.getSchemaVersion(), document.getProjectId(),
                 document.getRevision(), document.getName(), entryScreenId, screens, widgets,
                 document.getEntryControl(), state, events);
+    }
+
+    private static boolean hasStarterEntryWidget(CreatorProjectDocument document) {
+        CreatorWidget entry = document.getWidgets().get(ENTRY_WIDGET_ID);
+        CreatorScreen screen = document.getScreens().get(document.getEntryScreenId());
+        if (entry == null || screen == null) return false;
+        CreatorWidget root = document.getWidgets().get(screen.getRootWidgetId());
+        return root != null && root.getChildren().contains(ENTRY_WIDGET_ID);
     }
 
     private static boolean hasRootLayoutDefaults(CreatorProjectDocument document) {
