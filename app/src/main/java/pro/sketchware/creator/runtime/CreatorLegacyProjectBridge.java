@@ -462,7 +462,7 @@ public final class CreatorLegacyProjectBridge {
             }
         }
         if (!hasIntent) {
-            viewStore.b(javaName, new ComponentBean(ComponentBean.COMPONENT_TYPE_INTENT,
+            viewStore.a(javaName, new ComponentBean(ComponentBean.COMPONENT_TYPE_INTENT,
                     CreatorRuntimeDefaults.EDITOR_INTENT_ID));
         }
 
