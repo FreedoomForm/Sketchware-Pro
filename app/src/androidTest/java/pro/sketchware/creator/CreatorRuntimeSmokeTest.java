@@ -126,16 +126,26 @@ public final class CreatorRuntimeSmokeTest {
 
             Activity live = awaitResumedActivity(CreatorProjectActivity.class, 12000L);
             assertThat(live).isNotNull();
-            View canvas = live.findViewById(R.id.creator_preview_canvas);
-            assertThat(canvas).isNotNull();
-            View addedLive = canvas.findViewWithTag(addedId);
-            assertThat(addedLive).isNotNull();
-            assertThat(addedLive).isInstanceOf(MaterialButton.class);
-            assertThat(((MaterialButton) addedLive).getText().toString())
-                    .isEqualTo("Smoke button");
-            addedLive.performClick();
-            assertThat(((MaterialButton) addedLive).getText().toString())
-                    .isEqualTo("Smoke clicked");
+            AtomicReference<Throwable> liveAssertion = new AtomicReference<>();
+            InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+                try {
+                    View canvas = live.findViewById(R.id.creator_preview_canvas);
+                    assertThat(canvas).isNotNull();
+                    View addedLive = canvas.findViewWithTag(addedId);
+                    assertThat(addedLive).isNotNull();
+                    assertThat(addedLive).isInstanceOf(MaterialButton.class);
+                    assertThat(((MaterialButton) addedLive).getText().toString())
+                            .isEqualTo("Smoke button");
+                    addedLive.performClick();
+                    assertThat(((MaterialButton) addedLive).getText().toString())
+                            .isEqualTo("Smoke clicked");
+                } catch (Throwable error) {
+                    liveAssertion.set(error);
+                }
+            });
+            if (liveAssertion.get() != null) {
+                throw new AssertionError("Live surface assertion failed", liveAssertion.get());
+            }
 
             try (ActivityScenario<DesignActivity> reopened = ActivityScenario.launch(editorIntent)) {
                 InstrumentationRegistry.getInstrumentation().waitForIdleSync();
