@@ -100,7 +100,13 @@
             android:name="com.besome.sketch.design.DesignActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|keyboard"
             android:windowSoftInputMode="adjustNothing|stateHidden"
-            android:theme="@style/Theme.SketchwarePro.SmallToolbar" />
+            android:exported="true"
+            android:theme="@style/Theme.SketchwarePro.SmallToolbar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name="pro.sketchware.creator.CreatorProjectActivity"
             android:configChanges="orientation|screenSize"
@@ -109,13 +115,8 @@
         <activity
             android:name="pro.sketchware.creator.CreatorHomeActivity"
             android:configChanges="orientation|screenSize"
-            android:exported="true"
-            android:theme="@style/Theme.SketchwarePro.Starting">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:exported="false"
+            android:theme="@style/Theme.SketchwarePro.Starting" />
         <activity
             android:name="pro.sketchware.activities.main.activities.MainActivity"
             android:configChanges="orientation|screenSize"

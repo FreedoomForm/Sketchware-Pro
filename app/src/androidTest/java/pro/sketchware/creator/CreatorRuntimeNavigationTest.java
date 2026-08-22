@@ -68,32 +68,26 @@ public class CreatorRuntimeNavigationTest {
     }
 
     @Test public void creatorActivitiesLaunchWithAppCompatPostSplashTheme() {
-        try (ActivityScenario<CreatorHomeActivity> home = ActivityScenario.launch(CreatorHomeActivity.class)) {
-            home.onActivity(activity -> assertThat(activity.hasWindowFocus() || !activity.isFinishing()).isTrue());
-        }
         try (ActivityScenario<CreatorProjectActivity> project = ActivityScenario.launch(CreatorProjectActivity.class)) {
             project.onActivity(activity -> assertThat(activity.hasWindowFocus() || !activity.isFinishing()).isTrue());
         }
     }
 
-    @Test public void installedLauncherIsCreatorHomeWithContinueOnly() {
+    @Test public void installedLauncherIsOriginalDesignActivityOnMainProject() {
         Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         assertThat(launchIntent).isNotNull();
         assertThat(launchIntent.getComponent()).isNotNull();
         assertThat(launchIntent.getComponent().getClassName())
-                .isEqualTo(CreatorHomeActivity.class.getName());
+                .isEqualTo(DesignActivity.class.getName());
 
-        try (ActivityScenario<CreatorHomeActivity> scenario = ActivityScenario.launch(CreatorHomeActivity.class)) {
+        try (ActivityScenario<DesignActivity> scenario = ActivityScenario.launch(DesignActivity.class)) {
             scenario.onActivity(activity -> {
-                assertThat(((android.view.ViewGroup) activity.findViewById(R.id.creator_home_content))
-                        .getChildCount()).isEqualTo(1);
-                assertThat((Object) activity.findViewById(R.id.creator_entry_control))
-                        .isInstanceOf(com.google.android.material.button.MaterialButton.class);
-                assertThat(activity.findViewById(R.id.creator_entry_control).getVisibility())
-                        .isEqualTo(View.VISIBLE);
-                CoordinatorLayout.LayoutParams layoutParams =
-                        (CoordinatorLayout.LayoutParams) activity.findViewById(R.id.creator_entry_control).getLayoutParams();
-                assertThat(layoutParams.gravity).isEqualTo(android.view.Gravity.BOTTOM | android.view.Gravity.END);
+                assertThat(activity.getIntent().getStringExtra("creator_runtime_project_id"))
+                        .isNotEmpty();
+                assertThat((Object) activity.findViewById(R.id.tab_layout)).isNotNull();
+                assertThat((Object) activity.findViewById(R.id.viewpager)).isNotNull();
+                assertThat(activity.findViewById(R.id.btn_options).getVisibility())
+                        .isEqualTo(View.GONE);
             });
         }
     }
@@ -164,15 +158,9 @@ public class CreatorRuntimeNavigationTest {
         assertThat(continueViewFound).isTrue();
     }
 
-    @Test public void nextFabActuallyNavigatesToOriginalSketchwareEditor() {
+    @Test public void compatibilityHomeEntryRedirectsToOriginalSketchwareEditor() {
         try (ActivityScenario<CreatorHomeActivity> home = ActivityScenario.launch(CreatorHomeActivity.class)) {
-            home.onActivity(activity -> {
-                View next = activity.findViewById(R.id.creator_entry_control);
-                assertThat(next.getVisibility()).isEqualTo(View.VISIBLE);
-                next.performClick();
-            });
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-
             AtomicReference<Activity> resumed = new AtomicReference<>();
             InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
                     ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
@@ -264,9 +252,12 @@ public class CreatorRuntimeNavigationTest {
         assertThat(found).isTrue();
     }
 
-    @Test public void creatorHomeReturnsToLiveRuntimeSurfaceAfterOriginalEditor() {
-        try (ActivityScenario<CreatorHomeActivity> home = ActivityScenario.launch(CreatorHomeActivity.class)) {
-            home.onActivity(activity -> activity.findViewById(R.id.creator_entry_control).performClick());
+    @Test public void mainActivityBackReturnsToSamePersistedNativeSurface() {
+        try (ActivityScenario<DesignActivity> editorScenario = ActivityScenario.launch(DesignActivity.class)) {
+            editorScenario.onActivity(activity -> {
+                assertThat(activity.getIntent().getStringExtra("creator_runtime_project_id")).isNotEmpty();
+                assertThat(activity.findViewById(R.id.file_name).getVisibility()).isEqualTo(View.VISIBLE);
+            });
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
             AtomicReference<Activity> editor = new AtomicReference<>();
             InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
@@ -287,6 +278,8 @@ public class CreatorRuntimeNavigationTest {
             assertThat(live.get().findViewById(R.id.creator_editor_header).getVisibility())
                     .isEqualTo(View.GONE);
             assertThat((Object) live.get().findViewById(R.id.creator_preview_canvas)).isNotNull();
+            assertThat((Object) live.get().findViewById(R.id.creator_preview_canvas)
+                    .findViewWithTag(CreatorRuntimeDefaults.ENTRY_WIDGET_ID)).isNotNull();
         }
     }
 

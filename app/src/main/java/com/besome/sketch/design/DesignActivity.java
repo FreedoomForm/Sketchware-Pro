@@ -451,15 +451,33 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     public void finish() {
         // SaveChangesProjectCloser/ProjectSaver persist the legacy stores before
         // calling finish(). Import that final snapshot before the legacy caches
-        // are released so Creator Home renders the just-edited document.
-        if (isCreatorRuntimeMode() && sc_id != null) {
+        // are released so the same main activity renders the just-edited document.
+        boolean creatorRuntime = isCreatorRuntimeMode();
+        if (creatorRuntime && sc_id != null) {
             importLegacyRuntimeBoundary();
         }
         jC.a();
         cC.a();
         bC.a();
         setResult(RESULT_CANCELED, getIntent());
+        if (creatorRuntime) {
+            Intent liveIntent = new Intent(this, pro.sketchware.creator.CreatorProjectActivity.class)
+                    .putExtra(pro.sketchware.creator.CreatorProjectActivity.EXTRA_LIVE_ONLY, true)
+                    .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            startActivity(liveIntent);
+        }
         super.finish();
+    }
+
+    private void prepareCreatorRuntimeLaunch() {
+        Intent launchIntent = getIntent();
+        if (launchIntent == null
+                || launchIntent.hasExtra("sc_id")
+                || launchIntent.hasExtra("creator_runtime_project_id")) return;
+        CreatorProjectDocument document = CreatorRuntimeSession.get(this).getDocument();
+        String legacyScId = CreatorLegacyProjectBridge.ensureLegacyProject(this, document);
+        launchIntent.putExtra("sc_id", legacyScId);
+        launchIntent.putExtra("creator_runtime_project_id", document.getProjectId());
     }
 
     private void checkForUnsavedProjectData() {
@@ -557,6 +575,7 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
     public void onCreate(Bundle savedInstanceState) {
         enableEdgeToEdgeNoContrast();
         super.onCreate(savedInstanceState);
+        prepareCreatorRuntimeLaunch();
         setContentView(R.layout.design);
         if (!isStoragePermissionGranted()) {
             finish();

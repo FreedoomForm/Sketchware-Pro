@@ -27,7 +27,10 @@ import dev.chrisbanes.insetter.Side;
 import mod.hilal.saif.activities.tools.AppSettings;
 import pro.sketchware.R;
 import pro.sketchware.activities.about.AboutActivity;
-import pro.sketchware.creator.CreatorHomeActivity;
+import com.besome.sketch.design.DesignActivity;
+import pro.sketchware.creator.runtime.CreatorLegacyProjectBridge;
+import pro.sketchware.creator.runtime.CreatorProjectDocument;
+import pro.sketchware.creator.runtime.CreatorRuntimeSession;
 import pro.sketchware.utility.UI;
 
 public class MainDrawer extends NavigationView {
@@ -109,8 +112,12 @@ public class MainDrawer extends NavigationView {
             intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             activity.startActivity(intent);
         } else if (id == R.id.creator_runtime) {
-            Intent intent = new Intent(activity, CreatorHomeActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            CreatorProjectDocument document = CreatorRuntimeSession.get(activity).getDocument();
+            String legacyScId = CreatorLegacyProjectBridge.ensureLegacyProject(activity, document);
+            Intent intent = new Intent(activity, DesignActivity.class)
+                    .putExtra("sc_id", legacyScId)
+                    .putExtra("creator_runtime_project_id", document.getProjectId())
+                    .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
             activity.startActivity(intent);
         }
     }
