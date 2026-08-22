@@ -1587,9 +1587,12 @@ public class DesignActivity extends BaseAppCompatActivity implements View.OnClic
             if (activity != null) {
                 activity.loadProject(savedInstanceState != null);
                 if (activity.isCreatorRuntimeMode()) {
-                    // eC/hC are now initialized and disk-backed. Project the
-                    // authoritative runtime document exactly once for startup,
-                    // before the fragments perform their first refresh.
+                    // eC/hC are now initialized and disk-backed. Re-ensure the
+                    // bridge after loadProject because the legacy loader can
+                    // replace its in-memory stores with the disk snapshot; the
+                    // runtime starter must be projected only after that boundary.
+                    CreatorLegacyProjectBridge.ensureLegacyProject(activity,
+                            CreatorRuntimeSession.get(activity).getDocument());
                     activity.syncCreatorRuntimeBoundary();
                     activity.creatorRuntimeProjectReady = true;
                 }
